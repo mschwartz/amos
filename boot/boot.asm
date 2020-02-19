@@ -14,12 +14,20 @@
 	BITS 16
                     org 0x7c00
 
+cmain               equ 0x9000
+RSP64               equ 0x6000
+
 start:
                     jmp  0:main
 
-bootDrive:          db 0
+;; these filled in by build-img tool
                     align 4
+boot_sector:        dw 0
+boot_sectors:       dw 0
+kernel_sector:      dw 0
+kernel_sectors:     dw 0
 
+                    %include "disk.inc"
 main:
                     mov ax, 0
                     mov ss, ax
@@ -30,15 +38,15 @@ main:
                     mov fs, ax
                     mov gs, ax
 
-                    mov [bootDrive],dl
+                    ; initialize disk drive for reading rest of boot and the kernel
+                    ; must be called before dl is modified!
+                    call init_disk
 
                     ;; load in second sector, and C program sectors
-                    mov ah, 0x02
-                    mov al, 4           ; number of sectors
-                    mov cx, 0x0002
-                    xor dh, dh
-                    mov bx, 0x7e00
-                    int 0x13
+                    LOAD 0x7e00, 2, 2
+
+                    ;; load in kernel
+                    LOAD cmain, 4, 4
 
                     ; jump to start of 2nd sector
                     jmp boot2
@@ -47,17 +55,12 @@ end                 equ $
 	times 510-($-$$) db 0	; Pad remainder of boot sector with 0s
 	dw 0xAA55		; The standard PC boot signature
 
-;                    %include "lib/screen.inc"
-                    %include "lib/memory.inc"
-
+                    %include "memory.inc"
 boot2:
                     cli
 
-                    lgdt [gdt_descriptor]
 
-                    xor ebx ,ebx
-                    mov ah, 0eh
-                    mov al, 'g'
+                    lgdt [gdt_descriptor]
 
                     mov eax, cr0
                     or eax, 0x1
@@ -70,29 +73,8 @@ boot2:
 
                     [bits 32]
 
-VIDEO_MEMORY equ 0xb8000
-;WHITE_ON_BLACK equ 0x0f
-
-%if 0
-                    %include "lib/screen.inc"
-
-print32:
-                    pusha
-                    mov edx, VIDEO_MEMORY
-.loop:
-                    mov al, [ebx]
-                    cmp al, 0
-                    je .done
-                    mov ah, WHITE_ON_BLACK
-                    mov [edx], eax
-                    add edx, 2
-                    add ebx, 1
-                    jmp .loop
-.done:
-                    popa
-                    ret
-%endif
-
+;                    %include "debug.inc"
+;                    %include "paging.inc"
 b32:
                     mov ax, DATA_SEG
                     mov ds, ax
@@ -100,11 +82,39 @@ b32:
                     mov fs, ax
                     mov gs, ax
 
-                    mov ebp, 0x2000
+                    mov ebp, 0x8000
                     mov esp, ebp
 
+                    ;; go into long mode
+                    %include "paging.inc"
+
+                    [bits 64]
+
+
+WHITE_ON_BLACK      equ 0x0f
+WHITE_ON_GREEN      equ 0x1e
+
+                    cli
+;                    mov rsp, RSP64
+;                    mov rsp, rbp
+
+                    mov rsi, cmain
+                    mov rcx, 16
+                    call hexdump
+jmp $
+                    mov rdi, rsp
+                    push rdi
                     call cmain
+                    mov edi, 0xB8000
+                    mov ah, WHITE_ON_BLACK
+                    mov al, '.'
+;                    mov ax, 0x2F20
+                    mov ecx, 25*80
+                    rep stosw                     ; Clear the screen.
                     jmp $
 
+                    %include "debug.inc"
 
-cmain:
+;BLOCKS              equ 3*512
+;                    times BLOCKS-($-$$) db 0	; Pad remainder of boot sector with 0s
+

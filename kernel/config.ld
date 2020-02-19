@@ -1,9 +1,9 @@
 OUTPUT_FORMAT(elf32-i386)
-ENTRY(main)
+ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x7e00;
+    . = 0x9000;
     .text : { *(.text) }
     .data : { *(.data) }
     .bss  : { *(.bss) *(COMMON) }

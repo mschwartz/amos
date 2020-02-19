@@ -1,5 +1,33 @@
 ;; disk.inc
 
+                    ; LOAD address, sector, count
+                    %macro LOAD 3
+                    mov bx, %1
+                    mov cl, %2
+                    mov al, %3
+                    call load_sectors
+                    %endm
+; al = number of sectors
+; cl = sector num
+; dl = drive number
+; bx = destination
+load_sectors:
+                    mov ah, 02h         ; read
+                    mov ch, 0           ; track number
+                    mov dh, 0           ; head number
+                    mov dl, [bootDrive]
+                    int 13h
+                    ret
+
+
+init_disk:          
+                    mov [bootDrive], dl
+                    ret
+
+bootDrive:          db 0
+                    align 4
+
+%if 0
 di_drive_number equ 0
 di_valid equ di_drive_number + 1
 di_num_cylinders equ di_valid + 1
@@ -140,4 +168,4 @@ reset_disk:
                     int 0x13
 ;                    call newline
                     ret
-
+%endif

@@ -100,25 +100,6 @@ int kernel_main(uint32_t ax);
 void foo();
 }
 
-int kernel_main(uint32_t ax) {
-  Screen screen;
-  screen.cls();
-  foo();
-  //  screen.hexword(0xea5a);
-  screen.hexlong(ax);
-  screen.putc(' ');
-  screen.hexlong(0xbeefdead);
-  //  screen.hexbyte(ax);
-  //  screen.hexbyte(ax>>8);
-  //  screen.hexbyte(0xe5);
-  //  screen.hexbyte(0xe5);
-  screen.newline();
-  for (int i = 0; i < 5; i++) {
-    screen.puts("Hello from kernel_main\r\n");
-  }
-  return 0;
-}
-
 uint64_t memory_test() {
   uint8_t *ptr = (uint8_t *)0x10000;
   uint64_t size = 0;
@@ -136,10 +117,27 @@ uint64_t memory_test() {
     ptr += 4096;
     size += 4096;
   }
-//  char buf[4096];
-//  itoa(size, buf, 10);
-//  screen.hexlong(size);
-//  screen.putc(' ');
-//  screen.puts(buf);
   return size;
 }
+
+int kernel_main(uint32_t ax) {
+  Screen screen;
+  screen.cls();
+  foo();
+  //  screen.hexword(0xea5a);
+  screen.hexlong(ax);
+  screen.putc(' ');
+  screen.hexlong(0xbeefdead);
+  uint64_t pages = memory_test();
+  screen.hexlong(pages);
+  //  screen.hexbyte(ax);
+  //  screen.hexbyte(ax>>8);
+  //  screen.hexbyte(0xe5);
+  //  screen.hexbyte(0xe5);
+  screen.newline();
+  for (int i = 0; i < 5; i++) {
+    screen.puts("Hello from kernel_main\r\n");
+  }
+  return 0;
+}
+

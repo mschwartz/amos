@@ -43,10 +43,13 @@ main:
                     call init_disk
 
                     ;; load in second sector, and C program sectors
-                    LOAD 0x7e00, 2, 2
+;                    LOAD 0x7e00, 2, 4
+;                    LOAD 0x7e00, [boot_sector], [boot_sectors]
+                    LOAD 0x7e00, 1, 9
 
                     ;; load in kernel
-                    LOAD cmain, 4, 4
+;                    LOAD cmain, [kernel_sector], [kernel_sectors]
+;                    LOAD cmain, 4, 8
 
                     ; jump to start of 2nd sector
                     jmp boot2
@@ -89,31 +92,19 @@ b32:
                     %include "paging.inc"
 
                     [bits 64]
+                    jmp go
 
 
-WHITE_ON_BLACK      equ 0x0f
-WHITE_ON_GREEN      equ 0x1e
 
-                    cli
-;                    mov rsp, RSP64
-;                    mov rsp, rbp
+go:                 cli
+                    mov rsp, RSP64
+                    mov rsp, rbp
+;                    mov rax, cmain
+;                    call hexword
 
-                    mov rsi, cmain
-                    mov rcx, 16
-                    call hexdump
-jmp $
-                    mov rdi, rsp
-                    push rdi
-                    call cmain
-                    mov edi, 0xB8000
-                    mov ah, WHITE_ON_BLACK
-                    mov al, '.'
-;                    mov ax, 0x2F20
-                    mov ecx, 25*80
-                    rep stosw                     ; Clear the screen.
+                    %include "boot64.inc"
+
                     jmp $
-
-                    %include "debug.inc"
 
 ;BLOCKS              equ 3*512
 ;                    times BLOCKS-($-$$) db 0	; Pad remainder of boot sector with 0s

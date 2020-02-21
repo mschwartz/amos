@@ -2,36 +2,37 @@ VIDEO_MEMORY equ 0xb8000
 WHITE_ON_BLACK equ 0x0f
 
                     [bits 64]
+
                     align 8
 screen:             dq VIDEO_MEMORY
+nybbles             db "0123456789ABCDEF",0
+
                     align 8
 
 putc:
-;                    push rdx
+                    push rdx
 
-                    mov r8, [screen]
+                    mov rdx, [screen]
                     mov ah, WHITE_ON_BLACK
-                    mov [r8], ax
-                    add r8, 2
-                    mov [screen], r8
+                    mov [rdx], ax
+                    add rdx, 2
+                    mov [screen], rdx
 
-;                    pop rdx
+                    pop rdx
+                    ret
+
                     ret
                    
 ;newline:
-;                    push eax
 ;                    mov al, 13
 ;                    call screen_putc
 ;                    mov al, 10
 ;                    call screen_putc
-;                    pop eax
 ;                    ret
 
 space:
-	push rax
 	mov al, ' '
 	call putc
-	pop rax
 	ret
 print32:
 .loop:
@@ -44,69 +45,60 @@ print32:
 .done:
                     ret
 
-nybbles:
-	db "0123456789ABCDEF"
-
-                    align 4
-
 hexnybble:
-                    push rbx
-
-	and al, 0x0f
+                    and al, 0x0f
                     xor rbx, rbx
                     mov bl, al
                     add rbx, nybbles
                     mov al, [rbx]
                     call putc
 
-                    pop rbx
 	ret
 
 hexbyte:
-;                    push rax
-                    call hexnybble
-;                    pop rax
-                    ret
-;                    push rax
+                    push rax
 	ror rax, 4
 	call hexnybble
-;                    pop rax
-;                    call hexnybble
+                    pop rax
+                    call hexnybble
 
-	pop rax
 	ret
 
 hexword:
-	push rax
-	push rax
+                    push rax
 	ror rax, 8
 	and rax, 0xff
-	call hexbyte
-	pop rax
+                    call hexbyte
+                    pop rax
 	and rax, 0xff
-	call hexbyte
-	pop rax
+                    call hexbyte
 	ret
 
 hexlong:            
-	push rax
-	push rax
-                    ror eax, 16
+                    mov al, 'Z'
+                    call putc
+ret
+                    push rax
+                    call hexword
+                    pop rax
+                    ror rax, 16
+                    and rax, 0xffff
+	pop rax
                     and rax, 0xffff
                     call hexword
-	pop rax
-                    and eax, 0xffff
-                    call hexword
-	pop rax
+	mov rax, r9
 	ret
 
 hexdump:
-
                     mov rax, rsi
-                    call hexbyte
+;                    mov al, 0xee
+;                    call hexbyte
+                    call hexword
+                    jmp $
 ;                    call hexlong
-                    ret
-                    call space
+                    mov al, '-'
+                    call putc
+
 hexdump_loop:
 	lodsb
 	call hexbyte

@@ -6,12 +6,11 @@ WHITE_ON_GREEN      equ 0x1e
                     section text
                     global _start
 _start:
-                    mov edi, 0xB8000
-                    mov ah, WHITE_ON_BLACK
-                    mov al, '.'
-;                    mov ax, 0x2F20
-                    mov ecx, 25*80
-                    rep stosw                     ; Clear the screen.
+;                    mov edi, 0xB8000
+;                    mov ah, WHITE_ON_BLACK
+;                    mov al, '.'
+;                    mov ecx, 25*80
+;                    rep stosw                     ; Clear the screen.
                     jmp boot
 
                     global foo

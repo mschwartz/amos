@@ -87,10 +87,10 @@ int main(int ac, char *av[]) {
 
   // patch boot.img with block # and num blocks for boot sector and kernel
   uint16_t *ptr = (uint16_t *)&raw[8];
-  ptr[0] = 1;
+  ptr[0] = 2;
   ptr[1] = boot.blocks - 1;
   ptr[2] = boot.blocks + 1;
-  ptr[3] = kernel.blocks;
+  ptr[3] = rawblocks - boot.blocks;
 
 
   int fd = open(BARE_FILE, O_WRONLY|O_CREAT|O_TRUNC, 0644);

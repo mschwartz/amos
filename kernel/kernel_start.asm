@@ -1,9 +1,10 @@
+;                    org 0x9000
                     [bits 64]
 
 WHITE_ON_BLACK      equ 0x0f
 WHITE_ON_GREEN      equ 0x1e
 
-                    section text
+                    section start
                     global _start
 _start:
 ;                    mov edi, 0xB8000
@@ -20,9 +21,6 @@ foo:
 
                     extern kernel_main
 boot:
-;                    mov ax, 0xdead
-;                    call hexword
-;                    jmp $
                     push rbp
                     mov rbp, rsp
                     mov rax, 0xdeadbeef
@@ -31,6 +29,9 @@ boot:
                     add esp, 8
                     leave
                     ret
+
+                    global __stack_chk_fail
+__stack_chk_fail:   ret
 
 ;BLOCKS              equ 16
 ;                    times BLOCKS-($-$$) db 0	; Pad remainder of boot sector with 0s

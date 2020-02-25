@@ -17,30 +17,36 @@ hw:
                     pop rax
                     call hb
                     ret
+hl:
+                    push rax
+                    shr rax, 16
+                    call hw
+                    pop rax
+                    call hw
+                    ret
 boot64:
                     cli
-                    mov rax, 0xdeadbeef
-                    call hw
-                    jmp $
-                    push rax
-                    shr rax, 24
-                    call hexnybble
-                    pop rax
-                    shr rax, 20
-                    call hexnybble
-                    jmp $
-                    mov rsi, cmain
-                    mov rcx, 16
-                    call hexdump
+;                    mov rax, 0xdeadbeef
+;                    call hl
+;                    push rax
+;                    shr rax, 24
+;                    call hexnybble
+;                    pop rax
+;                    shr rax, 20
+;                    call hexnybble
+;                    mov rsi, CMAIN
+;                    mov rcx, 16
+;                    call hexdump
 
-WHITE_ON_BLACK      equ 0x0f
-WHITE_ON_GREEN      equ 0x1e
 
 ;                    mov rdi, rsp
 ;                    push rdi
                     global call_main
 call_main:
-                    call cmain
+                    call CMAIN
+                    mov rsi, CMAIN
+                    mov rcx, 16
+                    call hexdump
                     jmp $
                     mov edi, 0xB8000
                     mov ah, WHITE_ON_BLACK

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-export KERNEL='kernel_start.o cclib/string.o main.o'
+set -e
+
+export KERNEL='main.o kernel_start.o'
 
 echo "BUILDING BOOT SECTOR"
 cd boot
@@ -8,24 +10,30 @@ nasm -f bin -l boot.lst -o boot.img boot.asm
 ls -l boot.img
 cd ..
 
+
 echo ""
 echo "BUILDING KERNEL"
+
 cd kernel
-export CFLAGS='-nostartfiles -ffreestanding -nostdlib -m64 -fno-stack-protector'
+export CFLAGS='-nostartfiles -ffreestanding -nostdlib -m64 -fno-stack-protector -I./cclib -I./x86 -I./kernel/cclib -I./kernel/x86'
 
 echo "  COMPILING"
 echo "    nasm -f elf -o kernel_start.o kernel_start.asm"
-nasm -f elf64 -o kernel_start.o kernel_start.asm
+nasm -f elf64 -o kernel_start.o -l kernel_start.lst kernel_start.asm
 cd cclib
+make
+cd ..
+cd x86 
 make
 cd ..
 
 echo "    gcc -c $CFLAGS -o main.o main.cpp"
 gcc -g -c $CFLAGS -o main.o main.cpp
+
 echo "  LINKING"
-echo "    ld -melf_i386 -Tconfig.ld -o kernel.elf $KERNEL -Lcclib -lcclib"
-#ld -melf_i386 -Tconfig.ld -o kernel.elf $KERNEL
-ld  -Tconfig.ld -o kernel.elf $KERNEL
+export LIBS='-Lcclib -lcclib -Lx86 -lx86'
+echo "    ld -melf_i386 -Tconfig.ld -o kernel.elf $KERNEL ${LIBS}"
+ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS
 echo "    objcopy -O binary kernel.elf kernel.img"
 objcopy -O binary kernel.elf kernel.img
 cd ..
@@ -38,3 +46,7 @@ echo "    cat boot.img kernel.img > drive.img"
 
 echo ""
 echo "COMPLETE!"
+ls -l  */*.img 
+echo ""
+ls -l *.img
+echo ""

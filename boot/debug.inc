@@ -1,6 +1,3 @@
-VIDEO_MEMORY equ 0xb8000
-WHITE_ON_BLACK equ 0x0f
-
                     [bits 64]
 
                     align 8
@@ -75,9 +72,6 @@ hexword:
 	ret
 
 hexlong:            
-                    mov al, 'Z'
-                    call putc
-ret
                     push rax
                     call hexword
                     pop rax
@@ -91,11 +85,7 @@ ret
 
 hexdump:
                     mov rax, rsi
-;                    mov al, 0xee
-;                    call hexbyte
                     call hexword
-                    jmp $
-;                    call hexlong
                     mov al, '-'
                     call putc
 

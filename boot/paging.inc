@@ -1,8 +1,3 @@
-PLL4T               equ 0x1000          ; page map level 4 table
-PDPT                equ 0x2000          ; page directory pointer table
-PDT                 equ 0x3000          ; page directory table
-PT                  equ 0x4000          ; page table
-
                     jmp enter_long_mode
 ; Global Descriptor Table (64-bit).
 GDT64:                           
@@ -94,8 +89,19 @@ Realm64:
                     mov fs, ax
                     mov gs, ax
                     mov ss, ax
-                    mov edi, 0xB8000
-                    mov rax, 0x1F201F201F201F20   ; Set the A-register to 0x1F201F201F201F20.
-                    mov ecx, 500                  ; Set the C-register to 500.
-                    rep stosq                     ; Clear the screen.
+                    call foo
+                    jmp bar
+foo:
+                    call foo2
+                    ret
+foo2:
+                    call foo3
+                    ret
+foo3:
+;                    mov rdi, 0xB8000
+;                    mov rax, 0x1F201F201F201F20   ; Set the A-register to 0x1F201F201F201F20.
+;                    mov ecx, 500                  ; Set the C-register to 500.
+;                    rep stosq                     ; Clear the screen.
+                    ret
+bar:
 

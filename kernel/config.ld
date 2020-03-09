@@ -4,7 +4,10 @@ ENTRY(_start)
 SECTIONS
 {
     . = 0x9000;
-    .text : { *(.text) }
+    .text : { 
+	    *(start)
+	    *(.text) 
+    }
     .data : { *(.data) }
     .bss  : { *(.bss) *(COMMON) }
 }

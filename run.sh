@@ -1,4 +1,5 @@
 #!/bin/bash
 
-./build.sh
-qemu-system-x86_64 bare.img
+set -e
+
+./build.sh && qemu-system-x86_64 c.img

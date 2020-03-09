@@ -1,10 +1,14 @@
-OBJ= 	string.o
+OBJ= 		itoa.o sprintf.o string.o
 
-LIB=	libcclib.a
+LIB=		libcclib.a
 
 .cpp.o:
-	gcc -O2 -c $(CFLAGS) -o $*.o $*.c
+	gcc -g -O2 -c $(CFLAGS) -o $*.o $*.cpp
 
-$(LIB):	$(OBJ)
+$(LIB):	$(OBJ) Makefile
 	ar rcs $(LIB) $(OBJ)
 	ranlib $(LIB)
+	@echo ""
+
+clean:
+	rm -rf *.o *.a

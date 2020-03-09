@@ -1,0 +1,27 @@
+OBJ= 	 bochs.o cpu.o kprint.o tasking.o gdt.o idt.o kernel_isr.o mmu.o
+
+LIB=	libx86.a
+
+CGLAGS= -I. -I../cclib -I../devices
+
+.cpp.o:
+	gcc -O2 -c $(CFLAGS) -o $*.o $*.cpp
+
+.asm.o:
+	@echo ""
+	nasm -f elf64 -o $*.o $*.asm
+	@echo ""
+
+$(LIB):	$(OBJ)
+	ar rcs $(LIB) $(OBJ)
+	ranlib $(LIB)
+
+kernel_isr.o: kernel_isr.asm
+	@echo ""
+	@echo "*** NASM"
+	nasm -f elf64 -o $*.o $*.asm
+	@echo "***"
+	@echo ""
+
+clean:
+	rm -rf *.o *.a

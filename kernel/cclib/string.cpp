@@ -1,29 +1,48 @@
+#include "types.h"
 #include "string.h"
+#include "Screen.h"
 
-char *itoa(int value, char *result, int base) {
-  // check that the base if valid
-  if (base < 2 || base > 36) {
-    *result = '\0';
-    return result;
+size_t strlen(char *s) {
+  int count = 0;
+  while (*s++) {
+    count++;
   }
-
-  char *ptr = result, *ptr1 = result, tmp_char;
-  int tmp_value;
-
-  do {
-    tmp_value = value;
-    value /= base;
-    *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz"[35 + (tmp_value - value * base)];
-  } while (value);
-
-  // Apply negative sign
-  if (tmp_value < 0)
-    *ptr++ = '-';
-  *ptr-- = '\0';
-  while (ptr1 < ptr) {
-    tmp_char = *ptr;
-    *ptr-- = *ptr1;
-    *ptr1++ = tmp_char;
-  }
-  return result;
+  return count;
 }
+
+void strcpy(char *dst, const char *src) {
+  while ((*dst++ = *src++));
+}
+
+void reverse(char *src) {
+  int l = strlen(src);
+  char work[l+1];
+  char *dst = work,
+       *end_ptr = &src[l-1];
+
+  for (int i=0; i<l; i++) {
+    *dst++ = *end_ptr--;
+  }
+  *dst++ = '\0';
+  strcpy(src, work);
+}
+
+void memcpy(void *dst, void *src, size_t size) {
+  uint8_t *s = (uint8_t *)src,
+          *d = (uint8_t *)dst;
+
+  for (size_t i = 0; i < size; i++) {
+    *d++ = *s++;
+  }
+}
+
+void memset(void *dst, uint8_t v, size_t size) {
+  uint8_t *d = (uint8_t *)dst;
+  //  size = 4096;
+
+  //  kprint("memset(%x, %d, %d)\n", d, v, 4096);
+  for (size_t i = 0; i < size; i++) {
+    *d++ = v;
+  }
+}
+

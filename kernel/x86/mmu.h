@@ -1,0 +1,73 @@
+#ifndef KERNEL_MMU_H
+#define KERNEL_MMU_H
+
+#include <types.h>
+
+const uint64_t PAGE_SIZE = 4096;
+
+// page table entry
+struct PTE {
+  uint32_t frame : 20;
+  uint32_t avail : 3;
+  uint32_t rsvd2 : 2;
+  uint32_t dirty : 1;
+  uint32_t access : 1;
+  uint32_t rsvd1 : 2;
+  uint32_t kernel : 1;
+  uint32_t rw : 1;
+  uint32_t present : 1;
+};
+
+enum PAGE_PTE_FLAGS {
+  I86_PTE_PRESENT = 1,          //0000000000000000000000000000001
+  I86_PTE_WRITABLE = 2,         //0000000000000000000000000000010
+  I86_PTE_USER = 4,             //0000000000000000000000000000100
+  I86_PTE_WRITETHOUGH = 8,      //0000000000000000000000000001000
+  I86_PTE_NOT_CACHEABLE = 0x10, //0000000000000000000000000010000
+  I86_PTE_ACCESSED = 0x20,      //0000000000000000000000000100000
+  I86_PTE_DIRTY = 0x40,         //0000000000000000000000001000000
+  I86_PTE_PAT = 0x80,           //0000000000000000000000010000000
+  I86_PTE_CPU_GLOBAL = 0x100,   //0000000000000000000000100000000
+  I86_PTE_LV4_GLOBAL = 0x200,   //0000000000000000000001000000000
+  I86_PTE_FRAME = 0x7FFFF000    //1111111111111111111000000000000
+};
+
+enum PAGE_PDE_FLAGS {
+  I86_PDE_PRESENT = 1,        //0000000000000000000000000000001
+  I86_PDE_WRITABLE = 2,       //0000000000000000000000000000010
+  I86_PDE_USER = 4,           //0000000000000000000000000000100
+  I86_PDE_PWT = 8,            //0000000000000000000000000001000
+  I86_PDE_PCD = 0x10,         //0000000000000000000000000010000
+  I86_PDE_ACCESSED = 0x20,    //0000000000000000000000000100000
+  I86_PDE_DIRTY = 0x40,       //0000000000000000000000001000000
+  I86_PDE_4MB = 0x80,         //0000000000000000000000010000000
+  I86_PDE_CPU_GLOBAL = 0x100, //0000000000000000000000100000000
+  I86_PDE_LV4_GLOBAL = 0x200, //0000000000000000000001000000000
+  I86_PDE_FRAME = 0x7FFFF000  //1111111111111111111000000000000
+};
+
+//! a page directory entry
+typedef uint32_t pd_entry;
+
+// page table entry
+typedef uint32_t pt_entry;
+
+class MMU {
+public:
+  MMU();
+  ~MMU();
+public:
+  uint64_t total_memory() { return system_memory; }
+  uint64_t total_pages() { return system_pages; }
+protected:
+  uint64_t system_memory;
+  uint64_t system_pages;
+  uint8_t *free_pages;
+protected:
+  uint64_t link_memory_pages(uint64_t address, uint64_t size);
+
+};
+
+extern MMU *mmu;
+
+#endif

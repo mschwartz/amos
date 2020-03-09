@@ -7,6 +7,7 @@
                     mov al, %3
                     call load_sectors
                     %endm
+
 ; al = number of sectors
 ; cl = sector num
 ; dl = drive number

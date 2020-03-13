@@ -52,18 +52,6 @@ const uint64_t HIGH_RAM2_END    = 0xbfffffff;
 const uint64_t HIGH_RAM         = 0x0000000100000000; // unlimited
 
 
-//const uint64_t GIGABYTE = 0x40000000;
-
 extern "C" void bzero(void *dst, unsigned long size);
-#if 0
-struct PageDirectoryEntry {
-};
-
-struct PageTableEntry {
-};
-
-
-extern uint64_t init_memory();
-#endif
 
 #endif

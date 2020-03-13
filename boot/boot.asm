@@ -16,6 +16,10 @@
                     %include "memory.inc"
                     %include "cga.inc"
 
+                    %macro BOCHS 0
+                    xchg bx,bx
+                    %endmacro
+
 ; ---------------------------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------------------------
@@ -31,10 +35,11 @@ boot_sector:        dw 0
 boot_sectors:       dw 0
 kernel_sector:      dw 0
 kernel_sectors:     dw 0
-msg                 db 'here', 0
+;msg                 db 'here', 0
 ; Variables
 BOOT_DRIVE:         db 0
 loading_msg         db 'Loading...', 13, 10, 0
+;memory_msg          db 'memory', 13, 10, 0
 
 ; ---------------------------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------------------------
@@ -53,41 +58,6 @@ main:
                     mov gs, ax
 
                     mov [BOOT_DRIVE], dl
-
-;
-;;; Query memory chunks via BIOS
-;
-SMAP                equ                 0x0534d4150
-init_memory:        
-                    xor ebx, ebx        ; initial continuation value
-                    mov ebp, ebx
-                    mov di, memory_info
-                    mov edx, SMAP
-                    mov ecx, 24
-                    mov eax, 0xe820
-                    int 15h
-                    jc .error
-                    or ebx,ebx
-                    je .done
-
-.top:
-                    add di, 24
-                    mov edx, SMAP
-                    mov ecx, 24
-                    mov eax, 0xe820
-                    int 15h
-                    jc .error
-                    or ebx,ebx
-                    je .done
-
-                    jmp .top
-.error:
-                    call cls16
-                    jmp $
-.done:
-                    xor eax, eax
-                    mov ecx, 8
-                    rep stosd
 
 ; enable A20
 set_a20:
@@ -127,95 +97,25 @@ load_error:
                     call space16
                     pop si
                     call puts16
+                    call newline16
                     jmp $
-;
-; inputs:
-;   cl = start sector
-;   ebx = memory address
-;
-load_sector:
-                    push ebx
-                    mov ebx, load_sector_buffer
-                    mov dh, 0                               ; head 0
-                    mov dl, [BOOT_DRIVE]
-                    mov ch, 0                               ; cylender 0
-                    mov ah, 0x02
-                    mov al, 1
-                    int 13h
-                    jc load_error2
-                   
-                    mov si, loading_msg
-                    call puts16
 
-                    ;; copy sector to destination
-                    pop ebx
-                    push ebx
-                    mov eax, ebx
-                    call hexlong16
-                    call space16
-
-                    pop ebx
-                    mov esi, load_sector_buffer
-                    mov edi, ebx
-                    mov ecx, 512
-                    rep movsb
-
-                    ret
-
-;
-; inputs:
-;   cx = start sector
-;   ax = number of sectors
-;   bx = memory address
-;
-load_sectors:
-                    pusha
-                    call load_sector
-                    popa
-                    add cx, 1
-                    add bx, 512
-                    sub ax, 1
-                    jne load_sectors
-                    ret
-                    
                     global load
 load:
-;                    mov cx, [boot_sector]
-;                    mov ax, [boot_sectors]
-;                    mov bx, 0x7e00
-;                    call load_sectors
-                    ;; load in second sector
                     mov dh, 0                               ; head 0
                     mov dl, [BOOT_DRIVE]
+                    mov cx, [boot_sector]                   ; start sector
                     mov ch, 0                               ; cylender 0
-                    mov cl, [boot_sector]                   ; start sector
                     mov bx, 0x7e00
+                    mov ax, [boot_sectors]                  ; number of sectors to read
                     mov ah, 0x02                            ; operation: read sectors
-                    mov al, 1
-                    mov al, [boot_sectors]                  ; number of sectors to read
                     int 13h
                     jc load_error1
-
-                    mov eax, CMAIN
-                    call hexlong16
-                    call space16
-                    mov ax, [kernel_sector]
-                    call hexword16
-                    call space16
-                    mov ax, [kernel_sectors]
-                    call hexword16
-                    call newline16
-
-;                    xchg bx, bx
-                    ;; load in kernel
-                    mov cx, [kernel_sector]
-                    xor eax, eax
-                    mov ax, [kernel_sectors]
-                    mov ebx, CMAIN
-                    call load_sectors
-
-                    ; jump to start of 2nd sector
+                    ;; jump to second sector of boot program
                     jmp boot2
+
+                    [bits 16]
+                    %include "debug16.inc"
 
 	times 510-($-$$) db 0	; Pad remainder of boot sector with 0s
 	dw 0xAA55		; The standard PC boot signature
@@ -255,9 +155,123 @@ gdtr:
 CODE_SEG            equ gdt_code - gdt_start
 DATA_SEG            equ gdt_data - gdt_start
 
-                    %include "debug16.inc"
-
 boot2:
+                    ; load kernel to 0x10000
+                    mov ax, 0x1000
+                    mov es, ax
+                    xor bx, bx
+                    mov dh, 0                               ; head 0
+                    mov dl, [BOOT_DRIVE]
+                    mov cx, [kernel_sector]                   ; start sector
+                    mov ch, 0                               ; cylender 0
+                    mov ax, [kernel_sectors]                  ; number of sectors to read
+                    mov ah, 0x02                            ; operation: read sectors
+                    int 13h
+                    jc .error
+                    xor eax,eax
+                    mov es, ax
+                    ; jump to start of 2nd sector
+                    jmp .done
+.error:
+                    xor eax, eax
+                    mov es, ax
+                    jmp load_error2
+.done:
+;
+;;; Query memory chunks via BIOS
+;
+mmap_ent            equ memory_info             ; the number of entries will be stored at 0x8000
+do_e820:
+        mov di, memory_info+4          ; Set di to 0x8004. Otherwise this code will get stuck in `int 0x15` after some entries are fetched 
+	xor ebx, ebx		; ebx must be 0 to start
+	xor bp, bp		; keep an entry count in bp
+	mov edx, 0x0534D4150	; Place "SMAP" into edx
+	mov eax, 0xe820
+	mov [es:di + 20], dword 1	; force a valid ACPI 3.X entry
+	mov ecx, 24		; ask for 24 bytes
+	int 0x15
+	jc short .failed	; carry set on first call means "unsupported function"
+	mov edx, 0x0534D4150	; Some BIOSes apparently trash this register?
+	cmp eax, edx		; on success, eax must have been reset to "SMAP"
+	jne short .failed
+	test ebx, ebx		; ebx = 0 implies list is only 1 entry long (worthless)
+	je short .failed
+	jmp short .jmpin
+.e820lp:
+	mov eax, 0xe820		; eax, ecx get trashed on every int 0x15 call
+	mov [es:di + 20], dword 1	; force a valid ACPI 3.X entry
+	mov ecx, 24		; ask for 24 bytes again
+	int 0x15
+	jc short .e820f		; carry set means "end of list already reached"
+	mov edx, 0x0534D4150	; repair potentially trashed register
+.jmpin:
+	jcxz .skipent		; skip any 0 length entries
+	cmp cl, 20		; got a 24 byte ACPI 3.X response?
+	jbe short .notext
+	test byte [es:di + 20], 1	; if so: is the "ignore this data" bit clear?
+	je short .skipent
+.notext:
+	mov ecx, [es:di + 8]	; get lower uint32_t of memory region length
+	or ecx, [es:di + 12]	; "or" it with upper uint32_t to test for zero
+	jz .skipent		; if length uint64_t is 0, skip entry
+	inc bp			; got a good entry: ++count, move to next storage spot
+	add di, 24
+.skipent:
+	test ebx, ebx		; if ebx resets to 0, list is complete
+	jne short .e820lp
+.e820f:
+	mov [mmap_ent], bp	; store the entry count
+	clc			; there is "jc" on end of list to this point, so the carry must be cleared
+	jmp .done
+.failed:
+	stc			; "function unsupported" error exit
+.done:
+
+%if 0
+SMAP                equ                 0x0534d4150
+                    global init_memory
+init_memory:        
+;                    mov si, memory_msg
+;                    call puts16
+                    mov di, memory_info
+                    xor ebx, ebx        ; initial continuation value
+                    xor ebp, ebp
+                    mov edx, SMAP
+                    mov [es:di + 20], dword 1
+                    mov ecx, 24
+                    mov eax, 0xe820
+                    int 15h
+                    jc .error
+                    or ebx,ebx
+                    je .done
+                   
+                    pusha
+                    mov si, di
+                    mov cx, 32
+                    call hexdump16
+                    mov eax, memory_info
+                    call hexlong16
+                    call newline16
+                    popa
+.top:
+                    add di, 24
+                    mov edx, SMAP
+                    mov ecx, 24
+                    mov eax, 0xe820
+                    int 15h
+                    jc .error
+                    or ebx,ebx
+                    je .done
+
+                    jmp .top
+.error:
+                    call cls16
+                    jmp $
+.done:
+                    xor eax, eax
+                    mov ecx, 8
+                    rep stosd
+%endif
                     cli
                     lgdt [gdtr]
 
@@ -302,6 +316,24 @@ b32:
                     jmp enter_long_mode
 
 ; Global Descriptor Table (64-bit).
+
+gdt64:
+	dq 0x0000000000000000
+	dq 0x00209b0000000000 ;// 64 bit ring0 code segment
+	dq 0x0020930000000000 ;// 64 bit ring0 data segment
+	dq 0x0020fb0000000000 ;// 64 bit ring3 code segment
+	dq 0x0020f30000000000 ;// 64 bit ring3 data segment
+	dq 0x0000000000000000 ;// reserve for TSS low
+	dq 0x0000000000000000 ;// reserve for TSS high
+	dq 0x00cf9b000000ffff ;// 32 bit ring0 code segment
+	dq 0x00cf93000000ffff ;// 32 bit ring0 data segment
+gdt_ptr:
+	dw (gdt_ptr - gdt64 - 1)
+	dq gdt64
+gdt_ptr64:
+	dw (gdt_ptr - gdt64 - 1)
+	dq (gdt64)
+%if 0
 GDT64:                           
 Null:               equ $ - GDT64                           ; The null descriptor.
                     dw 0xFFFF                               ; Limit (low).
@@ -327,15 +359,48 @@ DATA:               equ $ - GDT64                           ; The data descripto
 GDT64_Pointer:                                              ; The GDT-pointer.
                     dw $ - GDT64 - 1                        ; Limit.
                     dq GDT64                                ; Base.
+%endif
 
-                    align 4
-enter_long_mode:
-                    mov eax, cr0
-                    and eax, ~(1<<31)
-                    mov cr0, eax
+PTE_PRESENT         equ 1<<0
+PTE_WRITE           equ 1<<1
+PTE_LARGE           equ 1<<7
+PAGE_SIZE           equ 4096
 
-                    mov edi, PLL4T
-                    mov cr3, edi
+setup_identity_tables:
+                    mov edx, PLL4T
+                    mov eax, PLL4T + PAGE_SIZE
+                    or eax, PTE_PRESENT + PTE_WRITE
+
+                    mov [edx], eax
+                    mov [edx + 2048], eax
+                    mov [edx + 4088], eax
+
+                    add edx, PAGE_SIZE
+                    add eax, PAGE_SIZE
+                    mov [edx], eax
+                    mov [edx + 4080], eax
+
+                    add eax, PAGE_SIZE
+                    mov [edx + 8], eax
+                    mov [edx + 4088], eax
+
+                    add eax, PAGE_SIZE
+                    mov [edx + 16], eax
+                    add eax, PAGE_SIZE
+                    mov [edx+24], eax
+
+                    add edx, PAGE_SIZE
+                    mov eax, PTE_LARGE + PTE_PRESENT + PTE_WRITE
+                    mov ecx, 2048
+.loop:
+                    mov [edx], eax
+                    add eax, 0x200000
+                    add edx, 8
+                    loop .loop
+
+                    ret
+
+setup_page_tables:
                     xor eax, eax
                     mov ecx, 4096
                     rep stosd
@@ -356,6 +421,19 @@ enter_long_mode:
                     add edi, 8
                     loop .set_entry
 
+                    ret
+
+                    align 4
+enter_long_mode:
+                    mov eax, cr0
+                    and eax, ~(1<<31)
+                    mov cr0, eax
+
+;                    call setup_page_tables
+                    call setup_identity_tables
+
+                    mov edi, PLL4T
+                    mov cr3, edi
                     ; enable PAE paging
                     mov eax, cr4
                     or eax, 1<<5
@@ -371,8 +449,9 @@ enter_long_mode:
                     or eax, 1<< 31 | 1<<0
                     mov cr0, eax
 
-                    lgdt [GDT64_Pointer]
-                    jmp CODE:go64
+;                    lgdt [GDT64_Pointer]
+                    lgdt [gdt_ptr64]
+                    jmp CODE_SEG:go64
                     nop
                     nop
                     nop
@@ -382,7 +461,7 @@ enter_long_mode:
                     %include "debug64.inc"
 go64:
                     cli
-                    mov ax, DATA
+                    mov ax, DATA_SEG
                     mov dx, ax
                     mov es, ax
                     mov fs, ax

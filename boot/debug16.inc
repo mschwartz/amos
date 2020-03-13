@@ -23,6 +23,7 @@ cls16:
                     rep stosw
                     ret
 putc16:
+                    out 0xe9, al
 	xor bx,bx
 	mov ah, 0eh
 	int 10h			; Otherwise, print it
@@ -50,10 +51,10 @@ newline16:
 	ret
 
 space16:
-	push ax
+	pusha
 	mov al, ' '
 	call putc16
-	pop ax
+	popa
 	ret
 
 nybbles16:
@@ -118,12 +119,17 @@ hexdump16:
 ;                    call space16
 ;                    pop si
 ;                    pop cx
-hexdump_loop16:
+                    pusha
+                    mov ax, si
+                    call hexword16
+                    call space16
+                    popa
+.loop:
 	lodsb
-	call hexbyte
-	mov al, ' '
-	call putc16
+	call hexbyte16
+                    call space16
 	dec cx
-	ja hexdump_loop16
+	ja .loop
+                    call newline16
 	ret
 

@@ -62,11 +62,127 @@ extern "C" uint64_t isr45;
 extern "C" uint64_t isr46; // ata 0,0 (14)
 extern "C" uint64_t isr47; // ata 0,1 (15)
 
+extern "C" uint64_t isr48; // unexpected
+
 extern "C" uint64_t isr128; // syscall (0x80, or 0x60 + 32)
 extern "C" uint64_t isr130; // interrupt scheduler
 
 static isr_handler_t interrupt_handlers[INTERRUPTS];
 
+extern "C" bool kernel_isr() {
+//  dprint("kernel_isr\n");
+//  current_task->Dump();
+  isr_handler_t *info = &interrupt_handlers[current_task->isr_num];
+  if (!info->handler) {
+    const char *desc = IDT::interrupt_description(current_task->isr_num);
+    dprint("here %s\n", desc);
+    kprint("here %s\n", desc);
+    kprint("no handler: %s\n", desc);
+    return false;
+  }
+  return info->handler(info->data);
+};
+
+#define IDT_PRESENT    ((uint64_t)1 << 47)
+#define IDT_64INT      ((uint64_t)14 << 40)
+#define IDT_64TRAP     ((uint64_t)15 << 40)
+#define IDT_USER       ((uint64_t)3 << 45)
+#define IDT_SYSCALL    0x80
+#define IDT_SIZE       (IDT_SYSCALL + 1)
+#define IDT_IRQS       16
+#define IDT_EXCEPTIONS 32
+
+typedef struct idt_entry {
+  uint64_t low;
+  uint64_t high;
+  void set(uint64_t isr, uint64_t flags) {
+    uint64_t cs = 8;
+    low = (isr & 0xFFFFul) | ((uint64_t)cs << 16) | ((isr & 0xFFFF0000ul) << 32) | flags | IDT_PRESENT;
+    high = (isr >> 32) & 0xFFFFFFFFul;
+  }
+} PACKED idt_entry_t;
+
+typedef struct {
+  uint16_t limit;
+  idt_entry_t *base;
+} PACKED idt_ptr_t;
+
+static idt_entry_t idt_entries[IDT_SIZE];
+static idt_ptr_t idt_ptr;
+
+IDT::IDT() {
+  disable_interrupts();
+  // initialize C ISRs
+  for (int i = 0; i < INTERRUPTS; i++) {
+    interrupt_handlers[i].set(nullptr, nullptr, "Not installed");
+  }
+
+  // EXCEPTIONS
+  idt_entries[0].set(isr0, IDT_64INT);
+  idt_entries[1].set(isr1, IDT_64INT);
+  idt_entries[2].set(isr2, IDT_64INT);
+  idt_entries[3].set(isr3, IDT_64INT);
+  idt_entries[4].set(isr4, IDT_64INT);
+  idt_entries[5].set(isr5, IDT_64INT);
+  idt_entries[6].set(isr6, IDT_64INT);
+  idt_entries[7].set(isr7, IDT_64INT);
+  idt_entries[8].set(isr8, IDT_64INT);
+  idt_entries[9].set(isr9, IDT_64INT);
+  idt_entries[10].set(isr10, IDT_64INT);
+  idt_entries[11].set(isr11, IDT_64INT);
+  idt_entries[12].set(isr12, IDT_64INT);
+  idt_entries[13].set(isr13, IDT_64INT);
+  idt_entries[14].set(isr14, IDT_64INT);
+  idt_entries[15].set(isr15, IDT_64INT);
+  idt_entries[16].set(isr16, IDT_64INT);
+  idt_entries[17].set(isr17, IDT_64INT);
+  idt_entries[18].set(isr18, IDT_64INT);
+  idt_entries[19].set(isr19, IDT_64INT);
+  idt_entries[20].set(isr20, IDT_64INT);
+  idt_entries[21].set(isr21, IDT_64INT);
+  idt_entries[22].set(isr22, IDT_64INT);
+  idt_entries[23].set(isr23, IDT_64INT);
+  idt_entries[24].set(isr24, IDT_64INT);
+  idt_entries[25].set(isr25, IDT_64INT);
+  idt_entries[26].set(isr26, IDT_64INT);
+  idt_entries[27].set(isr27, IDT_64INT);
+  idt_entries[28].set(isr28, IDT_64INT);
+  idt_entries[29].set(isr29, IDT_64INT);
+  idt_entries[30].set(isr30, IDT_64INT);
+  idt_entries[31].set(isr31, IDT_64INT);
+
+  // IRQs
+  idt_entries[32].set(isr32, IDT_64INT);
+  idt_entries[33].set(isr33, IDT_64INT);
+  idt_entries[34].set(isr34, IDT_64INT);
+  idt_entries[35].set(isr35, IDT_64INT);
+  idt_entries[36].set(isr36, IDT_64INT);
+  idt_entries[37].set(isr37, IDT_64INT);
+  idt_entries[38].set(isr38, IDT_64INT);
+  idt_entries[39].set(isr39, IDT_64INT);
+  idt_entries[40].set(isr40, IDT_64INT);
+  idt_entries[41].set(isr41, IDT_64INT);
+  idt_entries[42].set(isr42, IDT_64INT);
+  idt_entries[43].set(isr43, IDT_64INT);
+  idt_entries[44].set(isr44, IDT_64INT);
+  idt_entries[45].set(isr45, IDT_64INT);
+  idt_entries[46].set(isr46, IDT_64INT);
+  idt_entries[47].set(isr47, IDT_64INT);
+
+  // install handler for unexpected interrupts
+  for (int i=48; i<IDT_SIZE; i++) {
+    // TODO: make a special handler
+    idt_entries[i].set(isr48, IDT_64INT);
+  }
+  idt_entries[128].set(isr128, IDT_64INT);
+  idt_entries[130].set(isr130, IDT_64INT);
+
+  idt_ptr.limit = sizeof(idt_entry_t) * 256 - 1;
+  idt_ptr.base = &idt_entries[0];
+  load_idtr(&idt_ptr);
+}
+
+#if 0
 struct idt_entry {
   uint16_t offset1;
   uint16_t selector;
@@ -129,9 +245,10 @@ IDT::IDT() {
     interrupt_handlers[i].set(nullptr, nullptr, "Not installed");
   }
 
-  //  dprint("isr0 %x\n", isr0);
-  //  dprint("isr1 %x\n", isr1);
-  //  dprint("isr2 %x\n", isr2);
+    dprint("isr0 %x\n", isr0);
+    dprint("isr1 %x\n", isr1);
+    dprint("isr2 %x\n", isr2);
+
   // Exceptions
   idt_set_gate(0, isr0, 0x08, 0x8E);
   idt_set_gate(1, isr1, 0x08, 0x8E);
@@ -195,8 +312,9 @@ IDT::IDT() {
   idt_p.limit = sizeof(struct idt_entry) * 256 - 1;
   idt_p.base = &idt_entries[0];
   load_idtr(&idt_p);
+  bochs
 }
-
+#endif
 IDT::~IDT() {
   disable_interrupts();
 }

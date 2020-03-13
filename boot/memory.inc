@@ -12,13 +12,13 @@ PT                  equ 0x4000          ; page table
 load_sector_buffer  equ 0x4800          ; 512 byte sector buffer for reading
 
 video_info          equ 0x5000
-memory_info         equ 0x6000
 gdt32               equ 0x7000
 BOOTSTRAP_ORG       equ 0x7c00
+memory_info         equ 0x9000
 
 
 ; kernel address (loaded here)
-CMAIN               equ 0x9000
+CMAIN               equ 0x10000
 
 ; display
 CGA                 equ 0xb8000

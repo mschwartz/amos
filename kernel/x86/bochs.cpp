@@ -107,3 +107,16 @@ void dhex64(const uint64_t l) {
   dhex32((l >> 32) & 0xffffffff);
   dhex32(l & 0xffffffff);
 }
+
+void dhexdump(uint8_t *src, int lines){
+  uint64_t address = (uint64_t)src;
+  for (int i=0; i<lines; i++) {
+    dprint("%x: ", address);
+    for (int c=0; c<8; c++) {
+      dhex8(*src++);
+      dputc(' ');
+    }
+    dputc('\n');
+  }
+}
+

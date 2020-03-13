@@ -30,4 +30,6 @@ void dhex16(const uint16_t w);
 void dhex32(const uint32_t w);
 void dhex64(const uint64_t w);
 
+void dhexdump(uint8_t *src, int lines);
+
 #endif

@@ -1,9 +1,9 @@
-#include "bochs.h"
-#include "kprint.h"
 #include <stdarg.h>
-#include <itoa.h>
-#include <sprintf.h>
-#include <Screen.h>
+#include <x86/bochs.h>
+#include <x86/kprint.h>
+#include <posix/itoa.h>
+#include <posix/sprintf.h>
+//#include <Screen.h>
 
 void dputs(const char *s) {
   while (*s) {
@@ -14,7 +14,7 @@ void dputs(const char *s) {
 void dprintf(const char *fmt, ...) {
   va_list ap;
   char *s, c, t, tt;
-  int d;
+  TInt d;
   char buf[20];
 
   va_start(ap, fmt);
@@ -83,36 +83,36 @@ void dprint(const char *fmt, ...) {
   va_end(args);
 }
 
-void dhex4(const uint8_t n) {
+void dhex4(const TUint8 n) {
   const char *nybbles = "0123456789ABCDEF";
   dputc(nybbles[n & 0x0f]);
 }
 
-void dhex8(const uint8_t b) {
+void dhex8(const TUint8 b) {
   dhex4(b >> 4);
   dhex4(b);
 }
 
-void dhex16(const uint16_t w) {
+void dhex16(const TUint16 w) {
   dhex8(w >> 8);
   dhex8(w);
 }
 
-void dhex32(const uint32_t l) {
+void dhex32(const TUint32 l) {
   dhex16((l >> 16) & 0xffff);
   dhex16(l & 0xffff);
 }
 
-void dhex64(const uint64_t l) {
+void dhex64(const TUint64 l) {
   dhex32((l >> 32) & 0xffffffff);
   dhex32(l & 0xffffffff);
 }
 
-void dhexdump(uint8_t *src, int lines){
-  uint64_t address = (uint64_t)src;
-  for (int i=0; i<lines; i++) {
+void dhexdump(TUint8 *src, int lines){
+  TUint64 address = (TUint64)src;
+  for (TInt i=0; i<lines; i++) {
     dprint("%x: ", address);
-    for (int c=0; c<8; c++) {
+    for (TInt c=0; c<8; c++) {
       dhex8(*src++);
       dputc(' ');
     }

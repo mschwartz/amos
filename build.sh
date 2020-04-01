@@ -5,12 +5,10 @@ set -e
 PWD=`pwd`
 echo $PWD
 
-export KERNEL='main.o kernel_start.o'
-
 export INCLUDE_PATH="\
-	-I${PWD}/kernel/cclib \
-	-I$PWD/kernel/x86 \
-	-I$PWD/kernel/devices -I. \
+	-I${PWD}/kernel/include \
+	-I$PWD/kernel \
+  -I. \
 	"
 
 export CFLAGS="\
@@ -20,15 +18,30 @@ export CFLAGS="\
 	-nostdlib \
 	-m64 \
 	-fno-stack-protector \
-	-fno-exceptions $INCLUDE_PATH \
+	-fno-exceptions \
+  -fno-use-cxa-atexit \
+  -fno-rtti \
+  $INCLUDE_PATH \
 	"
 
+
 export LIBS="\
-	-L$PWD/kernel/cclib -lcclib \
+	-L$PWD/kernel/Exec -lexec \
 	-L$PWD/kernel/x86 -lx86 \
-	-L$PWD/kernel/devices -ldevices \
-	-L$PWD/kernel/cclib -lcclib \
+	-L$PWD/kernel/Devices -ldevices \
+	-L$PWD/kernel/posix -lposix \
 	"
+
+CRTBEGIN_OBJ=`gcc -print-file-name=crtbegin.o`
+echo ""
+echo $CRTBEGIN_OBJ
+echo ""
+CRTEND_OBJ=`gcc -print-file-name=crtend.o`
+
+echo "CRTBEGIN" $CRTBEGIN_OBJ
+
+#export KERNEL="crti.o $CRTBEGIN_OBJ main.o kernel_start.o $CRTEND_OBJ crtn.o "
+export KERNEL="$CRTBEGIN_OBJ main.o kernel_start.o $CRTEND_OBJ  "
 
 #echo $INCLUDE_PATH
 #echo $LIBS
@@ -53,23 +66,31 @@ cd kernel
 echo "  COMPILING"
 echo "    nasm -f elf -o kernel_start.o kernel_start.asm"
 nasm -f elf64 -o kernel_start.o -l kernel_start.lst kernel_start.asm
-cd cclib
+gcc -c -o crti.o crti.s
+gcc -c -o crtn.o crtn.s
+echo "  BUILDING EXEC"
+cd Exec
 make
 cd ..
+echo "  BUILDING POSIX"
+cd posix
+make
+cd ..
+echo "  BUILDING X86"
 cd x86 
 make
 cd ..
-cd devices
+echo "  BUILDING DEVICES"
+cd Devices
 make
 cd ..
 
 echo "    gcc -c $CFLAGS -o main.o main.cpp"
-gcc -g -c $CFLAGS -o main.o main.cpp
+gcc -g -c $CFLAGS $INCLUDE_PATH -o main.o main.cpp
 
 #############################
 
 echo "  LINKING"
-#export LIBS='-Lcclib -lcclib -Lx86 -lx86 -Ldevices -ldevices'
 echo "    ld -melf_i386 -Tconfig.ld -o kernel.elf $KERNEL ${LIBS}"
 ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS
 echo "    objcopy -O binary kernel.elf kernel.img"

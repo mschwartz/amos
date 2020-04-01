@@ -1,7 +1,7 @@
 #ifndef STRING_H
 #define STRING_H
 
-#include "../x86/types.h"
+#include <posix.h>
 
 extern size_t strlen(char *s);
 extern void strcpy(char *dst, const char *src);

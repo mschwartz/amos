@@ -1,9 +1,9 @@
 #include <stdarg.h>
-#include "string.h"
-#include "itoa.h"
-#include "Screen.h"
+#include <posix/string.h>
+#include <posix/itoa.h>
+#include <Devices/Screen.h>
 
-extern Screen *screen;
+//extern Screen *screen;
 
 void kprint(const char *fmt, ...) {
   va_list ap;
@@ -13,7 +13,7 @@ void kprint(const char *fmt, ...) {
 
   va_start(ap, fmt);
   if (!fmt) {
-    screen->puts("NULL FORMAT");
+    gScreen->puts("NULL FORMAT");
     return;
   }
 
@@ -23,7 +23,7 @@ void kprint(const char *fmt, ...) {
       case '\0':
         return;
       case '\n':
-        screen->newline();
+        gScreen->newline();
         break;
       case '%':
         tt = *fmt++;
@@ -32,32 +32,32 @@ void kprint(const char *fmt, ...) {
             break;
           case 's':
             s = va_arg(ap, char *);
-            screen->puts(s);
+            gScreen->puts(s);
             break;
           case 'd':
           case 'u':
             d = va_arg(ap, long);
             ltoa(d, buf, 10);
-            screen->puts(buf);
+            gScreen->puts(buf);
             break;
           case 'x':
           case 'X':
             d = va_arg(ap, long);
             ltoa(d, buf, 16);
-            screen->puts(buf);
+            gScreen->puts(buf);
             break;
           case 'c':
             c = (char)va_arg(ap, int);
-            screen->putc(c);
+            gScreen->putc(c);
             break;
           default:
-            screen->putc('%');
-            screen->putc(tt);
+            gScreen->putc('%');
+            gScreen->putc(tt);
             break;
         }
         break;
       default:
-        screen->putc(t);
+        gScreen->putc(t);
         break;
     }
   }

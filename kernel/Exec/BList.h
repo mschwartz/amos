@@ -23,28 +23,28 @@ public:
 
 public:
   // make this node last on the list, if node is key
-  void InsertBeforeNode(BNode *nnode) {
-    BNode *pnode = nnode->prev;
-    pnode->next = this;
-    nnode->prev = this;
-    next = nnode;
-    prev = pnode;
+  void InsertBeforeNode(BNode *aNextNode) {
+    BNode *pnode = aNextNode->mPrev;
+    pnode->mNext = this;
+    aNextNode->mPrev = this;
+    mNext = aNextNode;
+    mPrev = pnode;
   }
   // make this node first on the list, if node is key
-  void InsertAfterNode(BNode *pnode) {
-    BNode *nnode = pnode->next;
-    pnode->next = this;
-    nnode->prev = this;
-    next = nnode;
-    prev = pnode;
+  void InsertAfterNode(BNode *mPreviousNode) {
+    BNode *nnode = mPreviousNode->mNext;
+    mPreviousNode->mNext = this;
+    nnode->mPrev = this;
+    mNext = nnode;
+    mPrev = mPreviousNode;
   }
   void Remove() {
-    next->prev = prev;
-    prev->next = next;
+    mNext->mPrev = mPrev;
+    mPrev->mNext = mNext;
   }
 
 public:
-  BNode *next, *prev;
+  BNode *mNext, *mPrev;
 };
 
 /**
@@ -52,32 +52,32 @@ public:
  */
 class BNodePri : public BBase {
 public:
-  BNodePri(TInt aPri);
+  BNodePri(TInt aPri = 0);
   virtual ~BNodePri();
 
 public:
-  void InsertBeforeNode(BNodePri *nnode) {
-    BNodePri *pnode = nnode->prev;
-    pnode->next = this;
-    nnode->prev = this;
-    next = nnode;
-    prev = pnode;
+  void InsertBeforeNode(BNodePri *aNode) {
+    BNodePri *pnode = aNode->mPrev;
+    pnode->mNext = this;
+    aNode->mPrev = this;
+    mNext = aNode;
+    mPrev = pnode;
   }
   // make this node first on the list, if node is key
   void InsertAfterNode(BNodePri *pnode) {
-    BNodePri *nnode = pnode->next;
-    pnode->next = this;
-    nnode->prev = this;
-    next = nnode;
-    prev = pnode;
+    BNodePri *nnode = pnode->mNext;
+    pnode->mNext = this;
+    nnode->mPrev = this;
+    mNext = nnode;
+    mPrev = pnode;
   }
   void Remove() {
-    next->prev = prev;
-    prev->next = next;
+    mNext->mPrev = mPrev;
+    mPrev->mNext = mNext;
   }
 
 public:
-  BNodePri *next, *prev;
+  BNodePri *mNext, *mPrev;
   TInt pri;
 };
 
@@ -93,43 +93,49 @@ public:
    * Remove all of the elements from the list.
    */
   virtual void Reset() {
-    next = (BNode *)this;
-    prev = (BNode *)this;
+    mNext = (BNode *)this;
+    mPrev = (BNode *)this;
   }
 
-  virtual void AddHead(BNode &node);
+  virtual void AddHead(BNode &aNode);
   virtual BNode *RemHead();
-  virtual void AddTail(BNode &node);
+  virtual void AddTail(BNode &aNode);
   virtual BNode *RemTail();
-  virtual void RemoveNode(BNode *node);
+  virtual void RemoveNode(BNode *aNode);
+
   /**
   * Get the element from the head of the list.
   * @return The head element.
   */
-  virtual BNode *First() { return next; }
+  virtual BNode *First() { return mNext; }
+
   /**
    * Get the element after the specified element.
    * @param curr The current element;
    * @return The next element in the list;
    */
-  virtual BNode *Next(BNode *curr) { return curr->next; }
+  virtual BNode *Next(BNode *aNode) { return aNode->mNext; }
+
   /**
     * Get the element from the tail of the list.
     * @return The head element.
     */
-  virtual BNode *Last() { return prev; }
+  virtual BNode *Last() { return mPrev; }
+
   /**
    * Get element before the specified element.
    * @param curr The current element;
    * @return The previous element in the list;
    */
-  virtual BNode *Prev(BNode *curr) { return curr->prev; }
+  virtual BNode *Prev(BNode *aNode) { return aNode->mPrev; }
+
   /**
    * Test if the specified element is the end of the list.
    * @param curr The element to test.
    * @return True if is is the end or faes if it is not the end.
    */
-  virtual TBool End(BNode *curr) { return curr == (BNode *)this; }
+
+  virtual TBool End(BNode *aNode) { return aNode == (BNode *)this; }
 };
 
 /**
@@ -144,24 +150,24 @@ public:
   virtual ~BListPri();
 
 public:
-  void Dump(BNodePri *stop = ENull);
+  void Dump(BNodePri *aStop = ENull);
 
 public:
   /**
    * Remove all of the elements from the list.
    */
   virtual void Reset() {
-    next = (BNodePri *)this;
-    prev = (BNodePri *)this;
+    mNext = (BNodePri *)this;
+    mPrev = (BNodePri *)this;
   }
 
-  virtual void Add(BNodePri &node);
-  virtual void RemoveNode(BNodePri *node);
+  virtual void Add(BNodePri &aNode);
+  virtual void RemoveNode(BNodePri *aNode);
   /**
    * Get the head element from the list.
    * @return The head element.
    */
-  virtual BNodePri *First() { return next; }
+  virtual BNodePri *First() { return mNext; }
   /**
    * Test if the specified element is the end of the list.
    * @param curr The element to test.
@@ -173,20 +179,20 @@ public:
   /**
    * Get the element after the specified element.
    * @param curr The current element;
-   * @return The next element in the list;
+   * @return The mNext element in the list;
    */
-  virtual BNodePri *Next(BNodePri *curr) { return curr->next; }
+  virtual BNodePri *Next(BNodePri *curr) { return curr->mNext; }
   /**
     * Get the element from the tail of the list.
     * @return The head element.
     */
-  virtual BNodePri *Last() { return prev; }
+  virtual BNodePri *Last() { return mPrev; }
   /**
    * Get element before the specified element.
    * @param curr The current element;
-   * @return The previous element in the list;
+   * @return The mPrevious element in the list;
    */
-  virtual BNodePri *Prev(BNodePri *curr) { return curr->prev; }
+  virtual BNodePri *Prev(BNodePri *curr) { return curr->mPrev; }
 
 private:
   virtual void AddHead(BNodePri &nodevirtual);

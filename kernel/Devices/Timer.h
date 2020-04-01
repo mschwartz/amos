@@ -5,7 +5,7 @@
 #ifndef KERNEL_TIMER_H
 #define KERNEL_TIMER_H
 
-#include <types.h>
+#include <Exec/BTypes.h>
 
 class Timer {
 public:
@@ -13,13 +13,13 @@ public:
   ~Timer();
 
 public:
-  void set_frequency(int hz);
+  void set_frequency(TInt hz);
   void increment_ticks() { ticks++; }
 
 protected:
-  uint64_t ticks; // ticks/interrupts since start
+  TUint64 ticks; // ticks/interrupts since start
 };
 
-extern Timer *timer;
+extern Timer *gTimer;
 
 #endif

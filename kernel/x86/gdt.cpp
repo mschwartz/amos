@@ -2,31 +2,31 @@
 #include <kprint.h>
 #include <bochs.h>
 
-GDT *gdt;
+GDT *gGDT;
 
 typedef struct _GDT_t_ {
-  uint16_t segm_limit0;    /* segment limit, bits: 15:00	(00-15) */
-  uint16_t base_addr0;     /* starting address, bits: 15:00	(16-31) */
-  uint8_t base_addr1;      /* starting address, bits: 23:16	(32-38) */
-  uint8_t type : 4;        /* segment type			(39-42) */
-  uint8_t S : 1;           /* type: 0-system, 1-code or data	(43-43) */
-  uint8_t DPL : 2;         /* descriptor privilege level	(44-45) */
-  uint8_t P : 1;           /* present (in memory)		(46-46) */
-  uint8_t segm_limit1 : 4; /*segment limit, bits: 19:16	(47-50) */
-  uint8_t AVL : 1;         /* "Available for use"		(51-51) */
-  uint8_t L : 1;           /* 64-bit code?			(52-52) */
-  uint8_t DB : 1;          /* 1 - 32 bit system, 0 - 16 bit	(53-53) */
-  uint8_t G : 1;           /* granularity 0-1B, 1-4kB 	(54-54) */
-  uint8_t base_addr2;      /* starting address, bits: 23:16	(55-63) */
+  TUint16 segm_limit0;    /* segment limit, bits: 15:00	(00-15) */
+  TUint16 base_addr0;     /* starting address, bits: 15:00	(16-31) */
+  TUint8 base_addr1;      /* starting address, bits: 23:16	(32-38) */
+  TUint8 type : 4;        /* segment type			(39-42) */
+  TUint8 S : 1;           /* type: 0-system, 1-code or data	(43-43) */
+  TUint8 DPL : 2;         /* descriptor privilege level	(44-45) */
+  TUint8 P : 1;           /* present (in memory)		(46-46) */
+  TUint8 segm_limit1 : 4; /*segment limit, bits: 19:16	(47-50) */
+  TUint8 AVL : 1;         /* "Available for use"		(51-51) */
+  TUint8 L : 1;           /* 64-bit code?			(52-52) */
+  TUint8 DB : 1;          /* 1 - 32 bit system, 0 - 16 bit	(53-53) */
+  TUint8 G : 1;           /* granularity 0-1B, 1-4kB 	(54-54) */
+  TUint8 base_addr2;      /* starting address, bits: 23:16	(55-63) */
 } PACKED GDT_t;
 
 struct gdt_info {
-  unsigned short limit_low;
-  unsigned short base_low;
-  unsigned char base_middle;
-  unsigned char access;
-  unsigned char granularity;
-  unsigned char base_high;
+  TUint16 limit_low;
+  TUint16 base_low;
+  TUint8 base_middle;
+  TUint8 access;
+  TUint8 granularity;
+  TUint8 base_high;
   void Dump() {
     kprint("gdt_info @ %x (%d bytes long)\n", this, sizeof(gdt_info));
     kprint("limit low %x ", limit_low);
@@ -39,8 +39,8 @@ struct gdt_info {
 } PACKED;
 
 struct gdtr {
-  uint16_t limit;
-  uint64_t base;
+  TUint16 limit;
+  TUint64 base;
   void Dump() {
     kprint("gdtr @ %x (%d bytes long)\n", this, sizeof(gdtr));
     kprint("limit  %x\n", limit);
@@ -49,28 +49,28 @@ struct gdtr {
 } PACKED;
 
 struct tss_info {
-  uint32_t rsvd0;
-  uint64_t rsp0;
-  uint64_t rsp1;
-  uint64_t rsp2;
-  uint32_t rsvd1;
-  uint32_t rsvd2;
-  uint64_t ist1;
-  uint64_t ist2;
-  uint64_t ist3;
-  uint64_t ist4;
-  uint64_t ist5;
-  uint64_t ist6;
-  uint64_t ist7;
-  uint32_t rsvd3;
-  uint32_t rsvd4;
-  uint16_t rsvd5;
-  uint16_t iopb;
+  TUint32 rsvd0;
+  TUint64 rsp0;
+  TUint64 rsp1;
+  TUint64 rsp2;
+  TUint32 rsvd1;
+  TUint32 rsvd2;
+  TUint64 ist1;
+  TUint64 ist2;
+  TUint64 ist3;
+  TUint64 ist4;
+  TUint64 ist5;
+  TUint64 ist6;
+  TUint64 ist7;
+  TUint32 rsvd3;
+  TUint32 rsvd4;
+  TUint16 rsvd5;
+  TUint16 iopb;
 } PACKED;
 
-GDT_t gdtmem[6];
-gdtr gp;
-tss_info tss;
+static GDT_t gdtmem[6];
+static gdtr gp;
+static tss_info tss;
 
 #define SEGNDX_CODE 1
 #define SEGNDX_DATA 2
@@ -80,7 +80,7 @@ tss_info tss;
 #define PRIV_USER 3
 
 extern "C" void gdt_flush(gdtr *gp);         // ASM function
-extern "C" void tss_flush(uint32_t segment); // ASM funct
+extern "C" void tss_flush(TUint32 segment); // ASM funct
 
 GDT::GDT() {
   return;
@@ -89,14 +89,14 @@ GDT::GDT() {
 //  dprint("sizeof(GDT_t) = %d %x\n", sizeof(GDT_t), 0xdeadbeef);
   //  return;
   gp.limit = (sizeof(gdt_info) * 6) - 1;
-  gp.base = (uint64_t)&gdtmem[0];
+  gp.base = (TUint64)&gdtmem[0];
 //  gp.Dump();
   set_gate(0, 0, 0, 0, 0);                                   // first gate is ALWAYS null
   set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xC0);                    // 0x9A corresponds to ring 0 CODE memory segments
   set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xC0);                    // 0x92 corresponds to  ring 0 DATA memory segments
   set_gate(3, 0, 0xFFFFFFFF, 0xF8, 0xC0);                    // User Code (r3) segment maybe these 2 shouldn't overlap with the ring 0...
   set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xC0);                    // User Data (r3) segment
-  set_gate(5, (uint64_t)&tss, sizeof(tss_info), 0x89, 0x40); // TSS segment
+  set_gate(5, (TUint64)&tss, sizeof(tss_info), 0x89, 0x40); // TSS segment
 
 //  kprint("about to flush %x\n", &gp);
   gdt_flush(&gp);
@@ -107,9 +107,9 @@ GDT::~GDT() {
   //
 }
 
-void GDT::set_gate(int id, void *start_addr, uint32_t size, uint32_t priv_level) {
-  uint64_t addr = (uint64_t)start_addr;
-  uint32_t gsize = size;
+void GDT::set_gate(TInt id, void *start_addr, TUint32 size, TUint32 priv_level) {
+  TUint64 addr = (TUint64)start_addr;
+  TUint32 gsize = size;
   kprint("gsize: %x\n", gsize);
 #if 0
   gdtmem[id].limit_low = addr & 0x0000ffff;
@@ -136,10 +136,10 @@ void GDT::set_gate(int id, void *start_addr, uint32_t size, uint32_t priv_level)
 #endif
 }
 
-void GDT::set_gate(int id, uint64_t base, uint64_t limit, uint8_t access, uint8_t granularity) {
+void GDT::set_gate(TInt id, TUint64 base, TUint64 limit, TUint8 access, TUint8 granularity) {
   GDT_t *g = (GDT_t *)&gdtmem[id];
-  uint32_t addr = (uint32_t)base;
-  uint32_t gsize = limit;
+  TUint32 addr = (TUint32)base;
+  TUint32 gsize = limit;
 
   g->base_addr0 = addr & 0x0000ffff;
   g->base_addr1 = (addr & 0x00ff0000) >> 16;

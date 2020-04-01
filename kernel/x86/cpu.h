@@ -1,7 +1,7 @@
 #ifndef KERNEL_X86_CPU_H
 #define KERNEL_X86_CPU_H
 
-#include <types.h>
+#include <Exec/BTypes.h>
 
 class CPU {
 public:
@@ -9,7 +9,7 @@ public:
   ~CPU();
 };
 
-extern CPU *cpu;
+extern CPU *gCPU;
 
 // TODO: move I/O to a separate file
 extern "C" void cli();

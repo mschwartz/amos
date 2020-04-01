@@ -1,12 +1,13 @@
-#include <types.h>
-#include <limits.h>
-#include <string.h>
-#include <itoa.h>
-#include <kprint.h>
-#include <bochs.h>
-
-#include <sprintf.h>
 #include <stdarg.h>
+#include <limits.h>
+
+#include <posix.h>
+#include <posix/string.h>
+#include <posix/itoa.h>
+#include <x86/kprint.h>
+#include <x86/bochs.h>
+
+#include <posix/sprintf.h>
 
 static int putchar(int ic) {
   char c = (char)ic;

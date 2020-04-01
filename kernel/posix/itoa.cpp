@@ -1,7 +1,7 @@
-#include <cclib.h>
-#include <itoa.h>
-#include <string.h>
-#include <bochs.h>
+#include <posix.h>
+#include <posix/itoa.h>
+#include <posix/string.h>
+#include <x86/bochs.h>
 
 typedef struct {
   long quot, rem;
@@ -30,7 +30,7 @@ char *itoa(int value, char *result, int base) {
   }
   else {
     char *out = result;
-    int quotient = abs(value);
+    int quotient = ABS(value);
     //    screen->puts("quotient ");
     //    screen->hexlong(quotient);
     //    screen->newline();
@@ -90,7 +90,7 @@ char *ltoa(long value, char *result, int base) {
   }
   else {
     char *out = result;
-    long quotient = abs(value);
+    long quotient = ABS(value);
     //    screen->puts("quotient ");
     //    screen->hexlong(quotient);
     //    screen->newline();

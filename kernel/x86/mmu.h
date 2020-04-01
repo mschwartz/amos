@@ -1,21 +1,21 @@
 #ifndef KERNEL_MMU_H
 #define KERNEL_MMU_H
 
-#include <types.h>
+#include <Exec/BTypes.h>
 
-const uint64_t PAGE_SIZE = 4096;
+const TUint64 PAGE_SIZE = 4096;
 
 // page table entry
 struct PTE {
-  uint32_t frame : 20;
-  uint32_t avail : 3;
-  uint32_t rsvd2 : 2;
-  uint32_t dirty : 1;
-  uint32_t access : 1;
-  uint32_t rsvd1 : 2;
-  uint32_t kernel : 1;
-  uint32_t rw : 1;
-  uint32_t present : 1;
+  TUint32 frame : 20;
+  TUint32 avail : 3;
+  TUint32 rsvd2 : 2;
+  TUint32 dirty : 1;
+  TUint32 access : 1;
+  TUint32 rsvd1 : 2;
+  TUint32 kernel : 1;
+  TUint32 rw : 1;
+  TUint32 present : 1;
 };
 
 enum PAGE_PTE_FLAGS {
@@ -47,27 +47,27 @@ enum PAGE_PDE_FLAGS {
 };
 
 //! a page directory entry
-typedef uint32_t pd_entry;
+typedef TUint32 pd_entry;
 
 // page table entry
-typedef uint32_t pt_entry;
+typedef TUint32 pt_entry;
 
 class MMU {
 public:
   MMU();
   ~MMU();
 public:
-  uint64_t total_memory() { return system_memory; }
-  uint64_t total_pages() { return system_pages; }
+  TUint64 total_memory() { return system_memory; }
+  TUint64 total_pages() { return system_pages; }
 protected:
-  uint64_t system_memory;
-  uint64_t system_pages;
-  uint8_t *free_pages;
+  TUint64 system_memory;
+  TUint64 system_pages;
+  TUint8 *free_pages;
 protected:
-  uint64_t link_memory_pages(uint64_t address, uint64_t size);
+  TUint64 link_memory_pages(TUint64 address, TUint64 size);
 
 };
 
-extern MMU *mmu;
+extern MMU *gMMU;
 
 #endif

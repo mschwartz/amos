@@ -3,9 +3,9 @@
 
 // Model/encapsulate the CPU interrupts facilities
 
-#include <types.h>
-#include <string.h>
-#include <bochs.h>
+#include <Exec/BTypes.h>
+#include <x86/bochs.h>
+#include <posix/string.h>
 
 /*******************************************************/
 
@@ -55,20 +55,20 @@ typedef struct registers {
 } __attribute__((packed)) registers_t;
 #endif
 
-const int INTERRUPTS = 256;
+const TInt INTERRUPTS = 256;
 
 // hardware interrupt handler
-typedef bool (interrupt_handler_t)(void *aData);
+typedef TBool (TInterruptHandler)(void *aData);
 
 typedef struct HANDLER_INFO {
-  void set(interrupt_handler_t *aHandler, void *aData, const char *aDescription) {
+  void set(TInterruptHandler *aHandler, void *aData, const char *aDescription) {
     handler = aHandler;
     strcpy(description, aDescription);
     data = aData;
   }
-  interrupt_handler_t *handler;
+  TInterruptHandler *handler;
   char description[64];
-  void *data;
+  TAny *data;
 } isr_handler_t;
 
 //extern void init_interrupts();
@@ -79,7 +79,7 @@ public:
   ~IDT();
 
 public:
-  static const char *interrupt_description(uint16_t n);
+  static const char *interrupt_description(TUint16 n);
 public:
   static void disable_interrupts() { asm volatile("cli\n\t"); }
   static void enable_interrupts() { asm volatile("sti\n\t"); }
@@ -93,12 +93,12 @@ public:
 
 public:
   // interrupt handlers return true if the kernel could/should perform a task switch
-  static void install_handler(uint8_t index, interrupt_handler_t *handler, void *data, const char *description = "undefined");
+  static void install_handler(TUint8 aIndex, TInterruptHandler *aHandler, TAny *aData, const char *aDescription = "undefined");
 
 //protected:
 //  interrupt_handler_t interrupt_handlers[INTERRUPTS];
 };
 
-extern IDT *idt;
+extern IDT *gIDT;
 
 #endif

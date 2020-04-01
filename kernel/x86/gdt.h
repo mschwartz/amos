@@ -1,7 +1,7 @@
 #ifndef KERNEL_GDT_H
 #define KERNEL_GDT_H
 
-#include <types.h>
+#include <Exec/BTypes.h>
 
 class GDT {
 public:
@@ -9,12 +9,12 @@ public:
   ~GDT();
 
 public:
-  void set_gate(int id, void *start_addr, uint32_t size, uint32_t priv_level);
-  void set_gate(int num, uint64_t base, uint64_t limit, uint8_t access, uint8_t granularity);
+  void set_gate(TInt id, TAny *start_addr, TUint32 size, TUint32 priv_level);
+  void set_gate(TInt num, TUint64 base, TUint64 limit, TUint8 access, TUint8 granularity);
   void tss_install();
 };
 
-extern GDT *gdt;
+extern GDT *gGDT;
 
 #if 0 
 #define GDT 0
@@ -32,21 +32,21 @@ extern GDT *gdt;
 /*! TSS - Task State Segment */
 typedef struct _tss_t_
 {
-	uint32_t	link;	/* not used in this implementation */
+	TUint32	link;	/* not used in this implementation */
 
-	uint32_t	esp0;	/* stack for ring 0 - thread context is here saved */
+	TUint32	esp0;	/* stack for ring 0 - thread context is here saved */
 	uint16_t	ss0;	/* stack segment descriptor for ring 0 */
 
 	uint16_t	ss0__;	/* bits not used */
 
 	/* stack pointers and stack segments for rings 1 and 2 - not used */
-	uint32_t	esp1, ss1, esp2, ss2;
+	TUint32	esp1, ss1, esp2, ss2;
 
-	uint32_t	cr3;		/* control register 3 - paging - not used */
+	TUint32	cr3;		/* control register 3 - paging - not used */
 
-	uint32_t	eip, eflags, reg[8], seg[6]; /* hardware context - not used */
+	TUint32	eip, eflags, reg[8], seg[6]; /* hardware context - not used */
 
-	uint32_t	ldt;		/* LDT pointer - not used */
+	TUint32	ldt;		/* LDT pointer - not used */
 
 	uint16_t	trap;		/* not used */
 
@@ -59,17 +59,17 @@ typedef struct _GDT_t_
 {
 	uint16_t	segm_limit0; /* segment limit, bits: 15:00	(00-15) */
 	uint16_t	base_addr0;  /* starting address, bits: 15:00	(16-31) */
-	uint8_t	base_addr1;  /* starting address, bits: 23:16	(32-38) */
-	uint8_t	type	: 4; /* segment type			(39-42) */
-	uint8_t	S	: 1; /* type: 0-system, 1-code or data	(43-43) */
-	uint8_t	DPL	: 2; /* descriptor privilege level	(44-45) */
-	uint8_t	P	: 1; /* present (in memory)		(46-46) */
-	uint8_t	segm_limit1: 4; /*segment limit, bits: 19:16	(47-50) */
-	uint8_t	AVL	: 1; /* "Available for use"		(51-51) */
-	uint8_t	L	: 1; /* 64-bit code?			(52-52) */
-	uint8_t	DB	: 1; /* 1 - 32 bit system, 0 - 16 bit	(53-53) */
-	uint8_t	G	: 1; /* granularity 0-1B, 1-4kB 	(54-54) */
-	uint8_t	base_addr2;  /* starting address, bits: 23:16	(55-63) */
+	TUint8	base_addr1;  /* starting address, bits: 23:16	(32-38) */
+	TUint8	type	: 4; /* segment type			(39-42) */
+	TUint8	S	: 1; /* type: 0-system, 1-code or data	(43-43) */
+	TUint8	DPL	: 2; /* descriptor privilege level	(44-45) */
+	TUint8	P	: 1; /* present (in memory)		(46-46) */
+	TUint8	segm_limit1: 4; /*segment limit, bits: 19:16	(47-50) */
+	TUint8	AVL	: 1; /* "Available for use"		(51-51) */
+	TUint8	L	: 1; /* 64-bit code?			(52-52) */
+	TUint8	DB	: 1; /* 1 - 32 bit system, 0 - 16 bit	(53-53) */
+	TUint8	G	: 1; /* granularity 0-1B, 1-4kB 	(54-54) */
+	TUint8	base_addr2;  /* starting address, bits: 23:16	(55-63) */
 }
 __attribute__((__packed__)) GDT_t;
 

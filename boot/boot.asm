@@ -449,6 +449,7 @@ enter_long_mode:
                     or eax, 1<< 31 | 1<<0
                     mov cr0, eax
 
+
 ;                    lgdt [GDT64_Pointer]
                     lgdt [gdt_ptr64]
                     jmp CODE_SEG:go64

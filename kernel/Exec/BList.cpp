@@ -1,5 +1,5 @@
-#include "BList.h"
-#include <bochs.h>
+#include <Exec/BList.h>
+#include <x86/bochs.h>
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ BList::BList() : BNode() { Reset(); }
 BList::~BList() {
 #ifndef PRODUCTION
 #if (defined(__XTENSA__) && defined(DEBUGME)) || !defined(__XTENSA__)
-   if (next != this) {
+   if (mNext != this) {
      dprint("List not empty!");
    }
 #endif
@@ -48,20 +48,20 @@ BList::~BList() {
  * Add an element to the tail of the list.
  * @param node The element to add.
  */
-void BList::AddTail(BNode &node) { node.InsertBeforeNode(this); }
+void BList::AddTail(BNode &aNode) { aNode.InsertBeforeNode(this); }
 
 /**
  * Add an element to the head of the list.
  * @param node The element to add.
  */
-void BList::AddHead(BNode &node) { node.InsertAfterNode(this); }
+void BList::AddHead(BNode &aNode) { aNode.InsertAfterNode(this); }
 
 /**
  * Remove the element at the head of the list.
  * @return The removed element.
  */
 BNode *BList::RemHead() {
-  BNode *n = next;
+  BNode *n = mNext;
   if (n == (BNode *)this)
     return ENull;
   n->Remove();
@@ -73,7 +73,7 @@ BNode *BList::RemHead() {
  * @return The removed element.
  */
 BNode *BList::RemTail() {
-  BNode *n = prev;
+  BNode *n = mPrev;
   if (n == (BNode *)this)
     return NULL;
   n->Remove();
@@ -84,7 +84,7 @@ BNode *BList::RemTail() {
  * Remove the specified element from the list.
  *  * @param node The element to remove.
  */
-void BList::RemoveNode(BNode *node) { node->Remove(); }
+void BList::RemoveNode(BNode *aNode) { aNode->Remove(); }
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -105,34 +105,35 @@ BListPri::BListPri() : BNodePri(0) {
 BListPri::~BListPri() {
 #ifndef PRODUCTION
 #if (defined(__XTENSA__) && defined(DEBUGME)) || !defined(__XTENSA__)
-   if (next != this) {
+   if (mNext != this) {
      dprint("List not empty!");
    }
 #endif
 #endif
 }
 
-void BListPri::Dump(BNodePri *stop) {
+void BListPri::Dump(BNodePri *aStop) {
   for (auto *s = First(); !End(s); s = Next(s)) {
     dprint("Node %p PRI(%d)\n", s, s->pri);
-    if (stop && s == stop) {
+    if (aStop && s == aStop) {
       break;
     }
   }
 }
 
-void BListPri::AddTail(BNodePri &node) { node.InsertBeforeNode(this); }
+void BListPri::AddTail(BNodePri &aNode) { aNode.InsertBeforeNode(this); }
 
-void BListPri::AddHead(BNodePri &node) { node.InsertAfterNode(this); }
+void BListPri::AddHead(BNodePri &aNode) { aNode.InsertAfterNode(this); }
 
 /**
  * Remove the prioritized element at the head of the list.
  * @return The removed element.
  */
 BNodePri *BListPri::RemHead() {
-  BNodePri *n = next;
-  if (n == (BNodePri *)this)
+  BNodePri *n = mNext;
+  if (n == (BNodePri *)this) {
     return NULL;
+  }
   n->Remove();
   return n;
 }
@@ -142,9 +143,10 @@ BNodePri *BListPri::RemHead() {
  * @return The removed element.
  */
 BNodePri *BListPri::RemTail() {
-  BNodePri *n = prev;
-  if (n == (BNodePri *)this)
+  BNodePri *n = mPrev;
+  if (n == (BNodePri *)this) {
     return NULL;
+  }
   n->Remove();
   return n;
 }
@@ -153,14 +155,14 @@ BNodePri *BListPri::RemTail() {
  * Remove the specified element from the list.
  * @param node The element to remove.
  */
-void BListPri::RemoveNode(BNodePri *node) { node->Remove(); }
+void BListPri::RemoveNode(BNodePri *aNode) { aNode->Remove(); }
 
-void BListPri::Add(BNodePri &node) {
-  for (BNodePri *n = First(); !End(n); n = n->next) {
-    if (node.pri < n->pri) {
-      node.InsertBeforeNode(n);
+void BListPri::Add(BNodePri &aNode) {
+  for (BNodePri *n = First(); !End(n); n = n->mNext) {
+    if (aNode.pri < n->pri) {
+      aNode.InsertBeforeNode(n);
       return;
     }
   }
-  AddTail(node);
+  AddTail(aNode);
 }

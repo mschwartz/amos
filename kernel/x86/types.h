@@ -1,8 +1,11 @@
 #ifndef KERNEL_TYPES_H
 #define KERNEL_TYPES_H
 
+#include <BTypes.h>
+
 #define PACKED __attribute__ ((packed))
 
+#if 0
 typedef unsigned char uint8_t;
 typedef char int8_t;
 
@@ -29,6 +32,8 @@ typedef int16_t SHORT;
 typedef int32_t WORD;
 typedef int64_t LONG;
 
+#endif
+
 
 /*!
  * Calculate a*b/c (all operands are 32 bit unsigned integers)
@@ -37,9 +42,9 @@ typedef int64_t LONG;
  * \param c
  * \returns (a*b)/c
  */
-static inline uint32_t arch_mul_div_32 ( uint32_t a, uint32_t b, uint32_t c )
+static inline TUint32 arch_mul_div_32 ( TUint32 a, TUint32 b, TUint32 c )
 {
-	uint32_t result, m1, m0, mod;
+	TUint32 result, m1, m0, mod;
 
 	asm ("mull %2":"=a" (m0), "=d" (m1):"rm" (b), "0" (a) );
 	asm ("divl %2":"=a" (result), "=d" (mod):"rm" (c), "0" (m0), "1" (m1) );

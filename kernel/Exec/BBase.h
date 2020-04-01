@@ -4,9 +4,10 @@
 // Uncomment for production build
 // #define PRODUCTION
 
-#include "BTypes.h"
+#include <Exec/BTypes.h>
 //#include "Memory.h"
 //#include <memory>
+
 
 /**
  * BBase is the base class for EVERYTHING.
@@ -16,6 +17,10 @@ public:
   BBase();
 
   ~BBase();
+public:
+ void operator delete(void *ptr, unsigned long size) { }
+// int __cxa_atexit(void (*func) (void *), void * arg, void * dso_handle) { return 0; }
+
 };
 
 //////// RANDOM NUMBER GENERATOR

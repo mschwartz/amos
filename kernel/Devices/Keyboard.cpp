@@ -1,14 +1,14 @@
-#include <Keyboard.h>
-#include <kprint.h>
-#include <idt.h>
-#include <PIC.h>
-#include <bochs.h>
-#include <cpu.h>
+#include <Devices/Keyboard.h>
+#include <x86/kprint.h>
+#include <x86/idt.h>
+#include <Devices/PIC.h>
+#include <x86/bochs.h>
+#include <x86/cpu.h>
 
-uint16_t KEYB_DR = 0x60; /* data register */
-uint16_t KEYB_SR = 0x64; /* status register */
-uint8_t PORT1 = 1;
-uint8_t PORT2 = 2;
+TUint16 KEYB_DR = 0x60; /* data register */
+TUint16 KEYB_SR = 0x64; /* status register */
+TUint8 PORT1 = 1;
+TUint8 PORT2 = 2;
 
 const int TIMEOUT = 10000;
 
@@ -158,30 +158,30 @@ enum {
   OUTPUT_FIRST_PORT_DATA = (1 << 7),
 };
 
-Keyboard *keyboard;
+Keyboard *gKeyboard;
 
-static inline uint8_t read_config_byte(uint8_t offset) {
+static inline TUint8 read_config_byte(TUint8 offset) {
   outb(CMD_READ_BYTE_00 + offset, KEYB_SR);
   return inb(KEYB_DR);
 }
 
-static inline uint16_t read_status() {
+static inline TUint16 read_status() {
   return inb(KEYB_SR);
 }
 
-static inline void write_status(uint8_t value) {
+static inline void write_status(TUint8 value) {
   outb(value, KEYB_SR);
 }
 
 // wait for bit(s) to be set in status register
-static inline bool wait_status(uint8_t bits) {
+static inline bool wait_status(TUint8 bits) {
   int timeout = TIMEOUT;
   while (timeout-- > 0 && (read_status() & bits))
     ;
   return timeout > 0;
 }
 
-static inline bool write_data(uint8_t value, uint16_t port = 1) {
+static inline bool write_data(TUint8 value, TUint16 port = 1) {
   if (port == PORT2) {
     write_status(CMD_WRITE_NEXT_BYTE_SECOND_INPUT_BUFFER);
   }
@@ -194,30 +194,32 @@ static inline bool write_data(uint8_t value, uint16_t port = 1) {
   return true;
 }
 
-static inline uint16_t read_data() {
+static inline TUint16 read_data() {
   if (!wait_status(SR_OUTPUT_EMPTY)) {
     return 0xffff;
   }
   return inb(KEYB_DR);
 }
 
-static inline uint16_t command(uint8_t cmd, uint8_t port = 1) {
+static inline TUint16 command(TUint8 cmd, TUint8 port = 1) {
   write_status(cmd);
   return read_data();
 }
 
 bool keyboard_isr(void *aData) {
   dprint("KEYBOARD isr\n");
-  uint16_t *ptr = (uint16_t *)0xb8000;
-  uint16_t t = inb(KEYB_DR);
+  TUint16 *ptr = (TUint16 *)0xb8000;
+  TUint16 t = inb(KEYB_DR);
   dprint(" keyboard data: %x\n", t);
   *ptr = 0x1f42;
-  pic->ack(IRQ_KEYBOARD);
+  gPIC->ack(IRQ_KEYBOARD);
   dprint(" ack %d\n", IRQ_KEYBOARD);
   return true;
 }
 
 Keyboard::Keyboard() {
+  dprint("Construct Keyboard\n");
+
 #if 0
   dprint("configure PS/2\n");
 
@@ -232,7 +234,7 @@ Keyboard::Keyboard() {
   dprint("read data %x\n", read_data());
 
   // 3 set controller configuration byte
-  uint8_t config = read_config_byte(0);
+  TUint8 config = read_config_byte(0);
   dprint("  config = %x... ", config);
   config &= ~CONFIG_FIRST_PORT_ENABLE | CONFIG_SECOND_PORT_ENABLE | CONFIG_FIRST_PORT_TRANSLATION;
   dprint("=> %x...\n", config);
@@ -240,7 +242,7 @@ Keyboard::Keyboard() {
   write_data(config);
 
   // 4 perform self test
-  uint16_t st = command(CMD_TEST_CONTROLLER);
+  TUint16 st = command(CMD_TEST_CONTROLLER);
   dprint("  controller test: %x\n", st);
 
   // 5 determine if there are 2 channels
@@ -253,7 +255,7 @@ Keyboard::Keyboard() {
   }
   // 5 perform interface tests
   dprint("  test port 1\n");
-  uint16_t it = command(CMD_TEST_PORT1);
+  TUint16 it = command(CMD_TEST_PORT1);
   dprint("  port 1 interface test: %x\n", it);
   if (config & CONFIG_SECOND_PORT_CLOCK) {
     dprint("  test port 2\n");
@@ -268,10 +270,10 @@ Keyboard::Keyboard() {
     write_status(CMD_ENABLE_PORT2);
   }
   // 7 reset devices
-  uint16_t reset1 = command(PULSE_RESET_PORT, PORT1);
+  TUint16 reset1 = command(PULSE_RESET_PORT, PORT1);
   dprint("  reset port 1 = %x\n", reset1);
   if (config & CONFIG_SECOND_PORT_CLOCK) {
-    uint16_t reset2 = command(PULSE_RESET_PORT, PORT2);
+    TUint16 reset2 = command(PULSE_RESET_PORT, PORT2);
     dprint("  reset port 2 = %x\n", reset2);
   }
 #endif
@@ -279,9 +281,9 @@ Keyboard::Keyboard() {
   //
   ptr1 = ptr2 = 0;
   // install kernel handler
-  idt->install_handler(IRQ_KEYBOARD, keyboard_isr, this, "");
+  gIDT->install_handler(IRQ_KEYBOARD, keyboard_isr, this, "");
   // enable the keyboard interrupt
-  pic->enable_interrupt(IRQ_KEYBOARD);
+  gPIC->enable_interrupt(IRQ_KEYBOARD);
 }
 
 Keyboard::~Keyboard() {

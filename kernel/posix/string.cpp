@@ -1,6 +1,5 @@
-#include "types.h"
-#include "string.h"
-#include "Screen.h"
+#include <posix.h>
+#include <posix/string.h>
 
 size_t strlen(char *s) {
   int count = 0;

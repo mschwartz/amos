@@ -12,7 +12,7 @@ ifndef CFLAGS
 endif
 
 .cpp.o:
-	gcc -O2 -c $(CFLAGS) -o $*.o $*.cpp
+	gcc -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
 
 
 $(LIB):	$(OBJ)

@@ -1,13 +1,13 @@
-#include <idt.h>
-#include <string.h>
-#include <kprint.h>
-#include <bochs.h>
-#include <tasking.h>
-#include <kernel_memory.h>
+#include <x86/idt.h>
+#include <posix/string.h>
+#include <x86/kprint.h>
+#include <x86/bochs.h>
+#include <x86/tasking.h>
+#include <x86/kernel_memory.h>
 
-IDT *idt;
+IDT *gIDT;
 
-extern "C" void set_vector(void *idt_vector, void (*offset)(), uint16_t selector, uint8_t flags);
+extern "C" void set_vector(void *idt_vector, void (*offset)(), TUint16 selector, uint8_t flags);
 extern "C" void load_idtr(void *ptr);
 
 // exceptions
@@ -103,7 +103,7 @@ typedef struct idt_entry {
 } PACKED idt_entry_t;
 
 typedef struct {
-  uint16_t limit;
+  TUint16 limit;
   idt_entry_t *base;
 } PACKED idt_ptr_t;
 
@@ -116,6 +116,10 @@ IDT::IDT() {
   for (int i = 0; i < INTERRUPTS; i++) {
     interrupt_handlers[i].set(nullptr, nullptr, "Not installed");
   }
+
+    dprint("isr0 %x\n", isr0);
+    dprint("isr1 %x\n", isr1);
+    dprint("isr2 %x\n", isr2);
 
   // EXCEPTIONS
   idt_entries[0].set(isr0, IDT_64INT);
@@ -184,14 +188,14 @@ IDT::IDT() {
 
 #if 0
 struct idt_entry {
-  uint16_t offset1;
-  uint16_t selector;
+  TUint16 offset1;
+  TUint16 selector;
   uint8_t ist;
   uint8_t type_attr;
-  uint16_t offset2;
+  TUint16 offset2;
   uint32_t offset3;
   uint32_t zero;
-  void set(uint64_t offset, uint16_t selector, uint8_t flags) {
+  void set(uint64_t offset, TUint16 selector, uint8_t flags) {
     offset1 = offset & 0xffff;
     this->selector = selector;
     ist = 0;
@@ -202,7 +206,7 @@ struct idt_entry {
   }
   void Dump() {
     dprint("idt_entry @ %x (size: %d)\n", this, sizeof(idt_entry));
-    //    dprint("*** %d %d %d %d\n", sizeof(uint8_t), sizeof(uint16_t), sizeof(uint32_t), sizeof(uint64_t));
+    //    dprint("*** %d %d %d %d\n", sizeof(uint8_t), sizeof(TUint16), sizeof(uint32_t), sizeof(uint64_t));
     dprint("  selector: %x offset1: %x offset2: %x offset3: %x ist: %x attr: %x zero:%x\n", selector, offset1, offset2, offset3, ist, type_attr, zero);
     //    dprint("*** %x %x %x %x %x %x %x %x\n", this, &this->offset1, &this->selector, &this->ist, &this->type_attr, &this->offset2, &this->offset3, &this->zero);
   }
@@ -213,7 +217,7 @@ typedef idt_entry idt_entry_t;
 static idt_entry_t idt_entries[256];
 
 struct {
-  uint16_t limit;
+  TUint16 limit;
   void *base;
 } PACKED idt_p;
 
@@ -231,7 +235,7 @@ extern "C" bool kernel_isr() {
   return info->handler(info->data);
 };
 
-static void idt_set_gate(int i, uint64_t offset, uint16_t selector, uint8_t flags) {
+static void idt_set_gate(int i, uint64_t offset, TUint16 selector, uint8_t flags) {
   //    dprint("idt_set_gate ndx: %d %x\n", i, offset&0xfffffff);
   idt_entries[i].set(offset, selector, flags);
 }
@@ -312,14 +316,13 @@ IDT::IDT() {
   idt_p.limit = sizeof(struct idt_entry) * 256 - 1;
   idt_p.base = &idt_entries[0];
   load_idtr(&idt_p);
-  bochs
 }
 #endif
 IDT::~IDT() {
   disable_interrupts();
 }
 
-void IDT::install_handler(uint8_t index, interrupt_handler_t *handler, void *aData, const char *description) {
+void IDT::install_handler(uint8_t index, TInterruptHandler *handler, void *aData, const char *description) {
   interrupt_handlers[index].set(handler, aData, description);
 }
 
@@ -382,7 +385,7 @@ static const char *int_desc[] = {
   "Software interrupt"
 };
 
-const char *IDT::interrupt_description(uint16_t n) {
+const char *IDT::interrupt_description(TUint16 n) {
   /* Interrupts descriptions */
   dprint("desc(%d) %s\n", n, int_desc[0]);
 

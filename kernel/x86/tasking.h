@@ -1,36 +1,36 @@
 #ifndef TASKING_H
 #define TASKING_H
 
-#include <types.h>
-#include <bochs.h>
+#include <Exec/BTypes.h>
+#include <x86/bochs.h>
 
 typedef struct Task {
   struct Task *next, *prev;
   // flags
-  uint64_t rflags;
+  TUint64 rflags;
   // general purpose registers
-  uint64_t rax;
-  uint64_t rbx;
-  uint64_t rcx;
-  uint64_t rdx;
-  uint64_t rdi;
-  uint64_t rsi;
+  TUint64 rax;
+  TUint64 rbx;
+  TUint64 rcx;
+  TUint64 rdx;
+  TUint64 rdi;
+  TUint64 rsi;
   // segment/selector registers
-  uint32_t ds;
-  uint32_t es;
-  uint32_t fs;
-  uint32_t gs;
+  TUint32 ds;
+  TUint32 es;
+  TUint32 fs;
+  TUint32 gs;
   // instruction pointer
-  uint32_t cs;
-  uint32_t ss;
-  uint64_t rip;
+  TUint32 cs;
+  TUint32 ss;
+  TUint64 rip;
   // stack
-  uint64_t rsp;
-  uint64_t rbp;
+  TUint64 rsp;
+  TUint64 rbp;
   // flags
 
-  uint64_t err_code;
-  uint64_t isr_num; //48
+  TUint64 err_code;
+  TUint64 isr_num; //48
 
   void Dump() {
     extern char *isr_names[];
@@ -59,7 +59,7 @@ typedef struct Task {
     dprint(" rip: %x\n", rip);
 
     dprint("  stack:\n");
-    uint64_t *stack = (uint64_t *)rsp;
+    TUint64 *stack = (TUint64 *)rsp;
     for (int i=0; i<10; i++) {
       dprint("    %x: %x\n", i, *stack++);
     }

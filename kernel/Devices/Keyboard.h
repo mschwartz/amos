@@ -18,6 +18,6 @@ protected:
   int ptr1, ptr2;
 };
 
-extern Keyboard *keyboard;
+extern Keyboard *gKeyboard;
 
 #endif

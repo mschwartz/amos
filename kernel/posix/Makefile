@@ -1,9 +1,9 @@
 OBJ= 		itoa.o sprintf.o string.o
 
-LIB=		libcclib.a
+LIB=		libposix.a
 
 .cpp.o:
-	gcc -g -O2 -c $(CFLAGS) -o $*.o $*.cpp
+	gcc -g -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
 
 $(LIB):	$(OBJ) Makefile
 	ar rcs $(LIB) $(OBJ)

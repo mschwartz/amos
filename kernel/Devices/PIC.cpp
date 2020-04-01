@@ -1,12 +1,12 @@
-#include <idt.h>
-#include <cpu.h>
-#include <kprint.h>
-#include <bochs.h>
-#include <PIC.h>
+#include <x86/idt.h>
+#include <x86/cpu.h>
+#include <x86/kprint.h>
+#include <x86/bochs.h>
+#include <Devices/PIC.h>
 
 // 8259 PIC Interrupt Controller
 
-PIC *pic;
+PIC *gPIC;
 
 #define PIC1_CMD 0x20  /* master PIC-a command port	*/
 #define PIC2_CMD 0xA0  /* slave PIC-a command port	*/
@@ -17,6 +17,7 @@ PIC *pic;
 #define ob(port, data) outb(data, port)
 
 PIC::PIC() {
+  dprint("Constructing PIC\n");
   // remap PIC IRQs
   ob(PIC1_CMD, 0x11); /* starting initialization  */
   ob(PIC2_CMD, 0x11);

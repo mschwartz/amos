@@ -20,14 +20,18 @@ foo:
                     nop
                     ret
 
+                    extern _init, _fini
                     extern kernel_main
+
 boot:
                     push rbp
                     mov rbp, rsp
+;                    call _init
                     mov rax, 0xdeadbeef
                     push rax
                     call kernel_main
                     add esp, 8
+;                    call _fini
                     leave
                     ret
 

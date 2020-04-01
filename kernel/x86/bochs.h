@@ -1,16 +1,25 @@
 #ifndef KERNEL_BOCHS_H
 #define KERNEL_BOCHS_H
 
-#include <cpu.h>
-
+#include <x86/cpu.h>
+#include <x86/kprint.h>
 // debugging methods for running within bochs x86 emulator
 
 // Is a useless instruction. Causes Bochs to break at the calling point
 #define bochs asm volatile("xchg %bx, %bx;");
 
+extern TUint8 in_bochs;
+
 //outputs a character to the debug console
 inline void dputc(char c) {
-  outb((int)c, 0xe9);
+    outb((int)c, 0xe9);
+    return;
+  if (in_bochs) {
+    outb((int)c, 0xe9);
+  }
+  else {
+    kputc(c);
+  }
 }
 
 //stops simulation and breaks into the debug console
@@ -25,11 +34,11 @@ void dputs(const char *s);
 void dprintf(const char *fmt, ...);
 void dprint(const char *fmt, ...);
 
-void dhex8(const uint8_t b);
-void dhex16(const uint16_t w);
-void dhex32(const uint32_t w);
-void dhex64(const uint64_t w);
+void dhex8(const TUint8 b);
+void dhex16(const TUint16 w);
+void dhex32(const TUint32 w);
+void dhex64(const TUint64 w);
 
-void dhexdump(uint8_t *src, int lines);
+void dhexdump(TUint8 *src, int lines);
 
 #endif

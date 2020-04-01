@@ -1,21 +1,23 @@
-#include <cpu.h>
-#include <Screen.h>
-#include <kprint.h>
-#include <kernel_memory.h>
+#include <Devices/Screen.h>
+#include <x86/cpu.h>
+#include <x86/bochs.h>
+#include <x86/kprint.h>
+#include <x86/kernel_memory.h>
 
 Screen::Screen() {
-  screen = (uint8_t *)0xb8000;
+  screen = (TUint8 *)0xb8000;
   row = col = 0;
   attr(BLACK, WHITE);
   cls();
+  dprint("Constructed Screen\n");
 }
 
 void Screen::moveto(int x, int y) {
-  uint16_t pos = y * VGA_WIDTH + x;
+  TUint16 pos = y * VGA_WIDTH + x;
   outb(0x0f, 0x3d4);
-  outb((uint8_t)(pos & 0xff), 0x3d5);
+  outb((TUint8)(pos & 0xff), 0x3d5);
   outb(0x0e, 0x3d4);
-  outb((uint8_t)((pos >> 8) & 0xff), 0x3d5);
+  outb((TUint8)((pos >> 8) & 0xff), 0x3d5);
 }
 
 void Screen::getxy(int &x, int &y) {
@@ -23,8 +25,8 @@ void Screen::getxy(int &x, int &y) {
   y = row;
 }
 
-void Screen::cleareol(uint8_t ch) {
-  uint16_t *dst = (uint16_t *)&screen[row * VGA_BYTESPERROW],
+void Screen::cleareol(TUint8 ch) {
+  TUint16 *dst = (TUint16 *)&screen[row * VGA_BYTESPERROW],
            blank = (attribute << 8) | ch;
   for (int c = col; c < VGA_WIDTH; col++) {
     *dst++ = blank;
@@ -32,16 +34,16 @@ void Screen::cleareol(uint8_t ch) {
 }
 
 void Screen::scrollup() {
-  uint16_t *dst = (uint16_t *)&screen[0 * VGA_BYTESPERROW],
-           *src = (uint16_t *)&screen[(0 + 1) * VGA_BYTESPERROW],
+  TUint16 *dst = (TUint16 *)&screen[0 * VGA_BYTESPERROW],
+           *src = (TUint16 *)&screen[(0 + 1) * VGA_BYTESPERROW],
            blank = (attribute << 8) | ' ';
 
-  for (int r = 0; r < 25; r++) {
-    for (int c = 0; c < VGA_WIDTH; c++) {
+  for (TInt r = 0; r < 25; r++) {
+    for (TInt c = 0; c < VGA_WIDTH; c++) {
       *dst++ = *src++;
     }
   }
-  for (int c = 0; c < VGA_WIDTH; c++) {
+  for (TInt c = 0; c < VGA_WIDTH; c++) {
     *dst++ = blank;
   }
 
@@ -72,7 +74,7 @@ void Screen::putc(char c) {
     col = 0;
   }
   else {
-    long offset = row * 160 + col * 2;
+    TInt64 offset = row * 160 + col * 2;
 
     screen[offset++] = c;
     screen[offset++] = attribute;
@@ -86,8 +88,8 @@ void Screen::putc(char c) {
   moveto(col, row);
 }
 
-void Screen::cls(uint8_t ch) {
-  for (int i = 0; i < 25 * 80; i++) {
+void Screen::cls(TUint8 ch) {
+  for (TInt i = 0; i < 25 * 80; i++) {
     screen[2 * i] = ch;
     screen[2 * i + 1] = attribute;
   }
@@ -101,41 +103,41 @@ void Screen::puts(const char *s) {
   }
 }
 
-void Screen::hexnybble(const uint8_t n) {
+void Screen::hexnybble(const TUint8 n) {
   const char *nybbles = "0123456789ABCDEF";
   putc(nybbles[n & 0x0f]);
 }
 
-void Screen::hexbyte(const uint8_t b) {
+void Screen::hexbyte(const TUint8 b) {
   hexnybble(b >> 4);
   hexnybble(b);
 }
 
-void Screen::hexword(const uint16_t w) {
+void Screen::hexword(const TUint16 w) {
   hexbyte(w >> 8);
   hexbyte(w);
 }
 
-void Screen::hexlong(const uint32_t l) {
+void Screen::hexlong(const TUint32 l) {
   hexword((l >> 16) & 0xffff);
   hexword(l & 0xffff);
 }
 
-void Screen::hexquad(const uint64_t l) {
+void Screen::hexquad(const TUint64 l) {
   hexlong((l >> 32) & 0xffffffff);
   hexlong(l & 0xffffffff);
 }
 
-void Screen::hexdump(const void *addr, int count) {
-  uint8_t *ptr = (uint8_t *)addr;
-  uint64_t address = (uint64_t)addr;;
+void Screen::hexdump(const TAny *addr, TInt count) {
+  TUint8 *ptr = (TUint8 *)addr;
+  TUint64 address = (TUint64)addr;;
   hexlong(address);
   putc(' ');
-  for (int i = 0; i < count; i++) {
+  for (TInt i = 0; i < count; i++) {
     hexbyte(*ptr++);
     putc(' ');
   }
   newline();
 }
 
-Screen *screen;
+Screen *gScreen;

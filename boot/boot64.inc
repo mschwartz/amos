@@ -25,6 +25,7 @@
 ;                    call hw
 ;                    ret
 boot64:
+ xchg bx, bx
                     cli
 ;                    mov rax, 0xdeadbeef
 ;                    call hl
@@ -43,11 +44,15 @@ boot64:
 ;                    push rdi
                     global call_main
 call_main:
-cli
+                    cli
                     mov esi, CMAIN
                     mov ecx, 16
                     call hexdump
+                    xchg bx, bx
                     call CMAIN
+                    cli
+                    xchg bx, bx
+                    cli
                     cli
 jmp $
 ;                    mov rsi, CMAIN

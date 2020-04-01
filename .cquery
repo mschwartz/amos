@@ -1,10 +1,5 @@
 %clang
 %cpp -std=gun++17
--I./kernel/cclib
--I./kernel/x86
--I./kernel/devices
--I./cclib
--I./x86
--I./devices
+-I./kernel
 -I.
 -I/usr/include

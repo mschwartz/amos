@@ -11,12 +11,12 @@ kernel_start.o: kernel_start.asm
 	@echo "     >>> Assembling kernel_start"
 	nasm -f elf64 -o kernel_start.o kernel_start.asm
 
-./cclib/libcclib:
+./posix/libposix:
 	+cd cclib && make
 
-kernel.elf: $(KERNEL) ./cclib/libcclib ./x86/libx86
+kernel.elf: $(KERNEL) ./posix/libposix ./x86/libx86
 	@echo "    >>> Linking kernel.elf"
-	ld -Tconfig.ld -o kernel.elf $(KERNEL) -L./cclib -lcclib -L/x86 -lx86
+	ld -Tconfig.ld -o kernel.elf $(KERNEL) -L./posix -lposix -L/x86 -lx86
 #        gcc $(CFLAGS) -Ttext 0x8000 -o kernel.elf $(KERNEL)
 
 kernel.img: kernel.elf
@@ -29,7 +29,7 @@ run:	all
 
 clean:
 	@rm -f *.o  *.img
-	cd cclib && make clean && cd ..
+	cd posix && make clean && cd ..
 	cd x86 && make clean
 
 

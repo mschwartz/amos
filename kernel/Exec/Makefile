@@ -1,11 +1,11 @@
-OBJ= 	 BTypes.o BBase.o BList.o
+OBJ= 	 BTypes.o BBase.o BList.o BMessagePort.o BDevice.o
 
 LIB=	libexec.a
 
-CFLAGS= -I. -I../cclib -I../devices -I../x86
+#CFLAGS= -I. -I../cclib -I../devices -I../x86
 
 .cpp.o:
-	gcc -O2 -c $(CFLAGS) -o $*.o $*.cpp
+	gcc -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
 
 .asm.o:
 	@echo ""

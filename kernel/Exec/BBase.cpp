@@ -1,5 +1,5 @@
-#include "BBase.h"
-#include <bochs.h>
+#include <Exec/BBase.h>
+#include <x86/bochs.h>
 
 #if 0
 #ifndef __XTENSA__

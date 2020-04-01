@@ -5,99 +5,99 @@
  * CPU class maintains the CPU interrupt vectors
  */
 
-static bool divide_error_handler(void *aData) {
+static TBool divide_error_handler(void *aData) {
   dprint("divide error handler\n");
   return true;
 }
-static bool debug_handler(void *aData) {
+static TBool debug_handler(void *aData) {
   dprint("debug handler\n");
   return true;
 }
-static bool nmi_handler(void *aData) {
+static TBool nmi_handler(void *aData) {
   dprint("nmi handler\n");
   return true;
 }
-static bool breakpoint_handler(void *aData) {
+static TBool breakpoint_handler(void *aData) {
   dprint("breakpoint handler\n");
   return true;
 }
-static bool overflow_handler(void *aData) {
+static TBool overflow_handler(void *aData) {
   dprint("overflow handler\n");
   return true;
 }
-static bool out_of_bounds_handler(void *aData) {
+static TBool out_of_bounds_handler(void *aData) {
   dprint("out_of_bounds handler\n");
   return true;
 }
-static bool invalid_opcode_handler(void *aData) {
+static TBool invalid_opcode_handler(void *aData) {
   dprint("invalid_opcode handler\n");
   return true;
 }
-static bool device_not_available_handler(void *aData) {
+static TBool device_not_available_handler(void *aData) {
   dprint("device_not_available handler\n");
   return true;
 }
-static bool double_fault_handler(void *aData) {
+static TBool double_fault_handler(void *aData) {
   dprint("double_fault handler\n");
   return true;
 }
-static bool coprocessor_segment_overrun_handler(void *aData) {
+static TBool coprocessor_segment_overrun_handler(void *aData) {
   dprint("coprocessor_segment_overrun handler\n");
   return true;
 }
-static bool invalid_tss_handler(void *aData) {
+static TBool invalid_tss_handler(void *aData) {
   dprint("invalid_tss handler\n");
   return true;
 }
-static bool segment_not_present_handler(void *aData) {
+static TBool segment_not_present_handler(void *aData) {
   dprint("segment_not_present handler\n");
   return true;
 }
-static bool stack_fault_handler(void *aData) {
+static TBool stack_fault_handler(void *aData) {
   dprint("stack_fault handler\n");
   return true;
 }
-static bool general_protection_handler(void *aData) {
+static TBool general_protection_handler(void *aData) {
   dprint("general_protection handler\n");
   return true;
 }
-static bool page_fault_handler(void *aData) {
+static TBool page_fault_handler(void *aData) {
   dprint("page_fault handler\n");
   return true;
 }
-static bool unknown_exception_handler(void *aData) {
+static TBool unknown_exception_handler(void *aData) {
   dprint("unknown_exception handler\n");
   return true;
 }
-static bool coprocessor_fault_handler(void *aData) {
+static TBool coprocessor_fault_handler(void *aData) {
   dprint("coprocessor_fault handler\n");
   return true;
 }
-static bool alignment_check_handler(void *aData) {
+static TBool alignment_check_handler(void *aData) {
   dprint("alignment_check handler\n");
   return true;
 }
-static bool machine_check_handler(void *aData) {
+static TBool machine_check_handler(void *aData) {
   dprint("machine_check handler\n");
   return true;
 }
-static bool simd_fault_handler(void *aData) {
+static TBool simd_fault_handler(void *aData) {
   dprint("simd_fault handler\n");
   return true;
 }
-static bool virtualization_handler(void *aData) {
+static TBool virtualization_handler(void *aData) {
   dprint("virtualization_handler\n");
   return true;
 }
-static bool security_handler(void *aData) {
+static TBool security_handler(void *aData) {
   dprint("security_handler\n");
   return true;
 }
 
-CPU *cpu;
+CPU *gCPU;
 
 CPU::CPU() {
-  int irq = 0;
+  TInt irq = 0;
   IDT::install_handler(irq++, divide_error_handler, /* data */ nullptr, "Divide Error");
   IDT::install_handler(irq++, debug_handler, /* data */ nullptr, "Debug Exception");
   IDT::install_handler(irq++, nmi_handler, /* data */ nullptr, "NMI");

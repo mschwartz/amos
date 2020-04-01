@@ -15,6 +15,7 @@ public:
 public:
   void set_frequency(TInt hz);
   void increment_ticks() { ticks++; }
+  TUint64 GetTicks() { return ticks; }
 
 protected:
   TUint64 ticks; // ticks/interrupts since start

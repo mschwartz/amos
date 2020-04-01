@@ -5,7 +5,10 @@
 #include <posix/sprintf.h>
 //#include <Screen.h>
 
+TUint8 in_bochs; //  = *((TUint8 *)0x7c10);
+
 void dputs(const char *s) {
+//  dprint("bochs %x\n", in_bochs);
   while (*s) {
     dputc(*s++);
   }
@@ -28,9 +31,6 @@ void dprintf(const char *fmt, ...) {
     switch (t) {
       case '\0':
         return;
-        //      case '\n':
-        //        screen->newline();
-        //        break;
       case '%':
         tt = *fmt++;
         switch (tt) {
@@ -38,7 +38,13 @@ void dprintf(const char *fmt, ...) {
             break;
           case 's':
             s = va_arg(ap, char *);
+            if (in_bochs) {
             dputs(s);
+            }
+            else {
+              kputs(s);
+            }
+
             break;
           case 'd':
           case 'u':

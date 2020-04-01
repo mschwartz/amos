@@ -1,4 +1,5 @@
 #include <Devices/Keyboard.h>
+#include <Devices/Timer.h>
 #include <x86/kprint.h>
 #include <x86/idt.h>
 #include <Devices/PIC.h>
@@ -207,13 +208,12 @@ static inline TUint16 command(TUint8 cmd, TUint8 port = 1) {
 }
 
 bool keyboard_isr(void *aData) {
-  dprint("KEYBOARD isr\n");
   TUint16 *ptr = (TUint16 *)0xb8000;
   TUint16 t = inb(KEYB_DR);
-  dprint(" keyboard data: %x\n", t);
+  TUint64 c = gTimer->GetTicks();
+  dprint(" keyboard data: %x %d\n", t, c);
   *ptr = 0x1f42;
   gPIC->ack(IRQ_KEYBOARD);
-  dprint(" ack %d\n", IRQ_KEYBOARD);
   return true;
 }
 

@@ -30,7 +30,6 @@ static void call_global_constructors(void) {
   dprint("CALL CONSTRUCTORS %x %x\n", __init_array_start, __init_array_end);
   for (func_ptr *func = __init_array_start; func != __init_array_end; func++) {
     dprint("func %x\n", func);
-    bochs
     (*func)();
   }
 }
@@ -45,9 +44,10 @@ extern "C" int kernel_main(TUint64 ax) {
   dprint("initialized screen\n");
   kprint("initialized screen\n");
 
+  in_bochs = *((TUint8 *)0x7c10);
+  dprint("bochs %x\n", in_bochs);
   call_global_constructors();
 
-  bochs
   gDeviceList.FindDevice("FOO>DEVICE");
 
 

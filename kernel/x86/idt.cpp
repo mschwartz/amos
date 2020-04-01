@@ -316,7 +316,6 @@ IDT::IDT() {
   idt_p.limit = sizeof(struct idt_entry) * 256 - 1;
   idt_p.base = &idt_entries[0];
   load_idtr(&idt_p);
-  bochs
 }
 #endif
 IDT::~IDT() {

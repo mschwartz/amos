@@ -5,6 +5,16 @@
 
 //extern Screen *screen;
 
+void kputc(char c) {
+  gScreen->putc(c);
+}
+
+void kputs(const char *s) {
+  while (*s) {
+    kputc(*s++);
+  }
+}
+
 void kprint(const char *fmt, ...) {
   va_list ap;
   char *s, c, t, tt;

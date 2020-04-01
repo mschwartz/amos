@@ -35,6 +35,7 @@ boot_sector:        dw 0
 boot_sectors:       dw 0
 kernel_sector:      dw 0
 kernel_sectors:     dw 0
+bochs_present:      db 0
 ;msg                 db 'here', 0
 ; Variables
 BOOT_DRIVE:         db 0
@@ -58,6 +59,16 @@ main:
                     mov gs, ax
 
                     mov [BOOT_DRIVE], dl
+
+                    ; detect running in bochs
+detect_bochs:
+                    mov dx, 0e9h
+                    in al, dx
+                    cmp al, 0e9h
+                    jne .done
+                    mov al, -1
+                    mov [bochs_present], al
+.done:
 
 ; enable A20
 set_a20:

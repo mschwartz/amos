@@ -2,15 +2,24 @@
 #define KERNEL_BOCHS_H
 
 #include <x86/cpu.h>
-
+#include <x86/kprint.h>
 // debugging methods for running within bochs x86 emulator
 
 // Is a useless instruction. Causes Bochs to break at the calling point
 #define bochs asm volatile("xchg %bx, %bx;");
 
+extern TUint8 in_bochs;
+
 //outputs a character to the debug console
 inline void dputc(char c) {
-  outb((int)c, 0xe9);
+    outb((int)c, 0xe9);
+    return;
+  if (in_bochs) {
+    outb((int)c, 0xe9);
+  }
+  else {
+    kputc(c);
+  }
 }
 
 //stops simulation and breaks into the debug console

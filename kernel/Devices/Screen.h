@@ -5,35 +5,36 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-#include "../x86/types.h"
+#include <Exec/BTypes.h>
+//#include "../x86/types.h"
 
-const int VGA_WIDTH = 80;
-const int VGA_HEIGHT = 25;
-const int VGA_BYTESPERROW = VGA_WIDTH * 2;
+const TInt VGA_WIDTH = 80;
+const TInt VGA_HEIGHT = 25;
+const TInt VGA_BYTESPERROW = VGA_WIDTH * 2;
 
-const uint8_t BLACK = 0;
-const uint8_t BLUE = 1;
-const uint8_t GREEN = 2;
-const uint8_t CYAN = 3;
-const uint8_t RED = 4;
-const uint8_t MAGENTA = 5;
-const uint8_t BROWN = 6;
-const uint8_t LTGREY = 7;
+const TUint8 BLACK = 0;
+const TUint8 BLUE = 1;
+const TUint8 GREEN = 2;
+const TUint8 CYAN = 3;
+const TUint8 RED = 4;
+const TUint8 MAGENTA = 5;
+const TUint8 BROWN = 6;
+const TUint8 LTGREY = 7;
 
-const uint8_t DKGREY = 0x08;
-const uint8_t LTBLUE = 0x09;
-const uint8_t LTGREEN = 0x0a;
-const uint8_t LTCYAN = 0x0b;
-const uint8_t LTRED = 0x0c;
-const uint8_t PINK = 0x0d;
-const uint8_t YELLOW = 0x0e;
-const uint8_t WHITE = 0x0f;
+const TUint8 DKGREY = 0x08;
+const TUint8 LTBLUE = 0x09;
+const TUint8 LTGREEN = 0x0a;
+const TUint8 LTCYAN = 0x0b;
+const TUint8 LTRED = 0x0c;
+const TUint8 PINK = 0x0d;
+const TUint8 YELLOW = 0x0e;
+const TUint8 WHITE = 0x0f;
 
 class Screen {
 public:
   Screen();
 
-  void attr(uint8_t fg, uint8_t bg) {
+  void attr(TUint8 fg, TUint8 bg) {
     attribute = 0x0f;
 //    attribute = ((bg << 4) & 0xf0) | (fg & 0x0f);
   }
@@ -43,29 +44,29 @@ public:
   void down();
 
   // clear to end of line.  cursor is not moved.
-  void cleareol(uint8_t ch = ' ');
+  void cleareol(TUint8 ch = ' ');
 
-  // scroll screen up one line starting at row y.  Fill in bottom row with blanks
+  // scroll screen up one line starting at row y.  Fill in bottom row with bTInt
   void scrollup();
 
   void newline();
   void putc(char c);
-  void cls(uint8_t ch = ' ');
+  void cls(TUint8 ch = ' ');
   void puts(const char *s);
-  void hexnybble(const uint8_t n);
-  void hexbyte(const uint8_t b);
-  void hexword(const uint16_t w);
-  void hexlong(const uint32_t l);
-  void hexquad(const uint64_t l);
-  void hexdump(const void *addr, int count);
+  void hexnybble(const TUint8 n);
+  void hexbyte(const TUint8 b);
+  void hexword(const TUint16 w);
+  void hexlong(const TUint32 l);
+  void hexquad(const TUint64 l);
+  void hexdump(const void *addr, TInt count);
 
 protected:
-  uint8_t *screen;
-  uint8_t attribute;
-  short row, col;
+  TUint8 *screen;
+  TUint8 attribute;
+  TInt16 row, col;
   char buf[256];
 };
 
-extern Screen *screen;
+extern Screen *gScreen;
 
 #endif

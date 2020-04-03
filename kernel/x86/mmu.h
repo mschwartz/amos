@@ -5,67 +5,48 @@
 
 const TUint64 PAGE_SIZE = 4096;
 
-// page table entry
-struct PTE {
-  TUint32 frame : 20;
-  TUint32 avail : 3;
-  TUint32 rsvd2 : 2;
-  TUint32 dirty : 1;
-  TUint32 access : 1;
-  TUint32 rsvd1 : 2;
-  TUint32 kernel : 1;
-  TUint32 rw : 1;
-  TUint32 present : 1;
-};
+typedef struct {
+  TUint16 mOffset : 12;
+  TUint16 mPML4 9;          // page map level 4table
+  TUint16 mPDP 9;           // page directory pointer table
+  TUint16 mPD 9;            // page directory table
+  TUint16 mPT : 9;          // page table
+  TUint16 mSign : 16;
+} TLogicalAddress;
 
-enum PAGE_PTE_FLAGS {
-  I86_PTE_PRESENT = 1,          //0000000000000000000000000000001
-  I86_PTE_WRITABLE = 2,         //0000000000000000000000000000010
-  I86_PTE_USER = 4,             //0000000000000000000000000000100
-  I86_PTE_WRITETHOUGH = 8,      //0000000000000000000000000001000
-  I86_PTE_NOT_CACHEABLE = 0x10, //0000000000000000000000000010000
-  I86_PTE_ACCESSED = 0x20,      //0000000000000000000000000100000
-  I86_PTE_DIRTY = 0x40,         //0000000000000000000000001000000
-  I86_PTE_PAT = 0x80,           //0000000000000000000000010000000
-  I86_PTE_CPU_GLOBAL = 0x100,   //0000000000000000000000100000000
-  I86_PTE_LV4_GLOBAL = 0x200,   //0000000000000000000001000000000
-  I86_PTE_FRAME = 0x7FFFF000    //1111111111111111111000000000000
-};
-
-enum PAGE_PDE_FLAGS {
-  I86_PDE_PRESENT = 1,        //0000000000000000000000000000001
-  I86_PDE_WRITABLE = 2,       //0000000000000000000000000000010
-  I86_PDE_USER = 4,           //0000000000000000000000000000100
-  I86_PDE_PWT = 8,            //0000000000000000000000000001000
-  I86_PDE_PCD = 0x10,         //0000000000000000000000000010000
-  I86_PDE_ACCESSED = 0x20,    //0000000000000000000000000100000
-  I86_PDE_DIRTY = 0x40,       //0000000000000000000000001000000
-  I86_PDE_4MB = 0x80,         //0000000000000000000000010000000
-  I86_PDE_CPU_GLOBAL = 0x100, //0000000000000000000000100000000
-  I86_PDE_LV4_GLOBAL = 0x200, //0000000000000000000001000000000
-  I86_PDE_FRAME = 0x7FFFF000  //1111111111111111111000000000000
-};
-
-//! a page directory entry
-typedef TUint32 pd_entry;
-
-// page table entry
-typedef TUint32 pt_entry;
+typedef struct {
+  TUint16 mPresent: 1;
+  TUint16 mWritable: 1;
+  TUint16 mUserAccessible: 1;
+  TUint16 mWriteThrough: 1;
+  TUint16 mDisableCache: 1;
+  TUint16 mAccessed: 1;
+  TUint16 mDirty: 1;
+  TUint16 mHugePage: 1;
+  TUint16 mGlobal: 1;
+  TUint16 mUserBits: 9; // available, can be freely used by OS
+  TUint64 mPhysicalAddress: 40;
+  TUint16 mNoExecute: 1;
+} TPageTableEntry;
 
 class MMU {
 public:
   MMU();
   ~MMU();
+
 public:
   TUint64 total_memory() { return system_memory; }
   TUint64 total_pages() { return system_pages; }
+
+  TUint8 *AllocPage();
+
 protected:
   TUint64 system_memory;
   TUint64 system_pages;
-  TUint8 *free_pages;
+  TAny *free_pages;
+
 protected:
   TUint64 link_memory_pages(TUint64 address, TUint64 size);
-
 };
 
 extern MMU *gMMU;

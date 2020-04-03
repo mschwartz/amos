@@ -3,7 +3,8 @@
 set -e
 
 PWD=`pwd`
-echo $PWD
+
+rm *.lock
 
 export INCLUDE_PATH="\
 	-I$PWD/kernel/include \
@@ -94,7 +95,7 @@ gcc -g -c $CFLAGS $INCLUDE_PATH -o main.o main.cpp
 #############################
 
 echo "  LINKING"
-echo "    ld -melf_i386 -Tconfig.ld -o kernel.elf $KERNEL ${LIBS}"
+echo "    ld -melf_i386 -Tkernel.ld -o kernel.elf $KERNEL ${LIBS}"
 ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS
 echo "    objcopy -O binary kernel.elf kernel.img"
 objcopy -O binary kernel.elf kernel.img

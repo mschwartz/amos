@@ -13,8 +13,61 @@
 ;  */
 	BITS 16
 
-                    %include "memory.inc"
-                    %include "cga.inc"
+; memory map
+
+gigabyte            equ 0x40000000
+
+KERNEL_VMA          equ 0xffff880000000000
+
+;; page tables
+PLL4T               equ 0x1000          ; page map level 4 table
+PDPT                equ 0x2000          ; page directory pointer table
+PDT                 equ 0x3000          ; page directory table
+PT                  equ 0x4000          ; page table
+
+load_sector_buffer  equ 0x4800          ; 512 byte sector buffer for reading
+
+video_info          equ 0x5000
+gdt32               equ 0x7000
+BOOTSTRAP_ORG       equ 0x7c00
+memory_info         equ 0x9000
+
+
+;; STACK POINTER in 16, 32, 64 bit modes
+SP16                equ 0x7c00
+ESP32               equ 0x7c00
+RSP64               equ 0x7c00
+;; kernel address (loaded here)
+CMAIN               equ 0x10000
+;; higher-half virtual memory address
+KERNEL_VMA          equ 0xffff880000000000
+
+;;;; hardware
+
+;; CGA Display
+CGA                 equ 0xb8000
+VIDEO_MEMORY        equ CGA
+VIDEO_MEMORY_SEG    equ 0xb800
+WHITE_ON_BLACK      equ 0x0f
+GREEN_ON_BLACK      equ 0x1f
+
+;; MSR numbers
+MSR_EFER            equ 0xC0000080
+; EFER bitmasks
+EFER_LM             equ 0x100
+EFER_NX             equ 0x800
+EFER_SCE            equ 0x001
+; EFER bitmasks
+EFER_LM             equ 0x100
+EFER_NX             equ 0x800
+EFER_SCE            equ 0x001
+
+; CR0 bitmasks
+CR0_PAGING          equ 0x80000000
+
+; CR4 bitmasks
+CR4_PAE             equ 0x20
+CR4_PSE             equ 0x10
 
                     %macro BOCHS 0
                     xchg bx,bx
@@ -113,6 +166,7 @@ load_error:
 
                     global load
 load:
+                    ; read in rest of boot.bin
                     mov dh, 0                               ; head 0
                     mov dl, [BOOT_DRIVE]
                     mov cx, [boot_sector]                   ; start sector
@@ -166,6 +220,7 @@ gdtr:
 CODE_SEG            equ gdt_code - gdt_start
 DATA_SEG            equ gdt_data - gdt_start
 
+
 boot2:
                     ; load kernel to 0x10000
                     mov ax, 0x1000
@@ -191,9 +246,10 @@ boot2:
 ;
 ;;; Query memory chunks via BIOS
 ;
-mmap_ent            equ memory_info             ; the number of entries will be stored at 0x8000
+mmap_ent            equ memory_info                         ; the number of entries will be stored at 0x8000
+
 do_e820:
-        mov di, memory_info+4          ; Set di to 0x8004. Otherwise this code will get stuck in `int 0x15` after some entries are fetched 
+                    mov di, memory_info+4                   ; Set di to 0x8004. Otherwise this code will get stuck in `int 0x15` after some entries are fetched 
 	xor ebx, ebx		; ebx must be 0 to start
 	xor bp, bp		; keep an entry count in bp
 	mov edx, 0x0534D4150	; Place "SMAP" into edx
@@ -201,7 +257,7 @@ do_e820:
 	mov [es:di + 20], dword 1	; force a valid ACPI 3.X entry
 	mov ecx, 24		; ask for 24 bytes
 	int 0x15
-	jc short .failed	; carry set on first call means "unsupported function"
+	jc short .failed	                    ; carry set on first call means "unsupported function"
 	mov edx, 0x0534D4150	; Some BIOSes apparently trash this register?
 	cmp eax, edx		; on success, eax must have been reset to "SMAP"
 	jne short .failed
@@ -225,64 +281,19 @@ do_e820:
 	mov ecx, [es:di + 8]	; get lower uint32_t of memory region length
 	or ecx, [es:di + 12]	; "or" it with upper uint32_t to test for zero
 	jz .skipent		; if length uint64_t is 0, skip entry
-	inc bp			; got a good entry: ++count, move to next storage spot
+	inc bp		; got a good entry: ++count, move to next storage spot
 	add di, 24
 .skipent:
 	test ebx, ebx		; if ebx resets to 0, list is complete
 	jne short .e820lp
 .e820f:
-	mov [mmap_ent], bp	; store the entry count
-	clc			; there is "jc" on end of list to this point, so the carry must be cleared
+	mov [mmap_ent], bp	                    ; store the entry count
+	clc		; there is "jc" on end of list to this point, so the carry must be cleared
 	jmp .done
 .failed:
-	stc			; "function unsupported" error exit
+	stc		; "function unsupported" error exit
 .done:
 
-%if 0
-SMAP                equ                 0x0534d4150
-                    global init_memory
-init_memory:        
-;                    mov si, memory_msg
-;                    call puts16
-                    mov di, memory_info
-                    xor ebx, ebx        ; initial continuation value
-                    xor ebp, ebp
-                    mov edx, SMAP
-                    mov [es:di + 20], dword 1
-                    mov ecx, 24
-                    mov eax, 0xe820
-                    int 15h
-                    jc .error
-                    or ebx,ebx
-                    je .done
-                   
-                    pusha
-                    mov si, di
-                    mov cx, 32
-                    call hexdump16
-                    mov eax, memory_info
-                    call hexlong16
-                    call newline16
-                    popa
-.top:
-                    add di, 24
-                    mov edx, SMAP
-                    mov ecx, 24
-                    mov eax, 0xe820
-                    int 15h
-                    jc .error
-                    or ebx,ebx
-                    je .done
-
-                    jmp .top
-.error:
-                    call cls16
-                    jmp $
-.done:
-                    xor eax, eax
-                    mov ecx, 8
-                    rep stosd
-%endif
                     cli
                     lgdt [gdtr]
 
@@ -290,6 +301,7 @@ init_memory:
                     or al, 1
                     mov cr0, eax
 
+ BOCHS
                     jmp 8:b32
                     nop
                     nop
@@ -311,6 +323,7 @@ cls32:
                     ret
 
 b32:
+BOCHS
 
                     mov ax, 16
                     mov ds, ax
@@ -329,6 +342,17 @@ b32:
 ; Global Descriptor Table (64-bit).
 
 gdt64:
+                    dq 0
+                    dq 0x00AF98000000FFFF
+                    dq 0x00CF92000000FFFF
+gdt64_end:
+                    dq 0 ; some extra padding so the gdtr is 16-byte aligned
+gdtr64:
+                    dw gdt64_end - gdt64 - 1
+                    dq gdt64
+
+%if 0
+gdt64:
 	dq 0x0000000000000000
 	dq 0x00209b0000000000 ;// 64 bit ring0 code segment
 	dq 0x0020930000000000 ;// 64 bit ring0 data segment
@@ -344,6 +368,7 @@ gdt_ptr:
 gdt_ptr64:
 	dw (gdt_ptr - gdt64 - 1)
 	dq (gdt64)
+%endif
 %if 0
 GDT64:                           
 Null:               equ $ - GDT64                           ; The null descriptor.
@@ -376,6 +401,47 @@ PTE_PRESENT         equ 1<<0
 PTE_WRITE           equ 1<<1
 PTE_LARGE           equ 1<<7
 PAGE_SIZE           equ 4096
+
+boot_p4:
+                    dq (boot_p3 + PTE_PRESENT + PTE_WRITE)
+                    times 271 dq 0
+                    dq (high_p3 + PTE_PRESENT + PTE_WRITE)
+                    times 239 dq 0
+boot_p3:
+                    dq (boot_p2 + PTE_PRESENT + PTE_WRITE)
+                    times 511 dq 0
+
+boot_p2:
+                    dq (boot_p1 + PTE_PRESENT + PTE_WRITE)
+                    times 511 dq 0
+
+boot_p1:
+                    %assign pg 0
+                    %rep 512
+                        dq (pg + PTE_PRESENT + PTE_WRITE)
+                        %assign pg pg+PAGE_SIZE
+                    %endrep
+
+high_p3:
+                    dq (high_p2 + PTE_PRESENT + PTE_WRITE)
+                    times 511 dq 0
+
+high_p2:
+                    %assign pg 0
+                    %rep 512
+                        dq (pg + PTE_PRESENT + PTE_WRITE)
+                        %assign pg pg + PAGE_SIZE*512
+                    %endrep
+
+;PDPT                equ 0x2000          ; page directory pointer table
+;PDT                 equ 0x3000          ; page directory table
+;PT                  equ 0x4000          ; page table
+setup_higher_half:
+                    mov edi, PLL4T
+                    mov esi, boot_p1
+                    mov ecx, 512 * 2
+                    rep movsd
+                    ret
 
 setup_identity_tables:
                     mov edx, PLL4T
@@ -436,33 +502,26 @@ setup_page_tables:
 
                     align 4
 enter_long_mode:
-                    mov eax, cr0
-                    and eax, ~(1<<31)
-                    mov cr0, eax
-
-;                    call setup_page_tables
-                    call setup_identity_tables
-
-                    mov edi, PLL4T
-                    mov cr3, edi
                     ; enable PAE paging
                     mov eax, cr4
-                    or eax, 1<<5
+                    or eax, (CR4_PSE + CR4_PAE)
                     mov cr4, eax
 
-                    ; set LM bit
-                    mov ecx, 0xC0000080          ; Set the C-register to 0xC0000080, which is the EFER MSR.
+                    mov ecx, MSR_EFER
                     rdmsr
-                    or eax, 1<<8
+                    or eax, (EFER_LM + EFER_NX + EFER_SCE)
                     wrmsr
 
+                    mov eax, boot_p4
+                    mov cr3, eax
+
+                    BOCHS
                     mov eax, cr0
-                    or eax, 1<< 31 | 1<<0
+                    or eax, CR0_PAGING
                     mov cr0, eax
 
+                    lgdt [gdtr64]
 
-;                    lgdt [GDT64_Pointer]
-                    lgdt [gdt_ptr64]
                     jmp CODE_SEG:go64
                     nop
                     nop
@@ -470,7 +529,6 @@ enter_long_mode:
                     align 8
 
                     [bits 64]
-                    %include "debug64.inc"
 go64:
                     cli
                     mov ax, DATA_SEG
@@ -482,6 +540,17 @@ go64:
                     mov rbp, RSP64
                     mov rsp, rbp
 
+                    mov rax, qword higher_half
+                    jmp rax
+
+                    [section .init_high]
+                    %include "debug64.inc"
+higher_half:
+                    mov rax, [gdtr64 + 2]
+                    add rax, KERNEL_VMA
+                    mov [gdtr64+2], rax
+                    mov rax, gdtr64 + KERNEL_VMA
+                    lgdt [rax]
 
                     global call_main
 call_main:

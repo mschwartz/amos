@@ -6,9 +6,12 @@ PWD=`pwd`
 echo $PWD
 
 export INCLUDE_PATH="\
-	-I${PWD}/kernel/include \
+	-I$PWD/kernel/include \
 	-I$PWD/kernel \
-  -I. \
+	-I$PWD/kernel/Exec \
+	-I$PWD/kernel/Devices \
+	-I$PWD/kernel/cclib \
+  	-I. \
 	"
 
 export CFLAGS="\

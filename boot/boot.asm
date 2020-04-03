@@ -13,6 +13,11 @@
 ;  */
 	BITS 16
 
+                    ;; debugging breakpoint macro
+                    %macro BOCHS 0
+                    xchg bx,bx
+                    %endmacro
+
 ; memory map
 
 gigabyte            equ 0x40000000
@@ -51,27 +56,27 @@ VIDEO_MEMORY_SEG    equ 0xb800
 WHITE_ON_BLACK      equ 0x0f
 GREEN_ON_BLACK      equ 0x1f
 
-;; MSR numbers
+;; PAGING
+; MSR numbers
 MSR_EFER            equ 0xC0000080
 ; EFER bitmasks
 EFER_LM             equ 0x100
 EFER_NX             equ 0x800
 EFER_SCE            equ 0x001
-; EFER bitmasks
-EFER_LM             equ 0x100
-EFER_NX             equ 0x800
-EFER_SCE            equ 0x001
-
 ; CR0 bitmasks
 CR0_PAGING          equ 0x80000000
-
+CR0_PROTECTED_MODE  equ 1
 ; CR4 bitmasks
 CR4_PAE             equ 0x20
 CR4_PSE             equ 0x10
-
-                    %macro BOCHS 0
-                    xchg bx,bx
-                    %endmacro
+; page flag bitmasks
+PG_PRESENT          equ 0x1
+PG_WRITABLE         equ 0x2
+PG_USER             equ 0x4
+PG_BIG              equ 0x80
+PG_NO_EXEC          equ 0x8000000000000000
+;
+PAGE_SIZE           equ 4096
 
 ; ---------------------------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------------------------
@@ -297,8 +302,9 @@ do_e820:
                     cli
                     lgdt [gdtr]
 
+                    ; enable protected mode
                     mov eax, cr0
-                    or al, 1
+                    or al, CR0_PROTECTED_MODE
                     mov cr0, eax
 
  BOCHS
@@ -369,6 +375,7 @@ gdt_ptr64:
 	dw (gdt_ptr - gdt64 - 1)
 	dq (gdt64)
 %endif
+
 %if 0
 GDT64:                           
 Null:               equ $ - GDT64                           ; The null descriptor.
@@ -400,38 +407,43 @@ GDT64_Pointer:                                              ; The GDT-pointer.
 PTE_PRESENT         equ 1<<0
 PTE_WRITE           equ 1<<1
 PTE_LARGE           equ 1<<7
-PAGE_SIZE           equ 4096
 
+                    align PAGE_SIZE
+                    global boot_p4
 boot_p4:
-                    dq (boot_p3 + PTE_PRESENT + PTE_WRITE)
-                    times 271 dq 0
-                    dq (high_p3 + PTE_PRESENT + PTE_WRITE)
-                    times 239 dq 0
+	dq (boot_p3 + PG_PRESENT + PG_WRITABLE)
+	times 271 dq 0
+	dq (high_p3 + PG_PRESENT + PG_WRITABLE)
+	times 239 dq 0
+
 boot_p3:
-                    dq (boot_p2 + PTE_PRESENT + PTE_WRITE)
-                    times 511 dq 0
+	dq (boot_p2 + PG_PRESENT + PG_WRITABLE)
+	times 511 dq 0
 
 boot_p2:
-                    dq (boot_p1 + PTE_PRESENT + PTE_WRITE)
-                    times 511 dq 0
+	dq (boot_p1 + PG_PRESENT + PG_WRITABLE)
+	times 511 dq 0
 
+;; ID map the first bit 512 pages of memory
 boot_p1:
-                    %assign pg 0
+	%assign pg 0
                     %rep 512
-                        dq (pg + PTE_PRESENT + PTE_WRITE)
-                        %assign pg pg+PAGE_SIZE
+                      dq (pg + PG_PRESENT + PG_WRITABLE)
+                      %assign pg pg+PAGE_SIZE
                     %endrep
+
 
 high_p3:
-                    dq (high_p2 + PTE_PRESENT + PTE_WRITE)
-                    times 511 dq 0
+	dq (high_p2 + PG_PRESENT + PG_WRITABLE)
+	times 511 dq 0
 
 high_p2:
-                    %assign pg 0
+	%assign pg 0
                     %rep 512
-                        dq (pg + PTE_PRESENT + PTE_WRITE)
-                        %assign pg pg + PAGE_SIZE*512
-                    %endrep
+                      dq (pg + PG_PRESENT + PG_BIG + PG_WRITABLE)
+                      %assign pg pg+PAGE_SIZE*512
+                     %endrep
+
 
 ;PDPT                equ 0x2000          ; page directory pointer table
 ;PDT                 equ 0x3000          ; page directory table
@@ -502,14 +514,14 @@ setup_page_tables:
 
                     align 4
 enter_long_mode:
-                    ; enable PAE paging
+                    ; enable PAE and PSE paging
                     mov eax, cr4
-                    or eax, (CR4_PSE + CR4_PAE)
+                    or eax, (CR4_PAE | CR4_PSE)
                     mov cr4, eax
 
                     mov ecx, MSR_EFER
                     rdmsr
-                    or eax, (EFER_LM + EFER_NX + EFER_SCE)
+                    or eax, (EFER_LM | EFER_NX | EFER_SCE)
                     wrmsr
 
                     mov eax, boot_p4
@@ -522,6 +534,7 @@ enter_long_mode:
 
                     lgdt [gdtr64]
 
+                    BOCHS
                     jmp CODE_SEG:go64
                     nop
                     nop

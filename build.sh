@@ -4,7 +4,7 @@ set -e
 
 PWD=`pwd`
 
-rm *.lock
+rm -f *.lock
 
 export INCLUDE_PATH="\
 	-I$PWD/kernel/include \

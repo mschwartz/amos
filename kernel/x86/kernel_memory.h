@@ -52,6 +52,8 @@ const TUint64 HIGH_RAM2_END    = 0xbfffffff;
 const TUint64 HIGH_RAM         = 0x0000000100000000; // unlimited
 
 
+const TUint64 BIOS_MEMORY = 0x9000;
+
 extern "C" void bzero(TAny *dst, TUint64 size);
 
 #endif

@@ -31,6 +31,7 @@ static TBool out_of_bounds_handler(void *aData) {
 }
 static TBool invalid_opcode_handler(void *aData) {
   dprint("invalid_opcode handler\n");
+  halt();
   return true;
 }
 static TBool device_not_available_handler(void *aData) {

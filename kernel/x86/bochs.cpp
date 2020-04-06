@@ -48,14 +48,14 @@ void dprintf(const char *fmt, ...) {
             break;
           case 'd':
           case 'u':
-            d = va_arg(ap, long);
+            d = va_arg(ap, TUint64);
             itoa(d, buf, 10);
             dputs(buf);
             //            screen->puts(buf);
             break;
           case 'x':
           case 'X':
-            d = va_arg(ap, long);
+            d = va_arg(ap, TUint64);
             ltoa(d, buf, 16);
             dputs(buf);
             break;
@@ -121,6 +121,20 @@ void dhexdump(TUint8 *src, int lines){
     for (TInt c=0; c<8; c++) {
       dhex8(*src++);
       dputc(' ');
+      address++;
+    }
+    dputc('\n');
+  }
+}
+
+void dhexdump16(TUint16 *src, int lines){
+  TUint64 address = (TUint64)src;
+  for (TInt i=0; i<lines; i++) {
+    dprint("%x: ", address);
+    for (TInt c=0; c<8; c++) {
+      dhex16(*src++);
+      dputc(' ');
+      address += 2;
     }
     dputc('\n');
   }

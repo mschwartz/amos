@@ -4,6 +4,7 @@
 
 #include <Exec/BTypes.h>
 #include <posix/string.h>
+#include <posix/malloc.h>
 #include <x86/bochs.h>
 #include <x86/kprint.h>
 #include <x86/gdt.h>
@@ -34,47 +35,64 @@ static void call_global_constructors(void) {
   }
 }
 
+typedef struct {
+  TUint16 mMode;
+  TUint16 mWidth;
+  TUint16 mHeight;
+  TUint16 mPitch;
+  TUint16 mBitsPerPixel;
+  TUint16 mPad;
+  void Dump() {
+    dprint("Mode %x %d x %d %d bpp\n", mMode, mWidth, mHeight, mBitsPerPixel);
+  }
+} PACKED TModeInfo;
+
+typedef struct {
+  TInt16 mCount;          // number of modes found
+  TModeInfo mDisplayMode; // chosen display mode
+  TModeInfo mModes[];
+  void Dump() {
+    dprint("Found %d %x modes\n", mCount, mCount);
+    for (TInt16 i=0; i<mCount; i++) {
+      mModes[i].Dump();
+    }
+  }
+} PACKED TModes;
+
 //extern "C" TUint64 __CTOR_LIST__[];
 extern "C" int kernel_main(TUint64 ax) {
   Screen s;
-  //  s.putc('X');
-  //  s.putc('Y');
   gScreen = &s;
-  gScreen->puts("HERE\n");
-  dprint("initialized screen\n");
   kprint("initialized screen\n");
 
   in_bochs = *((TUint8 *)0x7c10);
   dprint("bochs %x\n", in_bochs);
   call_global_constructors();
 
-  gDeviceList.FindDevice("FOO>DEVICE");
+  TModes *modes = (TModes *)0x5000;
+  kprint("Display Mode:\n");
+  modes->mDisplayMode.Dump();
+  dhexdump((TUint8 *)0x5000, 2);
+//  kprint("Remaining Modes:\n");
+//  modes->Dump();
 
-
-//  for (int i=0; i<10; i++) {
-//    dprintf("CTOR %d = %x\n", i, __CTOR_LIST__[i]);
-//  }
   GDT g;
   gGDT = &g;
-  dprint("initialized GDT\n");
   kprint("initialized GDT\n");
 
   // set up paging
   MMU m;
   gMMU = &m;
-  dprint("initialized MMU\n");
   kprint("initialized MMU\n");
 
   Scheduler sc;
   scheduler = &sc;
-  dprint("initialized Scheduler\n");
   kprint("initialized Scheduler\n");
 
   // set up interrupt handlers
   IDT i;
   gIDT = &i;
-  dprint("initialized IDT\n");
-//  kprint("initialized IDT\n");
+  kprint("initialized IDT\n");
 
   CPU _cpu;
   gCPU = &_cpu;
@@ -82,29 +100,29 @@ extern "C" int kernel_main(TUint64 ax) {
   // set up 8259 PIC
   PIC p;
   gPIC = &p;
-  dprint("initialized 8259 PIC\n");
-//  kprint("initialized 8259 PIC\n");
+  kprint("initialized 8259 PIC\n");
   sti();
 
   Timer t;
   gTimer = &t;
-  dprint("initialized timer\n");
-//  kprint("initialized timer\n");
+  kprint("initialized timer\n");
 
   Keyboard k;
   gKeyboard = &k;
-  dprint("initialized keyboard\n");
   kprint("initialized keyboard\n");
 
-//  sti();
+  gDeviceList.FindDevice("FOO>DEVICE");
 
 //  test_trap();
 //  dprint("trap returned\n");
   char buf[10];
   memset(buf, 0, 8);
 
-//  halt();
+  extern void *kernel_end;
+  dprint("kernel_end = %x\n", &kernel_end);
+
   dprint("task0 do nothing\n");
+//  char *foo = (char *)malloc(10);
   while (1) {
 //    bochs
 //    halt();

@@ -12,3 +12,7 @@ Scheduler::Scheduler() {
 
 Scheduler::~Scheduler() {
 }
+
+int *__errno_location() {
+  return &current_task->errno;
+}

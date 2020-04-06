@@ -17,7 +17,7 @@ typedef unsigned long  uint64_t;
 typedef long  int64_t;
 #endif
 
-typedef long size_t;
+//typedef long size_t;
 
 
 #if 0
@@ -42,7 +42,6 @@ typedef int8_t TInt8;
 typedef int16_t TInt16;
 typedef int32_t TInt32;
 typedef int64_t TInt64;
-
 typedef uint8_t UBYTE;
 typedef uint8_t UCHAR;
 typedef uint16_t USHORT;
@@ -82,10 +81,9 @@ typedef float TFloat;
 
 #define ENull nullptr
 
-static inline int isalpha(int c) {
-  return c >= '0' && c <= '9';
-}
+#ifndef UINT32_MAX
 #define UINT32_MAX      ((TUint32)(4294967295U))
+#endif
 
 #ifndef LOBYTEM
 #define LOBYTE(x) TUint8((x)&0xff)

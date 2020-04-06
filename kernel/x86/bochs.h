@@ -40,5 +40,6 @@ void dhex32(const TUint32 w);
 void dhex64(const TUint64 w);
 
 void dhexdump(TUint8 *src, int lines);
+void dhexdump16(TUint16 *src, int lines);
 
 #endif

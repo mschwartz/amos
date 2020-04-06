@@ -1,4 +1,6 @@
 #include <posix.h>
+#include <posix/stdint.h>
+#include <posix/stddef.h>
 #include <posix/itoa.h>
 #include <posix/string.h>
 #include <x86/bochs.h>
@@ -11,13 +13,6 @@ static const char *digits = "0123456789abcdef";
 
 char *itoa(int value, char *result, int base) {
   // check that the base if valid
-
-  //  screen->puts("itoa ");
-  //  screen->hexlong(value);
-  //  screen->puts(" ");
-  //  screen->hexlong(base);
-  //  screen->newline();
-
   if (base < 2 || base > 16) {
     *result = 0;
     return result;
@@ -31,28 +26,16 @@ char *itoa(int value, char *result, int base) {
   else {
     char *out = result;
     int quotient = ABS(value);
-    //    screen->puts("quotient ");
-    //    screen->hexlong(quotient);
-    //    screen->newline();
 
     do {
       const int tmp = quotient / base;
-      //      screen->puts(" tmp ");
-      //      screen->hexlong(tmp);
       int ndx = quotient - (tmp * base);
       char c = digits[ndx];
+
       *out++ = c;
       *out = 0;
       quotient = tmp;
-      //      screen->puts(" quotient ");
-      //      screen->hexlong(quotient);
-      //      screen->puts(" ndx ");
-      //      screen->hexlong(ndx);
-      //      screen->puts(" c ");
-      //      screen->putc(c);
-      //      screen->puts(" out ");
-      //      screen->puts(result);
-      //      screen->newline();
+
     } while (quotient);
 
     // Apply negative sign
@@ -61,23 +44,13 @@ char *itoa(int value, char *result, int base) {
     }
 
     *out = 0;
-    //    screen->puts("out ");
-    //    screen->puts(out);
-    //    screen->newline();
     reverse(result);
   }
   return result;
 }
 
-char *ltoa(long value, char *result, int base) {
+char *ltoa(TInt64 value, char *result, int base) {
   // check that the base if valid
-
-  //  screen->puts("itoa ");
-  //  screen->hexlong(value);
-  //  screen->puts(" ");
-  //  screen->hexlong(base);
-  //  screen->newline();
-
   if (base < 2 || base > 16) {
     *result = 0;
     return result;
@@ -90,29 +63,17 @@ char *ltoa(long value, char *result, int base) {
   }
   else {
     char *out = result;
-    long quotient = ABS(value);
-    //    screen->puts("quotient ");
-    //    screen->hexlong(quotient);
-    //    screen->newline();
+    int64_t quotient = ABS(value);
 
     do {
-      const long tmp = quotient / base;
-      //      screen->puts(" tmp ");
-      //      screen->hexlong(tmp);
+      const int64_t tmp = quotient / base;
       int ndx = quotient - (tmp * base);
       char c = digits[ndx];
+
       *out++ = c;
       *out = 0;
       quotient = tmp;
-      //      screen->puts(" quotient ");
-      //      screen->hexlong(quotient);
-      //      screen->puts(" ndx ");
-      //      screen->hexlong(ndx);
-      //      screen->puts(" c ");
-      //      screen->putc(c);
-      //      screen->puts(" out ");
-      //      screen->puts(result);
-      //      screen->newline();
+
     } while (quotient);
 
     // Apply negative sign
@@ -121,9 +82,6 @@ char *ltoa(long value, char *result, int base) {
     }
 
     *out = 0;
-    //    screen->puts("out ");
-    //    screen->puts(out);
-    //    screen->newline();
     reverse(result);
   }
   return result;

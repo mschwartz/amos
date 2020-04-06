@@ -19,13 +19,13 @@ public:
   BDevice *FindDevice(const char *aName);
 
 public:
-  BDevice *RemHead() OVERRIDE { return (BDevice *)BListPri::RemHead(); }
+  BDevice *RemHead() { return (BDevice *)BListPri::RemHead(); }
 
-  BDevice *First() OVERRIDE { return (BDevice *)mNext; }
+  BDevice *First()  { return (BDevice *)mNext; }
 
   BDevice *Next(BDevice *aCurrent)  { return (BDevice *)aCurrent->mNext; }
 
-  BDevice *Last() OVERRIDE { return (BDevice *)mPrev; }
+  BDevice *Last()  { return (BDevice *)mPrev; }
 
   BDevice *Prev(BDevice *aCurrent) { return (BDevice *)aCurrent->mPrev; }
 

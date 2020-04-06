@@ -32,6 +32,8 @@ typedef struct Task {
   TUint64 err_code;
   TUint64 isr_num; //48
 
+  TInt errno;
+
   void Dump() {
     extern char *isr_names[];
 

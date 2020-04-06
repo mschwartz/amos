@@ -1,4 +1,4 @@
-OBJ= 		itoa.o sprintf.o string.o
+OBJ= 		sbrk.o malloc.o itoa.o sprintf.o string.o 
 
 LIB=		libposix.a
 

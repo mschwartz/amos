@@ -2,15 +2,14 @@
 
 set -e
 
-PWD=`pwd`
-echo $PWD
+TOP_DIR=`pwd`
+echo $TOP_DIR
 
 export INCLUDE_PATH="\
-	-I$PWD/kernel/include \
-	-I$PWD/kernel \
-	-I$PWD/kernel/Exec \
-	-I$PWD/kernel/Devices \
-	-I$PWD/kernel/cclib \
+	-I$TOP_DIR/kernel/include \
+	-I$TOP_DIR/kernel \
+	-I$TOP_DIR/kernel/Exec \
+	-I$TOP_DIR/kernel/Devices \
   	-I. \
 	"
 
@@ -22,18 +21,27 @@ export CFLAGS="\
 	-m64 \
 	-fno-stack-protector \
 	-fno-exceptions \
-  -fno-use-cxa-atexit \
-  -fno-rtti \
-  $INCLUDE_PATH \
+	-fno-use-cxa-atexit \
+	-fno-rtti \
+	-DKERNEL \
+	$INCLUDE_PATH \
 	"
-
 
 export LIBS="\
-	-L$PWD/kernel/Exec -lexec \
-	-L$PWD/kernel/x86 -lx86 \
-	-L$PWD/kernel/Devices -ldevices \
-	-L$PWD/kernel/posix -lposix \
+	-L$TOP_DIR/kernel/Exec -lexec \
+	-L$TOP_DIR/kernel/x86 -lx86 \
+	-L$TOP_DIR/kernel/Devices -ldevices \
+	-L$TOP_DIR/kernel/posix -lposix \
 	"
+
+echo ""
+echo "RCOMP"
+cd tools/rcomp-src && make
+
+cd $TOP_DIR
+echo $TOP_DIR
+pwd
+
 
 CRTBEGIN_OBJ=`gcc -print-file-name=crtbegin.o`
 echo ""
@@ -53,7 +61,7 @@ export KERNEL="$CRTBEGIN_OBJ main.o kernel_start.o $CRTEND_OBJ  "
 #############################
 
 echo "BUILDING BOOT SECTOR"
-cd boot
+cd $TOP_DIR/boot
 nasm -f bin -l boot.lst -o boot.img boot.asm
 ls -l boot.img
 cd ..
@@ -75,16 +83,16 @@ echo "  BUILDING EXEC"
 cd Exec
 make
 cd ..
-echo "  BUILDING POSIX"
-cd posix
-make
-cd ..
 echo "  BUILDING X86"
 cd x86 
 make
 cd ..
 echo "  BUILDING DEVICES"
 cd Devices
+make
+cd ..
+echo "  ============== BUILDING POSIX"
+cd posix
 make
 cd ..
 

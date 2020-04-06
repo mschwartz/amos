@@ -29,4 +29,5 @@ SECTIONS
     .fini : {
 	    *(.fini)
     }
+    kernel_end = .;
 }

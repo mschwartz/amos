@@ -1,15 +1,19 @@
 #include <Exec/BList.h>
+#ifdef KERNEL
 #include <x86/bochs.h>
+#endif
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 
+#if 0
 /// BNode
 
 BNode::BNode() : BBase() {}
 
 BNode::~BNode() {}
+#endif
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -17,9 +21,11 @@ BNode::~BNode() {}
 
 /// BNodePri
 
-BNodePri::BNodePri(TInt aPri) : BBase() { pri = aPri; }
+#if 0
+BNodePri::BNodePri(TInt aPri) : BBase(), pri(aPri) {}
 
 BNodePri::~BNodePri() {}
+#endif
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -30,31 +36,40 @@ BNodePri::~BNodePri() {}
 /**
  * Create an empty list.
  */
-BList::BList() : BNode() { Reset(); }
+BList::BList() : BNode() { 
+  Reset(); 
+}
+
 /**
  * Print a message if the list is not empty when it is deleted.
  */
 BList::~BList() {
-#ifndef PRODUCTION
-#if (defined(__XTENSA__) && defined(DEBUGME)) || !defined(__XTENSA__)
-   if (mNext != this) {
-     dprint("List not empty!");
-   }
-#endif
-#endif
+//#ifndef PRODUCTION
+//#if (defined(__XTENSA__) && defined(DEBUGME)) || !defined(__XTENSA__)
+//#ifdef KERNEL
+//   if (mNext != this) {
+//     dprint("List not empty!");
+//   }
+//#endif
+//#endif
+//#endif
 }
 
 /**
  * Add an element to the tail of the list.
  * @param node The element to add.
  */
-void BList::AddTail(BNode &aNode) { aNode.InsertBeforeNode(this); }
+void BList::AddTail(BNode &aNode) { 
+  aNode.InsertBeforeNode(this); 
+}
 
 /**
  * Add an element to the head of the list.
  * @param node The element to add.
  */
-void BList::AddHead(BNode &aNode) { aNode.InsertAfterNode(this); }
+void BList::AddHead(BNode &aNode) { 
+  aNode.InsertAfterNode(this); 
+}
 
 /**
  * Remove the element at the head of the list.
@@ -84,7 +99,9 @@ BNode *BList::RemTail() {
  * Remove the specified element from the list.
  *  * @param node The element to remove.
  */
-void BList::RemoveNode(BNode *aNode) { aNode->Remove(); }
+void BList::RemoveNode(BNode *aNode) { 
+  aNode->Remove(); 
+}
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -92,6 +109,7 @@ void BList::RemoveNode(BNode *aNode) { aNode->Remove(); }
 
 /// BListPri
 
+#if 0
 /**
  * Create an empty priority list.
  */
@@ -103,27 +121,36 @@ BListPri::BListPri() : BNodePri(0) {
  * Print a message if the list is not empty when it is deleted.
  */
 BListPri::~BListPri() {
-#ifndef PRODUCTION
-#if (defined(__XTENSA__) && defined(DEBUGME)) || !defined(__XTENSA__)
-   if (mNext != this) {
-     dprint("List not empty!");
-   }
-#endif
-#endif
+//#ifndef PRODUCTION
+//#if (defined(__XTENSA__) && defined(DEBUGME)) || !defined(__XTENSA__)
+//#ifdef KERNEL
+//   if (mNext != this) {
+//     dprint("List not empty!");
+//   }
+//#endif
+//#endif
+//#endif
 }
+#endif
 
 void BListPri::Dump(BNodePri *aStop) {
-  for (auto *s = First(); !End(s); s = Next(s)) {
-    dprint("Node %p PRI(%d)\n", s, s->pri);
-    if (aStop && s == aStop) {
-      break;
-    }
-  }
+//#ifdef KERNEL
+//  for (auto *s = First(); !End(s); s = Next(s)) {
+//    dprint("Node %p PRI(%d)\n", s, s->pri);
+//    if (aStop && s == aStop) {
+//      break;
+//    }
+//  }
+//#endif
 }
 
-void BListPri::AddTail(BNodePri &aNode) { aNode.InsertBeforeNode(this); }
+void BListPri::AddTail(BNodePri &aNode) { 
+  aNode.InsertBeforeNode(this); 
+}
 
-void BListPri::AddHead(BNodePri &aNode) { aNode.InsertAfterNode(this); }
+void BListPri::AddHead(BNodePri &aNode) { 
+  aNode.InsertAfterNode(this); 
+}
 
 /**
  * Remove the prioritized element at the head of the list.
@@ -155,7 +182,9 @@ BNodePri *BListPri::RemTail() {
  * Remove the specified element from the list.
  * @param node The element to remove.
  */
-void BListPri::RemoveNode(BNodePri *aNode) { aNode->Remove(); }
+void BListPri::RemoveNode(BNodePri *aNode) { 
+  aNode->Remove(); 
+}
 
 void BListPri::Add(BNodePri &aNode) {
   for (BNodePri *n = First(); !End(n); n = n->mNext) {

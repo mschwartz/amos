@@ -20,6 +20,9 @@
                     xchg bx,bx
                     %endmacro
 
+                    %macro debugger 0
+                    xchg bx,bx
+                    %endmacro
 ; ---------------------------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------------------------
@@ -188,20 +191,244 @@ boot2:
                     mov es, ax
                     jmp load_error2
 .done:
+
+;; query vesa graphics modes
+; CAVEAT PROGRAMMER!  This code overwrites memory_info, so be sure to run this logic before setting up memory_info
+
+                    global vesa_modes
+vesa_signature      equ misc_buffer
+vesa_version        equ vesa_signature + 4
+vesa_oem_string     equ vesa_version + 2
+vesa_capabilities   equ vesa_oem_string + 4
+vesa_mode_ptr       equ vesa_capabilities + 4
+vesa_total_memory   equ vesa_mode_ptr + 4
+
+mode_attribute      equ memory_info
+mode_wina_attribute equ mode_attribute + 2
+mode_winb_attribute equ mode_wina_attribute + 1
+mode_win_granularity equ mode_winb_attribute + 1
+mode_win_size       equ mode_win_granularity + 2
+mode_wina_segment   equ mode_win_size + 2
+mode_winb_segment   equ mode_wina_segment + 2
+mode_win_func_ptr   equ mode_winb_segment + 2
+mode_bytes_per_line equ mode_win_func_ptr + 4
+mode_width          equ mode_bytes_per_line + 2
+mode_height         equ mode_width + 2
+mode_x_charsize     equ mode_height + 2
+mode_y_charsize     equ mode_x_charsize + 1
+mode_num_planes     equ mode_y_charsize + 1
+mode_bitsperpixel   equ mode_num_planes + 1
+
+video_mode_count    equ video_info
+display_mode        equ video_info + 2
+
+video_mode          equ 0
+video_width         equ video_mode + 2
+video_height        equ video_width + 2
+video_pitch         equ video_height + 2
+video_bpp           equ video_pitch + 2
+video_pad           equ video_bpp + 2
+VIDEO_SIZE          equ video_pad + 2
+
+vesa_modes:
+                    cli
+                    xor ecx, ecx
+                    mov [video_mode_count], cx
+                    mov [display_mode], cx
+
+                    mov ah, 4fh
+                    mov al, 00h
+                    mov edi, misc_buffer
+                    int 10h
+
+                    mov esi, [vesa_mode_ptr]
+                    mov edi, video_info + 2 + VIDEO_SIZE
+.loop:
+                    lodsw
+                    mov [edi + video_mode], ax
+
+;                    pusha
+;                    call hexword16
+;                    popa
+;                    pusha
+;                    call space16
+;                    popa
+                    cmp ax, -1
+                    je .done
+
+                    pusha
+                    mov cx, ax          ; mode
+                    mov ah, 4fh
+                    mov al, 1
+                    mov edi, memory_info
+                    int 10h
+                    popa
+
+                    ; copy mode info to video_info
+                    mov ax, [mode_width]
+                    mov [edi + video_width], ax
+;                    pusha
+;                    call hexword16
+;                    call space16
+;                    popa
+
+                    mov ax, [mode_height]
+                    mov [edi + video_height], ax
+;                    pusha
+;                    call hexword16
+;                    call space16
+;                    popa
+
+                    xor ah, ah
+                    mov al, [mode_bitsperpixel]
+                    mov [edi + video_bpp], ax
+;                    pusha
+;                    call hexbyte16
+;                    call newline16
+;                    popa
+
+                    mov ax, [mode_bytes_per_line]
+                    mov [edi + video_pitch], ax
+
+                    ; try to choose highest resolution 32 bit display
+                    mov ax, [display_mode]
+                    test ax, ax
+                    je .choose          ; no mode chosen yet, so choose this one
+
+                    mov ax, [edi + video_height]
+                    cmp ax, [display_mode + video_height]
+                    ja .choose         ; higher resolution, use it
+                    jne .next           ; lower resolution skip to next
+
+                    ; same height
+                    mov ax, [edi + video_width]
+                    cmp ax, [display_mode + video_width]
+                    ja .choose         ; same height, higher width
+                    jne .next           ; lower resolution, so skip it
+
+                    ; same width and height
+                    mov ax, [edi + video_bpp]
+                    cmp ax, [display_mode + video_bpp]
+                    jl .next         ; lower bpp, skip it
+
+.choose:
+                    mov ax, [edi + video_mode]
+                    mov [display_mode], ax
+                    mov ax, [edi + video_width]
+                    mov [display_mode + video_width], ax
+                    mov ax, [edi + video_height]
+                    mov [display_mode + video_height], ax
+                    mov ax, [edi + video_pitch]
+                    mov [display_mode + video_pitch], ax
+                    mov ax, [edi + video_bpp]
+                    mov [display_mode + video_bpp], ax
+
+.next:
+                    add edi, VIDEO_SIZE
+                    inc cx
+
+                    jmp .loop
+.done:
+                    mov [video_mode_count], cx
+                    mov word [edi], -1
+
+
 ;
 ;;; Query memory chunks via BIOS
 ;
-mmap_ent            equ memory_info             ; the number of entries will be stored at 0x8000
+                    jmp probe_memory
+
+                    ; ebx: which memory block t oget
+                    ; edi: where to copy memory info
+get_memory_block:
+	mov eax, 0xe820
+	mov [es:edi + 20], dword 1	; force a valid ACPI 3.X entry
+	mov ecx, 24		; ask for 24 bytes
+	mov edx, 0x0534D4150	; Place "SMAP" into edx
+	int 0x15
+                    jc .failed
+	mov edx, 0x0534D4150	; Place "SMAP" into edx
+	cmp eax, edx		; on success, eax must have been reset to "SMAP"
+	jne .failed
+	test ebx, ebx		; ebx = 0 implies list is only 1 entry long (worthless)
+	je .failed
+.skip               clc
+                    ret
+.failed             stc
+                    ret
+
+memory_count        equ memory_info
+memory_infos        equ memory_count + 4
+
+probe_memory:
+                    xor ebx, ebx                            ; must be zero to start
+                    mov [memory_count], ebx
+                    mov edi, memory_infos
+.loop:
+                    call get_memory_block
+                    jc .done
+
+                    pusha
+                    push edi
+
+                    ; hex dump 24 bytes
+;                    mov esi, edi
+;                    mov ecx, 24
+;                    call hexdump16
+;                    call newline16
+
+                    ; address 
+                    mov edi, [esp]
+                    mov eax, [edi + 4]
+                    call hexlong16
+                    mov edi, [esp]
+                    mov eax, [edi + 0]
+                    call hexlong16
+                    call space16
+                    ; length
+                    mov edi, [esp]
+                    mov eax, [edi + 12]
+                    call hexlong16
+                    mov edi, [esp]
+                    mov eax, [edi + 8]
+                    call hexlong16
+                    call space16
+                    ; type
+                    mov edi, [esp]
+                    mov al, [edi + 16]
+                    call hexbyte16
+                    call newline16
+                    pop edi
+                    popa
+
+                    add edi, 24
+
+                    mov eax, [memory_count]
+                    add eax, 1
+                    mov [memory_count], eax
+
+                    jmp .loop
+.done:
+                    mov eax, [memory_count]
+
+;                    mov esi, memory_info
+;                    mov ecx, 32
+;                    call hexdump16
+;                    call newline16
+
+%if 0
+
+mmap_ent            equ memory_info                         ; the number of entries will be stored at 0x8000
 do_e820:
-        mov di, memory_info+4          ; Set di to 0x8004. Otherwise this code will get stuck in `int 0x15` after some entries are fetched 
+                    mov di, memory_info+4                   ; Set di to 0x8004. Otherwise this code will get stuck in `int 0x15` after some entries are fetched 
 	xor ebx, ebx		; ebx must be 0 to start
-	xor bp, bp		; keep an entry count in bp
+	xor ebp, ebp		; keep an entry count in bp
 	mov edx, 0x0534D4150	; Place "SMAP" into edx
 	mov eax, 0xe820
 	mov [es:di + 20], dword 1	; force a valid ACPI 3.X entry
 	mov ecx, 24		; ask for 24 bytes
 	int 0x15
-	jc short .failed	; carry set on first call means "unsupported function"
+	jc short .failed	                    ; carry set on first call means "unsupported function"
 	mov edx, 0x0534D4150	; Some BIOSes apparently trash this register?
 	cmp eax, edx		; on success, eax must have been reset to "SMAP"
 	jne short .failed
@@ -225,25 +452,24 @@ do_e820:
 	mov ecx, [es:di + 8]	; get lower uint32_t of memory region length
 	or ecx, [es:di + 12]	; "or" it with upper uint32_t to test for zero
 	jz .skipent		; if length uint64_t is 0, skip entry
-	inc bp			; got a good entry: ++count, move to next storage spot
+	inc ebp		; got a good entry: ++count, move to next storage spot
 	add di, 24
 .skipent:
 	test ebx, ebx		; if ebx resets to 0, list is complete
 	jne short .e820lp
 .e820f:
-	mov [mmap_ent], bp	; store the entry count
-	clc			; there is "jc" on end of list to this point, so the carry must be cleared
+	mov [mmap_ent], ebp	                    ; store the entry count
+	clc		; there is "jc" on end of list to this point, so the carry must be cleared
 	jmp .done
 .failed:
-	stc			; "function unsupported" error exit
+	stc		; "function unsupported" error exit
 .done:
+%endif
 
 %if 0
 SMAP                equ                 0x0534d4150
                     global init_memory
 init_memory:        
-;                    mov si, memory_msg
-;                    call puts16
                     mov di, memory_info
                     xor ebx, ebx        ; initial continuation value
                     xor ebp, ebp
@@ -482,6 +708,10 @@ go64:
                     mov rbp, RSP64
                     mov rsp, rbp
 
+;                    debugger
+;                    mov rsi, memory_info
+;                    mov rcx, 16
+;                    call hexdump
 
                     global call_main
 call_main:

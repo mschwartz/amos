@@ -11,19 +11,6 @@ static TUint64 page_table[512];
 
 MMU *gMMU;
 
-// the boot code creates an array of these at a known location, so we can find all the memory.
-typedef struct {
-  TUint64 address;
-  TUint64 size;
-  TUint64 type;
-  void Dump() {
-    dprint("memory_info: %x address: %x size: %d type: %x\n", this, address, size, type);
-  }
-} PACKED TMemoryInfo;
-
-const TUint64 MEMORYTYPE_RANGE = 1;
-const TUint64 MEMORYTYPE_RESERVED = 2;
-
 static const char *types[] = {
   "Undefined",
   "Range    ",
@@ -46,8 +33,8 @@ TUint64 MMU::link_memory_pages(TUint64 address, TUint64 size) {
 //    bzero(src, PAGE_SIZE);
 //        memset(src, 0, PAGE_SIZE);
 
-    *ptr = (TUint64)free_pages;
-    free_pages = src;
+    *ptr = (TUint64)mFreePages;
+    mFreePages = src;
     src += PAGE_SIZE;
     //    size -= PAGE_SIZE;
   }
@@ -56,20 +43,71 @@ TUint64 MMU::link_memory_pages(TUint64 address, TUint64 size) {
 }
 
 // unlink a 4K page from free list and return it
-TUint8 *MMU::AllocPage() {
-  TUint8 *ptr = (TUint8 *)free_pages;
+TAny *MMU::AllocPage() {
+  TUint8 *ptr = (TUint8 *)mFreePages;
   TUint64 *ptr64 = (TUint64 *)&ptr[0];
-  free_pages = (TAny *)ptr64[0];
-  return ptr;
+  mFreePages = (TAny *)ptr64[0];
+  return (TAny *)ptr;
 }
 
+void MMU::FreePage(TAny *aPage) {
+  TUint64 *ptr = (TUint64 *)aPage;
+  *ptr = (TUint64)mFreePages;
+  mFreePages = ptr;
+}
+
+// the boot code creates an array of these at a known location, so we can find all the memory.
+typedef struct {
+  TUint64 address;
+  TUint64 size;
+  TUint32 type;
+  TUint32 acpi;
+  void Dump() {
+    dprint("  TMemoryInfo: %x address: %x size: $%x(%d) type: %x acpi: %x\n", this, address, size, size, type, acpi);
+  }
+} PACKED TMemoryInfo;
+
+typedef struct {
+  TUint32 mCount;
+  TMemoryInfo mInfo[];
+  void Dump() {
+//    dhexdump((TUint8 *)BIOS_MEMORY, 16);
+    dprint("TBiosMemory: %x, %d entries\n", this, mCount);
+    for (TInt32 i=0; i<mCount; i++) {
+      mInfo[i].Dump();
+    }
+
+  }
+} PACKED TBiosMemory;
+
+const TUint64 MEMORYTYPE_RANGE = 1;
+const TUint64 MEMORYTYPE_RESERVED = 2;
+
 MMU::MMU() {
+  dprint("MMU\n");
 //  return;
-  free_pages = nullptr;
+  mFreePages = nullptr;
   system_memory = 0;
-  TInt16 count = *((TInt16 *)0x9000);
+  TBiosMemory *m = (TBiosMemory *)BIOS_MEMORY;
+  m->Dump();
+
+  TInt32 count = m->mCount;
   dprint("init_memory %d chunks\n", count);
-  TMemoryInfo *b = (TMemoryInfo *)0x9004; // defined in memory.inc
+  for (TInt32 i=0; i<count; i++) {
+    TMemoryInfo *b = &m->mInfo[i]; // defined in memory.inc
+    TInt type = b->type;
+//    dprint("base: $%x size: %d pages: %d type: %d (%d)\n", b->address, b->size, b->size / PAGE_SIZE, type, MEMORYTYPE_RANGE);
+    if (type != 1) {
+      continue;
+    }
+    dprint("->> base: $%x size: $%x(%d) pages: %d type: %d (%d)\n", b->address, b->size, b->size, b->size / PAGE_SIZE, type, MEMORYTYPE_RANGE);
+    system_memory += b->size;
+    //            link_memory_pages(b->address, b->size);
+    link_memory_pages(b->address, GIGABYTE);
+  }
+  system_pages = (system_memory + PAGE_SIZE - 1) / PAGE_SIZE;
+
+#if 0
   b->Dump();
   dhexdump((TUint8 *)b, 10);
   TInt type = b->type;
@@ -87,7 +125,7 @@ MMU::MMU() {
     b = &b[1];
   }
   system_pages = (system_memory + PAGE_SIZE - 1) / PAGE_SIZE;
-
+#endif
  
 
   // TODO: 64G+ address space mapping

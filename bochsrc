@@ -58,3 +58,7 @@ com1: enabled=1, mode=null
 com2: enabled=0
 com3: enabled=0
 com4: enabled=0
+
+# 4096 = 4G, but makes bocks load slow
+#memory: guest=4096, host=250
+memory: guest=1024, host=250

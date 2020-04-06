@@ -7,6 +7,7 @@ nybbles             db "0123456789ABCDEF",0
                     align 8
 
 putc:
+                    out 0xe9, al
                     push rdx
 
                     mov rdx, [screen]

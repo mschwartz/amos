@@ -2,8 +2,6 @@ OBJ= 	 bochs.o cpu.o kprint.o tasking.o gdt.o idt.o kernel_isr.o mmu.o
 
 LIB=	libx86.a
 
-#CGLAGS= -I. -I../cclib -I../devices
-
 .cpp.o:
 	gcc -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
 

@@ -1,8 +1,8 @@
 #ifndef POSIX_SPRINTF_H
 #define POSIX_SPRINTF_H
 
-#include <posix/stdint.h>
-#include <posix/stddef.h>
+#include <stdint.h>
+#include <stddef.h>
 #include <stdarg.h>
 
 extern int vsprintf(char* buffer, const char* format, va_list parameters) ;

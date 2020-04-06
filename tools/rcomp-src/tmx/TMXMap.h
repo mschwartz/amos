@@ -1,7 +1,10 @@
 #ifndef RCOMP_TMXMAP_H
 #define RCOMP_TMXMAP_H
 
-#include "../../src/BTypes.h"
+#include <Exec/BTypes.h>
+#include "Optionsh"
+
+#ifdef ENABLE_TMXMAPS
 
 class TMXTileSet;
 
@@ -41,5 +44,6 @@ protected:
   TUint16 objectCount;
   BObjectProgram *mObjectProgram;
 };
+#endif
 
 #endif //RCOMP_TMXMAP_H

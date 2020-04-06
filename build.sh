@@ -2,37 +2,7 @@
 
 set -e
 
-TOP_DIR=`pwd`
-echo $TOP_DIR
-
-export INCLUDE_PATH="\
-	-I$TOP_DIR/kernel/include \
-	-I$TOP_DIR/kernel \
-	-I$TOP_DIR/kernel/Exec \
-	-I$TOP_DIR/kernel/Devices \
-  	-I. \
-	"
-
-export CFLAGS="\
-	-mno-red-zone \
-	-nostartfiles \
-	-ffreestanding \
-	-nostdlib \
-	-m64 \
-	-fno-stack-protector \
-	-fno-exceptions \
-	-fno-use-cxa-atexit \
-	-fno-rtti \
-	-DKERNEL \
-	$INCLUDE_PATH \
-	"
-
-export LIBS="\
-	-L$TOP_DIR/kernel/Exec -lexec \
-	-L$TOP_DIR/kernel/x86 -lx86 \
-	-L$TOP_DIR/kernel/Devices -ldevices \
-	-L$TOP_DIR/kernel/posix -lposix \
-	"
+. ./shlib/common.sh
 
 echo ""
 echo "RCOMP"
@@ -43,11 +13,11 @@ echo $TOP_DIR
 pwd
 
 
-CRTBEGIN_OBJ=`gcc -print-file-name=crtbegin.o`
+CRTBEGIN_OBJ=`$GCC -print-file-name=crtbegin.o`
 echo ""
 echo $CRTBEGIN_OBJ
 echo ""
-CRTEND_OBJ=`gcc -print-file-name=crtend.o`
+CRTEND_OBJ=`$GCC -print-file-name=crtend.o`
 
 echo "CRTBEGIN" $CRTBEGIN_OBJ
 
@@ -77,8 +47,9 @@ cd kernel
 echo "  COMPILING"
 echo "    nasm -f elf -o kernel_start.o kernel_start.asm"
 nasm -f elf64 -o kernel_start.o -l kernel_start.lst kernel_start.asm
-gcc -c -o crti.o crti.s
-gcc -c -o crtn.o crtn.s
+echo $GCC -c -o crti.o crti.s
+$GCC -c -o crti.o crti.s
+$GCC -c -o crtn.o crtn.s
 echo "  BUILDING EXEC"
 cd Exec
 make
@@ -87,22 +58,18 @@ echo "  BUILDING X86"
 cd x86 
 make
 cd ..
-echo "  BUILDING DEVICES"
-cd Devices
-make
-cd ..
 echo "  ============== BUILDING POSIX"
 cd posix
 make
 cd ..
 
-echo "    gcc -c $CFLAGS -o main.o main.cpp"
-gcc -g -c $CFLAGS $INCLUDE_PATH -o main.o main.cpp
+echo "    $GCC -c $CFLAGS -o main.o main.cpp"
+$GCC -g -c $CFLAGS $INCLUDE_PATH -o main.o main.cpp
 
 #############################
 
 echo "  LINKING"
-echo "    ld -melf_i386 -Tconfig.ld -o kernel.elf $KERNEL ${LIBS}"
+echo "    ld -m64 -Tconfig.ld -o kernel.elf $KERNEL ${LIBS}"
 ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS
 echo "    objcopy -O binary kernel.elf kernel.img"
 objcopy -O binary kernel.elf kernel.img

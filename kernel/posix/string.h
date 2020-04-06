@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-#include <posix/stdint.h>
-#include <posix/stddef.h>
+#include <stdint.h>
+#include <stddef.h>
 
 extern size_t strlen(char *s);
 extern void strcpy(char *dst, const char *src);

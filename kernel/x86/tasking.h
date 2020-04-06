@@ -67,7 +67,7 @@ typedef struct Task {
     }
     dprint("\n");
   }
-} PACKED task_t;
+} task_t;
 
 class Scheduler {
 public:

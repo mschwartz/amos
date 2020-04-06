@@ -1,4 +1,6 @@
 #include <x86/bochs.h>
+#include <stddef.h>
+#include <unistd.h>
 
 /*
   This is a version (aka dlmalloc) of malloc/free/realloc written by
@@ -271,7 +273,7 @@ static int slrelease(int *sl);
 
 static long getpagesize(void);
 static long getregionsize(void);
-static void *sbrk(long size);
+//static void *sbrk(long size);
 static void *mmap(void *ptr, long size, long prot, long type, long handle, long arg);
 static long munmap(void *ptr, long size);
 
@@ -307,7 +309,6 @@ static int cpuinfo (int whole, unsigned long*kernel, unsigned long*user);
 #endif
 #endif /*Void_t*/
 
-#include <posix/stddef.h>
 //#if __STD_C
 //#include <stddef.h>   [> for size_t <]
 //#else
@@ -642,6 +643,7 @@ Void_t* memcpy();
 */
 
 
+extern "C" Void_t*     sbrk(ptrdiff_t);
 #ifdef LACKS_UNISTD_H
 #if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
 #if __STD_C
@@ -651,13 +653,6 @@ extern Void_t*     sbrk();
 #endif
 #endif
 #endif
-
-void *sbrk(intptr_t increment) {
-  dprint("sbrk %d\n", increment);
-  bochs
-  return 0;
-}
-
 
 /*
   MORECORE is the name of the routine to call to obtain more memory
@@ -669,7 +664,7 @@ void *sbrk(intptr_t increment) {
 //#ifndef MORECORE
 //extern Void_t*     sbrk(ptrdiff_t);
 //extern Void_t*     sbrk(ptrdiff_t);
-#include <posix/unistd.h>
+#include <unistd.h>
 #define MORECORE sbrk
 //#endif
 

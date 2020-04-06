@@ -1,7 +1,7 @@
 #include <posix.h>
-#include <posix/stdint.h>
-#include <posix/stddef.h>
-#include <posix/itoa.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <itoa.h>
 #include <posix/string.h>
 #include <x86/bochs.h>
 

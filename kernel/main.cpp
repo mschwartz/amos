@@ -18,6 +18,7 @@
 #include <Devices/Keyboard.h>
 #include <Devices/Timer.h>
 
+#include <Exec/Memory.h>
 #include <Exec/BDevice.h>
 
 typedef void (*func_ptr)(void);
@@ -120,6 +121,9 @@ extern "C" int kernel_main(TUint64 ax) {
 
   extern void *kernel_end;
   dprint("kernel_end = %x\n", &kernel_end);
+
+  char *foo = (char *)malloc(100);
+  dprint("AllocMem returned %x\n", foo);
 
   dprint("task0 do nothing\n");
 //  char *foo = (char *)malloc(10);

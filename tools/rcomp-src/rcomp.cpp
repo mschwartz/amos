@@ -92,7 +92,7 @@ void process_tilemap(char *line) {
   map.Write(resourceFile);
 }
 
-#ifdef ENABLE_TMX
+#ifdef ENABLE_TMXMAPS
 void process_tmx(char *line) {
   char work[MAX_STRING_LENGTH], filename[MAX_STRING_LENGTH];
 

@@ -1,4 +1,6 @@
 #include "rcomp.h"
+
+#ifdef ENABLE_TMXMAPS
 #include "TMXMap.h"
 #include "TMXTileSet.h"
 #include "TMXLayer.h"
@@ -301,3 +303,5 @@ void TMXMap::Write(ResourceFile &resourceFile) {
   resourceFile.Write(&height, sizeof(height));
   resourceFile.Write(&data[0], width * height * sizeof(TUint32));
 }
+
+#endif

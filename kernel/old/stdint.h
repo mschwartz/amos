@@ -1,8 +1,8 @@
 #ifndef POSIX_STDINT_H
 #define POSIX_STDINT_H
 
-//#include <stdint.h>
-
+#include <stdint.h>
+#if 0
 typedef unsigned char uint8_t;
 typedef char int8_t;
 
@@ -14,6 +14,6 @@ typedef int int32_t;
 
 typedef unsigned long  uint64_t;
 typedef long  int64_t;
-
+#endif
 
 #endif

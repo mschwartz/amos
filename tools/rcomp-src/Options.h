@@ -1,4 +1,17 @@
 #ifndef RCOMP_OPTIONS
 #define RCOMP_OPTIONS
 
+#define ENABLE_SRPTIESHEETS
+#undef ENABLE_SPRITESHEETS
+
+#define ENABLE_TILEMAPS
+#undef ENABLE_TILEMAPS
+
+#define ENABLE_TMXMAPS
+#undef ENABLE_TMXMAPS
+
+#define ENABLE_RAW
+#undef ENABLE_RAW
+
+
 #endif

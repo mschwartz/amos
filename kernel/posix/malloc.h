@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include <posix/stddef.h>   /* for size_t */
+#include <stddef.h>   /* for size_t */
 
 /*
   malloc(size_t n)

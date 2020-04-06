@@ -1,5 +1,7 @@
 %clang
 %cpp -std=gun++17
 -I./kernel
+-I./kernel/Exec
+-I./kernel/posix
 -I.
 -I/usr/include

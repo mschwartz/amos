@@ -1,9 +1,13 @@
-OBJ= 	 BTypes.o BBase.o BList.o BMessagePort.o BDevice.o
+GFX=	Graphics/TRect.o Graphics/TBCD.o Graphics/BFont.o Graphics/BBitmap.o
+
+DEVICES= Devices/Keyboard.o Devices/PIC.o Devices/Screen.o Devices/Timer.o
+
+OBJ= 	 BTypes.o Memory.o BBase.o BList.o BMessagePort.o BDevice.o $(DEVICES) $(GFX)
 
 LIB=	libexec.a
 
 .cpp.o:
-	gcc -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
+	$(GCC) -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
 
 .asm.o:
 	@echo ""
@@ -11,8 +15,8 @@ LIB=	libexec.a
 	@echo ""
 
 $(LIB):	$(OBJ)
-	ar rcs $(LIB) $(OBJ)
-	ranlib $(LIB)
+	$(AR) rcs $(LIB) $(OBJ)
+	$(RANLIB) $(LIB)
 
 kernel_isr.o: kernel_isr.asm
 	@echo ""
@@ -22,4 +26,4 @@ kernel_isr.o: kernel_isr.asm
 	@echo ""
 
 clean:
-	rm -rf *.o *.a
+	rm -rf *.o *.a Devies/*.o Devices/*.a Graphics/*.o Graphics/*.a

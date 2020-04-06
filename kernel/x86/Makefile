@@ -3,7 +3,7 @@ OBJ= 	 bochs.o cpu.o kprint.o tasking.o gdt.o idt.o kernel_isr.o mmu.o
 LIB=	libx86.a
 
 .cpp.o:
-	gcc -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
+	$(GCC) -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
 
 .asm.o:
 	@echo ""
@@ -11,8 +11,8 @@ LIB=	libx86.a
 	@echo ""
 
 $(LIB):	$(OBJ)
-	ar rcs $(LIB) $(OBJ)
-	ranlib $(LIB)
+	$(AR) rcs $(LIB) $(OBJ)
+	$(RANLIB) $(LIB)
 
 kernel_isr.o: kernel_isr.asm
 	@echo ""

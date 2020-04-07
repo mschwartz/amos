@@ -6,69 +6,70 @@
  */
 
 #include "Font.h"
+#include "charset.h"
 
-const TInt16 *const gVectorCharset[] = {
-  NULL, // space
+const TInt16 *gVectorCharset[] = {
+  ENull, // space
   font_emark,
 #ifdef FULL_CHARSET
   font_dquote,
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_pound, // #
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_dollar, // $
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_percent, // %
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_amp, // &
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_squote, // '
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_lparen, // (
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_rparen, // )
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_asterisk, // *
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_plus,
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_comma,
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef FULL_CHARSET
   font_minus,
 #else
-  NULL,
+  ENull,
 #endif
   font_period,
   font_fslash,
@@ -86,32 +87,32 @@ const TInt16 *const gVectorCharset[] = {
 #ifdef full_charset
   font_semicolon,
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef full_charset
   font_lt, // <
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef full_charset
   font_eq, // =
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef full_charset
   font_gt, // >
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef full_charset
   font_qmark,
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef full_charset
   font_at, // @
 #else
-  NULL,
+  ENull,
 #endif
   font_a,
   font_b,
@@ -142,31 +143,32 @@ const TInt16 *const gVectorCharset[] = {
 #ifdef full_charset
   font_lt, // [
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef full_charset
   font_bslash, // '\'
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef full_charset
   font_gt, // ]
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef full_charset
   font_caret, // ^
 #else
-  NULL,
+  ENull,
 #endif
 #ifdef full_charset
   font_uscore, // _
 #else
-  NULL,
+  ENull,
 #endif
-  NULL, // ``
+  ENull, // ``
 };
 
+#if 0
 WORD Font::scale = 0x100;
 
 #ifdef ENABLE_ROTATING_TEXT
@@ -206,7 +208,6 @@ TInt16 Font::print_string_rotatedx(TInt16 x, TInt16 y, FLOAT theta, const __Flas
   }
   return x - xo;
 }
-#endif
 
 TInt16 Font::write(TInt16 x, TInt16 y, char c) {
   PGM_P glyph;
@@ -360,3 +361,7 @@ TInt16 Font::_printf(TInt16 x, TInt16 y, const __FlashStringHelper *ifsh, ...) {
   va_end(ap);
   return xx - x;
 }
+
+#endif
+#endif
+

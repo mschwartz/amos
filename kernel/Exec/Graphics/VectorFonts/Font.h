@@ -2,8 +2,9 @@
 #define FONT_H
 
 #include <BTypes.h>
+#include <Exec/Graphics/BFont.h>
 
-extern const TInt16 *const gVectorCharset[];
+extern const TInt16 *gVectorCharset[];
 
 #if 0
 class Font {

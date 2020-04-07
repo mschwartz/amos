@@ -764,7 +764,7 @@ const TInt16 font_amp[] = {
 };
 #endif
 
-const TInt16 *const charset[] = {
+static const TInt16 *const charset[] = {
   NULL, // space
   font_emark,
 #ifdef FULL_CHARSET

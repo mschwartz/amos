@@ -1,8 +1,10 @@
-GFX=	Graphics/TRect.o Graphics/TBCD.o Graphics/BFont.o Graphics/BBitmap.o
+GFX=	Graphics/TRect.o Graphics/TBCD.o Graphics/BFont.o Graphics/BBitmap.o Graphics/VectorFonts/Font.o 
+
+SCREEN=	Devices/screen/VGAScreen.o Devices/screen/BitmapScreen.o 
 
 DEVICES= Devices/Keyboard.o Devices/PIC.o Devices/Screen.o Devices/Timer.o
 
-OBJ= 	 BTypes.o Memory.o BBase.o BList.o BMessagePort.o BDevice.o $(DEVICES) $(GFX)
+OBJ= 	 BTypes.o Memory.o BBase.o BList.o BMessagePort.o BDevice.o $(DEVICES) $(GFX) $(SCREEN)
 
 LIB=	libexec.a
 

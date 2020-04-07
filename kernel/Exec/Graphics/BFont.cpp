@@ -1,35 +1,41 @@
 #include <Exec/Graphics/BFont.h>
+#include <Exec/Graphics/VectorFonts/Font.h>
 
 #include <posix/string.h>
 #include <stdarg.h>
 #include <math.h>
 
-BVectorFont *CreateVectorFont(BBitmap *aBitmap, TInt8 *aCharset) {
+BVectorFont *CreateVectorFont(BBitmap *aBitmap, const TInt16 **aCharset) {
+  if (aCharset == ENull) {
+    return new BVectorFont32(aBitmap, gVectorCharset);
+  }
   return new BVectorFont32(aBitmap, aCharset);
 }
 
-BVectorFont::BVectorFont(BBitmap *aBitmap, TInt8 * aCharset) : mBitmap(aBitmap), mCharset(aCharset) {
+BVectorFont::BVectorFont(BBitmap *aBitmap, const TInt16 **aCharset) : mBitmap(aBitmap), mCharset(aCharset) {
   //
 }
 
-BVectorFont32::BVectorFont32(BBitmap *aBitmap, TInt8 *aCharset) : BVectorFont(aBitmap, aCharset) {
+BVectorFont32::BVectorFont32(BBitmap *aBitmap, const TInt16 **aCharset) : BVectorFont(aBitmap, aCharset) {
   mScale = 0x100;
+  mColor = TRGB(255, 255, 255);
 }
 
 BVectorFont32::~BVectorFont32() {
 }
 
 void BVectorFont::write(TInt x, TInt y, char c) {
+
 }
 
-void BVectorFont::write(TPoint& aPoint, char c) {
+void BVectorFont::write(TPoint &aPoint, char c) {
   write(aPoint.x, aPoint.y, c);
 }
 
 void BVectorFont::printf(TInt x, TInt y, const char *aFormat, ...) {
 }
 
-void BVectorFont::printf(TPoint& aPoint, const char *aFormat, ...) {
+void BVectorFont::printf(TPoint &aPoint, const char *aFormat, ...) {
 }
 
 TInt BVectorFont32::print_string_rotated(TInt x, TInt y, TFloat theta, const char *aFormat, ...) {

@@ -14,3 +14,15 @@ void *AllocMem(TUint64 aSize, TInt aFlags) {
 void FreeMem(TAny *memory) {
   free(memory);
 }
+
+void *operator new(size_t size) { return AllocMem(size, MEMF_SLOW); }
+
+void *operator new[](size_t size) { return AllocMem(size, MEMF_SLOW); }
+
+void operator delete(void *ptr) {
+  FreeMem(ptr);
+}
+
+void operator delete[](void *ptr) {
+  FreeMem(ptr);
+}

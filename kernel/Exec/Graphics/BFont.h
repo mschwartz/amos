@@ -12,12 +12,19 @@ public:
   virtual void printf(TPoint &aPoint, const char *aFormat, ...) = 0;
 };
 
+//typedef struct {
+//  TInt16 mNumLines;
+//  TInt16 mLines[];
+//} TVectorCharacterData;
+
+class BBitmap;
+
 class BVectorFont : public BFont {
 public:
   // factory method
-  static BVectorFont *CreateVectorFont(BBitmap *aBitmap, TInt8 *aCharset);
+  static BVectorFont *CreateVectorFont(BBitmap *aBitmap, const TInt16 **aCharset = ENull);
 public:
-  BVectorFont(BBitmap *aBitmap, TInt8 *aCharset);
+  BVectorFont(BBitmap *aBitmap, const TInt16 **aCharset);
   virtual ~BVectorFont() = 0;
 
 public:
@@ -28,16 +35,17 @@ public:
   virtual TInt print_string_rotated(TInt x, TInt y, TFloat angle, const char *aFormat, ...) = 0;
 protected:
   BBitmap *mBitmap;
-  TInt8 *mCharset;
+  const TInt16 **mCharset;
 } PACKED;
 
 class BVectorFont32 : public BVectorFont {
 public:
-  BVectorFont32(BBitmap *aBitmap, TInt8 *aCharset);
+  BVectorFont32(BBitmap *aBitmap, const TInt16 **aCharset = ENull);
   ~BVectorFont32();
   TInt print_string_rotated(TInt x, TInt y, TFloat angle, const char *aFormat, ...);
 public:
   TInt16 mScale;
+  TRGB mColor;
 };
 
 #endif

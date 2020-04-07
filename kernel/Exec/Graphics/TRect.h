@@ -40,7 +40,7 @@ struct TPoint {
     x += aOther.x;
     y += aOther.y;
   }
-};
+} PACKED;
 
 struct TRect {
   TInt32 x1, y1, x2, y2;
@@ -165,6 +165,6 @@ public:
   void CenterInX(TRect &aRect); // centers within rect (typically ViewPort rect)
   void CenterInY(TRect &aRect); // centers within rect (typically ViewPort rect)
   void CenterIn(TRect &aRect);  // centers within rect (typically ViewPort rect)
-};
+} PACKED;
 
 #endif //GENUS_TRECT_H

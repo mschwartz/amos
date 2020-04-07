@@ -7,10 +7,12 @@ SECTIONS
     .init : {
 	    *(.init)
     }
+    init_end = .;
     .text : { 
 	    *(start)
 	    *(.text) 
     }
+    text_end = .;
     .init_array : {
 	    __init_array_start = .;
 	    KEEP (*(.init_array*))
@@ -24,8 +26,11 @@ SECTIONS
     }
 	    */
     .rodata : { *(.rodata) }
+    rodata_end = .;
     .data : { *(.data) }
+    data_end = .;
     .bss  : { *(.bss) *(COMMON) }
+    bss_end = .;
     .fini : {
 	    *(.fini)
     }

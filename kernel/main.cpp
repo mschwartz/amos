@@ -36,43 +36,27 @@ static void call_global_constructors(void) {
   }
 }
 
-typedef struct {
-  TUint16 mMode;
-  TUint16 mWidth;
-  TUint16 mHeight;
-  TUint16 mPitch;
-  TUint16 mBitsPerPixel;
-  TUint16 mPad;
-  void Dump() {
-    dprint("Mode %x %d x %d %d bpp\n", mMode, mWidth, mHeight, mBitsPerPixel);
-  }
-} PACKED TModeInfo;
-
-typedef struct {
-  TInt16 mCount;          // number of modes found
-  TModeInfo mDisplayMode; // chosen display mode
-  TModeInfo mModes[];
-  void Dump() {
-    dprint("Found %d %x modes\n", mCount, mCount);
-    for (TInt16 i=0; i<mCount; i++) {
-      mModes[i].Dump();
-    }
-  }
-} PACKED TModes;
-
 //extern "C" TUint64 __CTOR_LIST__[];
 extern "C" int kernel_main(TUint64 ax) {
-  Screen s;
-  gScreen = &s;
-  kprint("initialized screen\n");
+  extern void *kernel_end, *init_end, *text_end, *rodata_end, *data_end, *bss_end;
+  dprint("kernel_end = %x\n", &kernel_end);
+  dprint("init_end = %x\n", &init_end);
+  dprint("text_end = %x\n", &text_end);
+  dprint("rodata_end = %x\n", &rodata_end);
+  dprint("data_end = %x\n", &data_end);
+  dprint("bss_end = %x\n", &bss_end);
+
+  gScreen = Screen::CreateScreen();
+//  Screen s;
+//  gScreen = &s;
+  dprint("initialized screen\n");
 
   in_bochs = *((TUint8 *)0x7c10);
   dprint("bochs %x\n", in_bochs);
   call_global_constructors();
 
-  TModes *modes = (TModes *)0x5000;
   kprint("Display Mode:\n");
-  modes->mDisplayMode.Dump();
+  gDisplayModes->mDisplayMode.Dump();
   dhexdump((TUint8 *)0x5000, 2);
 //  kprint("Remaining Modes:\n");
 //  modes->Dump();
@@ -118,9 +102,6 @@ extern "C" int kernel_main(TUint64 ax) {
 //  dprint("trap returned\n");
   char buf[10];
   memset(buf, 0, 8);
-
-  extern void *kernel_end;
-  dprint("kernel_end = %x\n", &kernel_end);
 
   char *foo = (char *)malloc(100);
   dprint("AllocMem returned %x\n", foo);

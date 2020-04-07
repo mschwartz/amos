@@ -96,7 +96,7 @@ public:
 #endif
 #endif
   }
-};
+} PACKED;
 
 typedef struct TRGB TPalette;
 

@@ -15,6 +15,13 @@ export AR=ar
 export RANLIB=ranlib
 export OBJCOPY=objcopy
 
+# use this one to use graphics console in the kenrel
+#export KGFX='-DKGFX'
+# use this one to use text console in the kenrel
+export KGFX=""
+
+export KFONT="cp866-8x8.psf"
+
 export INCLUDE_PATH="\
 	-I$TOP_DIR/kernel/include/ \
 	-I$TOP_DIR/kernel/ \
@@ -33,6 +40,7 @@ export CFLAGS="\
 	-fno-use-cxa-atexit \
 	-fno-rtti \
 	-DKERNEL \
+  $KGFX \
 	$INCLUDE_PATH \
 	"
 

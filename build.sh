@@ -30,15 +30,21 @@ export KERNEL="$CRTBEGIN_OBJ main.o kernel_start.o $CRTEND_OBJ  "
 
 #############################
 
+echo ""
+echo ""
+echo ""
 echo "BUILDING BOOT SECTOR"
 cd $TOP_DIR/boot
-nasm -f bin -l boot.lst -o boot.img boot.asm
+echo nasm -f bin -l boot.lst $KGFX -o boot.img boot.asm
+nasm -f bin -l boot.lst $KGFX -o boot.img boot.asm
 ls -l boot.img
 cd ..
 
 
 #############################
 
+echo ""
+echo ""
 echo ""
 echo "BUILDING KERNEL"
 
@@ -50,14 +56,35 @@ nasm -f elf64 -o kernel_start.o -l kernel_start.lst kernel_start.asm
 echo $GCC -c -o crti.o crti.s
 $GCC -c -o crti.o crti.s
 $GCC -c -o crtn.o crtn.s
+
+echo ""
+echo ""
+echo ""
 echo "  BUILDING EXEC"
 cd Exec
+echo "    creating console font"
+FFILE=$TOP_DIR/resources/fonts/console-fonts/$KFONT
+if [[ ! -e $FFILE ]]; then
+	gzip -d $FFILE.gz
+	$OBJCOPY -O elf64-x86-64 -B i386 -I binary $FFILE Graphics/kfont.o
+	gzip  $FFILE
+else
+	$OBJCOPY -O elf64-x86-64 -B i386 -I binary $FFILE Graphics/kfont.o
+fi
 make
 cd ..
+
+echo ""
+echo ""
+echo ""
 echo "  BUILDING X86"
 cd x86 
 make
 cd ..
+
+echo ""
+echo ""
+echo ""
 echo "  ============== BUILDING POSIX"
 cd posix
 make
@@ -68,10 +95,18 @@ $GCC -g -c $CFLAGS $INCLUDE_PATH -o main.o main.cpp
 
 #############################
 
+echo ""
+echo ""
+echo ""
 echo "  LINKING"
-echo "    ld -m64 -Tconfig.ld -o kernel.elf $KERNEL ${LIBS}"
+echo "ld -m64 -Tconfig.ld -o kernel.elf $KERNEL $LIBS"
 ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS
-echo "    objcopy -O binary kernel.elf kernel.img"
+
+echo ""
+echo ""
+echo ""
+echo "  Generating binary image"
+#echo "    objcopy -O binary kernel.elf kernel.img"
 objcopy -O binary kernel.elf kernel.img
 cd ..
 cd tools 

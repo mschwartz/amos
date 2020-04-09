@@ -617,7 +617,7 @@ Void_t* memcpy();
 #endif
 #endif
 
-#include <posix/string.h>
+#include <string.h>
 
 /*
   MALLOC_FAILURE_ACTION is the action to take before "return 0" when
@@ -1753,8 +1753,9 @@ int public_mALLOPt(int p, int v) {
 /* ------------- Optional versions of memcopy ---------------- */
 
 
+extern void memcpy(void *dst, void *src, size_t size);
+extern void memset(void *dst, uint8_t v, size_t size);
 #if USE_MEMCPY
-
 /* 
   Note: memcpy is ONLY invoked with non-overlapping regions,
   so the (usually slower) memmove is not needed.

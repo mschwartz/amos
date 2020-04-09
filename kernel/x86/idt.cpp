@@ -7,65 +7,65 @@
 
 IDT *gIDT;
 
-extern "C" void set_vector(void *idt_vector, void (*offset)(), TUint16 selector, uint8_t flags);
-extern "C" void load_idtr(void *ptr);
+extern "C" void set_vector(TAny *idt_vector, TAny (*offset)(), TUint16 selector, TUint8 flags);
+extern "C" void load_idtr(TAny *ptr);
 
 // exceptions
-extern "C" uint64_t isr0;
-extern "C" uint64_t isr1;
-extern "C" uint64_t isr2;
-extern "C" uint64_t isr3;
-extern "C" uint64_t isr4;
-extern "C" uint64_t isr5;
-extern "C" uint64_t isr6;
-extern "C" uint64_t isr7;
-extern "C" uint64_t isr8;
-extern "C" uint64_t isr9;
-extern "C" uint64_t isr10;
-extern "C" uint64_t isr11;
-extern "C" uint64_t isr12;
-extern "C" uint64_t isr13;
-extern "C" uint64_t isr14;
-extern "C" uint64_t isr15;
-extern "C" uint64_t isr16;
-extern "C" uint64_t isr17;
-extern "C" uint64_t isr18;
-extern "C" uint64_t isr19;
-extern "C" uint64_t isr20;
-extern "C" uint64_t isr21;
-extern "C" uint64_t isr22;
-extern "C" uint64_t isr23;
-extern "C" uint64_t isr24;
-extern "C" uint64_t isr25;
-extern "C" uint64_t isr26;
-extern "C" uint64_t isr27;
-extern "C" uint64_t isr28;
-extern "C" uint64_t isr29;
-extern "C" uint64_t isr30;
-extern "C" uint64_t isr31;
+extern "C" TUint64 isr0;
+extern "C" TUint64 isr1;
+extern "C" TUint64 isr2;
+extern "C" TUint64 isr3;
+extern "C" TUint64 isr4;
+extern "C" TUint64 isr5;
+extern "C" TUint64 isr6;
+extern "C" TUint64 isr7;
+extern "C" TUint64 isr8;
+extern "C" TUint64 isr9;
+extern "C" TUint64 isr10;
+extern "C" TUint64 isr11;
+extern "C" TUint64 isr12;
+extern "C" TUint64 isr13;
+extern "C" TUint64 isr14;
+extern "C" TUint64 isr15;
+extern "C" TUint64 isr16;
+extern "C" TUint64 isr17;
+extern "C" TUint64 isr18;
+extern "C" TUint64 isr19;
+extern "C" TUint64 isr20;
+extern "C" TUint64 isr21;
+extern "C" TUint64 isr22;
+extern "C" TUint64 isr23;
+extern "C" TUint64 isr24;
+extern "C" TUint64 isr25;
+extern "C" TUint64 isr26;
+extern "C" TUint64 isr27;
+extern "C" TUint64 isr28;
+extern "C" TUint64 isr29;
+extern "C" TUint64 isr30;
+extern "C" TUint64 isr31;
 
 // IRQs
-extern "C" uint64_t isr32; // the timer irq (0)
-extern "C" uint64_t isr33; // the kb irq (1)
-extern "C" uint64_t isr34;
-extern "C" uint64_t isr35;
-extern "C" uint64_t isr36;
-extern "C" uint64_t isr37;
-extern "C" uint64_t isr38;
-extern "C" uint64_t isr39;
-extern "C" uint64_t isr40;
-extern "C" uint64_t isr41;
-extern "C" uint64_t isr42;
-extern "C" uint64_t isr43;
-extern "C" uint64_t isr44;
-extern "C" uint64_t isr45;
-extern "C" uint64_t isr46; // ata 0,0 (14)
-extern "C" uint64_t isr47; // ata 0,1 (15)
+extern "C" TUint64 isr32; // the timer irq (0)
+extern "C" TUint64 isr33; // the kb irq (1)
+extern "C" TUint64 isr34;
+extern "C" TUint64 isr35;
+extern "C" TUint64 isr36;
+extern "C" TUint64 isr37;
+extern "C" TUint64 isr38;
+extern "C" TUint64 isr39;
+extern "C" TUint64 isr40;
+extern "C" TUint64 isr41;
+extern "C" TUint64 isr42;
+extern "C" TUint64 isr43;
+extern "C" TUint64 isr44;
+extern "C" TUint64 isr45;
+extern "C" TUint64 isr46; // ata 0,0 (14)
+extern "C" TUint64 isr47; // ata 0,1 (15)
 
-extern "C" uint64_t isr48; // unexpected
+extern "C" TUint64 isr48; // unexpected
 
-extern "C" uint64_t isr128; // syscall (0x80, or 0x60 + 32)
-extern "C" uint64_t isr130; // interrupt scheduler
+extern "C" TUint64 isr128; // syscall (0x80, or 0x60 + 32)
+extern "C" TUint64 isr130; // interrupt scheduler
 
 static isr_handler_t interrupt_handlers[INTERRUPTS];
 
@@ -83,21 +83,21 @@ extern "C" bool kernel_isr() {
   return info->handler(info->data);
 };
 
-#define IDT_PRESENT    ((uint64_t)1 << 47)
-#define IDT_64INT      ((uint64_t)14 << 40)
-#define IDT_64TRAP     ((uint64_t)15 << 40)
-#define IDT_USER       ((uint64_t)3 << 45)
+#define IDT_PRESENT    ((TUint64)1 << 47)
+#define IDT_64INT      ((TUint64)14 << 40)
+#define IDT_64TRAP     ((TUint64)15 << 40)
+#define IDT_USER       ((TUint64)3 << 45)
 #define IDT_SYSCALL    0x80
 #define IDT_SIZE       (IDT_SYSCALL + 1)
 #define IDT_IRQS       16
 #define IDT_EXCEPTIONS 32
 
 typedef struct idt_entry {
-  uint64_t low;
-  uint64_t high;
-  void set(uint64_t isr, uint64_t flags) {
-    uint64_t cs = 8;
-    low = (isr & 0xFFFFul) | ((uint64_t)cs << 16) | ((isr & 0xFFFF0000ul) << 32) | flags | IDT_PRESENT;
+  TUint64 low;
+  TUint64 high;
+  void set(TUint64 isr, TUint64 flags) {
+    TUint64 cs = 8;
+    low = (isr & 0xFFFFul) | ((TUint64)cs << 16) | ((isr & 0xFFFF0000ul) << 32) | flags | IDT_PRESENT;
     high = (isr >> 32) & 0xFFFFFFFFul;
   }
 } PACKED idt_entry_t;
@@ -195,7 +195,7 @@ struct idt_entry {
   TUint16 offset2;
   uint32_t offset3;
   uint32_t zero;
-  void set(uint64_t offset, TUint16 selector, uint8_t flags) {
+  void set(TUint64 offset, TUint16 selector, uint8_t flags) {
     offset1 = offset & 0xffff;
     this->selector = selector;
     ist = 0;
@@ -206,7 +206,7 @@ struct idt_entry {
   }
   void Dump() {
     dprint("idt_entry @ %x (size: %d)\n", this, sizeof(idt_entry));
-    //    dprint("*** %d %d %d %d\n", sizeof(uint8_t), sizeof(TUint16), sizeof(uint32_t), sizeof(uint64_t));
+    //    dprint("*** %d %d %d %d\n", sizeof(uint8_t), sizeof(TUint16), sizeof(uint32_t), sizeof(TUint64));
     dprint("  selector: %x offset1: %x offset2: %x offset3: %x ist: %x attr: %x zero:%x\n", selector, offset1, offset2, offset3, ist, type_attr, zero);
     //    dprint("*** %x %x %x %x %x %x %x %x\n", this, &this->offset1, &this->selector, &this->ist, &this->type_attr, &this->offset2, &this->offset3, &this->zero);
   }
@@ -235,7 +235,7 @@ extern "C" bool kernel_isr() {
   return info->handler(info->data);
 };
 
-static void idt_set_gate(int i, uint64_t offset, TUint16 selector, uint8_t flags) {
+static void idt_set_gate(int i, TUint64 offset, TUint16 selector, uint8_t flags) {
   //    dprint("idt_set_gate ndx: %d %x\n", i, offset&0xfffffff);
   idt_entries[i].set(offset, selector, flags);
 }
@@ -322,7 +322,7 @@ IDT::~IDT() {
   disable_interrupts();
 }
 
-void IDT::install_handler(uint8_t index, TInterruptHandler *handler, void *aData, const char *description) {
+void IDT::install_handler(TUint8 index, TInterruptHandler *handler, void *aData, const char *description) {
   interrupt_handlers[index].set(handler, aData, description);
 }
 

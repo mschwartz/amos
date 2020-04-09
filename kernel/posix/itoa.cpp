@@ -5,6 +5,8 @@
 #include <posix/string.h>
 #include <x86/bochs.h>
 
+extern void reverse(char *aString);
+
 typedef struct {
   long quot, rem;
 } ldiv_t;

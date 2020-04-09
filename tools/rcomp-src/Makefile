@@ -9,7 +9,7 @@ CE=     Panic.o ../../kernel/Exec/Memory.o ../../kernel/Exec/BBase.o ../../kerne
 INC=	-I. -I../../ -I../../kernel -I../../kernel/Exec
 
 .cpp.o:
-	g++ -c -O3 $(INC) -o $*.o $*.cpp
+	g++ -c -O3 -DTOOL $(INC) -o $*.o $*.cpp
 
 all: rcomp
 

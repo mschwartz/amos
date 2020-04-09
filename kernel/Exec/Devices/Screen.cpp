@@ -7,8 +7,13 @@
 #include "screen/BitmapScreen.h"
 
 Screen *Screen::CreateScreen() {
+#ifdef KGFX
+  dprint("Create Bitmap Screen\n");
+  return new BitmapScreen();
+#else
   dprint("Create VGA Screen\n");
   return new VGAScreen();
+#endif
 }
 
 void Screen::hexnybble(const TUint8 n) {

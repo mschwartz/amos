@@ -192,70 +192,132 @@ boot2:
                     jmp load_error2
 .done:
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; query vesa graphics modes
 ; CAVEAT PROGRAMMER!  This code overwrites memory_info, so be sure to run this logic before setting up memory_info
 
-                    global vesa_modes
-vesa_signature      equ misc_buffer
-vesa_version        equ vesa_signature + 4
-vesa_oem_string     equ vesa_version + 2
-vesa_capabilities   equ vesa_oem_string + 4
-vesa_mode_ptr       equ vesa_capabilities + 4
-vesa_total_memory   equ vesa_mode_ptr + 4
+                    struc vesa_info
+.signature          resb 4
+.version            resw 1
+.oem                resd 1
+.capabilities       resd 1
+.video_modes        resd 1              ; segment:offset pointer to list of supported video modes
+.video_memory       resw 1              ; amount of video memory in 64K blocks
+.software_rev       resw 1
+.vendor             resd 1
+.product_name       resd 1
+.product_rev        resd 1
+.reserved           resb 222
+.oem_data           resb 256+4
+                    endstruc
 
-mode_attribute      equ memory_info
-mode_wina_attribute equ mode_attribute + 2
-mode_winb_attribute equ mode_wina_attribute + 1
-mode_win_granularity equ mode_winb_attribute + 1
-mode_win_size       equ mode_win_granularity + 2
-mode_wina_segment   equ mode_win_size + 2
-mode_winb_segment   equ mode_wina_segment + 2
-mode_win_func_ptr   equ mode_winb_segment + 2
-mode_bytes_per_line equ mode_win_func_ptr + 4
-mode_width          equ mode_bytes_per_line + 2
-mode_height         equ mode_width + 2
-mode_x_charsize     equ mode_height + 2
-mode_y_charsize     equ mode_x_charsize + 1
-mode_num_planes     equ mode_y_charsize + 1
-mode_bitsperpixel   equ mode_num_planes + 1
+                    ;; vbe_mode_info_structure
+                    struc vesa_mode
+.attributes         resw 1
+.window             resw 1
+;.window_a           resb 1
+;.window_b           resb 1
+.granularity        resw 1
+.window_size        resw 1
+.segment_a          resw 1
+.segment_b          resw 1
+.win_func_ptr       resd 1
+.pitch              resw 1
+.width              resw 1
+.height             resw 1
+.w_char             resb 1
+.y_char             resb 1
+.planes             resb 1
+.depth              resb 1
+.banks              resb 1
+.memory_model       resb 1
+.bank_size          resb 1
+.image_pages        resb 1
+.reserved0          resb 1
+.red_mask           resb 1
+.red_position       resb 1
+.green_mask         resb 1
+.green_position     resb 1
+.blue_mask          resb 1
+.blue_position      resb 1
+.reserved_mask      resb 1
+.reserved_position  resb 1
+.direct_color_attributes resb 1
+.framebuffer        resd 1
+.off_screen_mem_off resd 1
+.off_screen_mem_size resw 1
+.reserved1          resb 206
+                    endstruc
 
-video_mode_count    equ video_info
-display_mode        equ video_info + 2
+;; our display_mode struct 
+                    struc display_mode
+.mode               resw 1
+.width              resw 1
+.height             resw 1
+.depth              resw 1
+.pitch              resw 1
+.pad                resw 1
+.framebuffer        resd 1
+.framebuffer_offset resd 1
+.framebuffer_size   resw 1
+.pad2               resw 1
+                    endstruc
 
-video_mode          equ 0
-video_width         equ video_mode + 2
-video_height        equ video_width + 2
-video_pitch         equ video_height + 2
-video_bpp           equ video_pitch + 2
-video_pad           equ video_bpp + 2
-VIDEO_SIZE          equ video_pad + 2
+; layout our video_info memory so our kernel (C/C++) can access it
+                    struc video_info_layout
+                    resb video_info
+.video_mode_count   resd 1
+.display_info       resb vesa_info_size
+.video_mode         resb display_mode_size
+.video_modes        resb display_mode_size
+                    endstruc
 
-vesa_modes:
+video_mode_count    equ video_info_layout.video_mode_count
+display_info        equ video_info_layout.display_info
+video_mode          equ video_info_layout.video_mode
+video_modes          equ video_info_layout.video_modes
+
+                    dd vesa_info_size
+                    dd display_mode_size
+                    dd video_mode_count
+                    dd display_info
+                    dd video_mode
+                    dd video_modes
+
+;; query vesa bios extensionf ro available modes
+                    global get_vesa_modes
+get_vesa_modes:
                     cli
-                    xor ecx, ecx
-                    mov [video_mode_count], cx
-                    mov [display_mode], cx
+                    ; zero our video_info memory
+                    xor al, al
+                    mov ecx, 1000h
+                    mov edi, video_info
+                    rep stosb
 
+                    xor ecx, ecx
+                    ; initialize mode count
+                    mov [video_mode_count], ecx
+                    ; initialize current mode to mode number 0 (undefined)
+                    mov [video_mode + display_mode.mode], cx
+
+                    ; get VBE info structure (vesa_*)
                     mov ah, 4fh
                     mov al, 00h
-                    mov edi, misc_buffer
+                    mov edi, display_info
                     int 10h
 
-                    mov esi, [vesa_mode_ptr]
-                    mov edi, video_info + 2 + VIDEO_SIZE
+                    mov esi, [display_info + vesa_info.video_modes]             ; pointer to array of mode numbers
+                    mov edi, video_modes                                        ; pointer to where we're goint to store our array
+                    mov ebp, memory_info
 .loop:
                     lodsw
-                    mov [edi + video_mode], ax
 
-;                    pusha
-;                    call hexword16
-;                    popa
-;                    pusha
-;                    call space16
-;                    popa
+                    mov [edi + display_mode.mode], ax                           ; store video mode
                     cmp ax, -1
-                    je .done
+                    je .done                                                    ; no more modes
 
+                    ; get information about mode in ax to memory_info
                     pusha
                     mov cx, ax          ; mode
                     mov ah, 4fh
@@ -264,73 +326,111 @@ vesa_modes:
                     int 10h
                     popa
 
-                    ; copy mode info to video_info
-                    mov ax, [mode_width]
-                    mov [edi + video_width], ax
-;                    pusha
-;                    call hexword16
-;                    call space16
-;                    popa
+                    ; copy mode info from memory_info to video_info
+                    xor eax, eax
+                    mov al, [ebp + vesa_mode.depth]
+                    mov [edi + display_mode.depth], ax
 
-                    mov ax, [mode_height]
-                    mov [edi + video_height], ax
-;                    pusha
-;                    call hexword16
-;                    call space16
-;                    popa
+                    mov ax, [ebp + vesa_mode.width]
+                    mov [edi + display_mode.width], ax
 
-                    xor ah, ah
-                    mov al, [mode_bitsperpixel]
-                    mov [edi + video_bpp], ax
-;                    pusha
-;                    call hexbyte16
-;                    call newline16
-;                    popa
+                    mov ax, [ebp + vesa_mode.height]
+                    mov [edi + display_mode.height], ax
 
-                    mov ax, [mode_bytes_per_line]
-                    mov [edi + video_pitch], ax
 
-                    ; try to choose highest resolution 32 bit display
-                    mov ax, [display_mode]
+                    mov ax, [ebp + vesa_mode.pitch]
+                    mov [edi + display_mode.pitch], ax
+
+                    mov eax, [ebp + vesa_mode.framebuffer]
+                    mov [edi + display_mode.framebuffer], eax
+
+                    mov eax, [ebp + vesa_mode.off_screen_mem_off]
+                    mov [edi + display_mode.framebuffer_offset], eax
+
+                    mov ax, [ebp + vesa_mode.off_screen_mem_size]
+                    mov [edi + display_mode.framebuffer_size], ax
+
+
+                    %if 0
+                    pusha
+                    mov esi, edi
+                    mov ecx, display_mode_size
+                    call hexdump16
+                    mov esi, video_mode
+                    mov ecx, display_mode_size
+                    call hexdump16
+                    call newline16
+                    popa
+                    %endif
+
+                    ;; try to choose highest resolution 32 bit display
+;                    BOCHS
+                    mov ax, [video_mode + display_mode.mode]
                     test ax, ax
                     je .choose          ; no mode chosen yet, so choose this one
 
-                    mov ax, [edi + video_height]
-                    cmp ax, [display_mode + video_height]
+                    ; if new mode's height is greater than our chosen one, then we want to choose it
+                    mov ax, [edi + display_mode.height]
+                    cmp ax, [video_mode + display_mode.height]
                     ja .choose         ; higher resolution, use it
-                    jne .next           ; lower resolution skip to next
+                    jne .next          ; lower resolution skip to next
 
-                    ; same height
-                    mov ax, [edi + video_width]
-                    cmp ax, [display_mode + video_width]
+
+                    ; same height, so see if new mode's width is higher resolution
+                    mov ax, [edi + display_mode.width]
+                    cmp ax, [video_mode + display_mode.width]
                     ja .choose         ; same height, higher width
                     jne .next           ; lower resolution, so skip it
 
-                    ; same width and height
-                    mov ax, [edi + video_bpp]
-                    cmp ax, [display_mode + video_bpp]
+                    ; same width and height, choose new mode if its depth is higher
+                    mov ax, [edi + display_mode.depth]
+                    cmp ax, [video_mode + display_mode.depth]
                     jl .next         ; lower bpp, skip it
 
+                    ;; choose new mode as selected mode
 .choose:
-                    mov ax, [edi + video_mode]
-                    mov [display_mode], ax
-                    mov ax, [edi + video_width]
-                    mov [display_mode + video_width], ax
-                    mov ax, [edi + video_height]
-                    mov [display_mode + video_height], ax
-                    mov ax, [edi + video_pitch]
-                    mov [display_mode + video_pitch], ax
-                    mov ax, [edi + video_bpp]
-                    mov [display_mode + video_bpp], ax
+                    ; copy new mode's values to selected mode struc at video_mode
+                    mov ax, [edi + display_mode.mode]
+                    mov [video_mode + display_mode.mode], ax
+
+                    mov ax, [edi + display_mode.width]
+                    mov [video_mode + display_mode.width], ax
+
+                    mov ax, [edi + display_mode.height]
+                    mov [video_mode + display_mode.height], ax
+
+                    mov ax, [edi + display_mode.depth]
+                    mov [video_mode + display_mode.depth], ax
+
+                    mov ax, [edi + display_mode.pitch]
+                    mov [video_mode + display_mode.pitch], ax
+
+                    mov eax, [edi + display_mode.framebuffer]
+                    mov [video_mode + display_mode.framebuffer], eax
+
+                    mov eax, [edi + display_mode.framebuffer_offset]
+                    mov [video_mode + display_mode.framebuffer_offset], eax
+
+                    mov ax, [edi + display_mode.framebuffer_size]
+                    mov [video_mode + display_mode.framebuffer_size], ax
 
 .next:
-                    add edi, VIDEO_SIZE
-                    inc cx
+                    add edi, display_mode_size
+                    inc ecx
 
                     jmp .loop
 .done:
-                    mov [video_mode_count], cx
+                    mov [video_mode_count], ecx
                     mov word [edi], -1
+
+%ifdef KGFX
+                    ; set video display mode
+                    mov ah, 4fh
+                    mov al, 02h
+                    mov bx, [video_mode + display_mode.mode]
+                    or bx, 1<<14        ; linear frame bufer select
+                    int 10h
+%endif
 
 
 ;

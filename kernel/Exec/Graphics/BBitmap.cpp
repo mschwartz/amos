@@ -9,5 +9,6 @@ BBitmap::BBitmap(TInt aWidth, TInt aHeight, TInt aDepth, TAny *aMemory) : mWidth
   else {
     mFreePixels = true;
   }
+  mBounds.Set(0, 0, aWidth-1, aHeight-1);
 }
 

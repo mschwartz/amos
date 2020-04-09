@@ -3,49 +3,43 @@
 
 #include <Graphics/Graphics.h>
 
-// abstrct base class for BFront
-class BFont : public BBase {
-public:
-  virtual void write(TInt x, TInt y, char c) = 0;
-  virtual void write(TPoint &aPoint, char c) = 0;
-  virtual void printf(TInt x, TInt y, const char *aFormat, ...) = 0;
-  virtual void printf(TPoint &aPoint, const char *aFormat, ...) = 0;
-};
-
-//typedef struct {
-//  TInt16 mNumLines;
-//  TInt16 mLines[];
-//} TVectorCharacterData;
-
+// BVectorFont is a scalable and rotatable vector font.  The downside is that no background pixels are cleared/set to bg color
+class BVectorFont;
+// BConsoleFont is a bitmapped glyph oriented font.  Foreground and background colors are honored.  The fonts are found
+// on a linux system in /usr/share/kbd/consolefonts/*.psf.  They may be gzipped on disk, but must be uncompressed
+// when included in the kernel.
+class BConsoleFont;
 class BBitmap;
 
-class BVectorFont : public BFont {
+// abstrct base class for BFront
+class BFont : public BBase {
+  public:
+  // factory methods
+  static BVectorFont *CreateVectorFont(BBitmap *aBitmap, const TAny *aCharset = ENull);
+  static BConsoleFont *CreateConsoleFont(BBitmap *aBitmap, TAny *aCharset = ENull);
 public:
-  // factory method
-  static BVectorFont *CreateVectorFont(BBitmap *aBitmap, const TInt16 **aCharset = ENull);
+  BFont();
+  BFont(TRGB& aForeground, TRGB& aBackground);
 public:
-  BVectorFont(BBitmap *aBitmap, const TInt16 **aCharset);
-  virtual ~BVectorFont() = 0;
-
+  virtual void Write(TInt aX, TInt aY, TInt16 aChar) = 0;
+  virtual void Write(TPoint &aPoint, TInt16 aChar) = 0;
+  virtual void Write(TInt aX, TInt aY, const char *) = 0;
+  virtual void Write(TPoint &aPoint, const char *) = 0;
 public:
-  void write(TInt x, TInt y, char c);
-  void printf(TInt x, TInt y, const char *aFormat, ...);
-  void write(TPoint &aPoint, char c);
-  void printf(TPoint &aPoint, const char *aFormat, ...);
-  virtual TInt print_string_rotated(TInt x, TInt y, TFloat angle, const char *aFormat, ...) = 0;
+  void SetForegroundColor(TRGB& aForeground) {
+    mForegroundColor.Set(aForeground);
+  }
+  void SetBackgroundColor(TRGB& aBackground) {
+    mBackgroundColor.Set(aBackground);
+  }
+  void SetColors(TRGB& aForeground, TRGB& aBackground) {
+    SetForegroundColor(aForeground);
+    SetBackgroundColor(aBackground);
+  }
 protected:
-  BBitmap *mBitmap;
-  const TInt16 **mCharset;
-} PACKED;
-
-class BVectorFont32 : public BVectorFont {
-public:
-  BVectorFont32(BBitmap *aBitmap, const TInt16 **aCharset = ENull);
-  ~BVectorFont32();
-  TInt print_string_rotated(TInt x, TInt y, TFloat angle, const char *aFormat, ...);
-public:
-  TInt16 mScale;
-  TRGB mColor;
+  TRGB mForegroundColor, mBackgroundColor;;
 };
 
+#include <Graphics/Font/BVectorFont.h>
+#include <Graphics/Font/BConsoleFont.h>
 #endif

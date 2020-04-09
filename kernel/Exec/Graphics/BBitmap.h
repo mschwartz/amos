@@ -2,7 +2,8 @@
 #define EXEC_BBITMAP_H
 
 #include <Exec/BBase.h>
-#include <Graphics/Graphics.h>
+#include <Graphics/TRect.h>
+#include <Graphics/TRGB.h>
 
 // base class for different depth bitmaps
 class BBitmap : BBase {
@@ -17,7 +18,12 @@ protected:
   virtual ~BBitmap() = 0;
 public:
   virtual void Clear(TRGB& aColor) = 0;
+  virtual void Clear(TUint32 aColor) = 0;
 
+public:
+  TInt Width() { return mWidth; }
+  TInt Height() { return mHeight; }
+  TInt Depth() { return mDepth; }
 protected:
   TInt mWidth, mHeight, mDepth;
   TAny *mPixels;

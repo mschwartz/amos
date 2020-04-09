@@ -1,6 +1,15 @@
 #include <Exec/Memory.h>
+#ifdef TOOL
+#include <string.h>
+#include <stdlib.h>
+#else
 #include <posix/string.h>
 #include <posix/malloc.h>
+#endif
+
+//#ifdef TOOL
+//extern void memset(void *dst, uint8_t v, size_t size);
+//#endif
 
 void *AllocMem(TUint64 aSize, TInt aFlags) {
   TUint8 *mem = (TUint8 *)malloc(aSize);

@@ -56,11 +56,10 @@ extern "C" int kernel_main(TUint64 ax) {
   call_global_constructors();
 
   kprint("Display Mode:\n");
-  gDisplayModes->mDisplayMode.Dump();
   dhexdump((TUint8 *)0x5000, 2);
-//  kprint("Remaining Modes:\n");
-//  modes->Dump();
+  gDisplayModes->Dump();
 
+  bochs
   GDT g;
   gGDT = &g;
   kprint("initialized GDT\n");

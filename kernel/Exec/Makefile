@@ -1,10 +1,12 @@
-GFX=	Graphics/TRect.o Graphics/TBCD.o Graphics/BFont.o Graphics/BBitmap.o Graphics/VectorFonts/Font.o 
+GFX=	Graphics/TRect.o Graphics/TBCD.o Graphics/BFont.o Graphics/BBitmap.o 
+
+FONTS=	Graphics/Font/BVectorFont.o Graphics/Font/BConsoleFont.o Graphics/Font/VectorFonts/Font.o Graphics/kfont.o
 
 SCREEN=	Devices/screen/VGAScreen.o Devices/screen/BitmapScreen.o 
 
 DEVICES= Devices/Keyboard.o Devices/PIC.o Devices/Screen.o Devices/Timer.o
 
-OBJ= 	 BTypes.o Memory.o BBase.o BList.o BMessagePort.o BDevice.o $(DEVICES) $(GFX) $(SCREEN)
+OBJ= 	 BTypes.o Memory.o BBase.o BList.o BMessagePort.o BDevice.o $(DEVICES) $(GFX) $(SCREEN) $(FONTS)
 
 LIB=	libexec.a
 
@@ -28,4 +30,4 @@ kernel_isr.o: kernel_isr.asm
 	@echo ""
 
 clean:
-	rm -rf *.o *.a Devies/*.o Devices/*.a Graphics/*.o Graphics/*.a
+	rm -rf *.o *.a */*.o */*.a */*/*.o */*/*.a

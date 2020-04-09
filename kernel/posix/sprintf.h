@@ -1,6 +1,7 @@
 #ifndef POSIX_SPRINTF_H
 #define POSIX_SPRINTF_H
 
+#include <string.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>

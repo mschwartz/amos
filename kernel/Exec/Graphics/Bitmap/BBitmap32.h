@@ -4,7 +4,8 @@
 #include <Graphics/BBitmap.h>
 #include <Graphics/BFont.h>
 
-class BBitmap32 : BBitmap {
+
+class BBitmap32 : public BBitmap {
 public:
   BBitmap32(TInt aWidth, TInt aHeight, TInt aDepth, TAny *aMemory = ENull);
   ~BBitmap32();
@@ -13,16 +14,25 @@ public:
   void SetFont(BFont *aFont) { mFont = aFont; }
 
 public:
+  inline void INLINE PlotPixel(TInt aX, TInt aY, TUint32 aColor) {
+    TUint32 *ptr = &mPixels32[aY * mWidth + aX];
+    *ptr = aColor;
+  }
   inline void INLINE PlotPixel(TInt aX, TInt aY, TRGB &aColor) {
     TUint32 *ptr = &mPixels32[aY * mWidth + aX];
     *ptr = aColor.rgb888();
   }
-  void SafePlotPixel(TInt aX, TInt aY, TRGB &aColor) {
-    if (aX < 0 || aX > mWidth || aY < 0 || aY > mHeight) {
-      return;
+  inline void INLINE SafePlotPixel(TInt aX, TInt aY, TRGB &aColor) {
+    if (mBounds.PointInRect(aX, aY)) {
+      PlotPixel(aX, aY, aColor);
     }
-    PlotPixel(aX, aY, aColor);
   }
+  inline void INLINE SafePlotPixel(TInt aX, TInt aY, TUint32 aColor) {
+    if (mBounds.PointInRect(aX, aY)) {
+      PlotPixel(aX, aY, aColor);
+    }
+  }
+  void Clear(TUint32 aColor);
   void Clear(TRGB &aColor);
   void Line(TFloat aX1, TFloat aY1, TFloat aX2, TFloat aY2, TRGB& aColor);
   void FastHLine(TInt aX, TInt aY, TUint aW, TRGB &aColor);

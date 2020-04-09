@@ -36,6 +36,9 @@ const TUint64 FRAME_BUFFER_END = 0x000fffff;
 // CGA Text Mode Buffer
 const TUint64 TEXT_BUFFER      = 0x000b8000;   // 32KB
 const TUint64 TEXT_BUFFER_END  = 0x000bffff;
+// VESA Graphics Mode Buffer
+const TUint64 VESA_BUFFER      = 0x000a0000;   // 32KB
+const TUint64 VESA_BUFFER_END  = 0x000affff;
 // ROM BIOS
 const TUint64 ROM_BIOS         = 0x000f4000;
 const TUint64 ROM_BIOS_END     = 0x0010ffef;

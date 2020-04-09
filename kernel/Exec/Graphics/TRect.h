@@ -139,11 +139,11 @@ public:
   TBool Intersection(const TRect &aSrcRect1, const TRect &aSrcRect2);
 
 public:
-  TBool PointInRect(TInt x, TInt y) {
+  inline TBool INLINE PointInRect(TInt x, TInt y) {
     return x >= x1 && x <= x2 && y >= y1 && y <= y2;
   }
 
-  TBool PointInRect(TPoint p) { return PointInRect(p.x, p.y); }
+  inline TBool INLINE PointInRect(TPoint p) { return PointInRect(p.x, p.y); }
 
 public:
   void Center(TInt32 aX, TInt32 aY);

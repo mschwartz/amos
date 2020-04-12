@@ -1,5 +1,5 @@
-#ifndef BMESSAGEPORT_H
-#define BMESSAGEPORT_H
+#ifndef EXEC_MESSAGE_H
+#define EXEX_MESSAGE_H
 
 #include <Exec/BBase.h>
 #include <Exec/BList.h>
@@ -8,22 +8,21 @@ class BMessagePort;
 
 class BMessage : public BNodePri {
 public:
-  BMessage(BMessagePort& aReplyPort);
+  BMessage(BMessagePort *aReplyPort);
   ~BMessage();
 
 public:
   void Reply(BMessagePort *aReplyPort = ENull);
-  void Send(BMessagePort *aMessagePort);
 
 protected:
-  BMessagePort& mReplyPort;
+  BMessagePort *mReplyPort;
 };
 
 class BMessageList : public BListPri {
 public:
   BMessage *RemHead() { return (BMessage *)BListPri::RemHead(); }
 
-  void AddTail(BMessage& aMessage) { BListPri::AddTail(aMessage); }
+  void AddTail(BMessage *aMessage) { BListPri::AddTail(aMessage); }
 
   BMessage *First()  { return (BMessage *)mNext; }
 
@@ -43,11 +42,9 @@ public:
 
 public:
   BMessage *GetMessage();
-  void SendMessage(BMessage *aMessage);
 
 protected:
   TUint64 mSignal;    // mask of Signal bits to set when message received
-  BMessageList mMessageList;
 };
 
 #endif

@@ -196,7 +196,7 @@ public:
    */
   BNodePri *Prev(BNodePri *curr) { return curr->mPrev; }
 
-private:
+//private:
   void AddHead(BNodePri &nodevirtual);
   void AddTail(BNodePri &node);
 };

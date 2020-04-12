@@ -4,9 +4,9 @@ FONTS=	Graphics/Font/BVectorFont.o Graphics/Font/BConsoleFont.o Graphics/Font/Ve
 
 SCREEN=	Devices/screen/VGAScreen.o Devices/screen/BitmapScreen.o 
 
-DEVICES= Devices/Keyboard.o Devices/PIC.o Devices/Screen.o Devices/Timer.o
+DEVICES= Devices/Keyboard.o Devices/PIC.o Devices/Screen.o Devices/Timer.o Devices/ScreenDevice.o
 
-OBJ= 	 BTypes.o Memory.o BBase.o BList.o BMessagePort.o BDevice.o $(DEVICES) $(GFX) $(SCREEN) $(FONTS)
+OBJ= 	 BTypes.o Memory.o BBase.o BList.o BTask.o BMessagePort.o BDevice.o $(DEVICES) $(GFX) $(SCREEN) $(FONTS)
 
 LIB=	libexec.a
 

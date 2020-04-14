@@ -1,3 +1,4 @@
+#include <Exec/ExecBase.h>
 #include <Devices/Keyboard.h>
 #include <Devices/Timer.h>
 #include <x86/kprint.h>
@@ -281,7 +282,8 @@ Keyboard::Keyboard() {
   //
   ptr1 = ptr2 = 0;
   // install kernel handler
-  gIDT->install_handler(IRQ_KEYBOARD, keyboard_isr, this, "");
+  gExecBase.InstallIrqHandler(IRQ_KEYBOARD, keyboard_isr, this, "");
+//  gIDT->install_handler(IRQ_KEYBOARD, keyboard_isr, this, "");
   // enable the keyboard interrupt
   gPIC->enable_interrupt(IRQ_KEYBOARD);
 }

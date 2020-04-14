@@ -6,6 +6,18 @@
 #include <Exec/BTask.h>
 #include <Exec/BDevice.h>
 
+#include <x86/idt.h>
+
+class GDT;
+//class IDT;
+class MMU;
+class CPU;
+class PIC;
+class Timer;
+class Keyboard;
+class Screen;
+
+
 class ExecBase : public BBase {
 public:
   ExecBase();
@@ -13,6 +25,7 @@ public:
   void Init();
 
 public:
+  void InstallIrqHandler(TUint8 aIndex, TInterruptHandler *aHandler, TAny *aData, const char *aDescription = "undefined");
   BTask *GetCurrentTask() { 
     return mCurrentTask; 
   }
@@ -39,8 +52,20 @@ public:
   void Enable();
 
 public:
+  Screen &GetScreen() { return *mScreen; }
   static ExecBase &GetExecBase();
 
+protected:
+  IDT *mIdt;
+  GDT *mGdt;
+  MMU *mMmu;
+  CPU *mCpu;
+  PIC *mPic;
+  Timer *mTimer;
+  Keyboard *mKeyboard;
+  Screen *mScreen;
 };
+
+extern ExecBase gExecBase;
 
 #endif

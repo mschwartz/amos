@@ -5,7 +5,7 @@
 #include <x86/tasking.h>
 #include <x86/kernel_memory.h>
 
-IDT *gIDT;
+//IDT *gIDT;
 
 extern "C" void set_vector(TAny *idt_vector, TAny (*offset)(), TUint16 selector, TUint8 flags);
 extern "C" void load_idtr(TAny *ptr);
@@ -385,7 +385,7 @@ static const char *int_desc[] = {
 
 const char *IDT::interrupt_description(TUint16 n) {
   /* Interrupts descriptions */
-  dprint("   desc(%d) %s\n\n", n, int_desc[0]);
+  dprint("   desc(%d) %s\n", n, int_desc[0]);
 
   if (n < INTERRUPTS)
     return int_desc[n];

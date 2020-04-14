@@ -54,51 +54,51 @@ extern "C" int kernel_main(TUint64 ax) {
   dprint("data_end = %x\n", &data_end);
   dprint("bss_end = %x\n", &bss_end);
 
-  gScreen = Screen::CreateScreen();
-  dprint("initialized screen\n");
+//  gScreen = Screen::CreateScreen();
+//  dprint("initialized screen\n");
 
   in_bochs = *((TUint8 *)0x7c10);
   dprint("bochs %x\n", in_bochs);
   call_global_constructors();
 
-  kprint("Display Mode:\n");
-  dhexdump((TUint8 *)0x5000, 2);
+//  kprint("Display Mode:\n");
+//  dhexdump((TUint8 *)0x5000, 2);
 //  Screen::DumpModes();
 
-  GDT g;
-  gGDT = &g;
-  dprint("initialized GDT\n");
+//  GDT g;
+//  gGDT = &g;
+//  dprint("initialized GDT\n");
 
   // set up paging
-  MMU m;
-  gMMU = &m;
-  dprint("initialized MMU\n");
+//  MMU m;
+//  gMMU = &m;
+//  dprint("initialized MMU\n");
 
   // set up interrupt handlers
-  IDT i;
-  gIDT = &i;
-  dprint("initialized IDT\n");
+//  IDT i;
+//  gIDT = &i;
+//  dprint("initialized IDT\n");
 
 //  Scheduler sc;
 //  scheduler = &sc;
 //  kprint("initialized Scheduler\n");
 
-  CPU _cpu;
-  gCPU = &_cpu;
+//  CPU _cpu;
+//  gCPU = &_cpu;
 
   // set up 8259 PIC
-  PIC p;
-  gPIC = &p;
-  kprint("initialized 8259 PIC\n");
-  sti();
+//  PIC p;
+//  gPIC = &p;
+//  kprint("initialized 8259 PIC\n");
+//  sti();
 
-  Timer *t = new Timer();
-  gTimer = t;
-  kprint("initialized timer\n");
+//  Timer *t = new Timer();
+//  gTimer = t;
+//  kprint("initialized timer\n");
 
-  Keyboard k;
-  gKeyboard = &k;
-  kprint("initialized keyboard\n");
+//  Keyboard k;
+//  gKeyboard = &k;
+//  kprint("initialized keyboard\n");
 
 //  gDeviceList.FindDevice("FOO>DEVICE");
 

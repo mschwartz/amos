@@ -33,7 +33,7 @@ static TBool out_of_bounds_handler(void *aData) {
 static TBool invalid_opcode_handler(void *aData) {
   cli();
   dprint("invalid_opcode handler\n");
-  ExecBase::DumpCurrentTaskRegisters();
+//  ExecBase::DumpCurrentTaskRegisters();
   halt();
   return true;
 }

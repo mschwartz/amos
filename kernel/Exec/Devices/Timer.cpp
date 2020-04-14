@@ -1,3 +1,4 @@
+#include <Exec/ExecBase.h>
 #include <x86/cpu.h>
 #include <x86/bochs.h>
 #include <x86/kprint.h>
@@ -15,7 +16,7 @@
 #define I8253_CMD_LOAD 0x34
 #define I8253_CMD_LATCH 0x04
 
-Timer *gTimer;
+//Timer *gTimer;
 
 bool timer_isr(void *aData) {
 //  dprint("TIMER INTERRUPT\n");
@@ -39,7 +40,7 @@ Timer::Timer() {
   ticks = 0;
 
   set_frequency(100);
-  gIDT->install_handler(IRQ_TIMER, timer_isr, this, "8253 Timer");
+  gExecBase.InstallIrqHandler(IRQ_TIMER, timer_isr, this, "8253 Timer");
   gPIC->enable_interrupt(IRQ_TIMER);
 }
 

@@ -1,3 +1,4 @@
+#include <Exec/ExecBase.h>
 #include <stdarg.h>
 #include <posix/string.h>
 #include <posix/itoa.h>
@@ -6,7 +7,8 @@
 //extern Screen *screen;
 
 void kputc(char c) {
-  gScreen->putc(c);
+  Screen &gScreen = gExecBase.GetScreen();
+  gScreen.putc(c);
 }
 
 void kputs(const char *s) {
@@ -22,8 +24,9 @@ void kprint(const char *fmt, ...) {
   char buf[20];
 
   va_start(ap, fmt);
+  Screen &gScreen = gExecBase.GetScreen();
   if (!fmt) {
-    gScreen->puts("NULL FORMAT");
+    gScreen.puts("NULL FORMAT");
     return;
   }
 
@@ -33,7 +36,7 @@ void kprint(const char *fmt, ...) {
       case '\0':
         return;
       case '\n':
-        gScreen->newline();
+        gScreen.newline();
         break;
       case '%':
         tt = *fmt++;
@@ -42,32 +45,32 @@ void kprint(const char *fmt, ...) {
             break;
           case 's':
             s = va_arg(ap, char *);
-            gScreen->puts(s);
+            gScreen.puts(s);
             break;
           case 'd':
           case 'u':
             d = va_arg(ap, long);
             ltoa(d, buf, 10);
-            gScreen->puts(buf);
+            gScreen.puts(buf);
             break;
           case 'x':
           case 'X':
             d = va_arg(ap, long);
             ltoa(d, buf, 16);
-            gScreen->puts(buf);
+            gScreen.puts(buf);
             break;
           case 'c':
             c = (char)va_arg(ap, int);
-            gScreen->putc(c);
+            gScreen.putc(c);
             break;
           default:
-            gScreen->putc('%');
-            gScreen->putc(tt);
+            gScreen.putc('%');
+            gScreen.putc(tt);
             break;
         }
         break;
       default:
-        gScreen->putc(t);
+        gScreen.putc(t);
         break;
     }
   }

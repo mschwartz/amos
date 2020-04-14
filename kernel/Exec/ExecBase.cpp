@@ -1,6 +1,14 @@
 #include <Exec/ExecBase.h>
-#include <x86/cpu.h>
 #include <x86/bochs.h>
+
+#include <x86/gdt.h>
+#include <x86/idt.h>
+#include <x86/mmu.h>
+#include <x86/cpu.h>
+#include <Devices/PIC.h>
+#include <Devices/Screen.h>
+#include <Devices/Keyboard.h>
+#include <Devices/Timer.h>
 
 class IdleTask : public BTask {
 public:
@@ -13,15 +21,9 @@ public:
   }
 };
 
-ExecBase *gExecBase = ENull;
 
 ExecBase &ExecBase::GetExecBase() {
-  bochs
-  if (!gExecBase) {
-    dprint("GetExecBase %x\n", gExecBase);
-    gExecBase = new ExecBase();
-  }
-  return *gExecBase;
+  return gExecBase;
 }
 
 void ExecBase::Disable() {
@@ -44,12 +46,34 @@ void ExecBase::Enable() {
 }
 
 ExecBase::ExecBase() : BBase() {
+  mScreen = Screen::CreateScreen();
+
+  static GDT gdt;
+  mGdt = &gdt;
+
+  static MMU mmu;
+  mMmu = &mmu;
+
+  static IDT _idt;
+  mIdt = &_idt;
+
+  static CPU _cpu;
+  mCpu = &_cpu;
+
+  static PIC pic;
+  mPic = &pic;
+
+  static Timer timer;
+  mTimer = &timer;
+
+
   //  Init();
   //  mExecBase = &gExecBase;
   dprint("Construct ExecBase %d\n", sizeof(BTaskList));
   bochs;
   mDeviceList = new BDeviceList();
   dprint("Constructed Device List\n");
+
 }
 
 ExecBase::~ExecBase() {
@@ -63,7 +87,7 @@ void ExecBase::AddTask(BTask *aTask) {
 }
 
 void ExecBase::DumpCurrentTask() {
-  gExecBase->mCurrentTask->Dump();
+  gExecBase.mCurrentTask->Dump();
 }
 
 void ExecBase::DumpCurrentTaskRegisters() {
@@ -99,3 +123,5 @@ void ExecBase::AddDevice(BDevice *aDevice) {
   mDeviceList->Add(*aDevice);
   Enable();
 }
+
+ExecBase gExecBase;

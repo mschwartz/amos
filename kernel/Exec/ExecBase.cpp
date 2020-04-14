@@ -16,8 +16,9 @@ public:
 ExecBase *gExecBase = ENull;
 
 ExecBase &ExecBase::GetExecBase() {
-  dprint("GetExecBase %x\n", gExecBase);
+  bochs
   if (!gExecBase) {
+    dprint("GetExecBase %x\n", gExecBase);
     gExecBase = new ExecBase();
   }
   return *gExecBase;
@@ -45,11 +46,8 @@ void ExecBase::Enable() {
 ExecBase::ExecBase() : BBase() {
   //  Init();
   //  mExecBase = &gExecBase;
-  dprint("Construct ExecBase\n");
+  dprint("Construct ExecBase %d\n", sizeof(BTaskList));
   bochs;
-  mTasksReady = new BTaskList();
-  dprint("Construct TaskReady\n");
-  mTasksWait = new BTaskList();
   mDeviceList = new BDeviceList();
   dprint("Constructed Device List\n");
 }
@@ -60,7 +58,7 @@ ExecBase::~ExecBase() {
 
 void ExecBase::AddTask(BTask *aTask) {
   Disable();
-  mTasksReady->Add(*aTask);
+  mTasksReady.Add(*aTask);
   Enable();
 }
 
@@ -80,7 +78,7 @@ void ExecBase::Init() {
   Disable(); // this operation needs to be atomic
   dprint("== AddTask %x\n", task);
   bochs;
-  mTasksReady->Add(*task);
+  mTasksReady.Add(*task);
   SetCurrentTask(task);
   Enable();
 }

@@ -1,2 +1,2 @@
-show dbg_all
+show off
 

@@ -26,10 +26,10 @@ public:
   static void DumpCurrentTaskRegisters();
 
 protected:
-  BDeviceList *mDeviceList;
-  BTaskList *mTasksReady;
-  BTaskList *mTasksWait;
+  BTaskList mTasksReady;
+  BTaskList mTasksWait;
   BTask *mCurrentTask;
+  BDeviceList *mDeviceList;
 
 protected:
   volatile TInt32 mDisableNestCount;

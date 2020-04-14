@@ -86,17 +86,14 @@ extern "C" int kernel_main(TUint64 ax) {
   CPU _cpu;
   gCPU = &_cpu;
 
-  ExecBase &eb = ExecBase::GetExecBase();
-  eb.Init();
-
   // set up 8259 PIC
   PIC p;
   gPIC = &p;
   kprint("initialized 8259 PIC\n");
   sti();
 
-  Timer t;
-  gTimer = &t;
+  Timer *t = new Timer();
+  gTimer = t;
   kprint("initialized timer\n");
 
   Keyboard k;
@@ -112,6 +109,9 @@ extern "C" int kernel_main(TUint64 ax) {
 
   char *foo = (char *)malloc(100);
   dprint("AllocMem returned %x\n", foo);
+
+//  ExecBase &eb = ExecBase::GetExecBase();
+//  eb.Init();
 
   dprint("task0 do nothing\n");
 //  char *foo = (char *)malloc(10);

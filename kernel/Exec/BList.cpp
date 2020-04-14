@@ -10,6 +10,10 @@
 ///////////////////////////////////////////////////////////////////////
 
 BNode::BNode(const char *aName) {
+#ifdef KERNEL
+  dprint("BNode %s\n", aName);
+  bochs
+#endif
   mNodeName = DuplicateString(aName);
 }
 
@@ -110,6 +114,10 @@ void BList::RemoveNode(BNode *aNode) {
 
 BNodePri::BNodePri(const char *aName, TInt64 aPri = 0) : BNode(aName), pri(aPri) {
   //
+#ifdef KERNEL
+  dprint("BNodePri %s\n", aName);
+  bochs
+#endif
 }
 
 BNodePri::~BNodePri() {
@@ -120,6 +128,10 @@ BNodePri::~BNodePri() {
  * Create an empty priority list.
  */
 BListPri::BListPri(const char *aName) : BNodePri(aName, 0) {
+#ifdef KERNEL
+  dprint("BListPri\n");
+  bochs
+#endif
   Reset();
 }
 

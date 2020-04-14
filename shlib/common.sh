@@ -10,6 +10,7 @@ echo $TOP_DIR
 #export OBJCOPY=/usr/bin/i686-elf-objcopy
 
 export GCC=gcc
+export GPP=g++
 export LD=ld
 export AR=ar
 export RANLIB=ranlib

@@ -13,11 +13,11 @@ echo $TOP_DIR
 pwd
 
 
-CRTBEGIN_OBJ=`$GCC -print-file-name=crtbegin.o`
+CRTBEGIN_OBJ=`$GPP -print-file-name=crtbegin.o`
 echo ""
 echo $CRTBEGIN_OBJ
 echo ""
-CRTEND_OBJ=`$GCC -print-file-name=crtend.o`
+CRTEND_OBJ=`$GPP -print-file-name=crtend.o`
 
 echo "CRTBEGIN" $CRTBEGIN_OBJ
 
@@ -53,9 +53,9 @@ cd kernel
 echo "  COMPILING"
 echo "    nasm -f elf -o kernel_start.o kernel_start.asm"
 nasm -f elf64 -o kernel_start.o -l kernel_start.lst kernel_start.asm
-echo $GCC -c -o crti.o crti.s
-$GCC -c -o crti.o crti.s
-$GCC -c -o crtn.o crtn.s
+echo $GPP -c -o crti.o crti.s
+$GPP -c -o crti.o crti.s
+$GPP -c -o crtn.o crtn.s
 
 echo ""
 echo ""
@@ -90,8 +90,8 @@ cd posix
 make
 cd ..
 
-echo "    $GCC -c $CFLAGS -o main.o main.cpp"
-$GCC -g -c $CFLAGS $INCLUDE_PATH -o main.o main.cpp
+echo "    $GPP -c $CFLAGS -o main.o main.cpp"
+$GPP -g -c $CFLAGS $INCLUDE_PATH -o main.o main.cpp
 
 #############################
 
@@ -100,7 +100,7 @@ echo ""
 echo ""
 echo "  LINKING"
 echo "ld -m64 -Tconfig.ld -o kernel.elf $KERNEL $LIBS"
-ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS
+$LD  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS
 
 echo ""
 echo ""

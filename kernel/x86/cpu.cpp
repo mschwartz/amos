@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include "idt.h"
+#include <Exec/ExecBase.h>
 
 /*!
  * CPU class maintains the CPU interrupt vectors
@@ -30,7 +31,9 @@ static TBool out_of_bounds_handler(void *aData) {
   return true;
 }
 static TBool invalid_opcode_handler(void *aData) {
+  cli();
   dprint("invalid_opcode handler\n");
+  ExecBase::DumpCurrentTaskRegisters();
   halt();
   return true;
 }
@@ -60,6 +63,7 @@ static TBool stack_fault_handler(void *aData) {
 }
 static TBool general_protection_handler(void *aData) {
   dprint("general_protection handler\n");
+  halt();
   return true;
 }
 static TBool page_fault_handler(void *aData) {

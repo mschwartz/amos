@@ -7,23 +7,20 @@
 const TInt HASH_SIZE = 256;
 
 struct BSymbol : public BNode {
-  BSymbol(const char *aName, TUint32 aValue, void *aPtr = ENull) {
-    name = strdup(aName);
-    value = aValue;
-    aptr = aPtr;
-  }
-
+  BSymbol(const char *aName, TUint32 aValue, void *aPtr = ENull);
   ~BSymbol() {
-    delete[] name;
+    //    delete[] name;
   }
 
-  char *name;
-  void *aptr; // ptr to anything you want to be able to lookup
+  void *mPtr; // ptr to anything you want to be able to lookup
   TUint32 value;
 };
 
 struct BSymbolList : public BList {
 public:
+  BSymbolList(const char *aName = "SymbolTable") : BList(aName) {
+    //
+  }
   ~BSymbolList() {
     while (BSymbol *s = RemHead()) {
       delete s;
@@ -31,33 +28,32 @@ public:
   }
 
 public:
-  BSymbol *RemHead() { return (BSymbol *) BList::RemHead(); }
+  BSymbol *RemHead() { return (BSymbol *)BList::RemHead(); }
 
-  BSymbol *First() { return (BSymbol *) mNext; }
+  BSymbol *First() { return (BSymbol *)mNext; }
 
-  BSymbol *Next(BSymbol *curr) { return (BSymbol *) curr->mNext; }
+  BSymbol *Next(BSymbol *curr) { return (BSymbol *)curr->mNext; }
 
-  BSymbol *Last() { return (BSymbol *) mPrev; }
+  BSymbol *Last() { return (BSymbol *)mPrev; }
 
-  BSymbol *Prev(BSymbol *curr) { return (BSymbol *) curr->mPrev; }
+  BSymbol *Prev(BSymbol *curr) { return (BSymbol *)curr->mPrev; }
 
-  TBool End(BSymbol *curr) { return curr == (BSymbol *) this; }
+  TBool End(BSymbol *curr) { return curr == (BSymbol *)this; }
 };
 
-class BSymbolTable {
+class BSymbolTable : public BBase {
 public:
   BSymbolTable();
 
   ~BSymbolTable();
 
 public:
-  BSymbol *LookupSymbol(const char *name);
+  BSymbol *LookupSymbol(const char *aName);
 
   TBool AddSymbol(const char *aName, TUint32 aValue, TAny *aPtr = ENull);
 
 protected:
   BSymbolList buckets[HASH_SIZE];
 };
-
 
 #endif //RCOMP_BSYMBOLTABLE_H

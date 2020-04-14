@@ -3,7 +3,7 @@ KERNEL=	kernel_start.o main.o
 #CFLAGS=-nostartfiles -ffreestanding -nostdlib -m64 -fno-stack-protector -I./cclib -I./x86
 
 .cpp.o:
-	$(GCC) -O2 -c $(CFLAGS) -o $*.o $*.cpp
+	$(GPP) -O2 -c $(CFLAGS) -o $*.o $*.cpp
 
 all:	kernel.img
 

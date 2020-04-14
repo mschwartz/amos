@@ -9,12 +9,12 @@ CE=     Panic.o ../../kernel/Exec/Memory.o ../../kernel/Exec/BBase.o ../../kerne
 INC=	-I. -I../../ -I../../kernel -I../../kernel/Exec
 
 .cpp.o:
-	g++ -c -O3 -DTOOL $(INC) -o $*.o $*.cpp
+	$(GPP) -c -O3 -DTOOL $(INC) -o $*.o $*.cpp
 
 all: rcomp
 
 rcomp:	$(LIB) $(OBJ) $(TMX) $(CE)
-	g++ -o rcomp $(OBJ) $(LIB) $(TMX) $(CE)
+	$(GPP) -o rcomp $(OBJ) $(LIB) $(TMX) $(CE)
 	cp rcomp ..
 
 clean:

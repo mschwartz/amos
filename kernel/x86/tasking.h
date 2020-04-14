@@ -4,8 +4,7 @@
 #include <Exec/BTypes.h>
 #include <x86/bochs.h>
 
-typedef struct Task {
-  struct Task *next, *prev;
+typedef struct  {
   // flags
   TUint64 rflags;
   // general purpose registers
@@ -69,13 +68,6 @@ typedef struct Task {
   }
 } task_t;
 
-class Scheduler {
-public:
-  Scheduler();
-  ~Scheduler();
-};
-
-extern Scheduler *scheduler;
 extern "C" task_t *current_task;
 
 #endif

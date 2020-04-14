@@ -18,20 +18,24 @@ public:
     TUint32 *ptr = &mPixels32[aY * mWidth + aX];
     *ptr = aColor;
   }
+
   inline void INLINE PlotPixel(TInt aX, TInt aY, TRGB &aColor) {
     TUint32 *ptr = &mPixels32[aY * mWidth + aX];
     *ptr = aColor.rgb888();
   }
+
   inline void INLINE SafePlotPixel(TInt aX, TInt aY, TRGB &aColor) {
     if (mBounds.PointInRect(aX, aY)) {
       PlotPixel(aX, aY, aColor);
     }
   }
+
   inline void INLINE SafePlotPixel(TInt aX, TInt aY, TUint32 aColor) {
     if (mBounds.PointInRect(aX, aY)) {
       PlotPixel(aX, aY, aColor);
     }
   }
+
   void Clear(TUint32 aColor);
   void Clear(TRGB &aColor);
   void Line(TFloat aX1, TFloat aY1, TFloat aX2, TFloat aY2, TRGB& aColor);

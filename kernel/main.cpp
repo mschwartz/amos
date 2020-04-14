@@ -3,6 +3,7 @@
  */
 
 #include <Exec/BTypes.h>
+#include <Exec/ExecBase.h>
 #include <posix/string.h>
 #include <posix/malloc.h>
 #include <x86/bochs.h>
@@ -11,7 +12,7 @@
 #include <x86/idt.h>
 #include <x86/mmu.h>
 #include <Devices/PIC.h>
-#include <x86/tasking.h>
+//#include <x86/tasking.h>
 
 // devices
 #include <Devices/Screen.h>
@@ -31,15 +32,22 @@ extern "C" func_ptr __global_ctors[0], __global_ctors[0];
 static void call_global_constructors(void) {
   dprint("CALL CONSTRUCTORS %x %x\n", __init_array_start, __init_array_end);
   for (func_ptr *func = __init_array_start; func != __init_array_end; func++) {
-    dprint("func %x\n", func);
+    dprint("func %x\n", *func);
     (*func)();
   }
 }
 
+task_t task0;
+
+extern "C" task_t *current_task;
+
 //extern "C" TUint64 __CTOR_LIST__[];
 extern "C" int kernel_main(TUint64 ax) {
+  current_task = &task0;
+
+  // logging
   extern void *kernel_end, *init_end, *text_end, *rodata_end, *data_end, *bss_end;
-  dprint("kernel_end = %x\n", &kernel_end);
+  dprint("\nkernel_end = %x\n", &kernel_end);
   dprint("init_end = %x\n", &init_end);
   dprint("text_end = %x\n", &text_end);
   dprint("rodata_end = %x\n", &rodata_end);
@@ -47,8 +55,6 @@ extern "C" int kernel_main(TUint64 ax) {
   dprint("bss_end = %x\n", &bss_end);
 
   gScreen = Screen::CreateScreen();
-//  Screen s;
-//  gScreen = &s;
   dprint("initialized screen\n");
 
   in_bochs = *((TUint8 *)0x7c10);
@@ -57,29 +63,31 @@ extern "C" int kernel_main(TUint64 ax) {
 
   kprint("Display Mode:\n");
   dhexdump((TUint8 *)0x5000, 2);
-  gDisplayModes->Dump();
+//  Screen::DumpModes();
 
-  bochs
   GDT g;
   gGDT = &g;
-  kprint("initialized GDT\n");
+  dprint("initialized GDT\n");
 
   // set up paging
   MMU m;
   gMMU = &m;
-  kprint("initialized MMU\n");
-
-  Scheduler sc;
-  scheduler = &sc;
-  kprint("initialized Scheduler\n");
+  dprint("initialized MMU\n");
 
   // set up interrupt handlers
   IDT i;
   gIDT = &i;
-  kprint("initialized IDT\n");
+  dprint("initialized IDT\n");
+
+//  Scheduler sc;
+//  scheduler = &sc;
+//  kprint("initialized Scheduler\n");
 
   CPU _cpu;
   gCPU = &_cpu;
+
+  ExecBase &eb = ExecBase::GetExecBase();
+  eb.Init();
 
   // set up 8259 PIC
   PIC p;
@@ -95,7 +103,7 @@ extern "C" int kernel_main(TUint64 ax) {
   gKeyboard = &k;
   kprint("initialized keyboard\n");
 
-  gDeviceList.FindDevice("FOO>DEVICE");
+//  gDeviceList.FindDevice("FOO>DEVICE");
 
 //  test_trap();
 //  dprint("trap returned\n");

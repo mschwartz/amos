@@ -75,9 +75,7 @@ extern "C" bool kernel_isr() {
   isr_handler_t *info = &interrupt_handlers[current_task->isr_num];
   if (!info->handler) {
     const char *desc = IDT::interrupt_description(current_task->isr_num);
-    dprint("here %s\n", desc);
-    kprint("here %s\n", desc);
-    kprint("no handler: %s\n", desc);
+    dprint("no handler: 0x%x isr %d %s\n", current_task, current_task->isr_num, desc);
     return false;
   }
   return info->handler(info->data);
@@ -322,7 +320,7 @@ IDT::~IDT() {
   disable_interrupts();
 }
 
-void IDT::install_handler(TUint8 index, TInterruptHandler *handler, void *aData, const char *description) {
+void IDT::install_handler(uint8_t index, TInterruptHandler *handler, void *aData, const char *description) {
   interrupt_handlers[index].set(handler, aData, description);
 }
 
@@ -387,7 +385,7 @@ static const char *int_desc[] = {
 
 const char *IDT::interrupt_description(TUint16 n) {
   /* Interrupts descriptions */
-  dprint("desc(%d) %s\n", n, int_desc[0]);
+  dprint("   desc(%d) %s\n\n", n, int_desc[0]);
 
   if (n < INTERRUPTS)
     return int_desc[n];

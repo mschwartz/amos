@@ -1,5 +1,16 @@
 #include <BTypes.h>
 
+extern "C" void __cxa_pure_virtual() {
+  //
+};
+
+extern "C" void _Unwind_Resume(TAny *exc) {
+  //
+};
+extern "C" void __gxx_personality_v0() {
+  //
+}
+
 #if 0
 TBool TRect::Overlaps(TRect &aOther) {
   if (x1 > aOther.x2 || x2 < aOther.x1) {

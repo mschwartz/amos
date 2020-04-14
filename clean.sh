@@ -2,4 +2,8 @@
 
 set -e
 
-rm -rf *.o */*.o */*/*.o cmake-build-release cmake-build-debug *.img */*.img
+find . -name '*.o' -print
+find . -name '*.o' -delete
+find . -name '*.a' -print
+find . -name '*.a' -delete
+

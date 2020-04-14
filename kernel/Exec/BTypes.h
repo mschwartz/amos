@@ -213,4 +213,8 @@ typedef float TFloat;
 //#include "Types/TBCD.h"
 //#include "Types/TNumber.h"
 
+extern "C"  void __cxa_pure_virtual();
+extern "C" void _Unwind_Resume(TAny *exc);
+extern "C" void __gxx_personality_v0();
+
 #endif // BTYPES_H

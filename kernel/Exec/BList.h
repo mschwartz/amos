@@ -2,6 +2,13 @@
 #define BLIST_H
 
 #include "BBase.h"
+#include <stdint.h>
+
+//const TInt64 INT64_MIN = LLONG_MIN;
+//const TInt64 INT64_MAX = LLONG_MAX;
+const TInt64 LOWEST_PRI = INT64_MAX;
+const TInt64 HIGHEST_PRI = INT64_MAX;
+
 
 /**
  * Two basic types of doubly linked lists:
@@ -18,26 +25,28 @@
  */
 class BNode : public BBase {
 public:
-  BNode() : BBase(){}
-  virtual ~BNode() {}
+  BNode(const char *aName);
+  ~BNode();
 
 public:
   // make this node last on the list, if node is key
-  void InsertBeforeNode(BNode *aNextNode) {
+   void InsertBeforeNode(BNode *aNextNode) {
     BNode *pnode = aNextNode->mPrev;
     pnode->mNext = this;
     aNextNode->mPrev = this;
     mNext = aNextNode;
     mPrev = pnode;
   }
+
   // make this node first on the list, if node is key
-  void InsertAfterNode(BNode *mPreviousNode) {
+   void InsertAfterNode(BNode *mPreviousNode) {
     BNode *nnode = mPreviousNode->mNext;
     mPreviousNode->mNext = this;
     nnode->mPrev = this;
     mNext = nnode;
     mPrev = mPreviousNode;
   }
+
   void Remove() {
     mNext->mPrev = mPrev;
     mPrev->mNext = mNext;
@@ -45,19 +54,20 @@ public:
 
 public:
   BNode *mNext, *mPrev;
+  char *mNodeName;
 };
 
 /**
  * An element in a BListPri linked list.
  */
-class BNodePri : public BBase {
+class BNodePri : public BNode {
 public:
-  BNodePri(TInt aPri = 0) : BBase(), pri(aPri) {}
-  virtual ~BNodePri() {}
+  BNodePri(const char *aName, TInt64 aPri);
+  ~BNodePri();
 
 public:
   void InsertBeforeNode(BNodePri *aNode) {
-    BNodePri *pnode = aNode->mPrev;
+    BNode *pnode = aNode->mPrev;
     pnode->mNext = this;
     aNode->mPrev = this;
     mNext = aNode;
@@ -65,7 +75,7 @@ public:
   }
   // make this node first on the list, if node is key
   void InsertAfterNode(BNodePri *pnode) {
-    BNodePri *nnode = pnode->mNext;
+    BNode *nnode = pnode->mNext;
     pnode->mNext = this;
     nnode->mPrev = this;
     mNext = nnode;
@@ -77,8 +87,7 @@ public:
   }
 
 public:
-  BNodePri *mNext, *mPrev;
-  TInt pri;
+  TInt64 pri;
 };
 
 /**
@@ -86,8 +95,8 @@ public:
  */
 class BList : public BNode {
 public:
-  BList();
-  virtual ~BList();
+  BList(const char *aName);
+  ~BList();
 
   /**
    * Remove all of the elements from the list.
@@ -146,10 +155,8 @@ public:
  */
 class BListPri : public BNodePri {
 public:
-  BListPri() : BNodePri(0) {
-    Reset();
-  }
-  virtual ~BListPri() {}
+  BListPri(const char *aName);
+  ~BListPri();
 
 public:
   void Dump(BNodePri *aStop = ENull);
@@ -169,36 +176,37 @@ public:
    * Get the head element from the list.
    * @return The head element.
    */
-  BNodePri *First() { return mNext; }
+  BNodePri *First() { return (BNodePri *)mNext; }
   /**
    * Test if the specified element is the end of the list.
    * @param curr The element to test.
    * @return True if is is the end or faes if it is not the end.
    */
   TBool End(BNodePri *curr) { return curr == (BNodePri *)this; }
+
+  void AddHead(BNodePri &nodevirtual);
   BNodePri *RemHead();
+
+  void AddTail(BNodePri &node);
   BNodePri *RemTail();
+
   /**
    * Get the element after the specified element.
    * @param curr The current element;
    * @return The mNext element in the list;
    */
-  BNodePri *Next(BNodePri *curr) { return curr->mNext; }
+  BNodePri *Next(BNodePri *curr) { return (BNodePri *)curr->mNext; }
   /**
     * Get the element from the tail of the list.
     * @return The head element.
     */
-  BNodePri *Last() { return mPrev; }
+  BNodePri *Last() { return (BNodePri *)mPrev; }
   /**
    * Get element before the specified element.
    * @param curr The current element;
    * @return The mPrevious element in the list;
    */
-  BNodePri *Prev(BNodePri *curr) { return curr->mPrev; }
-
-//private:
-  void AddHead(BNodePri &nodevirtual);
-  void AddTail(BNodePri &node);
+  BNodePri *Prev(BNodePri *curr) { return (BNodePri *)curr->mPrev; }
 };
 
 #endif

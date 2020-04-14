@@ -6,12 +6,12 @@ SCREEN=	Devices/screen/VGAScreen.o Devices/screen/BitmapScreen.o
 
 DEVICES= Devices/Keyboard.o Devices/PIC.o Devices/Screen.o Devices/Timer.o Devices/ScreenDevice.o
 
-OBJ= 	 BTypes.o Memory.o BBase.o BList.o BTask.o BMessagePort.o BDevice.o $(DEVICES) $(GFX) $(SCREEN) $(FONTS)
+OBJ= 	 BTypes.o Memory.o BBase.o BList.o BTask.o BMessagePort.o BDevice.o ExecBase.o $(DEVICES) $(GFX) $(SCREEN) $(FONTS)
 
 LIB=	libexec.a
 
 .cpp.o:
-	$(GCC) -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
+	$(GPP) -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
 
 .asm.o:
 	@echo ""

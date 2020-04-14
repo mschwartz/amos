@@ -5,6 +5,7 @@
 #else
 #include <posix/string.h>
 #include <posix/malloc.h>
+#include <x86/bochs.h>
 #endif
 
 //#ifdef TOOL
@@ -24,9 +25,21 @@ void FreeMem(TAny *memory) {
   free(memory);
 }
 
-void *operator new(size_t size) { return AllocMem(size, MEMF_SLOW); }
+void *operator new(size_t aSize) { 
+#ifdef KERNEL
+  bochs;
+  dprint("new %d\n", aSize);
+#endif
+  return AllocMem(aSize, MEMF_SLOW); 
+}
 
-void *operator new[](size_t size) { return AllocMem(size, MEMF_SLOW); }
+void *operator new[](size_t aSize) { 
+#ifdef KERNEL
+  bochs;
+  dprint("new[] %d\n", aSize);
+#endif
+  return AllocMem(aSize, MEMF_SLOW); 
+}
 
 void operator delete(void *ptr) {
   FreeMem(ptr);

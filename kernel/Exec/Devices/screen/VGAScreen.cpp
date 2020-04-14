@@ -8,6 +8,10 @@ VGAScreen::VGAScreen() { // } : Screen() {
   cls();
 }
 
+VGAScreen::~VGAScreen() {
+  //
+}
+
 void VGAScreen::moveto(int x, int y) {
   TUint16 pos = y * VGA_WIDTH + x;
   outb(0x0f, 0x3d4);
@@ -21,9 +25,19 @@ void VGAScreen::getxy(int &x, int &y) {
   y = row;
 }
 
+void VGAScreen::down() {
+  row++;
+  if (row > 24) {
+    scrollup();
+    row = 24;
+  }
+  moveto(col, row);
+}
+
 void VGAScreen::cleareol(TUint8 ch) {
   TUint16 *dst = (TUint16 *)&screen[row * VGA_BYTESPERROW],
            blank = (attribute << 8) | ch;
+
   for (int c = col; c < VGA_WIDTH; col++) {
     *dst++ = blank;
   }
@@ -48,19 +62,6 @@ void VGAScreen::scrollup() {
   moveto(0, 24);
 }
 
-void VGAScreen::down() {
-  row++;
-  if (row > 24) {
-    scrollup();
-    row = 24;
-  }
-  moveto(col, row);
-}
-void VGAScreen::newline() {
-  col = 0;
-  down();
-}
-
 void VGAScreen::putc(char c) {
   if (c == 10) {
     col = 0;
@@ -82,6 +83,11 @@ void VGAScreen::putc(char c) {
     }
   }
   moveto(col, row);
+}
+
+void VGAScreen::newline() {
+  col = 0;
+  down();
 }
 
 void VGAScreen::cls(TUint8 ch) {

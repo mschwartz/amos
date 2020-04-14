@@ -5,13 +5,13 @@
 
 class BDevice : public BNodePri {
 public:
-  BDevice();
+  BDevice(const char *aName = "BDevice");
   ~BDevice();
 };
 
 class BDeviceList : public BListPri {
 public:
-  BDeviceList();
+  BDeviceList(const char *aName = "Device List");
   ~BDeviceList();
 
 public:
@@ -31,8 +31,5 @@ public:
 
   TBool End(BDevice *aCurrent) { return aCurrent == (BDevice *)this; }
 };
-
-extern BDeviceList gDeviceList;
-
 
 #endif

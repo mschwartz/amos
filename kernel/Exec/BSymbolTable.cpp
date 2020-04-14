@@ -14,7 +14,12 @@ static TInt16 hash(const char *s) {
   return v%256;
 }
 
-BSymbolTable::BSymbolTable() {
+BSymbol::BSymbol(const char *aName, TUint32 aValue, void *aPtr)  : BNode(aName) {
+    value = aValue;
+    mPtr = aPtr;
+}
+
+BSymbolTable::BSymbolTable() : BBase() {
   //
 }
 
@@ -22,11 +27,11 @@ BSymbolTable::~BSymbolTable() {
   //
 }
 
-BSymbol *BSymbolTable::LookupSymbol(const char *name) {
-  TInt h = hash(name);
+BSymbol *BSymbolTable::LookupSymbol(const char *aName) {
+  TInt h = hash(aName);
   BSymbolList &bucket = buckets[h];
   for (BSymbol *sym = bucket.First(); !bucket.End(sym); sym=bucket.Next(sym)) {
-    if (strcmp(sym->name, name) == 0) {
+    if (CompareStrings(sym->mNodeName, aName) == 0) {
       return sym;
     }
   }
@@ -37,7 +42,7 @@ TBool BSymbolTable::AddSymbol(const char *aName, TUint32 aValue, TAny *aPtr) {
   BSymbol *sym = LookupSymbol(aName);
   if (sym) {
     // already exists
-    if (sym->value == aValue && sym->aptr == aPtr) {
+    if (sym->value == aValue && sym->mPtr == aPtr) {
       // trying to add a duplicate, pretend it succeeded)
       return ETrue;
     }

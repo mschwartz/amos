@@ -20,6 +20,8 @@ protected:
 };
 
 class BMessageList : public BListPri {
+  public:
+    BMessageList(const char *aName = "Message List");
 public:
   BMessage *RemHead() { return (BMessage *)BListPri::RemHead(); }
 
@@ -36,9 +38,9 @@ public:
   TBool End(BMessage *aCurrent) { return aCurrent == (BMessage *)this; }
 };
 
-class BMessagePort : public BBase {
+class BMessagePort : public BNode {
 public:
-  BMessagePort(TUint64 aSignal);
+  BMessagePort(TUint64 aSignal, const char *aName = "Message Port");
   ~BMessagePort();
 
 public:

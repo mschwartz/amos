@@ -11,9 +11,7 @@ CODE_SEL_64         equ 1
                     extern kernel_isr
 
 ; task_t structure MUST match the one in idt.h
-task_next           equ 0
-task_prev           equ task_next + 8
-task_rflags         equ task_prev + 8
+task_rflags         equ 0
 task_rax            equ task_rflags + 8
 task_rbx            equ task_rax + 8
 task_rcx            equ task_rbx + 8
@@ -156,7 +154,6 @@ isr_common:
                     ; finally restore rdi (we don't need it anymore)
                     mov rdi, [rdi + task_rdi]
 
-;                    bochs
                     iretq
 
 ;; the %rep here generates 256 handlers inline!
@@ -240,3 +237,35 @@ cli:
 sti:
                     sti
                     ret
+
+                    global GetCS
+GetCS:
+                    xor rax, rax
+                    mov eax, cs
+                    ret
+
+
+                    global GetDS
+GetDS:
+                    xor rax, rax
+                    mov eax, ds
+                    ret
+
+                    global GetES
+GetES:
+                    xor rax, rax
+                    mov eax, es
+                    ret
+
+                    global GetFS
+GetFS:
+                    xor rax, rax
+                    mov eax, fs
+                    ret
+
+                    global GetGS
+GetGS:
+                    xor rax, rax
+                    mov eax, gs
+                    ret
+

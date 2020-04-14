@@ -1,7 +1,8 @@
 #include <Exec/Devices/ScreenDevice.h>
+#include <Exec/ExecBase.h>
 
 ScreenDevice::ScreenDevice() : BDevice() {
-  gDeviceList.AddDevice(*this);
+  ExecBase::GetExecBase().AddDevice(this);
 }
 
 ScreenDevice::~ScreenDevice() {

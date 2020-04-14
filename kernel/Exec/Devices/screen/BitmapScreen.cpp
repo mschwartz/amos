@@ -3,9 +3,12 @@
 
 BitmapScreen::BitmapScreen() {
   dprint("BBitmapScreen constructor\n");
-  gDisplayModes->mDisplayMode.Dump();
-  TModeInfo *mode = &gDisplayModes->mDisplayMode;
-  mScreen = BBitmap::CreateBitmap(mode->mWidth, mode->mHeight, mode->mBitsPerPixel);
+  Screen::DumpModes();
+//  gDisplayModes->mDisplayMode.Dump();
+
+  TDisplayMode& mode = Screen::GetDisplayMode();
+//  TModeInfo *mode = &gDisplayModes->mDisplayMode;
+  mScreen = BBitmap::CreateBitmap(mode.mWidth, mode.mHeight, mode.mDepth);
   mX = mY = 0;
   mColor = TRGB(0, 0, 0);
 }

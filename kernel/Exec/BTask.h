@@ -1,38 +1,54 @@
 #ifndef EXEC_TASK_H
 #define EXEC_TASK_H
 
-#include <BList.h>
+#include <Exec/BList.h>
+#include <x86/tasking.h>
 
 class BTask : public BNodePri {
 public:
-  BTask();
+  BTask(TInt64 aPri, const char *aName, TUint64 aStackSize = 2 * 1024 * 1024);
   virtual ~BTask();
+
 public:
-  virtual void Run();
+  virtual void Run() = 0;
+  static void DumpRegisters(task_t *regs);
+  void Dump();
+
+public:
+  task_t mTaskX64;
+
+protected:
+  static void RunWrapper(BTask *aTask) { aTask->Run(); }
+
 protected:
   TUint64 mSigAlloc;
   TUint64 mSigWait;
   TUint64 mSigReceived;
-  TAny *mRegSP, *mUpperSP, *mLowerSP;
+  TAny *mUpperSP, *mLowerSP;
 };
 
 class BTaskList : public BListPri {
 public:
+  BTaskList() : BListPri("Task List") {}
+
+  static void DumpRegisters(task_t *aRegisters);
+  void Dump();
+public:
   BTask *RemHead() { return (BTask *)BListPri::RemHead(); }
 
-  void AddTail(BTask *aTask) { BListPri::AddTail((BNodePri *)aTask); }
+  void Add(BTask& aTask) { BListPri::Add(aTask); }
 
-  BTask *First()  { return (BTask *)mNext; }
+  void AddTail(BTask &aTask) { BListPri::AddTail(aTask); }
 
-  BTask *Next(BTask *aCurrent)  { return (BTask *)aCurrent->mNext; }
+  BTask *First() { return (BTask *)mNext; }
 
-  BTask *Last()  { return (BTask *)mPrev; }
+  BTask *Next(BTask *aCurrent) { return (BTask *)aCurrent->mNext; }
+
+  BTask *Last() { return (BTask *)mPrev; }
 
   BTask *Prev(BTask *aCurrent) { return (BTask *)aCurrent->mPrev; }
 
   TBool End(BTask *aCurrent) { return aCurrent == (BTask *)this; }
 };
-
-extern "C" BTask *gCurrentTask;
 
 #endif

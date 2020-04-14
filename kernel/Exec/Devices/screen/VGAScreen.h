@@ -30,6 +30,7 @@ const TUint8 WHITE = 0x0f;
 class VGAScreen : public Screen {
 public:
   VGAScreen();
+  ~VGAScreen();
 
   void attr(TUint8 fg, TUint8 bg) {
     attribute = 0x0f;

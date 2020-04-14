@@ -3,7 +3,7 @@ OBJ= 	 bochs.o cpu.o kprint.o tasking.o gdt.o idt.o kernel_isr.o mmu.o
 LIB=	libx86.a
 
 .cpp.o:
-	$(GCC) -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
+	$(GPP) -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
 
 .asm.o:
 	@echo ""

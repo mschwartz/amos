@@ -3,12 +3,10 @@
 
 #define MAX_DEVICES 16
 
-BDeviceList gDeviceList;
-
 /**
   * BDevice
   */
-BDevice::BDevice() : BNodePri() {
+BDevice::BDevice(const char *aName) : BNodePri(aName, 0) {
 }
 
 BDevice::~BDevice() {
@@ -17,7 +15,7 @@ BDevice::~BDevice() {
 /**
   * BDeviceList
   */
-BDeviceList::BDeviceList() : BListPri() {
+BDeviceList::BDeviceList(const char *aName) : BListPri( aName) {
 //  bochs
   dprint("construct device list\n");
 }

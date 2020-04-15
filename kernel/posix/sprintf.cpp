@@ -4,7 +4,7 @@
 #include <posix.h>
 #include <posix/string.h>
 #include <posix/itoa.h>
-#include <x86/kprint.h>
+//#include <x86/kprint.h>
 #include <x86/bochs.h>
 
 #include <posix/sprintf.h>

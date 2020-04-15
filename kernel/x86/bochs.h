@@ -2,7 +2,7 @@
 #define KERNEL_BOCHS_H
 
 #include <x86/cpu.h>
-#include <x86/kprint.h>
+#include <Exec/kprint.h>
 // debugging methods for running within bochs x86 emulator
 
 // Is a useless instruction. Causes Bochs to break at the calling point

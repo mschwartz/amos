@@ -1,6 +1,6 @@
-#include <gdt.h>
-#include <kprint.h>
-#include <bochs.h>
+#include <x86/gdt.h>
+#include <Exec/kprint.h>
+#include <x86/bochs.h>
 
 GDT *gGDT;
 

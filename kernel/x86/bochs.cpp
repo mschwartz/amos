@@ -1,16 +1,23 @@
-#include <stdarg.h>
 #include <x86/bochs.h>
-#include <x86/kprint.h>
+#include <stdarg.h>
 #include <posix/itoa.h>
 #include <posix/sprintf.h>
+#include <Exec/kprint.h>
 //#include <Screen.h>
 
 TUint8 in_bochs; //  = *((TUint8 *)0x7c10);
 
 void dputs(const char *s) {
 //  dprint("bochs %x\n", in_bochs);
-  while (*s) {
-    dputc(*s++);
+  if (in_bochs) {
+    while (*s) {
+      dputc(*s++);
+    }
+  }
+  else {
+    while (*s) {
+      dputc(*s++);
+    }
   }
 }
 
@@ -38,13 +45,7 @@ void dprintf(const char *fmt, ...) {
             break;
           case 's':
             s = va_arg(ap, char *);
-            if (in_bochs) {
             dputs(s);
-            }
-            else {
-              kputs(s);
-            }
-
             break;
           case 'd':
           case 'u':

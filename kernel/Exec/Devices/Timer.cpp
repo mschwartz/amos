@@ -1,10 +1,10 @@
 #include <Exec/ExecBase.h>
 #include <x86/cpu.h>
 #include <x86/bochs.h>
-#include <x86/kprint.h>
 #include <x86/idt.h>
 #include <Devices/PIC.h>
 #include <Devices/Timer.h>
+#include <Exec/kprint.h>
 
 #define PIT_TICKS_PER_DAY 0x1800b0
 
@@ -40,7 +40,7 @@ Timer::Timer() {
   ticks = 0;
 
   set_frequency(100);
-  gExecBase.InstallIrqHandler(IRQ_TIMER, timer_isr, this, "8253 Timer");
+  ExecBase::GetExecBase().InstallIrqHandler(IRQ_TIMER, timer_isr, this, "8253 Timer");
   gPIC->enable_interrupt(IRQ_TIMER);
 }
 

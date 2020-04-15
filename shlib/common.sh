@@ -40,13 +40,14 @@ export CFLAGS="\
 	-fno-exceptions \
 	-fno-use-cxa-atexit \
 	-fno-rtti \
+	-std=gnu++14\
 	-DKERNEL \
   $KGFX \
 	$INCLUDE_PATH \
 	"
 
 export LIBS="\
-	-L$TOP_DIR/kernel/Exec -lexec \
+	-L$TOP_DIR/kernel/Exec -lExec \
 	-L$TOP_DIR/kernel/x86 -lx86 \
 	-L$TOP_DIR/kernel/posix -lposix \
 	"

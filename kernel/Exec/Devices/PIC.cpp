@@ -1,6 +1,6 @@
 #include <x86/idt.h>
 #include <x86/cpu.h>
-#include <x86/kprint.h>
+#include <Exec/kprint.h>
 #include <x86/bochs.h>
 #include <Devices/PIC.h>
 

@@ -7,7 +7,7 @@
 #include <posix/string.h>
 #include <posix/malloc.h>
 #include <x86/bochs.h>
-#include <x86/kprint.h>
+#include <Exec/kprint.h>
 #include <x86/gdt.h>
 #include <x86/idt.h>
 #include <x86/mmu.h>
@@ -31,21 +31,19 @@ extern "C" func_ptr __global_ctors[0], __global_ctors[0];
 
 static void call_global_constructors(void) {
   dprint("CALL CONSTRUCTORS %x %x\n", __init_array_start, __init_array_end);
-  for (func_ptr *func = __init_array_start; func != __init_array_end; func++) {
+  for (func_ptr *func = __init_array_start; func < __init_array_end; func++) {
     dprint("func %x\n", *func);
     (*func)();
   }
+  dprint("done calling constructors\n");
 }
 
-task_t task0;
 
 extern "C" task_t *current_task;
 
 //extern "C" TUint64 __CTOR_LIST__[];
 extern "C" int kernel_main(TUint64 ax) {
-  current_task = &task0;
-
-  // logging
+  in_bochs = *((TUint8 *)0x7c10);
   extern void *kernel_end, *init_end, *text_end, *rodata_end, *data_end, *bss_end;
   dprint("\nkernel_end = %x\n", &kernel_end);
   dprint("init_end = %x\n", &init_end);
@@ -54,12 +52,18 @@ extern "C" int kernel_main(TUint64 ax) {
   dprint("data_end = %x\n", &data_end);
   dprint("bss_end = %x\n", &bss_end);
 
+  dprint("bochs %x %x\n", in_bochs, &gExecBase);
+  call_global_constructors();
+
+  ExecBase::GetExecBase().DumpCurrentTaskRegisters();
+//  task_t task0;
+//  current_task = &task0;
+
+  bochs;
+
+  // logging
 //  gScreen = Screen::CreateScreen();
 //  dprint("initialized screen\n");
-
-  in_bochs = *((TUint8 *)0x7c10);
-  dprint("bochs %x\n", in_bochs);
-  call_global_constructors();
 
 //  kprint("Display Mode:\n");
 //  dhexdump((TUint8 *)0x5000, 2);

@@ -10,16 +10,21 @@ TUint32 Milliseconds() {
 }
 
 BBase::BBase() {
+#ifdef KERNEL
+  dprint("BBase construcotr\n");
+#endif
   //
 }
 
 BBase::~BBase() {
+#ifdef KERNEL
+  dprint("BBase destructor\n");
+#endif
   //
 }
 
 void *BBase::operator new(size_t aSize) { 
 #ifdef KERNEL
-  bochs;
   dprint("new %d\n", aSize);
   return AllocMem(aSize, MEMF_SLOW); 
 #else
@@ -29,7 +34,6 @@ void *BBase::operator new(size_t aSize) {
 
 void *BBase::operator new[](size_t aSize) { 
 #ifdef KERNEL
-  bochs;
   dprint("new[] %d\n", aSize);
   return AllocMem(aSize, MEMF_SLOW); 
 #else

@@ -1,6 +1,5 @@
 #include <Exec/ExecBase.h>
 #include <x86/bochs.h>
-
 #include <x86/gdt.h>
 #include <x86/idt.h>
 #include <x86/mmu.h>
@@ -23,7 +22,14 @@ public:
 
 
 ExecBase &ExecBase::GetExecBase() {
-  return gExecBase;
+  static bool init = false;
+  if (!init) {
+    dprint("new ExecBase\n");
+    gExecBase = new ExecBase;
+    dprint("new ExecBase succeeded\n");
+    init = true;
+  }
+  return *gExecBase;
 }
 
 void ExecBase::Disable() {
@@ -46,31 +52,34 @@ void ExecBase::Enable() {
 }
 
 ExecBase::ExecBase() : BBase() {
+  dprint("ExecBase constructor called\n");
   mScreen = Screen::CreateScreen();
-
-  static GDT gdt;
-  mGdt = &gdt;
-
-  static MMU mmu;
-  mMmu = &mmu;
-
-  static IDT _idt;
-  mIdt = &_idt;
-
-  static CPU _cpu;
-  mCpu = &_cpu;
-
-  static PIC pic;
-  mPic = &pic;
-
-  static Timer timer;
-  mTimer = &timer;
+  dprint("Created screen\n");
 
 
+  mGdt = new GDT;
+  dprint("Created GDT\n");
+
+  mMmu = new MMU;
+  dprint("Created MMU\n");
+
+  mIdt = new IDT;
+  dprint("Created IDT\n");
+
+  mCpu = new CPU;
+  dprint("Created CPU\n");
+
+  mPic = new PIC;
+  dprint("Created PIC\n");
+
+  mTimer = new Timer;
+  dprint("Created Timer\n");
+
+
+//  Init();
   //  Init();
   //  mExecBase = &gExecBase;
   dprint("Construct ExecBase %d\n", sizeof(BTaskList));
-  bochs;
   mDeviceList = new BDeviceList();
   dprint("Constructed Device List\n");
 
@@ -87,7 +96,8 @@ void ExecBase::AddTask(BTask *aTask) {
 }
 
 void ExecBase::DumpCurrentTask() {
-  gExecBase.mCurrentTask->Dump();
+
+  ExecBase::GetExecBase().mCurrentTask->Dump();
 }
 
 void ExecBase::DumpCurrentTaskRegisters() {
@@ -107,6 +117,10 @@ void ExecBase::Init() {
   Enable();
 }
 
+void ExecBase::InstallIrqHandler(TUint8 aIndex, TInterruptHandler *aHandler, TAny *aData, const char *aDescription) {
+  IDT::install_handler(aIndex, aHandler, aData, aDescription);
+}
+
 void ExecBase::SetCurrentTask(BTask *aTask) {
   Disable(); // this operation needs to be atomic
   mCurrentTask = aTask;
@@ -124,4 +138,4 @@ void ExecBase::AddDevice(BDevice *aDevice) {
   Enable();
 }
 
-ExecBase gExecBase;
+ExecBase *gExecBase;

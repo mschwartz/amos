@@ -66,6 +66,6 @@ protected:
   Screen *mScreen;
 };
 
-extern ExecBase gExecBase;
+extern ExecBase *gExecBase;
 
 #endif

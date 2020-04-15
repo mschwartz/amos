@@ -9,8 +9,6 @@ public:
   ~CPU();
 };
 
-extern CPU *gCPU;
-
 // TODO: move I/O to a separate file
 extern "C" void cli();
 extern "C" void sti();

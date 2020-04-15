@@ -6,25 +6,25 @@
 
 //extern Screen *screen;
 
-void kputc(char c) {
-  Screen &gScreen = gExecBase.GetScreen();
+extern "C" void kputc(char c) {
+  Screen &gScreen = ExecBase::GetExecBase().GetScreen();
   gScreen.putc(c);
 }
 
-void kputs(const char *s) {
+extern "C" void kputs(const char *s) {
   while (*s) {
     kputc(*s++);
   }
 }
 
-void kprint(const char *fmt, ...) {
+extern "C" void kprint(const char *fmt, ...) {
   va_list ap;
   char *s, c, t, tt;
   long d;
   char buf[20];
 
   va_start(ap, fmt);
-  Screen &gScreen = gExecBase.GetScreen();
+  Screen &gScreen = ExecBase::GetExecBase().GetScreen();
   if (!fmt) {
     gScreen.puts("NULL FORMAT");
     return;

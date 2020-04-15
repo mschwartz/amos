@@ -1,10 +1,10 @@
 #include <Exec/Devices/Screen.h>
 #include <x86/cpu.h>
 #include <x86/bochs.h>
-#include <x86/kprint.h>
 #include <x86/kernel_memory.h>
 #include "screen/VGAScreen.h"
 #include "screen/BitmapScreen.h"
+#include <Exec/kprint.h>
 
 typedef struct {
   char mSignature[4];

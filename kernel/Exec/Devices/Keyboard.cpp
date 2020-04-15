@@ -1,11 +1,11 @@
 #include <Exec/ExecBase.h>
 #include <Devices/Keyboard.h>
 #include <Devices/Timer.h>
-#include <x86/kprint.h>
 #include <x86/idt.h>
 #include <Devices/PIC.h>
 #include <x86/bochs.h>
 #include <x86/cpu.h>
+#include <Exec/kprint.h>
 
 TUint16 KEYB_DR = 0x60; /* data register */
 TUint16 KEYB_SR = 0x64; /* status register */
@@ -282,7 +282,7 @@ Keyboard::Keyboard() {
   //
   ptr1 = ptr2 = 0;
   // install kernel handler
-  gExecBase.InstallIrqHandler(IRQ_KEYBOARD, keyboard_isr, this, "");
+  ExecBase::GetExecBase().InstallIrqHandler(IRQ_KEYBOARD, keyboard_isr, this, "");
 //  gIDT->install_handler(IRQ_KEYBOARD, keyboard_isr, this, "");
   // enable the keyboard interrupt
   gPIC->enable_interrupt(IRQ_KEYBOARD);

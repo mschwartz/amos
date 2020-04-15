@@ -1,6 +1,6 @@
 #include <x86/mmu.h>
 #include <x86/bochs.h>
-#include <x86/kprint.h>
+#include <Exec/kprint.h>
 #include <x86/kernel_memory.h>
 
 extern "C" void load_page_directory(TAny *aPtr);

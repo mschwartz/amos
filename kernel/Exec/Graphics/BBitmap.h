@@ -4,7 +4,7 @@
 #include <Exec/BBase.h>
 
 // base class for different depth bitmaps
-class BBitmap : BBase {
+class BBitmap : public BBase {
 public:
   // factory method
   // returns appropriate kind of BBitmap with specfied width, height, and depth.

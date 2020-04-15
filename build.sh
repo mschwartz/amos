@@ -5,6 +5,7 @@ set -e
 . ./shlib/common.sh
 
 echo ""
+echo ""
 echo "RCOMP"
 cd tools/rcomp-src && make
 
@@ -30,6 +31,8 @@ export KERNEL="$CRTBEGIN_OBJ kernel_main.o kernel_start.o $CRTEND_OBJ  "
 
 #############################
 
+echo ""
+echo ""
 echo "BUILDING BOOT SECTOR"
 cd $TOP_DIR/boot
 nasm -f bin -l boot.lst -o boot.img boot.asm
@@ -39,6 +42,7 @@ cd ..
 
 #############################
 
+echo ""
 echo ""
 echo "BUILDING KERNEL"
 
@@ -50,14 +54,20 @@ nasm -f elf64 -o kernel_start.o -l kernel_start.lst kernel_start.asm
 echo $GCC -c -o crti.o crti.s
 $GCC -c -o crti.o crti.s
 $GCC -c -o crtn.o crtn.s
+echo ""
+echo ""
 echo "  BUILDING EXEC"
 cd Exec
 make
 cd ..
+echo ""
+echo ""
 echo "  BUILDING X86"
 cd Exec/x86 
 make
 cd ../..
+echo ""
+echo ""
 echo "  ============== BUILDING POSIX"
 cd posix
 make
@@ -70,7 +80,7 @@ $GCC -g -c $CFLAGS $INCLUDE_PATH -o kernel_main.o kernel_main.cpp
 
 echo "  LINKING"
 echo "    ld -m64 -Tconfig.ld -o kernel.elf $KERNEL ${LIBS}"
-ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS
+ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS -lexec
 echo "    objcopy -O binary kernel.elf kernel.img"
 objcopy -O binary kernel.elf kernel.img
 cd ..

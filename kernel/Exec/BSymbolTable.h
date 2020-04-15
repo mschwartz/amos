@@ -6,24 +6,31 @@
 
 const TInt HASH_SIZE = 256;
 
+/********************************************************************************
+ ********************************************************************************
+ ********************************************************************************/
+
 struct BSymbol : public BNode {
-  BSymbol(const char *aName, TUint32 aValue, void *aPtr = ENull) {
-    name = strdup(aName);
-    value = aValue;
-    aptr = aPtr;
+  BSymbol(const char *aName, TUint32 aValue, void *aPtr = ENull) : BNode(aName){
+    mValue = aValue;
+    mPtr = aPtr;
   }
 
   ~BSymbol() {
-    delete[] name;
+//    delete[] name;
   }
 
-  char *name;
-  void *aptr; // ptr to anything you want to be able to lookup
-  TUint32 value;
+  void *mPtr; // ptr to anything you want to be able to lookup
+  TUint32 mValue;
 };
+
+/********************************************************************************
+ ********************************************************************************
+ ********************************************************************************/
 
 struct BSymbolList : public BList {
 public:
+  BSymbolList() :  BList("BSymbolList") {}
   ~BSymbolList() {
     while (BSymbol *s = RemHead()) {
       delete s;
@@ -44,7 +51,11 @@ public:
   TBool End(BSymbol *curr) { return curr == (BSymbol *) this; }
 };
 
-class BSymbolTable {
+/********************************************************************************
+ ********************************************************************************
+ ********************************************************************************/
+
+class BSymbolTable : public BBase {
 public:
   BSymbolTable();
 
@@ -56,7 +67,7 @@ public:
   TBool AddSymbol(const char *aName, TUint32 aValue, TAny *aPtr = ENull);
 
 protected:
-  BSymbolList buckets[HASH_SIZE];
+  BSymbolList mBuckets[HASH_SIZE];
 };
 
 

@@ -3,6 +3,16 @@
 
 ExecBase gExecBase;
 
+class IdleTask : public BTask {
+  public:
+    IdleTask() : BTask("Idle Task") {}
+  public:
+    void Run() {
+      while (1) {
+      }
+    }
+};
+
 ExecBase::ExecBase() {
   dprint("ExecBase constructor called\n");
 
@@ -23,6 +33,9 @@ ExecBase::ExecBase() {
   mCPU = new CPU;
   dprint("  initialized CPU vectors\n");
 
+  IdleTask *task = new IdleTask();
+  mActiveTasks.Add(*task);
+  task->Dump();
   // set up 8259 PIC
 //  gPIC = new PIC;
 //  dprint("  initialized 8259 PIC\n");
@@ -52,4 +65,8 @@ void ExecBase::newline() {
 
 void ExecBase::Hello() {
   dprint("Hello ExecBase\n");
+}
+
+void ExecBase::AddTask(BTask *aTask) {
+  mActiveTasks.Add(*aTask);
 }

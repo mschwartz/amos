@@ -1,7 +1,8 @@
 #ifndef BLIST_H
 #define BLIST_H
 
-#include "BBase.h"
+#include <Exec/BBase.h>
+#include <Exec/Memory.h>
 
 /**
  * Two basic types of doubly linked lists:
@@ -18,8 +19,8 @@
  */
 class BNode : public BBase {
 public:
-  BNode() : BBase(){}
-  ~BNode() {}
+  BNode(const char *aNodeName);
+  ~BNode();
 
 public:
   // make this node last on the list, if node is key
@@ -45,15 +46,16 @@ public:
 
 public:
   BNode *mNext, *mPrev;
+  char *mNodeName;
 };
 
 /**
  * An element in a BListPri linked list.
  */
-class BNodePri : public BBase {
+class BNodePri : public BNode {
 public:
-  BNodePri(TInt aPri = 0) : BBase(), pri(aPri) {}
-  ~BNodePri() {}
+  BNodePri(const char *aNodeName, TInt aPri = 0);
+  ~BNodePri();
 
 public:
   void InsertBeforeNode(BNodePri *aNode) {
@@ -86,7 +88,7 @@ public:
  */
 class BList : public BNode {
 public:
-  BList();
+  BList(const char *aNodeName);
   ~BList();
 
   /**
@@ -146,7 +148,7 @@ public:
  */
 class BListPri : public BNodePri {
 public:
-  BListPri() : BNodePri(0) {
+  BListPri(const char *aNodeName) : BNodePri(aNodeName, 0) {
     Reset();
   }
   ~BListPri() {}

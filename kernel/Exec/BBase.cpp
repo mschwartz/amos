@@ -3,8 +3,6 @@
 
 #ifdef KERNEL
 #include <Exec/Memory.h>
-#else
-#include <stdlib.h>
 #endif
 
 BBase::BBase() {
@@ -15,20 +13,35 @@ BBase::~BBase() {
   //
 }
 
+#ifdef KERNEL
+extern "C" void __cxa_pure_virtual() {}
+#endif
+
+
+#ifdef KERNEL
 void *BBase::operator new(unsigned long aSize) {
-#ifdef KERNEL
   return AllocMem(aSize, MEMF_PUBLIC);
-#else
-  return malloc(aSize);
-#endif
 }
-void BBase::operator_delete(TAny *aMemory, unsigned long aSize) {
+#endif
+
 #ifdef KERNEL
-  FreeMem(aMemory);
-#else
-  free(aMemory);
-#endif
+void *BBase::operator new[](unsigned long aSize) {
+  return AllocMem(aSize, MEMF_PUBLIC);
 }
+#endif
+
+#ifdef KERNEL
+void BBase::operator delete(TAny *aMemory, unsigned long aSize) {
+  FreeMem(aMemory);
+}
+#endif
+
+#ifdef KERNEL
+void BBase::operator delete[](TAny *aMemory, unsigned long aSize) {
+  FreeMem(aMemory);
+}
+#endif
+
 TUint32 Milliseconds() {
   return 0;
 }

@@ -240,3 +240,34 @@ cli:
 sti:
                     sti
                     ret
+
+                    global GetCS
+GetCS:
+                    xor rax, rax
+                    mov ax, cs
+                    ret
+
+                    global GetDS
+GetDS:
+                    xor rax, rax
+                    mov ax, ds
+                    ret
+
+                    global GetES
+GetES:
+                    xor rax, rax
+                    mov ax, es
+                    ret
+
+                    global GetFS
+GetFS:
+                    xor rax, rax
+                    mov ax, fs
+                    ret
+
+                    global GetGS
+GetGS:
+                    xor rax, rax
+                    mov ax, gs
+                    ret
+

@@ -8,7 +8,7 @@ BDeviceList gDeviceList;
 /**
   * BDevice
   */
-BDevice::BDevice() : BNodePri() {
+BDevice::BDevice(const char *aNodeName) : BNodePri(aNodeName) {
 }
 
 BDevice::~BDevice() {
@@ -17,7 +17,7 @@ BDevice::~BDevice() {
 /**
   * BDeviceList
   */
-BDeviceList::BDeviceList() : BListPri() {
+BDeviceList::BDeviceList() : BListPri("Device List") {
 //  bochs
   dprint("construct device list\n");
 }

@@ -15,4 +15,7 @@ enum EMemoryFlags {
 extern TAny *AllocMem(long aSize, int aFlags = MEMF_ANY);
 extern void FreeMem(TAny *aMemory);
 
+extern void *operator new(unsigned long aSize);
+extern void operator delete(void *aMemory, unsigned long aSize);
+
 #endif

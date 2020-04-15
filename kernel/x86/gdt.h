@@ -14,8 +14,6 @@ public:
   void tss_install();
 };
 
-extern GDT *gGDT;
-
 #if 0 
 #define GDT 0
 #define LDT 1

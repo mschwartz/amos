@@ -378,6 +378,7 @@ probe_memory:
 ;                    call newline16
 
                     ; address 
+%if 0
                     mov edi, [esp]
                     mov eax, [edi + 4]
                     call hexlong16
@@ -400,7 +401,7 @@ probe_memory:
                     call newline16
                     pop edi
                     popa
-
+%endif
                     add edi, 24
 
                     mov eax, [memory_count]

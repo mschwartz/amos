@@ -67,6 +67,6 @@ protected:
   char buf[256];
 };
 
-extern Screen *gScreen;
+//extern Screen *gScreen;
 
 #endif

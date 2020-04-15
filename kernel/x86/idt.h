@@ -99,6 +99,4 @@ public:
 //  interrupt_handler_t interrupt_handlers[INTERRUPTS];
 };
 
-extern IDT *gIDT;
-
 #endif

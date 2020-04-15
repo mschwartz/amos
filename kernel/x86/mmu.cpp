@@ -3,13 +3,14 @@
 #include <x86/kprint.h>
 #include <x86/kernel_memory.h>
 
+#define DEBUGME
+#undef DEBUGME
+
 extern "C" void load_page_directory(TAny *aPtr);
 extern "C" void enable_paging();
 
 static TUint64 page_directory[512] __attribute__((aligned(4096)));
 static TUint64 page_table[512];
-
-MMU *gMMU;
 
 static const char *types[] = {
   "Undefined",
@@ -84,15 +85,15 @@ const TUint64 MEMORYTYPE_RANGE = 1;
 const TUint64 MEMORYTYPE_RESERVED = 2;
 
 MMU::MMU() {
-  dprint("MMU\n");
-//  return;
   mFreePages = nullptr;
   system_memory = 0;
   TBiosMemory *m = (TBiosMemory *)BIOS_MEMORY;
   m->Dump();
 
   TInt32 count = m->mCount;
+#ifdef DEBUGME
   dprint("init_memory %d chunks\n", count);
+#endif
   for (TInt32 i=0; i<count; i++) {
     TMemoryInfo *b = &m->mInfo[i]; // defined in memory.inc
     TInt type = b->type;
@@ -100,7 +101,9 @@ MMU::MMU() {
     if (type != 1) {
       continue;
     }
+#ifdef DEBUGME
     dprint("->> base: $%x size: $%x(%d) pages: %d type: %d (%d)\n", b->address, b->size, b->size, b->size / PAGE_SIZE, type, MEMORYTYPE_RANGE);
+#endif
     system_memory += b->size;
     //            link_memory_pages(b->address, b->size);
     link_memory_pages(b->address, GIGABYTE);

@@ -7,11 +7,13 @@
 #include <posix/malloc.h>
 #include <x86/bochs.h>
 #include <x86/kprint.h>
-#include <x86/gdt.h>
-#include <x86/idt.h>
-#include <x86/mmu.h>
+//#include <x86/gdt.h>
+//#include <x86/idt.h>
+//#include <x86/mmu.h>
 #include <Devices/PIC.h>
 #include <x86/tasking.h>
+
+#include <Exec/ExecBase.h>
 
 // devices
 #include <Devices/Screen.h>
@@ -62,41 +64,23 @@ typedef struct {
 
 //extern "C" TUint64 __CTOR_LIST__[];
 extern "C" int kernel_main(TUint64 ax) {
-  Screen s;
-  gScreen = &s;
-  kprint("initialized screen\n");
-
   in_bochs = *((TUint8 *)0x7c10);
   dprint("bochs %x\n", in_bochs);
   call_global_constructors();
 
+  gExecBase.Hello();
+
   TModes *modes = (TModes *)0x5000;
-  kprint("Display Mode:\n");
+  dprint("\n\nDisplay Mode:\n");
   modes->mDisplayMode.Dump();
-  dhexdump((TUint8 *)0x5000, 2);
+//  dhexdump((TUint8 *)0x5000, 2);
+  dprint("\n\n");
 //  kprint("Remaining Modes:\n");
 //  modes->Dump();
-
-  GDT g;
-  gGDT = &g;
-  kprint("initialized GDT\n");
-
-  // set up paging
-  MMU m;
-  gMMU = &m;
-  kprint("initialized MMU\n");
 
   Scheduler sc;
   scheduler = &sc;
   kprint("initialized Scheduler\n");
-
-  // set up interrupt handlers
-  IDT i;
-  gIDT = &i;
-  kprint("initialized IDT\n");
-
-  CPU _cpu;
-  gCPU = &_cpu;
 
   // set up 8259 PIC
   PIC p;

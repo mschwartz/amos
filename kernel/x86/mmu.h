@@ -50,6 +50,4 @@ protected:
   TUint64 link_memory_pages(TUint64 address, TUint64 size);
 };
 
-extern MMU *gMMU;
-
 #endif

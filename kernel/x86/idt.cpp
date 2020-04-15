@@ -5,8 +5,6 @@
 #include <x86/tasking.h>
 #include <x86/kernel_memory.h>
 
-IDT *gIDT;
-
 extern "C" void set_vector(void *idt_vector, void (*offset)(), TUint16 selector, uint8_t flags);
 extern "C" void load_idtr(void *ptr);
 
@@ -70,14 +68,10 @@ extern "C" uint64_t isr130; // interrupt scheduler
 static isr_handler_t interrupt_handlers[INTERRUPTS];
 
 extern "C" bool kernel_isr() {
-//  dprint("kernel_isr\n");
-//  current_task->Dump();
   isr_handler_t *info = &interrupt_handlers[current_task->isr_num];
   if (!info->handler) {
     const char *desc = IDT::interrupt_description(current_task->isr_num);
-    dprint("here %s\n", desc);
-    kprint("here %s\n", desc);
-    kprint("no handler: %s\n", desc);
+    dprint("no handler: %s\n", desc);
     return false;
   }
   return info->handler(info->data);
@@ -116,10 +110,6 @@ IDT::IDT() {
   for (int i = 0; i < INTERRUPTS; i++) {
     interrupt_handlers[i].set(nullptr, nullptr, "Not installed");
   }
-
-    dprint("isr0 %x\n", isr0);
-    dprint("isr1 %x\n", isr1);
-    dprint("isr2 %x\n", isr2);
 
   // EXCEPTIONS
   idt_entries[0].set(isr0, IDT_64INT);

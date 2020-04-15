@@ -140,4 +140,4 @@ void Screen::hexdump(const TAny *addr, TInt count) {
   newline();
 }
 
-Screen *gScreen;
+//Screen *gScreen;

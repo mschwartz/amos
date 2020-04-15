@@ -2,7 +2,7 @@ GFX=	Graphics/TRect.o Graphics/TBCD.o Graphics/BFont.o Graphics/BBitmap.o
 
 DEVICES= Devices/Keyboard.o Devices/PIC.o Devices/Screen.o Devices/Timer.o
 
-OBJ= 	 BTypes.o Memory.o BBase.o BList.o BMessagePort.o BDevice.o $(DEVICES) $(GFX)
+OBJ= 	 BTypes.o Memory.o BBase.o BList.o BMessagePort.o BDevice.o ExecBase.o $(DEVICES) $(GFX)
 
 LIB=	libexec.a
 

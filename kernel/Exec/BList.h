@@ -19,7 +19,7 @@
 class BNode : public BBase {
 public:
   BNode() : BBase(){}
-  virtual ~BNode() {}
+  ~BNode() {}
 
 public:
   // make this node last on the list, if node is key
@@ -53,7 +53,7 @@ public:
 class BNodePri : public BBase {
 public:
   BNodePri(TInt aPri = 0) : BBase(), pri(aPri) {}
-  virtual ~BNodePri() {}
+  ~BNodePri() {}
 
 public:
   void InsertBeforeNode(BNodePri *aNode) {
@@ -87,7 +87,7 @@ public:
 class BList : public BNode {
 public:
   BList();
-  virtual ~BList();
+  ~BList();
 
   /**
    * Remove all of the elements from the list.
@@ -149,7 +149,7 @@ public:
   BListPri() : BNodePri(0) {
     Reset();
   }
-  virtual ~BListPri() {}
+  ~BListPri() {}
 
 public:
   void Dump(BNodePri *aStop = ENull);
@@ -197,7 +197,7 @@ public:
   BNodePri *Prev(BNodePri *curr) { return curr->mPrev; }
 
 private:
-  void AddHead(BNodePri &nodevirtual);
+  void AddHead(BNodePri &node);
   void AddTail(BNodePri &node);
 };
 

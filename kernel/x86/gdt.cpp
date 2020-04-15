@@ -2,8 +2,6 @@
 #include <kprint.h>
 #include <bochs.h>
 
-GDT *gGDT;
-
 typedef struct _GDT_t_ {
   TUint16 segm_limit0;    /* segment limit, bits: 15:00	(00-15) */
   TUint16 base_addr0;     /* starting address, bits: 15:00	(16-31) */

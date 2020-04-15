@@ -1,7 +1,5 @@
-#include <x86/cpu.h>
 #include <x86/bochs.h>
-#include <x86/kprint.h>
-#include <x86/idt.h>
+#include <Exec/ExecBase.h>
 #include <Devices/PIC.h>
 #include <Devices/Timer.h>
 
@@ -18,11 +16,9 @@
 Timer *gTimer;
 
 bool timer_isr(void *aData) {
-//  dprint("TIMER INTERRUPT\n");
   Timer *t = (Timer *)aData;
   t->increment_ticks();
   gPIC->ack(IRQ_TIMER);
-//  dprint(" ack %d\n", IRQ_TIMER);
   return true;
 }
 
@@ -34,12 +30,11 @@ void Timer::set_frequency(TInt hz) {
 }
 
 Timer::Timer() {
-  kprint("Construct timer\n");
-//  bochs
+  dprint("Construct timer\n");
   ticks = 0;
 
   set_frequency(100);
-  gIDT->install_handler(IRQ_TIMER, timer_isr, this, "8253 Timer");
+  gExecBase.AddInterruptHandler(IRQ_TIMER, timer_isr, this, "8253 Timer");
   gPIC->enable_interrupt(IRQ_TIMER);
 }
 

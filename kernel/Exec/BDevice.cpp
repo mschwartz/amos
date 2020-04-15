@@ -31,6 +31,6 @@ BDevice *BDeviceList::FindDevice(const char *aName) {
 }
 
 void BDeviceList::AddDevice(BDevice& aDevice) {
-  dprintf("Add Device %x\n", aDevice);
+  dprintf("Add Device %x\n", &aDevice);
 }
 

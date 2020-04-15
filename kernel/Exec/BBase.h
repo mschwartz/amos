@@ -15,11 +15,13 @@ extern void operator delete(TAny *ptr, unsigned long size);
  */
 class BBase {
 public:
-  BBase() {}
-  virtual ~BBase() {}
+  BBase();
+  ~BBase();
 public:
   // int __cxa_atexit(void (*func) (void *), void * arg, void * dso_handle) { return 0; }
 
+  void *operator new(unsigned long aSize);
+  void operator_delete(void *aMemory, unsigned long aSize);
 };
 
 extern TUint32 Milliseconds();

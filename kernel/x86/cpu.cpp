@@ -95,8 +95,6 @@ static TBool security_handler(void *aData) {
   return true;
 }
 
-CPU *gCPU;
-
 CPU::CPU() {
   TInt irq = 0;
   IDT::install_handler(irq++, divide_error_handler, /* data */ nullptr, "Divide Error");

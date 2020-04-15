@@ -38,7 +38,7 @@ export CFLAGS="\
 
 export LIBS="\
 	-L$TOP_DIR/kernel/Exec -lexec \
-	-L$TOP_DIR/kernel/x86 -lx86 \
+	-L$TOP_DIR/kernel/Exec/x86 -lx86 \
 	-L$TOP_DIR/kernel/posix -lposix \
 	"
 

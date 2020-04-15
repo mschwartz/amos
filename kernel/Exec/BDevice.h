@@ -5,7 +5,7 @@
 
 class BDevice : public BNodePri {
 public:
-  BDevice();
+   BDevice(const char *aNodeName);
   ~BDevice();
 };
 

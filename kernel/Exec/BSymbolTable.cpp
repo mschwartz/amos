@@ -24,9 +24,9 @@ BSymbolTable::~BSymbolTable() {
 
 BSymbol *BSymbolTable::LookupSymbol(const char *name) {
   TInt h = hash(name);
-  BSymbolList &bucket = buckets[h];
+  BSymbolList &bucket = mBuckets[h];
   for (BSymbol *sym = bucket.First(); !bucket.End(sym); sym=bucket.Next(sym)) {
-    if (strcmp(sym->name, name) == 0) {
+    if (strcmp(sym->mNodeName, name) == 0) {
       return sym;
     }
   }
@@ -37,7 +37,7 @@ TBool BSymbolTable::AddSymbol(const char *aName, TUint32 aValue, TAny *aPtr) {
   BSymbol *sym = LookupSymbol(aName);
   if (sym) {
     // already exists
-    if (sym->value == aValue && sym->aptr == aPtr) {
+    if (sym->mValue == aValue && sym->mPtr == aPtr) {
       // trying to add a duplicate, pretend it succeeded)
       return ETrue;
     }
@@ -49,7 +49,7 @@ TBool BSymbolTable::AddSymbol(const char *aName, TUint32 aValue, TAny *aPtr) {
   // doesn't exist, we'll add it
   TInt h = hash(aName);
   sym = new BSymbol(aName, aValue, aPtr);
-  buckets[h].AddTail(*sym);
+  mBuckets[h].AddTail(*sym);
   return ETrue;
 }
 

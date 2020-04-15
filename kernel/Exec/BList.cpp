@@ -7,13 +7,17 @@
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 
-#if 0
 /// BNode
 
-BNode::BNode() : BBase() {}
+BNode::BNode(const char *aNodeName) : BBase() {
+  mNodeName = DuplicateString(aNodeName);
+}
 
-BNode::~BNode() {}
-#endif
+BNode::~BNode() {
+  if (mNodeName) {
+    delete mNodeName;
+  }
+}
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -21,11 +25,9 @@ BNode::~BNode() {}
 
 /// BNodePri
 
-#if 0
-BNodePri::BNodePri(TInt aPri) : BBase(), pri(aPri) {}
+BNodePri::BNodePri(const char *aNodeName, TInt aPri) : BNode(aNodeName), pri(aPri) {}
 
 BNodePri::~BNodePri() {}
-#endif
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -36,7 +38,7 @@ BNodePri::~BNodePri() {}
 /**
  * Create an empty list.
  */
-BList::BList() : BNode() { 
+BList::BList(const char *aNodeName) : BNode(aNodeName) { 
   Reset(); 
 }
 

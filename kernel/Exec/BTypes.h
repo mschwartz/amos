@@ -4,7 +4,6 @@
 #define PACKED __attribute__ ((packed))
 #define INLINE __attribute__((always_inline))
 
-
 #if 0
 typedef unsigned char uint8_t;
 typedef char int8_t;

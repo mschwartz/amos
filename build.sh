@@ -22,7 +22,7 @@ CRTEND_OBJ=`$GCC -print-file-name=crtend.o`
 echo "CRTBEGIN" $CRTBEGIN_OBJ
 
 #export KERNEL="crti.o $CRTBEGIN_OBJ main.o kernel_start.o $CRTEND_OBJ crtn.o "
-export KERNEL="$CRTBEGIN_OBJ main.o kernel_start.o $CRTEND_OBJ  "
+export KERNEL="$CRTBEGIN_OBJ kernel_main.o kernel_start.o $CRTEND_OBJ  "
 
 #echo $INCLUDE_PATH
 #echo $LIBS
@@ -55,16 +55,16 @@ cd Exec
 make
 cd ..
 echo "  BUILDING X86"
-cd x86 
+cd Exec/x86 
 make
-cd ..
+cd ../..
 echo "  ============== BUILDING POSIX"
 cd posix
 make
 cd ..
 
-echo "    $GCC -c $CFLAGS -o main.o main.cpp"
-$GCC -g -c $CFLAGS $INCLUDE_PATH -o main.o main.cpp
+echo "    $GCC -c $CFLAGS -o kernel_main.o kernel_main.cpp"
+$GCC -g -c $CFLAGS $INCLUDE_PATH -o kernel_main.o kernel_main.cpp
 
 #############################
 

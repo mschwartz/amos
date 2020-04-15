@@ -14,7 +14,7 @@ _start:
 ;                    rep stosw                     ; Clear the screen.
                     jmp boot
 
-                    %include "x86/debug64.inc"
+                    %include "Exec/x86/debug64.inc"
                     global foo
 foo:
                     nop

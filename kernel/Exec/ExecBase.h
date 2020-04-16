@@ -25,6 +25,8 @@ public:
   void Hello();
   void AddInterruptHandler(TUint8 aIndex, TInterruptHandler *aHandler, TAny *aData, const char *aDescription = "undefined");
 
+  void GuruMeditation();
+
 protected:
   Screen *mScreen;
   GDT *mGDT;
@@ -34,10 +36,12 @@ protected:
 
 public:
   void AddTask(BTask *aTask);
+  void Reschedule();
+  BTask *GetCurrentTask() { return mCurrentTask; }
 
 protected:
   BTaskList mActiveTasks, mWaitingTasks;
-
+  BTask *mCurrentTask;
 };
 
 extern ExecBase gExecBase;

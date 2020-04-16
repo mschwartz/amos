@@ -59,7 +59,11 @@ isr%1:              dq xisr%1
 ; each of the isr handlers pushes a word of it's IRQ number and jumps here
 ; this code puashes all the registers on the stack, and calls our single C IRQ handler
 ; the C IRQ handler expects this specific order of items on the stack!  See the ISR_REGISTERS struct.
+                    extern stackdump
+                    global isr_common
 isr_common:
+;                    call stackdump
+
                     push rdi            ; save rdi so we don't clobber it
 ;                    xchg bx, bx
 
@@ -122,23 +126,33 @@ isr_common:
                     ; TODO check return value to see if task switch should be done
                     call kernel_isr
 
+                    global resume_task
+resume_task:
                     ; restore task state
                     mov rdi, [current_task]
-                    ; set up the return stack
+
+                    ; set up the return stack using the task's stack memory
+                    mov ss, [rdi + task_ss]
+                    mov rsp, [rdi + task_rsp]
+
                     ; we save/restore the return stack in case we switch stacks on a task switch
                     xor rax, rax
                     mov eax, [rdi + task_ss]
                     push rax
+
                     mov rax, [rdi + task_rsp]
                     push rax
+
                     mov rax, [rdi + task_rflags]
                     push rax
+
                     mov eax, [rdi + task_cs]
                     push rax
-                    mov eax, [rdi + task_rip]
-                    push rax
-                    ; stack is now ready for iretq
 
+                    mov rax, [rdi + task_rip]
+                    push rax
+
+                    ; stack is now ready for iretq
 
                     mov rax, [rdi + task_rax]
                     mov rbx, [rdi + task_rbx]
@@ -156,7 +170,10 @@ isr_common:
                     ; finally restore rdi (we don't need it anymore)
                     mov rdi, [rdi + task_rdi]
 
-;                    bochs
+                    global dump_it
+dump_it:
+;bochs
+;                    call stackdump
                     iretq
 
 ;; the %rep here generates 256 handlers inline!
@@ -247,6 +264,12 @@ GetCS:
                     mov ax, cs
                     ret
 
+                    global GetSS
+GetSS:
+                    xor rax, rax
+                    mov ax, ss
+                    ret
+
                     global GetDS
 GetDS:
                     xor rax, rax
@@ -271,3 +294,8 @@ GetGS:
                     mov ax, gs
                     ret
 
+                    global GetRFLAGS
+GetRFLAGS:
+                    pushf
+                    pop rax
+                    ret

@@ -1,7 +1,7 @@
-#include <x86/bochs.h>
 #include <Exec/ExecBase.h>
 #include <Devices/PIC.h>
 #include <Devices/Timer.h>
+#include <x86/bochs.h>
 
 #define PIT_TICKS_PER_DAY 0x1800b0
 
@@ -19,6 +19,7 @@ bool timer_isr(void *aData) {
   Timer *t = (Timer *)aData;
   t->increment_ticks();
   gPIC->ack(IRQ_TIMER);
+  gExecBase.Reschedule();
   return true;
 }
 
@@ -33,7 +34,7 @@ Timer::Timer() {
   dprint("Construct timer\n");
   ticks = 0;
 
-  set_frequency(100);
+  set_frequency(100);   // TODO: use ExecBase quantum instead of 100
   gExecBase.AddInterruptHandler(IRQ_TIMER, timer_isr, this, "8253 Timer");
   gPIC->enable_interrupt(IRQ_TIMER);
 }

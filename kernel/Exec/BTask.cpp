@@ -1,7 +1,8 @@
 #include <Exec/BTask.h>
 #include <x86/bochs.h>
+#include <Exec/ExecBase.h>
 
-extern "C" TUint32 GetCS(), GetDS(), GetES(), GetFS(), GetGS();
+extern "C" TUint32 GetCS(), GetDS(), GetES(), GetFS(), GetGS(), GetSS(), GetRFLAGS();
 
 BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aName, aPri) {
   dprint("Construct BTask %s\n", aName);
@@ -16,15 +17,19 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aNam
   mUpperSP = &stack[aStackSize];
   mLowerSP = &stack[0];
 
-  regs->rsp = (TUint64)&stack[aStackSize];
+  regs->rsp = (TUint64)mUpperSP;
   regs->rbp = regs->rsp;
+  regs->ss = GetSS();
   regs->rdi = (TUint64)this;
   regs->rip = (TUint64)this->RunWrapper;
+  regs->rax = (TUint64)this;
   regs->cs = GetCS();
   regs->ds = GetDS();
-  regs->es = GetCS();
+  regs->es = GetES();
   regs->fs = GetFS();
   regs->gs = GetGS();
+  regs->rflags = 0x202; // GetRFLAGS();
+  Dump();
 //#endif 
 }
 
@@ -32,9 +37,15 @@ BTask::~BTask() {
   //
 }
 
+void BTask::RunWrapper(BTask *aTask) {
+  BTask *t = gExecBase.GetCurrentTask();
+  t->Run(); 
+}
+
 void BTask::DumpRegisters(task_t *regs) {
   dprint("   isr_num %d\n", regs->isr_num);
   dprint("  err_code 0x%x\n", regs->err_code);
+  dprint("     flags 0x%x\n", regs->rflags);
   dprint("        cs 0x%x\n", regs->cs);
   dprint("        ds 0x%x\n", regs->ds);
   dprint("        es 0x%x\n", regs->es);

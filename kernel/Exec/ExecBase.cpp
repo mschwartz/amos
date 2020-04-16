@@ -1,14 +1,22 @@
 #include <Exec/ExecBase.h>
 #include <x86/bochs.h>
+#include <stdint.h>
 
 ExecBase gExecBase;
 
 class IdleTask : public BTask {
   public:
-    IdleTask() : BTask("Idle Task") {}
+    IdleTask() : BTask("Idle Task", INT64_MAX) {}
   public:
     void Run() {
+      sti();
+      dprint("IdleTask Running\n");
       while (1) {
+//        dprint("IdleTask Running\n");
+        halt();
+//        bochs;
+//      dprint("IdleTask Running\n");
+//        halt();
       }
     }
 };
@@ -69,4 +77,20 @@ void ExecBase::Hello() {
 
 void ExecBase::AddTask(BTask *aTask) {
   mActiveTasks.Add(*aTask);
+}
+
+  extern "C" void resume_task();
+void ExecBase::Reschedule() {
+//  dprint("RESCHEDULE!!!\n");
+  // TODO determine what task to wake
+  mCurrentTask = mActiveTasks.First();
+  current_task = &mCurrentTask->mTaskX64;
+//  mCurrentTask->Dump();
+  resume_task();
+}
+
+void ExecBase::GuruMeditation() {
+  dprint("GURU MEDIDTATION\n");
+  mCurrentTask->Dump();
+  while (1);
 }

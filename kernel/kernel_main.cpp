@@ -83,8 +83,8 @@ extern "C" int kernel_main(TUint64 ax) {
   kprint("initialized Scheduler\n");
 
   // set up 8259 PIC
-  PIC p;
-  gPIC = &p;
+//  PIC p;
+  gPIC = new PIC;
   kprint("initialized 8259 PIC\n");
   sti();
 
@@ -108,6 +108,8 @@ extern "C" int kernel_main(TUint64 ax) {
 
   char *foo = (char *)malloc(100);
   dprint("AllocMem returned %x\n", foo);
+
+  gExecBase.Reschedule();
 
   dprint("task0 do nothing\n");
 //  char *foo = (char *)malloc(10);

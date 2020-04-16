@@ -1,5 +1,6 @@
-#include "cpu.h"
-#include "idt.h"
+#include <Exec/ExecBase.h>
+//#include "cpu.h"
+//#include "idt.h"
 
 /*!
  * CPU class maintains the CPU interrupt vectors
@@ -59,8 +60,10 @@ static TBool stack_fault_handler(void *aData) {
   return true;
 }
 static TBool general_protection_handler(void *aData) {
+  cli();
   dprint("general_protection handler\n");
-  return true;
+  gExecBase.GuruMeditation();
+//  return true;
 }
 static TBool page_fault_handler(void *aData) {
   dprint("page_fault handler\n");

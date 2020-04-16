@@ -18,7 +18,7 @@ public:
   task_t mTaskX64;
 
 protected:
-  static void RunWrapper(BTask *aTask) { aTask->Run(); }
+  static void RunWrapper(BTask *aTask);
 
 protected:
   TUint64 mSigAlloc;

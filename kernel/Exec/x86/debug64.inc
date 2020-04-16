@@ -8,6 +8,8 @@ nybbles             db "0123456789ABCDEF",0
                     align 8
 
 putc:
+                    out 0x3e9, al
+                    ret
                     push rdx
 
                     mov rdx, [screen]
@@ -21,12 +23,12 @@ putc:
 
                     ret
                    
-;newline:
-;                    mov al, 13
-;                    call screen_putc
-;                    mov al, 10
-;                    call screen_putc
-;                    ret
+newline64:
+                    mov al, 13
+                    call putc
+                    mov al, 10
+                    call putc
+                    ret
 
 space:
 	mov al, ' '
@@ -53,6 +55,7 @@ hexnybble:
 
 	ret
 
+                    global hexbyte
 hexbyte:
                     push rax
 	ror rax, 4
@@ -62,6 +65,7 @@ hexbyte:
 
 	ret
 
+                    global hexword
 hexword:
                     push rax
 	ror rax, 8
@@ -72,6 +76,7 @@ hexword:
                     call hexbyte
 	ret
 
+                    global hexlong
 hexlong:            
                     push rax
                     ror rax, 16
@@ -81,6 +86,17 @@ hexlong:
                     call hexword
 	ret
 
+                    global hexquad
+hexquad:            
+                    push rax
+                    ror rax, 32
+                    and rax, 0xffffffff
+                    call hexlong
+                    pop rax
+                    call hexlong
+	ret
+
+                    global hexdump
 hexdump:
                     mov rax, rsi
                     call hexword
@@ -94,4 +110,47 @@ hexdump_loop:
 	call putc
                     loop hexdump_loop
 	ret
+
+                    global stackdump
+stackdump:
+                    push rsi
+                    mov rsi, rsp
+                    add rsi, 16
+
+                    push rax
+                    push rbx
+                    push rcx
+
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+
+                    call newline64
+
+                    pop rcx
+                    pop rbx
+                    pop rax
+                    pop rsi
+                    ret
+dump1:
+                    push rsi
+                    mov rax, rsi
+                    call hexquad
+                    mov al, ' '
+                    call putc
+                    pop rsi
+                    lodsq
+                    call hexquad
+                    call newline64
+                    ret
 

@@ -144,7 +144,7 @@ static __inline void outsl(unsigned short int __port, const void *__addr, unsign
 }
 
 static __attribute__((noreturn)) inline void halt() {
-  disable_interrupts();
+//  disable_interrupts();
   while (true) {
     __asm__ __volatile__("hlt");
   }

@@ -5,13 +5,19 @@
 extern "C" TUint32 GetCS(), GetDS(), GetES(), GetFS(), GetGS(), GetSS(), GetRFLAGS();
 
 BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aName, aPri) {
-  dprint("Construct BTask %s\n", aName);
-  dputs(aName);
-  dprint("---\n");
-//#if 0
-  task_t *regs = &mTaskX64;
+  // initialize Forbid/Permit
+  mForbidNestCount = 0;
 
+  // initialize task's Signals
+  mSigAlloc = 0;
+  mSigWait = 0;
+  mSigReceived = 0;
+
+  // initialize task's registers
+  task_t *regs = &mTaskX64;
+  // zero out registers
   SetMemory8(regs, 0, sizeof(task_t));
+
   // initialize stack
   TUint8 *stack = (TUint8 *)AllocMem(aStackSize, MEMF_PUBLIC);
   mUpperSP = &stack[aStackSize];
@@ -29,8 +35,6 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aNam
   regs->fs = GetFS();
   regs->gs = GetGS();
   regs->rflags = 0x202; // GetRFLAGS();
-  Dump();
-//#endif 
 }
 
 BTask::~BTask() {
@@ -39,7 +43,7 @@ BTask::~BTask() {
 
 void BTask::RunWrapper(BTask *aTask) {
   BTask *t = gExecBase.GetCurrentTask();
-  t->Run(); 
+  t->Run();
 }
 
 void BTask::DumpRegisters(task_t *regs) {
@@ -69,5 +73,66 @@ void BTask::Dump() {
   dputs(mNodeName);
   dprintf("---\n");
   DumpRegisters(regs);
+}
+
+TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
+  if (aSignalNum == -1) {
+    for (TInt sig = 0; sig < 64; sig++) {
+      TUint64 mask = 1 << sig;
+      if ((mSigAlloc & mask) == 0) {
+        mSigAlloc |= mask;
+        return sig;
+      }
+    }
+  }
+  else if (aSignalNum >= 0) {
+    TUint64 mask = 1 << aSignalNum;
+    if ((mSigAlloc & mask) == 0) {
+      mSigAlloc |= mask;
+      return aSignalNum;
+    }
+  }
+  return -1;
+}
+
+TBool BTask::FreeSignal(TInt64 aSignalNum) {
+  TUint64 mask = 1 << aSignalNum;
+  if (mSigAlloc & mask) {
+    mSigAlloc &= ~mask;
+  }
+}
+
+TUint64 BTask::Wait(TUint64 aSignalSet) {
+  mSigWait |= aSignalSet;
+  gExecBase.WaitSignal(this);
+
+  gExecBase.Disable();
+  TUint64 received = mSigReceived;
+  mSigReceived = 0;
+  gExecBase.Enable();
+
+  return received;
+}
+
+void BTask::Disable() {
+  gExecBase.Disable();
+}
+void BTask::Enable() {
+  gExecBase.Disable();
+}
+
+void BTask::Forbid() {
+  Disable();
+  mForbidNestCount++;
+  Enable();
+}
+
+void BTask::Permit() {
+  Disable();
+  mForbidNestCount--;
+  if (mForbidNestCount < 0) {
+    mForbidNestCount = 0;
+  }
+  Enable();
 }
 

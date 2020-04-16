@@ -15,15 +15,16 @@ pwd
 
 
 CRTBEGIN_OBJ=`$GCC -print-file-name=crtbegin.o`
-echo ""
-echo $CRTBEGIN_OBJ
-echo ""
+#echo ""
+#echo $CRTBEGIN_OBJ
+#echo ""
 CRTEND_OBJ=`$GCC -print-file-name=crtend.o`
 
-echo "CRTBEGIN" $CRTBEGIN_OBJ
+#echo "CRTBEGIN" $CRTBEGIN_OBJ
 
 #export KERNEL="crti.o $CRTBEGIN_OBJ main.o kernel_start.o $CRTEND_OBJ crtn.o "
-export KERNEL="$CRTBEGIN_OBJ kernel_main.o kernel_start.o $CRTEND_OBJ  "
+#export KERNEL="crti.o $CRTBEGIN_OBJ kernel_main.o kernel_start.o $CRTEND_OBJ crtn.o "
+export KERNEL="$CRTBEGIN_OBJ kernel_main.o kernel_start.o $CRTEND_OBJ "
 
 #echo $INCLUDE_PATH
 #echo $LIBS
@@ -51,8 +52,9 @@ cd kernel
 echo "  COMPILING"
 echo "    nasm -f elf -o kernel_start.o kernel_start.asm"
 nasm -f elf64 -o kernel_start.o -l kernel_start.lst kernel_start.asm
-echo $GCC -c -o crti.o crti.s
+echo "    $GCC -c -o crti.o crti.s"
 $GCC -c -o crti.o crti.s
+echo "    $GCC -c -o crtn.o crtn.s"
 $GCC -c -o crtn.o crtn.s
 echo ""
 echo ""

@@ -8,20 +8,24 @@ nybbles             db "0123456789ABCDEF",0
                     align 8
 
 putc:
-                    out 0x3e9, al
-                    ret
-                    push rdx
-
-                    mov rdx, [screen]
-                    mov ah, WHITE_ON_BLACK
-                    mov [rdx], ax
-                    add rdx, 2
-                    mov [screen], rdx
-
-                    pop rdx
+                    push dx
+                    mov dx, 3f9h
+                    out dx, al
+                    pop dx
                     ret
 
-                    ret
+;                    push rdx
+
+;                    mov rdx, [screen]
+;                    mov ah, WHITE_ON_BLACK
+;                    mov [rdx], ax
+;                    add rdx, 2
+;                    mov [screen], rdx
+
+;                    pop rdx
+;                    ret
+
+;                    ret
                    
 newline64:
                     mov al, 13
@@ -88,12 +92,15 @@ hexlong:
 
                     global hexquad
 hexquad:            
+                    push rbx
                     push rax
+                    mov rbx, 0xffffffff
                     ror rax, 32
-                    and rax, 0xffffffff
+                    and rax, rbx
                     call hexlong
                     pop rax
                     call hexlong
+                    pop rbx
 	ret
 
                     global hexdump

@@ -3,11 +3,14 @@
 
 #include <Exec/BTypes.h>
 
+#if 0
 class CPU {
 public:
   CPU();
   ~CPU();
 };
+#endif
+
 
 // TODO: move I/O to a separate file
 extern "C" void cli();

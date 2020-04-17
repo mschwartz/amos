@@ -4,6 +4,7 @@
 #include <Exec/BBase.h>
 #include <Exec/BInterrupt.h>
 #include <Exec/BTask.h>
+#include <Exec/BMessagePort.h>
 #include <Exec/BDevice.h>
 #include <Devices/Screen.h>
 #include <x86/gdt.h>
@@ -24,9 +25,6 @@ public:
   void newline();
 
 public:
-  void Hello();
-  void AddInterruptHandler(TUint8 aIndex, TInterruptHandler *aHandler, TAny *aData, const char *aDescription = "undefined");
-
   void GuruMeditation();
 
 protected:
@@ -34,12 +32,25 @@ protected:
   GDT *mGDT;
   MMU *mMMU;
   IDT *mIDT;
-  CPU *mCPU;
+//  CPU *mCPU;
 
+  //
+  // INTERRUPTS
+  //
 public:
-  TBool SetIntVector(EInterruptNumber aInterruptNumber, BInterrupt *aInterrupt);
+  void AddInterruptHandler(TUint8 aIndex, TInterruptHandler *aHandler, TAny *aData, const char *aDescription = "undefined");
+
+  void SetIntVector(EInterruptNumber aInterruptNumber, BInterrupt *aInterrupt);
   void RemoveIntVector(BInterrupt *aInterrupt);
   //
+protected:
+  // interrupt lists
+  static TBool RootHandler(TInt64 aInterruptNumber, TAny *aData);
+  void SetInterrupt(EInterruptNumber aInterruptNumber, const char *aName);
+  void SetException(EInterruptNumber aInterruptNumber, const char *aName);
+  void InitInterrupts();
+  BInterruptList mInterrupts[EMaxInterrupts];
+
 public:
   void Enable();
   void Disable();
@@ -47,13 +58,11 @@ public:
 protected:
   TInt64 mDisableNestCount;
 
-protected:
-  // interrupt lists
-  BInterruptList mInterrupts[EMaxInterrupts];
-
+  //
+  // TASKS
+  //
 public:
   void AddTask(BTask *aTask);
-  void Reschedule();
   BTask *GetCurrentTask() { return mCurrentTask; }
   /**
     * Put task to sleep until any of its sigwait signals are set.
@@ -61,11 +70,26 @@ public:
   void WaitSignal(BTask *aTask);
   void Wait(BTask *aTask);
   void Wake(BTask *aTask);
+  void Reschedule();
 
 protected:
   BTaskList mActiveTasks, mWaitingTasks;
   BTask *mCurrentTask;
 
+  //
+  // Message Ports
+  //
+public:
+  void AddMessagePort(BMessagePort& aMessagePort);
+  TBool RemoveMessagePort(BMessagePort& aMessagePort);
+
+  BMessagePort *FindPort(const char *aPortName);
+protected:
+  BMessagePortList *mMessagePortList;
+
+  //
+  // DEVICES
+  //
 public:
   void AddDevice(BDevice *aDevice);
   BDevice *FindDevice(const char *aName);
@@ -75,4 +99,5 @@ protected:
 };
 
 extern ExecBase gExecBase;
+
 #endif

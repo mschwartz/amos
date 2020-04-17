@@ -1,4 +1,6 @@
 #include <Exec/BList.h>
+#include <Exec/Memory.h>
+
 #ifdef KERNEL
 #include <x86/bochs.h>
 #endif
@@ -105,6 +107,24 @@ void BList::RemoveNode(BNode *aNode) {
   aNode->Remove(); 
 }
 
+BNode *BList::Find(const char *aNodeName) {
+  for (BNode *n = First(); !End(n); n = n->mNext) {
+    if (CompareStrings(aNodeName, n->mNodeName) == 0) {
+      return n;
+    }
+  }
+  return ENull;
+}
+
+BNode *BList::Find(BNode& aNode) {
+  for (BNode *n = First(); !End(n); n = n->mNext) {
+    if (n == &aNode) {
+      return n;
+    }
+  }
+  return ENull;
+}
+
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -197,3 +217,22 @@ void BListPri::Add(BNodePri &aNode) {
   }
   AddTail(aNode);
 }
+
+BNodePri *BListPri::Find(const char *aNodeName) {
+  for (BNodePri *n = First(); !End(n); n = n->mNext) {
+    if (CompareStrings(aNodeName, n->mNodeName) == 0) {
+      return n;
+    }
+  }
+  return ENull;
+}
+
+BNodePri *BListPri::Find(BNodePri& aNode) {
+  for (BNodePri *n = First(); !End(n); n = n->mNext) {
+    if (n == &aNode) {
+      return n;
+    }
+  }
+  return ENull;
+}
+

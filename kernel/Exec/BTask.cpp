@@ -99,7 +99,14 @@ TBool BTask::FreeSignal(TInt64 aSignalNum) {
   TUint64 mask = 1 << aSignalNum;
   if (mSigAlloc & mask) {
     mSigAlloc &= ~mask;
+    return ETrue;
   }
+  return EFalse;
+}
+
+void BTask::Signal(TInt64 aSignalNum) {
+  mSigReceived |= (1 << aSignalNum);
+  gExecBase.Wake(this);
 }
 
 TUint64 BTask::Wait(TUint64 aSignalSet) {
@@ -135,4 +142,3 @@ void BTask::Permit() {
   }
   Enable();
 }
-

@@ -1,14 +1,26 @@
-#include <Exec/Memory.h>
-#include <string.h>
 #include <posix/malloc.h>
+#include <Exec/Memory.h>
+#include <Exec/BTypes.h>
+
+#define LOCKMEM
+#undef LOCKMEM
+
+#ifdef LOCKMEM
+#include <Exec/ExecBase.h>
+#endif
 
 void *AllocMem(TInt64 aSize, TInt aFlags) {
+#ifdef LOCKMEM
+  gExecBase.Disable();
+#endif
   TUint8 *mem = (TUint8 *)malloc(aSize);
+#ifdef LOCKMEM
+  gExecBase.Enable();
+#endif
   if (aFlags & MEMF_CLEAR) {
-    memset(mem, 0, aSize);
+    SetMemory8(mem, 0, aSize);
   }
   return (TAny *)mem;
-
 }
 
 void FreeMem(TAny *memory) {

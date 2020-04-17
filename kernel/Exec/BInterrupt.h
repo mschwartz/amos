@@ -4,9 +4,49 @@
 #include <Exec/BList.h>
 
 enum EInterruptNumber {
-  ETimerInterrupt,
-  EKeyboardInterrupt,
+  // Exceptions
+  EDivideError,
+  EDebug,
+  ENmi,
+  EInt3,
+  EOverflow,
+  EOutOfBounds,
+  EInvalidOpCode,
+  EDeviceNotAvailable,
+  EDoubleFault,
+  ECoprocessorSegmentOverrun,
+  EInvalidTSS,
+  ESegmentNotPresent,
+  EStackFault,
+  EGeneralProtection,
+  EPageFault,
+  EUnknown,
+  ECoprocessorFault,
+  EAlignmentCheck,
+  EMachineCheck,
+  ESimdFault,
+  EVirtualization,
+  ESecurity,
+  // IRQ
+  ETimerIRQ = 0x20,
+  EKeyboardIRQ = 0x21,
+  ESlavePicIRQ,
+  ECom2IRQ,
+  ECom1IRQ,
+  ELpt2IRQ,
+  EFloppyIRQ,
+  ELpt1IRQ,
+  ERtClockIRQ,
+  EMasterPicIRQ,
+  EReserved1IRQ,
+  EReserved2IRQ,
+  EReserved3IRQ,
+  ECoprocessorIRQ,
+  EHardDiskIRQ,
+  EReserved4IRQ,
+  //
   EMaxInterrupts,
+
 };
 
 /*
@@ -23,7 +63,7 @@ public:
       * You must imeplement a Run() method in your inherited class.  It returns ETrue if it handled the interrupt
       * and no more interrupt handlers in the chain are to be executed.
       */
-  virtual TBool Run() = 0;
+  virtual TBool Run(TAny *aData) = 0;
 };
 
 class BInterruptList : public BListPri {

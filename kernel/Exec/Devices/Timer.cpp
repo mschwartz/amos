@@ -15,13 +15,29 @@
 
 Timer *gTimer;
 
-bool timer_isr(void *aData) {
+class TimerInterrupt : public BInterrupt {
+public:
+  TimerInterrupt() : BInterrupt("Timer INterruptHandler", LIST_PRI_MAX) {}
+
+public:
+  TBool Run(TAny *aData) {
+    Timer *t = (Timer *)aData;
+    t->increment_ticks();
+    gPIC->ack(IRQ_TIMER);
+    gExecBase.Reschedule();
+    return ETrue;
+  }
+};
+
+#if 0
+bool timer_isr(TInt64 aInterruptNumber, void *aData) {
   Timer *t = (Timer *)aData;
   t->increment_ticks();
   gPIC->ack(IRQ_TIMER);
   gExecBase.Reschedule();
   return true;
 }
+#endif
 
 void Timer::set_frequency(TInt hz) {
   int divisor = 1193180 / hz;
@@ -34,8 +50,9 @@ Timer::Timer() {
   dprint("Construct timer\n");
   ticks = 0;
 
-  set_frequency(100);   // TODO: use ExecBase quantum instead of 100
-  gExecBase.AddInterruptHandler(IRQ_TIMER, timer_isr, this, "8253 Timer");
+  set_frequency(100); // TODO: use ExecBase quantum instead of 100
+//  gExecBase.AddInterruptHandler(IRQ_TIMER, timer_isr, this, "8253 Timer");
+  gExecBase.SetIntVector(ETimerIRQ, new TimerInterrupt);
   gPIC->enable_interrupt(IRQ_TIMER);
 }
 

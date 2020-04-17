@@ -65,7 +65,7 @@ extern "C" int kernel_main(TUint64 ax) {
   TModes *modes = (TModes *)0x5000;
   dprint("\n\nDisplay Mode:\n");
   modes->mDisplayMode.Dump();
-  gDeviceList.FindDevice("FOO>DEVICE");
+//  gDeviceList.FindDevice("FOO>DEVICE");
 
   char buf[10];
   memset(buf, 0, 8);

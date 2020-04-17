@@ -58,14 +58,16 @@ typedef struct registers {
 const TInt INTERRUPTS = 256;
 
 // hardware interrupt handler
-typedef TBool (TInterruptHandler)(void *aData);
+typedef TBool (TInterruptHandler)(TInt64 aInterruptNumber, void *aData);
 
 typedef struct HANDLER_INFO {
-  void set(TInterruptHandler *aHandler, void *aData, const char *aDescription) {
+  void set(TInt64 aInterruptNumber, TInterruptHandler *aHandler, void *aData, const char *aDescription) {
     handler = aHandler;
     strcpy(description, aDescription);
+    mInterruptNumber = aInterruptNumber;
     data = aData;
   }
+  TInt64 mInterruptNumber;
   TInterruptHandler *handler;
   char description[64];
   TAny *data;

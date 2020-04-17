@@ -51,6 +51,10 @@ public:
     * Returns a mask of the signals actually received.
     */
   TUint64 Wait(TUint64 aSignalSet);
+  /**
+    * Receive a signal
+    */
+  void Signal(TInt64 aSignalBit);
 
 protected:
   volatile TInt64 mForbidNestCount;

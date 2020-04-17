@@ -6,7 +6,6 @@
 
 #include <Exec/ExecBase.h>
 
-
 TUint16 KEYB_DR = 0x60; /* data register */
 TUint16 KEYB_SR = 0x64; /* status register */
 TUint8 PORT1 = 1;
@@ -208,7 +207,24 @@ static inline TUint16 command(TUint8 cmd, TUint8 port = 1) {
   return read_data();
 }
 
-bool keyboard_isr(void *aData) {
+class KeyboardInterrupt : public BInterrupt {
+  public:
+    KeyboardInterrupt() : BInterrupt("Keyboard Interrupt Handler", LIST_PRI_MAX) {}
+
+public:
+  TBool Run(TAny *aData) {
+    TUint16 *ptr = (TUint16 *)0xb8000;
+    TUint16 t = inb(KEYB_DR);
+    TUint64 c = gTimer->GetTicks();
+    dprint(" keyboard data: %x %d\n", t, c);
+    *ptr = 0x1f42;
+    gPIC->ack(IRQ_KEYBOARD);
+    return ETrue;
+  }
+};
+
+#if 0
+bool keyboard_isr(TInt64 aInterruptNumber, void *aData) {
   TUint16 *ptr = (TUint16 *)0xb8000;
   TUint16 t = inb(KEYB_DR);
   TUint64 c = gTimer->GetTicks();
@@ -217,6 +233,7 @@ bool keyboard_isr(void *aData) {
   gPIC->ack(IRQ_KEYBOARD);
   return true;
 }
+#endif
 
 Keyboard::Keyboard() {
   dprint("Construct Keyboard\n");
@@ -282,7 +299,8 @@ Keyboard::Keyboard() {
   //
   ptr1 = ptr2 = 0;
   // install kernel handler
-  gExecBase.AddInterruptHandler(IRQ_KEYBOARD, keyboard_isr, this, "");
+//  gExecBase.AddInterruptHandler(IRQ_KEYBOARD, keyboard_isr, this, "");
+  gExecBase.SetIntVector(EKeyboardIRQ, new KeyboardInterrupt);
   // enable the keyboard interrupt
   gPIC->enable_interrupt(IRQ_KEYBOARD);
 }

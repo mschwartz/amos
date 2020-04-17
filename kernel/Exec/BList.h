@@ -3,6 +3,10 @@
 
 #include <Exec/BBase.h>
 #include <Exec/Memory.h>
+#include <stdint.h>
+
+const TInt64 LIST_PRI_MIN = INT64_MIN;
+const TInt64 LIST_PRI_MAX = INT64_MAX;
 
 /**
  * Two basic types of doubly linked lists:
@@ -136,8 +140,20 @@ public:
    * @param curr The element to test.
    * @return True if is is the end or faes if it is not the end.
    */
-
   TBool End(BNode *aNode) { return aNode == (BNode *)this; }
+
+  /**
+    * Find a node in this list with the specified name.  Only the first found node is returned;
+    * returns ENull if not found.
+    */
+  BNode *Find(const char *aNodeName);
+
+  /**
+    * Find a node in this list with the specified address.
+    * returns ENull if not found.
+    */
+  BNode *Find(BNode& aNode);
+
 };
 
 /**
@@ -197,6 +213,18 @@ public:
    * @return The mPrevious element in the list;
    */
   BNodePri *Prev(BNodePri *curr) { return curr->mPrev; }
+
+  /**
+    * Find a node in this list with the specified name.  Only the first found node is returned;
+    * returns ENull if not found.
+    */
+  BNodePri *Find(const char *aNodeName);
+
+  /**
+    * Find a node in this list with the specified address.
+    * returns ENull if not found.
+    */
+  BNodePri *Find(BNodePri& aNode);
 
 private:
   void AddHead(BNodePri &node);

@@ -88,7 +88,7 @@ MMU::MMU() {
   mFreePages = nullptr;
   system_memory = 0;
   TBiosMemory *m = (TBiosMemory *)BIOS_MEMORY;
-  m->Dump();
+//  m->Dump();
 
   TInt32 count = m->mCount;
 #ifdef DEBUGME
@@ -134,13 +134,17 @@ MMU::MMU() {
   // TODO: 64G+ address space mapping
   //  return;
   // blank page directory:
+#ifdef DEBUGME
   dprint("blanking page directory\n");
+#endif
   for (TInt i = 0; i < 512; i++) {
     // kernel-mode access only, write eanbled, not present
     page_directory[i] = 2;
   }
 
+#ifdef DEBUGME
   dprint("set up page tables\n");
+#endif
   for (TInt t = 0; t < 512; t++) {
     // supervisor level, r/w, present
     page_table[t] = (t * PAGE_SIZE) | 3;
@@ -148,7 +152,9 @@ MMU::MMU() {
 
   page_directory[0] = ((TUint64)page_table) | 3;
 
+#ifdef DEBUGME
   dprint("page_directory: %x\n", page_directory);
+#endif
 //  bochs
 //  load_page_directory(page_directory);
 //  enable_paging();

@@ -1,15 +1,14 @@
-#include <Devices/Keyboard.h>
-#include <Devices/Timer.h>
-#include <x86/kprint.h>
+#include <Exec/Devices/KeyboardDevice.h>
+#include <Exec/BTask.h>
 #include <Devices/PIC.h>
 #include <x86/bochs.h>
 
 #include <Exec/ExecBase.h>
 
-TUint16 KEYB_DR = 0x60; /* data register */
-TUint16 KEYB_SR = 0x64; /* status register */
-TUint8 PORT1 = 1;
-TUint8 PORT2 = 2;
+const TUint16 KEYB_DR = 0x60; /* data register */
+const TUint16 KEYB_SR = 0x64; /* status register */
+const TUint8 PORT1 = 1;
+const TUint8 PORT2 = 2;
 
 const int TIMEOUT = 10000;
 
@@ -159,7 +158,7 @@ enum {
   OUTPUT_FIRST_PORT_DATA = (1 << 7),
 };
 
-Keyboard *gKeyboard;
+//Keyboard *gKeyboard;
 
 static inline TUint8 read_config_byte(TUint8 offset) {
   outb(CMD_READ_BYTE_00 + offset, KEYB_SR);
@@ -207,103 +206,81 @@ static inline TUint16 command(TUint8 cmd, TUint8 port = 1) {
   return read_data();
 }
 
+class KeyboardTask;
+
 class KeyboardInterrupt : public BInterrupt {
-  public:
-    KeyboardInterrupt() : BInterrupt("Keyboard Interrupt Handler", LIST_PRI_MAX) {}
+public:
+  KeyboardInterrupt(KeyboardTask *aTask) : BInterrupt("Keyboard Interrupt Handler", LIST_PRI_MAX) {
+    mTask = aTask;
+  }
 
 public:
-  TBool Run(TAny *aData) {
-    TUint16 *ptr = (TUint16 *)0xb8000;
-    TUint16 t = inb(KEYB_DR);
-    TUint64 c = gTimer->GetTicks();
-    dprint(" keyboard data: %x %d\n", t, c);
-    *ptr = 0x1f42;
-    gPIC->ack(IRQ_KEYBOARD);
-    return ETrue;
-  }
+  TBool Run(TAny *aData);
+  //    TUint16 *ptr = (TUint16 *)0xb8000;
+
+protected:
+  KeyboardTask *mTask;
 };
 
-#if 0
-bool keyboard_isr(TInt64 aInterruptNumber, void *aData) {
-  TUint16 *ptr = (TUint16 *)0xb8000;
+class KeyboardTask : public BTask {
+  friend KeyboardInterrupt;
+
+public:
+  KeyboardTask() : BTask("Keyboard Task", LIST_PRI_MAX) {
+    mPtr1 = mPtr2 = 0;
+    // install kernel handler
+    gExecBase.SetIntVector(EKeyboardIRQ, new KeyboardInterrupt(this));
+    // enable the keyboard interrupt
+    gPIC->enable_interrupt(IRQ_KEYBOARD);
+    dprint("Added keyboard irq handler\n");
+  }
+
+  void Run();
+
+protected:
+  char mBuffer[KEYBOARD_BUFFER_SIZE];
+  int mPtr1, mPtr2;
+  BMessagePort *mMessagePort;
+};
+
+TBool KeyboardInterrupt::Run(TAny *aData) {
   TUint16 t = inb(KEYB_DR);
-  TUint64 c = gTimer->GetTicks();
+//  TUint64 c = gTimer->GetTicks();
+  TUint64 c = gExecBase.SystemTicks();
   dprint(" keyboard data: %x %d\n", t, c);
-  *ptr = 0x1f42;
+  mTask->mBuffer[mTask->mPtr2++] = t;
+  mTask->mPtr2 %= KEYBOARD_BUFFER_SIZE;
+  //    *ptr = 0x1f42;
+  mTask->Signal(1 << 10);
+  //  dputs("signal "); dhex64((TUint64)mTask); dputs("\n");
   gPIC->ack(IRQ_KEYBOARD);
-  return true;
-}
-#endif
-
-Keyboard::Keyboard() {
-  dprint("Construct Keyboard\n");
-
-#if 0
-  dprint("configure PS/2\n");
-
-  // configure PS/2
-  // 1) disable devices
-  dprint("  disable port 1\n");
-  write_status(CMD_DISABLE_PORT1);
-  dprint("  disable port 2\n");
-  write_status(CMD_DISABLE_PORT2);
-
-  // 2 flush output buffer
-  dprint("read data %x\n", read_data());
-
-  // 3 set controller configuration byte
-  TUint8 config = read_config_byte(0);
-  dprint("  config = %x... ", config);
-  config &= ~CONFIG_FIRST_PORT_ENABLE | CONFIG_SECOND_PORT_ENABLE | CONFIG_FIRST_PORT_TRANSLATION;
-  dprint("=> %x...\n", config);
-  write_status(CMD_WRITE_BYTE_00);
-  write_data(config);
-
-  // 4 perform self test
-  TUint16 st = command(CMD_TEST_CONTROLLER);
-  dprint("  controller test: %x\n", st);
-
-  // 5 determine if there are 2 channels
-  if (config & CONFIG_SECOND_PORT_CLOCK) {
-    dprint("  enable port2\n");
-    write_status(CMD_ENABLE_PORT2);
-    // disable it again
-    dprint("  disable port2\n");
-    write_status(CMD_DISABLE_PORT2);
-  }
-  // 5 perform interface tests
-  dprint("  test port 1\n");
-  TUint16 it = command(CMD_TEST_PORT1);
-  dprint("  port 1 interface test: %x\n", it);
-  if (config & CONFIG_SECOND_PORT_CLOCK) {
-    dprint("  test port 2\n");
-    it = command(CMD_TEST_PORT2);
-    dprint("  port 2 interface test: %x\n", it);
-  }
-  // 6 enable devices
-  dprint("  enable port 1\n");
-  write_status(CMD_ENABLE_PORT1);
-  if (config & CONFIG_SECOND_PORT_CLOCK) {
-    dprint("  enable port 2\n");
-    write_status(CMD_ENABLE_PORT2);
-  }
-  // 7 reset devices
-  TUint16 reset1 = command(PULSE_RESET_PORT, PORT1);
-  dprint("  reset port 1 = %x\n", reset1);
-  if (config & CONFIG_SECOND_PORT_CLOCK) {
-    TUint16 reset2 = command(PULSE_RESET_PORT, PORT2);
-    dprint("  reset port 2 = %x\n", reset2);
-  }
-#endif
-
-  //
-  ptr1 = ptr2 = 0;
-  // install kernel handler
-//  gExecBase.AddInterruptHandler(IRQ_KEYBOARD, keyboard_isr, this, "");
-  gExecBase.SetIntVector(EKeyboardIRQ, new KeyboardInterrupt);
-  // enable the keyboard interrupt
-  gPIC->enable_interrupt(IRQ_KEYBOARD);
+  return ETrue;
 }
 
-Keyboard::~Keyboard() {
+void KeyboardTask::Run() {
+  dprint("keyboard task alive!\n");
+  // initialize message port and wait for messages
+
+  while (ETrue) {
+    //    dprint("About to wait\n");
+    TUint64 r = Wait(1 << 10);
+    //    if (r) {
+    dprint("KEYBOARD.TASK RETURNED Signal received %x\n", r);
+    //    }
+  }
+  /*
+  mMessagePort = CreateMessagePort();
+  while (WaitPort(mMessagePort)) {
+    dprint("wait port returned\n");
+    halt();
+  }
+  */
+}
+
+KeyboardDevice::KeyboardDevice() : BDevice("keyboard.device") {
+  dprint("Construct KeyboardDevice\n");
+  gExecBase.AddTask(new KeyboardTask);
+}
+
+KeyboardDevice::~KeyboardDevice() {
 }

@@ -1,6 +1,6 @@
 GFX=	Graphics/TRect.o Graphics/TBCD.o Graphics/BFont.o Graphics/BBitmap.o
 
-DEVICES= Devices/Keyboard.o Devices/PIC.o Devices/Screen.o Devices/Timer.o
+DEVICES= Devices/KeyboardDevice.o Devices/PIC.o Devices/Screen.o Devices/TimerDevice.o
 
 OBJ= 	 BTypes.o Memory.o BBase.o BList.o BMessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o $(DEVICES) $(GFX)
 

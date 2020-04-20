@@ -3,18 +3,22 @@
 #include <x86/kprint.h>
 #include <posix/itoa.h>
 #include <posix/sprintf.h>
+#include <Exec/ExecBase.h>
 //#include <Screen.h>
 
 TUint8 in_bochs; //  = *((TUint8 *)0x7c10);
 
+extern "C" void eputs(const char *s);
 void dputs(const char *s) {
-//  dprint("bochs %x\n", in_bochs);
-  while (*s) {
-    dputc(*s++);
-  }
+  eputs(s);
+  //  dprint("bochs %x\n", in_bochs);
+//  while (*s) {
+//    dputc(*s++);
+//  }
 }
 
 void dprintf(const char *fmt, ...) {
+  gExecBase.Disable();
   va_list ap;
   char *s, c, t, tt;
   TInt d;
@@ -38,8 +42,10 @@ void dprintf(const char *fmt, ...) {
             break;
           case 's':
             s = va_arg(ap, char *);
+            ltoa(d, buf, 16);
+            dputs(buf);
             if (in_bochs) {
-            dputs(s);
+              dputs(s);
             }
             else {
               kputs(s);
@@ -84,7 +90,7 @@ void dprint(const char *fmt, ...) {
   //  dprintf("args: %x\n", args);
   vsprintf(buf, fmt, args);
   //  vsprintf(buf, fmt, parameters);
-//  kprint("%s", buf);
+  //  kprint("%s", buf);
   dputs(buf);
   va_end(args);
 }
@@ -114,11 +120,11 @@ void dhex64(const TUint64 l) {
   dhex32(l & 0xffffffff);
 }
 
-void dhexdump(TUint8 *src, int lines){
+void dhexdump(TUint8 *src, int lines) {
   TUint64 address = (TUint64)src;
-  for (TInt i=0; i<lines; i++) {
+  for (TInt i = 0; i < lines; i++) {
     dprint("%x: ", address);
-    for (TInt c=0; c<8; c++) {
+    for (TInt c = 0; c < 8; c++) {
       dhex8(*src++);
       dputc(' ');
       address++;
@@ -127,11 +133,11 @@ void dhexdump(TUint8 *src, int lines){
   }
 }
 
-void dhexdump16(TUint16 *src, int lines){
+void dhexdump16(TUint16 *src, int lines) {
   TUint64 address = (TUint64)src;
-  for (TInt i=0; i<lines; i++) {
+  for (TInt i = 0; i < lines; i++) {
     dprint("%x: ", address);
-    for (TInt c=0; c<8; c++) {
+    for (TInt c = 0; c < 8; c++) {
       dhex16(*src++);
       dputc(' ');
       address += 2;
@@ -139,4 +145,3 @@ void dhexdump16(TUint16 *src, int lines){
     dputc('\n');
   }
 }
-

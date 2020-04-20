@@ -19,7 +19,7 @@ BDevice::~BDevice() {
   */
 BDeviceList::BDeviceList() : BListPri("Device List") {
 //  bochs
-  dprint("construct device list\n");
+//  dprint("construct device list\n");
 }
 
 BDeviceList::~BDeviceList() {

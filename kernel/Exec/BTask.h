@@ -4,7 +4,14 @@
 #include <Exec/BList.h>
 #include <x86/tasking.h>
 
+class BMessagePort;
+
 class ExecBase;
+
+enum ETaskState {
+  ETaskRunning,
+  ETaskWaiting,
+};
 
 class BTask : public BNodePri {
   friend ExecBase;
@@ -14,19 +21,16 @@ public:
   virtual ~BTask();
 
 public:
-  task_t mTaskX64;
+  task_t mRegisters;
 
 protected:
-  TAny *mUpperSP, *mLowerSP;
+  volatile TAny *mUpperSP, *mLowerSP; 
+  volatile ETaskState mTaskState;
 
 public:
   virtual void Run() = 0;
-  static void DumpRegisters(task_t *regs);
+  void DumpRegisters(task_t *regs);
   void Dump();
-
-public:
-  void Disable();
-  void Enable();
 
 protected:
   static void RunWrapper(BTask *aTask);
@@ -56,12 +60,20 @@ public:
     */
   void Signal(TInt64 aSignalBit);
 
-protected:
-  volatile TInt64 mForbidNestCount;
+public:
+  BMessagePort *CreateMessagePort(const char *aName = ENull, TInt64 aPri = LIST_PRI_DEFAULT);
+  void FreeMessagePort(BMessagePort *aMessagePort);
+  TUint64 WaitPort(BMessagePort *aMessagePort);
 
 public:
+  void Disable();
+  void Enable();
+
   void Forbid();
   void Permit();
+
+protected:
+  volatile TInt64 mForbidNestCount, mDisableNestCount;
 };
 
 class BTaskList : public BListPri {

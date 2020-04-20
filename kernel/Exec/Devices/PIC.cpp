@@ -17,7 +17,7 @@ PIC *gPIC;
 #define ob(port, data) outb(data, port)
 
 PIC::PIC() {
-  dprint("Constructing PIC\n");
+//  dprint("Constructing PIC\n");
   // remap PIC IRQs
   ob(PIC1_CMD, 0x11); /* starting initialization  */
   ob(PIC2_CMD, 0x11);

@@ -2,9 +2,15 @@
 #include <x86/bochs.h>
 #include <stdint.h>
 
-#include <Devices/Keyboard.h>
-#include <Devices/Timer.h>
+#include <Devices/KeyboardDevice.h>
+#include <Devices/TimerDevice.h>
+
 ExecBase gExecBase;
+
+extern "C" void schedule_trap();
+extern "C" void eputs(const char *s);
+
+extern "C" void enter_next_task();
 
 class IdleTask : public BTask {
 public:
@@ -43,7 +49,7 @@ ExecBase::ExecBase() {
   dprint("  initialized IDT\n");
 
   InitInterrupts();
-  dprint("  Installed interrupt handlers\n");
+  //  dprint("  Installed interrupt handlers\n");
 
   //  mCPU = new CPU;
   //  dprint("  initialized CPU vectors\n");
@@ -52,25 +58,32 @@ ExecBase::ExecBase() {
   IdleTask *task = new IdleTask();
   mActiveTasks.Add(*task);
   mCurrentTask = mActiveTasks.First();
-  current_task = &mCurrentTask->mTaskX64;
+  current_task = ENull;
+  next_task = &mCurrentTask->mRegisters;
 
   // set up 8259 PIC
   gPIC = new PIC;
-  dprint("  initialized 8259 PIC\n");
   mDisableNestCount = 0;
   sti();
+  Disable();
+  dprint("  initialized 8259 PIC\n");
+  Enable();
 
-  Timer t;
-  gTimer = &t;
-  kprint("initialized timer\n");
 
-  Keyboard k;
-  gKeyboard = &k;
-  kprint("initialized keyboard\n");
+  // initialize devices
+  AddDevice(mTimer = new TimerDevice());
+  kprint("  initialized timer\n");
+
+  AddDevice(new KeyboardDevice);
+  kprint("  initialized keyboard \n");
 }
 
 ExecBase::~ExecBase() {
   dprint("ExecBase destructor called\n");
+}
+
+TUint64 ExecBase::SystemTicks() {
+  return mTimer->GetTicks();
 }
 
 void ExecBase::Disable() {
@@ -103,16 +116,46 @@ void ExecBase::newline() {
 }
 
 void ExecBase::AddTask(BTask *aTask) {
+  dprint("Add Task %x rip=%x rsp=%x --- ", aTask, aTask->mRegisters.rip, aTask->mRegisters.rsp);
+  dputs(aTask->mNodeName);
+  dprint(" ---\n");
   Disable();
   mActiveTasks.Add(*aTask);
   Enable();
+//  Reschedule();
+//  Schedule();
 }
 
 void ExecBase::WaitSignal(BTask *aTask) {
-  Disable();
   aTask->Remove();
   // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
   // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
+  if (aTask->mSigWait & aTask->mSigReceived) {
+//    dputs("wait signal active ");
+//    dputs(aTask->mNodeName);
+    dputs("\n");
+    mActiveTasks.Add(*aTask);
+    aTask->mTaskState = ETaskRunning;
+  }
+  else {
+//    dputs("wait signal wait ");
+//    dputs(aTask->mNodeName);
+//    dputs("\n");
+    mWaitingTasks.Add(*aTask);
+    aTask->mTaskState = ETaskWaiting;
+//    mCurrentTask = mActiveTasks.First();
+  }
+//  Reschedule();
+  Schedule();
+}
+
+#if 0
+// assumes aTask is in Active list
+void ExecBase::Wait(BTask *aTask) {
+  Disable();
+  // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
+  // this effects round-robin.
+  aTask->Remove();
   if (aTask->mSigWait & aTask->mSigReceived) {
     mActiveTasks.Add(*aTask);
   }
@@ -120,36 +163,70 @@ void ExecBase::WaitSignal(BTask *aTask) {
     mWaitingTasks.Add(*aTask);
   }
   Enable();
+  Reschedule();
+  Schedule();
 }
+#endif
 
-// assumes aTask is in Active list
-void ExecBase::Wait(BTask *aTask) {
-  Disable();
-  // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
-  // this effects round-robin.
-  aTask->Remove();
-  mActiveTasks.Add(*aTask);
-  Enable();
-}
-
+/**
+  * Wake() - if task is on Wait list, move it to active list.  If already on active list, re-add it.
+  * Note that Add() will sort the task into the list, effecting round-robin order.
+  */
 void ExecBase::Wake(BTask *aTask) {
-  Disable();
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
   aTask->Remove();
   mActiveTasks.Add(*aTask);
-  Enable();
+  aTask->mTaskState = ETaskRunning;
 }
 
-extern "C" void resume_task();
+void ExecBase::Schedule() {
+  schedule_trap();
+}
 
-void ExecBase::Reschedule() {
-  Wake(mCurrentTask);
-  if (mCurrentTask->mForbidNestCount == 0) {
-    mCurrentTask = mActiveTasks.First();
-    current_task = &mCurrentTask->mTaskX64;
+void ExecBase::Kickstart() {
+  enter_next_task(); // just enter next task
+}
+
+/**
+ * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
+ */
+void ExecBase::RescheduleIRQ() {
+  if (mCurrentTask) {
+    if (mCurrentTask->mForbidNestCount == 0) {
+      mCurrentTask->Remove();
+      if (mCurrentTask->mTaskState == ETaskWaiting) {
+        mWaitingTasks.Add(*mCurrentTask);
+      }
+      else {
+        mActiveTasks.Add(*mCurrentTask);
+      }
+    }
   }
-  resume_task();
+  mCurrentTask = mActiveTasks.First();
+  current_task = &mCurrentTask->mRegisters;
+}
+
+/**
+  * Determine next task to run. Should be called when logic determines that a different task, than the currently
+  * running one, could be made active.
+  */
+void ExecBase::Reschedule() {
+  Disable();
+  if (mCurrentTask) {
+    if (mCurrentTask->mForbidNestCount == 0) {
+      mCurrentTask->Remove();
+      if (mCurrentTask->mTaskState == ETaskWaiting) {
+        mWaitingTasks.Add(*mCurrentTask);
+      }
+      else {
+        mActiveTasks.Add(*mCurrentTask);
+      }
+    }
+  }
+  mCurrentTask = mActiveTasks.First();
+  next_task = &mCurrentTask->mRegisters;
+  Enable();
 }
 
 void ExecBase::AddMessagePort(BMessagePort &aMessagePort) {
@@ -157,21 +234,27 @@ void ExecBase::AddMessagePort(BMessagePort &aMessagePort) {
 }
 
 TBool ExecBase::RemoveMessagePort(BMessagePort &aMessagePort) {
-  Disable();
   if (mMessagePortList->Find(aMessagePort)) {
     aMessagePort.Remove();
-    Enable();
     return ETrue;
   }
-  Enable();
   return EFalse;
 }
 
-void ExecBase::GuruMeditation() {
-  dprint("GURU MEDIDTATION\n");
+void ExecBase::GuruMeditation(const char *aMessage) {
+  cli();
+  dputs("\n\n***********************\n");
+  dputs("GURU MEDIDTATION\n");
+  if (aMessage) {
+    dprint(aMessage);
+    dprint("\n");
+  }
+
   mCurrentTask->Dump();
-  while (1)
-    ;
+  dputs("***********************\n\n\n");
+  while (1) {
+    halt();
+  }
 }
 
 void ExecBase::AddDevice(BDevice *aDevice) {
@@ -190,8 +273,9 @@ public:
 public:
   TBool Run(TAny *aData) {
     cli();
-    dprintf(mNodeName);
-    dprintf(" Exception\n");
+    //    dprintf(mNodeName);
+    //    dprintf(" Exception\n");
+    gExecBase.GuruMeditation(mNodeName);
     // TODO: kill/remove current task
     halt();
     return ETrue;
@@ -211,19 +295,35 @@ public:
   }
 };
 
+class NextTaskTrap : public BInterrupt {
+public:
+  NextTaskTrap(const char *aKind) : BInterrupt(aKind, LIST_PRI_MIN) {}
+  ~NextTaskTrap();
+
+public:
+  TBool Run(TAny *aData) {
+    // at this point current_task is saved
+    cli();
+    gExecBase.RescheduleIRQ();
+    //    dprintf(mNodeName);
+    //    dprintf(" TRAP\n");
+    return ETrue;
+  }
+};
+
 void ExecBase::SetIntVector(EInterruptNumber aInterruptNumber, BInterrupt *aInterrupt) {
-  dprint("SetIntVector(%d) ", aInterruptNumber);
-  dprint(aInterrupt->mNodeName);
-  dprint("\n");
+  //  dprint("SetIntVector(%d) ", aInterruptNumber);
+  //  dprint(aInterrupt->mNodeName);
+  //  dprint("\n");
 
   mInterrupts[aInterruptNumber].Add(*aInterrupt);
 }
 
 TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
-//  dprint("RootHandler! %d %x\n", aInterruptNumber, aData);
+  //  dprint("RootHandler! %d %x\n", aInterruptNumber, aData);
   BInterruptList *list = &gExecBase.mInterrupts[aInterruptNumber];
   for (BInterrupt *i = (BInterrupt *)list->First(); !list->End(i); i = (BInterrupt *)i->mNext) {
-//    dprint("calling %d\n", i->pri);
+    //    dprint("calling %d\n", i->pri);
     if (i->Run(aData)) {
       return ETrue;
     }
@@ -239,11 +339,19 @@ void ExecBase::SetException(EInterruptNumber aIndex, const char *aName) {
 }
 
 void ExecBase::SetInterrupt(EInterruptNumber aIndex, const char *aName) {
-  dprint("Add IRQ %d ", aIndex);
+  //  dprint("Add IRQ %d ", aIndex);
+  //  dprint(aName);
+  //  dprint("\n");
+  IDT::install_handler(aIndex, ExecBase::RootHandler, this, aName);
+  SetIntVector(aIndex, new DefaultIRQ(aName));
+}
+
+void ExecBase::SetTrap(EInterruptNumber aIndex, const char *aName) {
+  dprint("Add Trap %d ", aIndex);
   dprint(aName);
   dprint("\n");
   IDT::install_handler(aIndex, ExecBase::RootHandler, this, aName);
-  SetIntVector(aIndex, new DefaultIRQ(aName));
+  SetIntVector(aIndex, new NextTaskTrap(aName));
 }
 
 void ExecBase::InitInterrupts() {
@@ -286,5 +394,6 @@ void ExecBase::InitInterrupts() {
   SetInterrupt(EReserved3IRQ, "Reserved3");
   SetInterrupt(ECoprocessorIRQ, "Coprocessor");
   SetInterrupt(EHardDiskIRQ, "HardDisk");
-  SetInterrupt(EReserved4IRQ, "Reserved4");
+  //  SetInterrupt(EReserved4IRQ, "Reserved4");
+  SetTrap(ETrap0, "Trap0");
 }

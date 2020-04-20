@@ -30,10 +30,11 @@ class BMessagePort : public BNodePri {
   friend ExecBase;
 
 public:
-  BMessagePort(const char *aName, BTask *aOwner, TInt64 aSignalBit, TInt64 aPri = 0);
+  BMessagePort(const char *aName, BTask *aOwner, TInt64 aSignalBit, TInt64 aPri = LIST_PRI_DEFAULT);
   ~BMessagePort();
 
   void ReceiveMessage(BMessage *aMessage);
+  TInt64 SignalNumber() { return mSignalBit; }
 
 protected:
   BTask *mOwner;

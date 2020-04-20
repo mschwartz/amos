@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 const TInt64 LIST_PRI_MIN = INT64_MIN;
+const TInt64 LIST_PRI_DEFAULT = 0;
 const TInt64 LIST_PRI_MAX = INT64_MAX;
 
 /**

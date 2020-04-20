@@ -5,34 +5,44 @@
 #include <x86/bochs.h>
 
 typedef struct Task {
-  struct Task *next, *prev;
   // flags
-  TUint64 rflags;
+  volatile TUint64 rflags;
   // general purpose registers
-  TUint64 rax;
-  TUint64 rbx;
-  TUint64 rcx;
-  TUint64 rdx;
-  TUint64 rdi;
-  TUint64 rsi;
-  // segment/selector registers
-  TUint32 ds;
-  TUint32 es;
-  TUint32 fs;
-  TUint32 gs;
+  volatile TUint64 rax;
+  volatile TUint64 rbx;
+  volatile TUint64 rcx;
+  volatile TUint64 rdx;
+  volatile TUint64 rsi;
+  volatile TUint64 rdi;
+
+  volatile TUint64 r8;
+  volatile TUint64 r9;
+  volatile TUint64 r10;
+  volatile TUint64 r11;
+  volatile TUint64 r12;
+  volatile TUint64 r13;
+  volatile TUint64 r14;
+  volatile TUint64 r15;
+
   // instruction pointer
-  TUint32 cs;
-  TUint32 ss;
-  TUint64 rip;
+  volatile TUint64 rip;
   // stack
-  TUint64 rsp;
-  TUint64 rbp;
+  volatile TUint64 rsp;
+  volatile TUint64 rbp;
   // flags
 
-  TUint64 err_code;
-  TUint64 isr_num; //48
+  volatile TUint64 err_code;
+  volatile TUint64 isr_num; //48
 
   TInt errno;
+
+  // segment/selector registers
+  volatile TUint16 cs;
+  volatile TUint16 ds;
+  volatile TUint16 es;
+  volatile TUint16 fs;
+  volatile TUint16 gs;
+  volatile TUint16 ss;
 
   void Dump() {
     extern char *isr_names[];
@@ -43,19 +53,18 @@ typedef struct Task {
     dprint(" isr_num: (%s) %x\n", "ISR", isr_num);
     dprint(" err_code: %x\n", err_code);
 
-    dprint(" rax: %x\n", rax);
-    dprint(" rbx: %x\n", rbx);
-    dprint(" rcx: %x\n", rcx);
-    dprint(" rdx: %x\n", rdx);
-    dprint(" rsi: %x\n", rsi);
-    dprint(" rdi: %x\n", rdi);
-
+    dprint(" rax: %x ", rax);
+    dprint(" rbx: %x ", rbx);
+    dprint(" rcx: %x ", rcx);
+    dprint(" rdx: %x ", rdx);
+    dprint(" rsi: %x ", rsi);
+    dprint(" rdi: %x ", rdi);
     dprint(" rbp: %x\n", rbp);
 
-    dprint(" cs: %x\n", cs);
-    dprint(" ds: %x\n", ds);
-    dprint(" es: %x\n", es);
-    dprint(" fs: %x\n", fs);
+    dprint(" cs: %x ", cs);
+    dprint(" ds: %x ", ds);
+    dprint(" es: %x ", es);
+    dprint(" fs: %x ", fs);
     dprint(" gs: %x\n", gs);
 
     dprint(" rip: %x\n", rip);
@@ -67,15 +76,9 @@ typedef struct Task {
     }
     dprint("\n");
   }
-} task_t;
+} PACKED task_t;
 
-class Scheduler {
-public:
-  Scheduler();
-  ~Scheduler();
-};
-
-extern Scheduler *scheduler;
 extern "C" task_t *current_task;
+extern "C" task_t *next_task;
 
 #endif

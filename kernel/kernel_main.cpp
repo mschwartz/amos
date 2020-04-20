@@ -8,15 +8,13 @@
 
 typedef void (*func_ptr)(void);
 
-extern "C" void test_trap();
-
 // these are for calling global constructors
 extern "C" func_ptr __init_array_start[0], __init_array_end[0];
 
 static void call_global_constructors(void) {
-  dprint("CALL CONSTRUCTORS %x %x\n", __init_array_start, __init_array_end);
+//  dprint("CALL CONSTRUCTORS %x %x\n", __init_array_start, __init_array_end);
   for (func_ptr *func = __init_array_start; func != __init_array_end; func++) {
-    dprint("func %x\n", func);
+//    dprint("func %x\n", func);
     (*func)();
   }
 }
@@ -58,9 +56,9 @@ extern "C" int kernel_main(TUint64 ax) {
   dprint("         init: %x - %x\n", &init_start, &init_end);
   dprint("         text: %x - %x\n", &text_start, &text_end);
   dprint("       rodata: %x - %x\n", &rodata_start, &rodata_end);
-  dprint("        data: %x - %x\n", &data_start, &data_end);
-  dprint("         bss: %x - %x\n", &bss_start, &bss_end);
-  dprint("  kernel_end: %x\n", &kernel_end);
+  dprint("         data: %x - %x\n", &data_start, &data_end);
+  dprint("          bss: %x - %x\n", &bss_start, &bss_end);
+  dprint("   kernel_end: %x\n", &kernel_end);
 
   TModes *modes = (TModes *)0x5000;
   dprint("\n\nDisplay Mode:\n");
@@ -70,7 +68,8 @@ extern "C" int kernel_main(TUint64 ax) {
   char buf[10];
   memset(buf, 0, 8);
 
-  gExecBase.Reschedule();
+//  gExecBase.Reschedule();
+  gExecBase.Kickstart();
 
   return 0;
 }

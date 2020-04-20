@@ -9,7 +9,6 @@ Screen::Screen() {
   row = col = 0;
   attr(BLACK, WHITE);
   cls();
-  dprint("Constructed Screen\n");
 }
 
 void Screen::moveto(int x, int y) {

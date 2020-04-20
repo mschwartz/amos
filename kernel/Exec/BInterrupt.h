@@ -45,6 +45,7 @@ enum EInterruptNumber {
   EHardDiskIRQ,
   EReserved4IRQ,
   //
+  ETrap0,
   EMaxInterrupts,
 
 };

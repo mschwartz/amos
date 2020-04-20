@@ -13,10 +13,17 @@
 #include <x86/cpu.h>
 #include <Devices/PIC.h>
 
+class TimerDevice;
+
 class ExecBase : public BBase {
 public:
   ExecBase();
   ~ExecBase();
+
+  /**
+    * Return quantum (timer interrupt frequency for multitasking preemption) in hz
+    */
+  TInt Quantum() { return 100; }
 
 public:
   // put character, string to console, wherever console is.
@@ -25,7 +32,7 @@ public:
   void newline();
 
 public:
-  void GuruMeditation();
+  void GuruMeditation(const char *aMessage = ENull);
 
 protected:
   Screen *mScreen;
@@ -48,6 +55,7 @@ protected:
   static TBool RootHandler(TInt64 aInterruptNumber, TAny *aData);
   void SetInterrupt(EInterruptNumber aInterruptNumber, const char *aName);
   void SetException(EInterruptNumber aInterruptNumber, const char *aName);
+  void SetTrap(EInterruptNumber aInterruptNumber, const char *aName);
   void InitInterrupts();
   BInterruptList mInterrupts[EMaxInterrupts];
 
@@ -56,7 +64,7 @@ public:
   void Disable();
 
 protected:
-  TInt64 mDisableNestCount;
+  volatile TInt64 mDisableNestCount;
 
   //
   // TASKS
@@ -68,9 +76,13 @@ public:
     * Put task to sleep until any of its sigwait signals are set.
     */
   void WaitSignal(BTask *aTask);
-  void Wait(BTask *aTask);
+//  void Wait(BTask *aTask);
   void Wake(BTask *aTask);
+
+  void Kickstart(); // kickstart multitasking.  Only call once from main() !!!!
   void Reschedule();
+  void RescheduleIRQ(); // from IRQ context
+  void Schedule();
 
 protected:
   BTaskList mActiveTasks, mWaitingTasks;
@@ -96,6 +108,13 @@ public:
 
 protected:
   BDeviceList mDeviceList;
+
+public:
+  TUint64 SystemTicks();
+
+protected:
+  TimerDevice *mTimer;
+
 };
 
 extern ExecBase gExecBase;

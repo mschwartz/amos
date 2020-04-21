@@ -57,3 +57,14 @@ void TBCD::FromUint32(TUint32 v) {
     v /= 10;
   }
 }
+
+TUint32 TBCD::ToUint32() {
+  TUint32 val = 0;
+  for (TInt digits = 0; digits < 8; digits++) {
+    TUint32 digit = mValue >> (((8-digits) * 4) & 0xff) - '0';
+    val *= 10;
+    val += digit;
+  }
+  return val;
+}
+

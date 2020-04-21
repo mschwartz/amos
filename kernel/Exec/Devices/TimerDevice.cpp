@@ -17,7 +17,7 @@ class TimerTask;
 
 class TimerInterrupt : public BInterrupt {
 public:
-  TimerInterrupt(TimerTask *aTask) : BInterrupt("Timer INterruptHandler", LIST_PRI_MAX) {
+  TimerInterrupt(TimerTask *aTask) : BInterrupt("Timer Interrupt Handler", LIST_PRI_MAX) {
     mTask = aTask;
   }
 
@@ -66,6 +66,7 @@ TBool TimerInterrupt::Run(TAny *aData) {
   gPIC->ack(IRQ_TIMER);
   // maybe wake up new task
   gExecBase.RescheduleIRQ();
+//  dprint("T");
   return ETrue;
 }
 

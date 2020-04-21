@@ -14,6 +14,7 @@
 #include <Devices/PIC.h>
 
 class TimerDevice;
+class RtcDevice;
 
 class ExecBase : public BBase {
 public:
@@ -80,7 +81,7 @@ public:
   void Wake(BTask *aTask);
 
   void Kickstart(); // kickstart multitasking.  Only call once from main() !!!!
-  void Reschedule();
+//  void Reschedule();
   void RescheduleIRQ(); // from IRQ context
   void Schedule();
 
@@ -114,6 +115,7 @@ public:
 
 protected:
   TimerDevice *mTimer;
+  RtcDevice *mRtc;
 
 };
 

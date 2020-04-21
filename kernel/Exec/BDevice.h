@@ -1,7 +1,7 @@
 #ifndef BDEVICE_H
 #define BDEVICE_H
 
-#include <Exec/BList.h>
+#include <Exec/BMessagePort.h>
 
 class BDevice : public BNodePri {
 public:

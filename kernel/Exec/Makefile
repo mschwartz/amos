@@ -1,15 +1,18 @@
-GFX=	Graphics/TRect.o Graphics/TBCD.o Graphics/BFont.o Graphics/BBitmap.o
+#GFX=	Graphics/TRect.o Font.o Graphics/BBitmap.o
+GFX=	Graphics/TRect.o Graphics/BBitmap.o
 
-DEVICES= Devices/KeyboardDevice.o Devices/PIC.o Devices/Screen.o Devices/TimerDevice.o
+DEVICES= Devices/KeyboardDevice.o Devices/PIC.o Devices/Screen.o Devices/TimerDevice.o Devices/RtcDevice.o
 
-OBJ= 	 BTypes.o Memory.o BBase.o BList.o BMessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o $(DEVICES) $(GFX)
+TYPES=	BTypes.o Types/TBCD.o 
+
+OBJ= 	 $(TYPES) Memory.o BBase.o BList.o BMessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o $(DEVICES) $(GFX)
 
 LIB=	libexec.a
 
 .cpp.o:
-	echo $*.cpp
+	@echo $*.cpp
 	$(GCC) -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
-	echo ""
+	@echo ""
 
 .asm.o:
 	@echo ""

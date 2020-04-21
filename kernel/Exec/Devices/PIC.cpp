@@ -79,14 +79,16 @@ void IRQ_clear_mask(unsigned char IRQline) {
     port = PIC2_DATA;
     IRQline -= 8;
   }
+//  dprint("IRQ_clear_mask(0x%x, %d)\n", port, IRQline);
   value = inb(port) & ~(1 << IRQline);
+  dprint("IRQ_clear_mask(0x%x, %d) = %x\n", port, IRQline, value);
   outb(port, value);
 }
 
 void PIC::disable_interrupt(uint16_t irq) {
-  return;
+//  return;
   irq -= IRQ_OFFSET;
-  dprint("enabled interrupt %d\n", irq);
+  dprint("disable interrupt %d\n", irq);
   IRQ_set_mask(irq);
 //  irq -= IRQ_OFFSET;
 //  dprint("PIC1  %x\n", inb(PIC1_DATA));
@@ -102,10 +104,11 @@ void PIC::disable_interrupt(uint16_t irq) {
 }
 
 void PIC::enable_interrupt(uint16_t irq) {
-  return;
+//  return;
+  dprint("enable_interrupt(%d)\n", irq);
   irq -= IRQ_OFFSET;
-  dprint("enabled interrupt %d\n", irq);
   IRQ_clear_mask(irq);
+  dprint("enabled interrupt %d\n", irq);
 //  if (irq < 8) {
 //    ob(PIC1_DATA, inb(PIC1_DATA) | (1 << irq));
 //  }

@@ -112,16 +112,16 @@ TBool BTask::FreeSignal(TInt64 aSignalNum) {
   return EFalse;
 }
 
-void BTask::Signal(TInt64 aSignalSet) {
-  gExecBase.Disable();
+extern "C" void push_disable();
+extern "C" void pop_disable();
 
+void BTask::Signal(TInt64 aSignalSet) {
   mSigReceived |= aSignalSet;
 #ifdef DEBUGME
   dprint("    BTASK Signal received %x\n", aSignalSet);
 #endif
   // assure this task is in active list and potentially perform a task switch
   gExecBase.Wake(this);
-  gExecBase.Enable();
 }
 
 TUint64 BTask::Wait(TUint64 aSignalSet) {

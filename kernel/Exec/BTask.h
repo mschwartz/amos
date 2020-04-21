@@ -4,6 +4,9 @@
 #include <Exec/BList.h>
 #include <x86/tasking.h>
 
+const TUint64 default_task_stack_size = 2 * 1024 * 1024;
+//const TUint64 default_task_stack_size = 64 * 1024;
+
 class BMessagePort;
 
 class ExecBase;
@@ -17,7 +20,7 @@ class BTask : public BNodePri {
   friend ExecBase;
 
 public:
-  BTask(const char *aName, TInt64 aPri = 0, TUint64 aStackSize = 2 * 1024 * 1024);
+  BTask(const char *aName, TInt64 aPri = 0, TUint64 aStackSize = default_task_stack_size);
   virtual ~BTask();
 
 public:

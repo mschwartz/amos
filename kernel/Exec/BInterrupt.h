@@ -36,7 +36,7 @@ enum EInterruptNumber {
   ELpt2IRQ,
   EFloppyIRQ,
   ELpt1IRQ,
-  ERtClockIRQ,
+  ERtcClockIRQ,
   EMasterPicIRQ,
   EReserved1IRQ,
   EReserved2IRQ,

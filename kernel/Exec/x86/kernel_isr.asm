@@ -498,3 +498,82 @@ eputs               pushf
                     pop dx
                     popf
                     ret
+
+                    global ack_irq8
+ack_irq8:
+                    push rax
+                    ; ack PIC
+                    mov al, 0x20
+                    out 0xa0, al
+                    out 0x20, al
+
+                    ; ack RTC
+                    mov al, 0x0c
+                    out 0x70, al
+                    in al, 0x71
+
+                    pop rax
+                    ret
+
+                    global enable_irq8
+enable_irq8:
+                    ; enable IRQ8 (IRQ0 on PIC2)
+                    push rax
+                    push rbx
+;                    in al, 0xa1
+;                    and al, 11111110b
+;                    out 0xa1, al
+
+                    ; enable RTC
+                    mov al, 8bh
+                    out 70h, al
+                    in al, 71h
+                    or al, 01000000b
+                    and al, 11001111b
+                    xchg bl, al
+                    mov al, 8bh
+                    out 70h, al
+                    xchg bl, al
+                    out 71h, al
+
+                    ;set RTC frequency
+                    mov al, 8ah
+                    out 70h, al
+                    in al, 71h
+                    and al, 0xf0
+                    or al, 06h   ;1024Hz
+;                    or al, 0eh   ;256hz
+                    xchg al, bl
+                    mov al, 8ah
+                    out 70h, al
+                    xchg al, bl
+                    out 71h, al
+                    pop rbx
+                    pop rax
+                    jmp ack_irq8
+
+                    global push_flags
+push_flags:
+                    pop rax
+                    pushf
+                    jmp rax
+
+                    global pop_flags
+pop_flags:
+                    pop rax
+                    popf
+                    jmp rax
+
+                    global push_disable
+push_disable:
+                    pop rax
+                    pushf
+                    cli
+                    jmp rax
+
+                    global pop_disable
+pop_disable:
+                    pop rax
+                    popf
+                    jmp rax
+

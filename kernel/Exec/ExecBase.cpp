@@ -4,6 +4,7 @@
 
 #include <Devices/KeyboardDevice.h>
 #include <Devices/TimerDevice.h>
+#include <Devices/RtcDevice.h>
 
 ExecBase gExecBase;
 
@@ -74,6 +75,9 @@ ExecBase::ExecBase() {
   AddDevice(mTimer = new TimerDevice());
   kprint("  initialized timer\n");
 
+  AddDevice(mRtc = new RtcDevice());
+  kprint("  initialized rtc \n");
+
   AddDevice(new KeyboardDevice);
   kprint("  initialized keyboard \n");
 }
@@ -83,7 +87,8 @@ ExecBase::~ExecBase() {
 }
 
 TUint64 ExecBase::SystemTicks() {
-  return mTimer->GetTicks();
+  return mRtc->mMillis;
+//  return mTimer->GetTicks();
 }
 
 void ExecBase::Disable() {
@@ -126,7 +131,11 @@ void ExecBase::AddTask(BTask *aTask) {
 //  Schedule();
 }
 
+extern "C" void push_flags();
+extern "C" void pop_flags();
+
 void ExecBase::WaitSignal(BTask *aTask) {
+  cli();
   aTask->Remove();
   // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
   // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
@@ -172,6 +181,9 @@ void ExecBase::Wait(BTask *aTask) {
   * Wake() - if task is on Wait list, move it to active list.  If already on active list, re-add it.
   * Note that Add() will sort the task into the list, effecting round-robin order.
   */
+extern "C" void push_disable();
+extern "C" void pop_disable();
+
 void ExecBase::Wake(BTask *aTask) {
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
@@ -192,6 +204,7 @@ void ExecBase::Kickstart() {
  * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
  */
 void ExecBase::RescheduleIRQ() {
+  cli();
   if (mCurrentTask) {
     if (mCurrentTask->mForbidNestCount == 0) {
       mCurrentTask->Remove();
@@ -211,6 +224,7 @@ void ExecBase::RescheduleIRQ() {
   * Determine next task to run. Should be called when logic determines that a different task, than the currently
   * running one, could be made active.
   */
+#if 0
 void ExecBase::Reschedule() {
   Disable();
   if (mCurrentTask) {
@@ -228,6 +242,7 @@ void ExecBase::Reschedule() {
   next_task = &mCurrentTask->mRegisters;
   Enable();
 }
+#endif
 
 void ExecBase::AddMessagePort(BMessagePort &aMessagePort) {
   mMessagePortList->Add(aMessagePort);
@@ -244,7 +259,8 @@ TBool ExecBase::RemoveMessagePort(BMessagePort &aMessagePort) {
 void ExecBase::GuruMeditation(const char *aMessage) {
   cli();
   dputs("\n\n***********************\n");
-  dputs("GURU MEDIDTATION\n");
+//  dputs("GURU MEDITATION\n");
+  dprint("GURU MEDITATION %d\n", SystemTicks());
   if (aMessage) {
     dprint(aMessage);
     dprint("\n");
@@ -273,8 +289,8 @@ public:
 public:
   TBool Run(TAny *aData) {
     cli();
-    //    dprintf(mNodeName);
-    //    dprintf(" Exception\n");
+        dprintf(mNodeName);
+        dprintf(" Exception\n");
     gExecBase.GuruMeditation(mNodeName);
     // TODO: kill/remove current task
     halt();
@@ -304,7 +320,16 @@ public:
   TBool Run(TAny *aData) {
     // at this point current_task is saved
     cli();
+
+//    dputs("Next Task ");
+//    BTask *t = gExecBase.GetCurrentTask();
+//    dputs(t->mNodeName);
+//    dputs(" -> ");
+
     gExecBase.RescheduleIRQ();
+//    t = gExecBase.GetCurrentTask();
+//    dputs(t->mNodeName);
+//    dputs("\n");
     //    dprintf(mNodeName);
     //    dprintf(" TRAP\n");
     return ETrue;
@@ -319,12 +344,16 @@ void ExecBase::SetIntVector(EInterruptNumber aInterruptNumber, BInterrupt *aInte
   mInterrupts[aInterruptNumber].Add(*aInterrupt);
 }
 
+extern "C" TUint64 GetRFLAGS();
+
 TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
-  //  dprint("RootHandler! %d %x\n", aInterruptNumber, aData);
+  cli();
+//    dprint("RootHandler! %d %x flags=%x\n", aInterruptNumber, aData, GetRFLAGS());
   BInterruptList *list = &gExecBase.mInterrupts[aInterruptNumber];
   for (BInterrupt *i = (BInterrupt *)list->First(); !list->End(i); i = (BInterrupt *)i->mNext) {
     //    dprint("calling %d\n", i->pri);
     if (i->Run(aData)) {
+//      dprint("RootHandler! return\n");
       return ETrue;
     }
   }
@@ -387,7 +416,7 @@ void ExecBase::InitInterrupts() {
   SetInterrupt(ELpt2IRQ, "Lpt2");
   SetInterrupt(EFloppyIRQ, "Floppy");
   SetInterrupt(ELpt1IRQ, "Lpt1");
-  SetInterrupt(ERtClockIRQ, "RtClock");
+  SetInterrupt(ERtcClockIRQ, "RtClock");
   SetInterrupt(EMasterPicIRQ, "MasterPic");
   SetInterrupt(EReserved1IRQ, "Reserved1");
   SetInterrupt(EReserved2IRQ, "Reserved2");

@@ -4,56 +4,6 @@
 #define PACKED __attribute__ ((packed))
 #define INLINE __attribute__((always_inline))
 
-#if 0
-typedef unsigned char uint8_t;
-typedef char int8_t;
-
-typedef unsigned short uint16_t;
-typedef short int16_t;
-
-typedef unsigned int uint32_t;
-typedef int int32_t;
-
-typedef unsigned long  uint64_t;
-typedef long  int64_t;
-#endif
-
-//typedef long size_t;
-
-
-#if 0
-#include <stddef.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/uio.h>
-#include <stdio.h>
-#include <string.h>
-#include <cmath>
-#include <cstdint>
-#endif
-
-#if 0
-typedef uint8_t TUint8;
-typedef uint16_t TUint16;
-typedef uint32_t TUint32;
-typedef unsigned int TUint;
-typedef uint64_t TUint64;
-
-typedef int8_t TInt8;
-typedef int16_t TInt16;
-typedef int32_t TInt32;
-typedef int64_t TInt64;
-typedef uint8_t UBYTE;
-typedef uint8_t UCHAR;
-typedef uint16_t USHORT;
-typedef uint32_t UWORD;
-typedef uint64_t ULONG;
-
-typedef int8_t BYTE;
-typedef int16_t SHORT;
-typedef int32_t WORD;
-typedef int64_t LONG;
-#else
 typedef unsigned char TUint8;
 typedef unsigned short TUint16;
 typedef unsigned int TUint32;
@@ -65,7 +15,6 @@ typedef  short TInt16;
 typedef  int TInt32;
 typedef  int TInt;
 typedef  long TInt64;
-#endif
 
 typedef int TInt;
 typedef void TAny;
@@ -209,7 +158,7 @@ typedef float TFloat;
 
 //#include "Types/TRGB.h"
 //#include "Types/TRect.h"
-//#include "Types/TBCD.h"
+#include "Types/TBCD.h"
 //#include "Types/TNumber.h"
 
 #endif // BTYPES_H

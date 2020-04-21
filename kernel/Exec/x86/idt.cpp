@@ -74,7 +74,8 @@ extern "C" bool kernel_isr() {
     dprint("no handler: %s\n", desc);
     return false;
   }
-  return info->handler(info->mInterruptNumber, info->data);
+  bool ret = info->handler(info->mInterruptNumber, info->data);
+  return ret;
 };
 
 #define IDT_PRESENT    ((uint64_t)1 << 47)

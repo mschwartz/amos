@@ -24,6 +24,8 @@ public:
     return mValue;
   }
 
+  TUint32 ToUint32();
+
   TUint32 mValue;
 };
 

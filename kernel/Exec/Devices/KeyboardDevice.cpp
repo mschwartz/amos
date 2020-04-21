@@ -232,7 +232,6 @@ public:
     gExecBase.SetIntVector(EKeyboardIRQ, new KeyboardInterrupt(this));
     // enable the keyboard interrupt
     gPIC->enable_interrupt(IRQ_KEYBOARD);
-    dprint("Added keyboard irq handler\n");
   }
 
   void Run();
@@ -245,28 +244,23 @@ protected:
 
 TBool KeyboardInterrupt::Run(TAny *aData) {
   TUint16 t = inb(KEYB_DR);
-//  TUint64 c = gTimer->GetTicks();
   TUint64 c = gExecBase.SystemTicks();
-  dprint(" keyboard data: %x %d\n", t, c);
+  dlog(" keyboard data: %x\n", t);
+  // add key to circular queue
   mTask->mBuffer[mTask->mPtr2++] = t;
   mTask->mPtr2 %= KEYBOARD_BUFFER_SIZE;
-  //    *ptr = 0x1f42;
   mTask->Signal(1 << 10);
-  //  dputs("signal "); dhex64((TUint64)mTask); dputs("\n");
   gPIC->ack(IRQ_KEYBOARD);
   return ETrue;
 }
 
 void KeyboardTask::Run() {
-  dprint("keyboard task alive!\n");
-  // initialize message port and wait for messages
+  dlog("keyboard task alive!\n");
 
+  // initialize message port and wait for messages
   while (ETrue) {
-    //    dprint("About to wait\n");
     TUint64 r = Wait(1 << 10);
-    //    if (r) {
-    dprint("KEYBOARD.TASK RETURNED Signal received %x\n", r);
-    //    }
+    dlog("KEYBOARD.TASK RETURNED Signal received %x\n", r);
   }
   /*
   mMessagePort = CreateMessagePort();
@@ -278,9 +272,10 @@ void KeyboardTask::Run() {
 }
 
 KeyboardDevice::KeyboardDevice() : BDevice("keyboard.device") {
-  dprint("Construct KeyboardDevice\n");
+  dlog("Construct KeyboardDevice\n");
   gExecBase.AddTask(new KeyboardTask);
 }
 
 KeyboardDevice::~KeyboardDevice() {
+  //
 }

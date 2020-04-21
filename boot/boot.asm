@@ -483,14 +483,14 @@ init_memory:
                     or ebx,ebx
                     je .done
                    
-                    pusha
-                    mov si, di
-                    mov cx, 32
-                    call hexdump16
-                    mov eax, memory_info
-                    call hexlong16
-                    call newline16
-                    popa
+;                    pusha
+;                    mov si, di
+;                    mov cx, 32
+;                    call hexdump16
+;                    mov eax, memory_info
+;                    call hexlong16
+;                    call newline16
+;                    popa
 .top:
                     add di, 24
                     mov edx, SMAP
@@ -716,9 +716,9 @@ go64:
 
                     global call_main
 call_main:
-                    mov esi, CMAIN
-                    mov ecx, 16
-                    call hexdump
+;                    mov esi, CMAIN
+;                    mov ecx, 16
+;                    call hexdump
                     call CMAIN
                     jmp $
 

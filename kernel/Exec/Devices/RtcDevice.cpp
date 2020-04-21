@@ -33,7 +33,6 @@ class RtcInterrupt : public BInterrupt {
 public:
   RtcInterrupt(RtcTask *aTask) : BInterrupt("Rtc Interrupt Handler", LIST_PRI_MAX) {
     mTask = aTask;
-    dprint("Rtc handler %x\n", mTask);
   }
 
 public:
@@ -51,40 +50,25 @@ class RtcTask : public BTask {
 public:
   RtcTask(RtcDevice *aRtcDevice) : BTask("Rtc Task", LIST_PRI_MAX) {
     mRtcDevice = aRtcDevice;
-    dprint("Rtc handler %x\n", mRtcDevice);
   }
 
 public:
   void Run() {
-    gExecBase.Disable();
-    dprint("RTC Task running!\n");
-    ReadRtc();
-    dprint("  Read RTC: %02d/%02d/%02d %02d:%02d:%02d\n", mMonth, mDay, mYear, mHours, mMinutes, mSeconds);
+    TUint64 flags = GetFlags();
+    cli();
 
-    dprint("  IRQ number: %d\n", ERtcClockIRQ);
+    dlog("RTC Task running!\n");
+    ReadRtc();
+    dlog("  --- Read RTC: %02d/%02d/%02d %02d:%02d:%02d\n", mMonth, mDay, mYear, mHours, mMinutes, mSeconds);
+
     gExecBase.SetIntVector(ERtcClockIRQ, new RtcInterrupt(this));
-//    gPIC->enable_interrupt(IRQ_RTC);
+
+    // enable RTC interrupt on the RTC controller
+    // default rate is 1/1024 (1024 hz) or 0x06
     enable_irq8();
-//     enable RTC interrupt on the RTC controller
-//     default rate is 1/1024 (1024 hz) or 0x06
-#if 0
-    outb(SELECT, 0x8a);
-    TUint8 prev = inb(DATA);
-    outb(SELECT, 0x8a);
-    outb(DATA, (prev & 0xf0) | 0x06);
-    outb(SELECT, 0x0b);
-    outb(DATA, inb(DATA) | 0x40);
-    dprint("About to enable interrupt %d in PIC\n", IRQ_RTC);
-    outb(0xa1, inb(0xa1) & ~1);
-//    gPIC->enable_interrupt(IRQ_RTC);
-    gExecBase.Enable();
-    gPIC->ack(IRQ_RTC);
-#endif
-    gExecBase.Enable();
+    
     while (ETrue) {
-//      dprint("  RtcTask: Waiting for signal\n");
       TUint64 sigs = Wait(1<<10);
-//      dprint("  RtcTask: sigs = %x\n", sigs);
     };
   }
 
@@ -151,8 +135,6 @@ public:
 //    ReadRtc();
     mRtcDevice->mMillis ++;
     mMillis++;
-//    if (mMillis > 1024) {
-//    }
   }
 protected:
   RtcDevice *mRtcDevice;
@@ -167,16 +149,10 @@ extern "C" void ack_irq8();
 TBool RtcInterrupt::Run(TAny *aData) {
 //  cli();
   mTask->UpdateMillis();
-//  ack_irq8();
-  // ack RTC interrupt
   gPIC->ack(IRQ_RTC);
   outb(SELECT, 0x0c);
   inb(DATA);
   mTask->Signal(1<<10);
-//  
-//  read_cmos(0x0c);
-//  sti();
-//  dprint("R");
   return ETrue;
 }
 
@@ -185,7 +161,6 @@ TBool RtcInterrupt::Run(TAny *aData) {
  ********************************************************************************/
 
 RtcDevice::RtcDevice() : BDevice("rtc.device") {
-  dprint("Construct rtc.device\n");
   mMillis = 0;
   gExecBase.AddTask(new RtcTask(this));
 }

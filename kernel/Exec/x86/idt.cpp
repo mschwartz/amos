@@ -71,7 +71,7 @@ extern "C" bool kernel_isr() {
   isr_handler_t *info = &interrupt_handlers[current_task->isr_num];
   if (!info->handler) {
     const char *desc = IDT::interrupt_description(current_task->isr_num);
-    dprint("no handler: %s\n", desc);
+    dlog("no handler: %s\n", desc);
     return false;
   }
   bool ret = info->handler(info->mInterruptNumber, info->data);
@@ -246,7 +246,6 @@ static const char *int_desc[] = {
 
 const char *IDT::interrupt_description(TUint16 n) {
   /* Interrupts descriptions */
-  dprint("desc(%d) %s\n", n, int_desc[0]);
 
   if (n < INTERRUPTS)
     return int_desc[n];

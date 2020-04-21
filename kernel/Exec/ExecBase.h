@@ -33,7 +33,7 @@ public:
   void newline();
 
 public:
-  void GuruMeditation(const char *aMessage = ENull);
+  void GuruMeditation(const char *aFormat, ...);
 
 protected:
   Screen *mScreen;
@@ -120,5 +120,8 @@ protected:
 };
 
 extern ExecBase gExecBase;
+
+extern "C" TUint64 GetFlags();
+extern "C" void SetFlags(TUint64 aFlags);
 
 #endif

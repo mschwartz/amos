@@ -47,38 +47,38 @@ typedef struct Task {
   void Dump() {
     extern char *isr_names[];
 
-    dprint("task @ %x\n", this);
+    dlog("task @ %x\n", this);
 
-//    dprint(" isr_num: (%s) %x\n", isr_names[isr_num], isr_num);
-    dprint(" isr_num: (%s) %x\n", "ISR", isr_num);
-    dprint(" err_code: %x\n", err_code);
+//    dlog(" isr_num: (%s) %x\n", isr_names[isr_num], isr_num);
+    dlog("isr_num: (%s) %x\n", "ISR", isr_num);
+    dlog("err_code: %x\n", err_code);
 
-    dprint(" rax: %x ", rax);
-    dprint(" rbx: %x ", rbx);
-    dprint(" rcx: %x ", rcx);
-    dprint(" rdx: %x ", rdx);
-    dprint(" rsi: %x ", rsi);
-    dprint(" rdi: %x ", rdi);
-    dprint(" rbp: %x\n", rbp);
+    dlog("    rax: %016x ", rax);
+    dlog("    rbx: %016x ", rbx);
+    dlog("    rcx: %016x ", rcx);
+    dlog("    rdx: %016x ", rdx);
+    dlog("    rsi: %016x ", rsi);
+    dlog("    rdi: %016x ", rdi);
+    dlog("    rbp: %016x\n", rbp);
 
-    dprint(" cs: %x ", cs);
-    dprint(" ds: %x ", ds);
-    dprint(" es: %x ", es);
-    dprint(" fs: %x ", fs);
-    dprint(" gs: %x\n", gs);
+    dlog("     cs: %016x ", cs);
+    dlog("     ds: %016x ", ds);
+    dlog("     es: %016x ", es);
+    dlog("     fs: %016x ", fs);
+    dlog("     gs: %016x\n", gs);
 
-    dprint(" rip: %x\n", rip);
+    dlog("    rip: %016x\n", rip);
 
-    dprint("  stack:\n");
+    dlog("  stack:\n");
     TUint64 *stack = (TUint64 *)rsp;
     for (int i=0; i<10; i++) {
-      dprint("    %x: %x\n", i, *stack++);
+      dlog("    %016x: %016x\n", i, *stack++);
     }
-    dprint("\n");
+    dlog("\n");
   }
-} PACKED task_t;
+} PACKED TTaskRegisters;
 
-extern "C" task_t *current_task;
-extern "C" task_t *next_task;
+extern "C" TTaskRegisters *current_task;
+extern "C" TTaskRegisters *next_task;
 
 #endif

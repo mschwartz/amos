@@ -7,6 +7,7 @@ set -e
 echo ""
 echo ""
 echo "RCOMP"
+rm -f ./kernel/Exec/Memory.o ./kernel/Exec/BBase.o ./kernel/Exec/BList.o ./kernel/Exec/BSymbolTable.o
 cd tools/rcomp-src && make
 
 cd $TOP_DIR

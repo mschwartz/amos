@@ -6,7 +6,7 @@ static uint8_t *gProgramBreak = 0;
 
 // sets end of the data segment to the value specified by addr
 extern "C" int brk(void *aAddress) {
-  dprint("brk called %x\n", aAddress);
+  dlog("brk called %x\n", aAddress);
   bochs
   return 0;
 }

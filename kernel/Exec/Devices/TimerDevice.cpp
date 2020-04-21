@@ -33,8 +33,7 @@ public:
   TimerTask(TimerDevice *aTimerDevice) : BTask("Timer Task", LIST_PRI_MAX) {
     mTimerDevice = aTimerDevice;
 
-    SetFrequency(100);
-//    SetFrequency(gExecBase.Quantum());
+    SetFrequency(gExecBase.Quantum());
     gExecBase.SetIntVector(ETimerIRQ, new TimerInterrupt(this));
     gPIC->enable_interrupt(IRQ_TIMER);
   }
@@ -53,10 +52,9 @@ protected:
 };
 
 void TimerTask::Run() {
-  dprint("TimerTask Alive!\n");
+  dlog("TimerTask Alive!\n");
   while (ETrue) {
     TUint64 sigs = Wait(1 << 10);
-//    dprint("TimerTask sigs %x\n", sigs);
     mTimerDevice->IncrementTicks();
   }
 }
@@ -66,15 +64,12 @@ TBool TimerInterrupt::Run(TAny *aData) {
   gPIC->ack(IRQ_TIMER);
   // maybe wake up new task
   gExecBase.RescheduleIRQ();
-//  dprint("T");
   return ETrue;
 }
 
 TimerDevice::TimerDevice() : BDevice("timer.device") {
-  dprint("Timer Device constructor\n");
   mTicks = 0;
   gExecBase.AddTask(new TimerTask(this));
-  dprint("Returning from constructor\n");
 }
 
 TimerDevice::~TimerDevice() {

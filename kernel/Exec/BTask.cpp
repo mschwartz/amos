@@ -51,15 +51,54 @@ void BTask::RunWrapper(BTask *aTask) {
   t->Run();
 }
 
+static void print_flag(TUint64 flags, TInt bit, const char *m) {
+  if (flags & (1<<bit)) {
+    dprint("%s ", m);
+  }
+}
+
 void BTask::DumpRegisters(TTaskRegisters *regs) {
   TUint64 flags = GetFlags();
   cli();
-  dlog("isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
+  dprint("===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
+  // print flags
+  TUint64 f = regs->rflags;
+  dprint("   flags: %016x ", f);
+  print_flag(f, 21, "ID");
+  print_flag(f, 20, "VIP");
+  print_flag(f, 19, "VIF");
+  print_flag(f, 18, "AC");
+  print_flag(f, 17, "VM");
+  print_flag(f, 16, "RF");
+  print_flag(f, 14, "NT");
+  dprint("IOPL(%d)", (f>>12) & 3);
+  print_flag(f, 11, "OF");
+  print_flag(f, 10, "DF");
+  dprint("IF(%s)", (f & (1<<9)) ? "STI" : "CLI");
+  print_flag(f, 8, "TF");
+  print_flag(f, 7, "SF");
+  print_flag(f, 6, "ZF");
+  print_flag(f, 4, "AF");
+  print_flag(f, 2, "PF");
+  print_flag(f, 0, "CF");
+  dprint("\n");
+
+  dprint("   rax: %016x\n", regs->rax);
+  dprint("   rbx: %016x\n", regs->rbx);
+  dprint("   rcx: %016x\n", regs->rcx);
+  dprint("   rdx: %016x\n", regs->rdx);
+  dprint("   rsi: %016x\n", regs->rsi);
+  dprint("   rdi: %016x\n", regs->rdi);
+  dprint("    ds: %08x es: %08x fs: %08x gs: %08x\n", regs->ds, regs->es, regs->fs, regs->gs);
+  dprint("    ss %08x rsp %016x rbp %016x\n", regs->ss, regs->rsp, regs->rbp);
+  dprint("    cs: %08x rip: %016x\n", regs->cs, regs->cs);
+#if 0
   dlog("rax 0x%x rbx 0x%x rcx 0x%x rdx 0x%x\n", regs->rax, regs->rbx, regs->rcx, regs->rdx);
   dlog("rsi %0x%x rdi %0x%x\n", regs->rsi, regs->rdi);
   dlog("cs 0x%x ds 0x%x es 0x%x fs 0x%x gs 0x%x\n", regs->cs, regs->ds, regs->es, regs->fs, regs->gs);
   dlog("ss 0x%x rsp 0x%x rbp 0x%x\n", regs->ss, regs->rsp, regs->rbp);
   dlog("rip 0x%x flags 0x%x\n", regs->rip, regs->rflags);
+#endif
   SetFlags(flags);
 }
 
@@ -67,16 +106,18 @@ void BTask::Dump() {
   TUint64 flags = GetFlags();
   cli();
   TTaskRegisters *regs = &mRegisters;
-  dlog("\nTask Dump %016x --- %s ---\n", this, mNodeName);
+  dprint("\nTask Dump %016x --- %s ---\n", this, mNodeName);
   DumpRegisters(regs);
-  dlog("  STACK:\n");
+  dprint("  STACK:\n");
   TUint64 *addr = (TUint64 *)regs->rsp;
   for (TInt i = 0; i < 10; i++) {
     if (addr > mUpperSP) {
       break;
     }
-    dlog("  %016x: %016x\n", addr, *addr++);
+    dprint("  %016x: %016x\n", addr, *addr);
+    addr++;
   }
+  dprint("\n\n");
   SetFlags(flags);
 }
 

@@ -166,6 +166,7 @@ void ExecBase::AddTask(BTask *aTask) {
   TUint64 flags = GetFlags();
   cli();
   dlog("Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
+  aTask->Dump();
   mActiveTasks.Add(*aTask);
   SetFlags(flags);
 }

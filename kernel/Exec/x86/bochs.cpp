@@ -21,6 +21,8 @@ void dputs(const char *s) {
 
 void dlog(const char *fmt, ...) {
   TUint64 flags = GetFlags();
+  cli();
+
   char buf[512];
   va_list args;
   va_start(args, fmt);
@@ -34,6 +36,8 @@ void dlog(const char *fmt, ...) {
 
 void dprintf(const char *fmt, ...) {
   TUint64 flags = GetFlags();
+  cli();
+
   char buf[512];
   va_list args;
   va_start(args, fmt);
@@ -46,6 +50,8 @@ void dprintf(const char *fmt, ...) {
 
 void dprint(const char *fmt, ...) {
   TUint64 flags = GetFlags();
+  cli();
+
   char buf[512];
   va_list args;
   va_start(args, fmt);

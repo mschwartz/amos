@@ -59,7 +59,7 @@ public:
     gExecBase.Disable();
     dprint("RTC Task running!\n");
     ReadRtc();
-    dprint("  Read RTC: %d/%d/%d %d:%d:%d\n", mMonth, mDay, mYear, mHours, mMinutes, mSeconds);
+    dprint("  Read RTC: %02d/%02d/%02d %02d:%02d:%02d\n", mMonth, mDay, mYear, mHours, mMinutes, mSeconds);
 
     dprint("  IRQ number: %d\n", ERtcClockIRQ);
     gExecBase.SetIntVector(ERtcClockIRQ, new RtcInterrupt(this));

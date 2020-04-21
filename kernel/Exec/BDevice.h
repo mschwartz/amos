@@ -32,7 +32,4 @@ public:
   TBool End(BDevice *aCurrent) { return aCurrent == (BDevice *)this; }
 };
 
-extern BDeviceList gDeviceList;
-
-
 #endif

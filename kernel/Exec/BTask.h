@@ -24,7 +24,7 @@ public:
   virtual ~BTask();
 
 public:
-  task_t mRegisters;
+  TTaskRegisters mRegisters;
 
 protected:
   volatile TAny *mUpperSP, *mLowerSP; 
@@ -32,7 +32,7 @@ protected:
 
 public:
   virtual void Run() = 0;
-  void DumpRegisters(task_t *regs);
+  void DumpRegisters(TTaskRegisters *regs);
   void Dump();
 
 protected:
@@ -83,7 +83,7 @@ class BTaskList : public BListPri {
 public:
   BTaskList() : BListPri("Task List") {}
 
-  static void DumpRegisters(task_t *aRegisters);
+  static void DumpRegisters(TTaskRegisters *aRegisters);
   void Dump();
 
 public:

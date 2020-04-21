@@ -30,6 +30,7 @@ inline void dbreak() {
   outw(0x08AE0, 0x8a00);
 }
 
+void dlog(const char *fmt, ...);
 void dputs(const char *s);
 void dprintf(const char *fmt, ...);
 void dprint(const char *fmt, ...);

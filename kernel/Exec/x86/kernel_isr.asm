@@ -482,6 +482,18 @@ GetRFLAGS:
                     pop rax
                     ret
 
+                    global GetFlags
+GetFlags:
+                    pushf
+                    pop rax
+                    ret
+
+                    global SetFlags
+SetFlags:
+                    push rdi
+                    popf
+                    ret
+
                     global eputs
 eputs               pushf
                     cli

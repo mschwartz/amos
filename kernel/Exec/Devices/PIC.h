@@ -45,7 +45,6 @@ public:
   ~PIC();
 
 public:
-//  void install_handler(uint16_t irq, INTERRUPT_HANDLER *h, void *data = nullptr, const char *description = "no description");
   void enable_interrupt(TUint16 irq);
   void disable_interrupt(TUint16 irq);
   void ack(TUint16 irq);

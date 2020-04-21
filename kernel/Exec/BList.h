@@ -168,7 +168,7 @@ public:
   BListPri(const char *aNodeName) : BNodePri(aNodeName, 0) {
     Reset();
   }
-  ~BListPri() {}
+  ~BListPri();
 
 public:
   void Dump(BNodePri *aStop = ENull);

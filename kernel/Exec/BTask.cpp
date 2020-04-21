@@ -19,9 +19,9 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aNam
   mSigReceived = 0;
 
   // initialize task's registers
-  task_t *regs = &mRegisters;
+  TTaskRegisters *regs = &mRegisters;
   // zero out registers
-  SetMemory8(regs, 0, sizeof(task_t));
+  SetMemory8(regs, 0, sizeof(TTaskRegisters));
 
   // initialize stack
   TUint8 *stack = (TUint8 *)AllocMem(aStackSize, MEMF_PUBLIC);
@@ -51,45 +51,44 @@ void BTask::RunWrapper(BTask *aTask) {
   t->Run();
 }
 
-void BTask::DumpRegisters(task_t *regs) {
-  Disable();
-  dprint("isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
-  dprint("rax 0x%x rbx 0x%x rcx 0x%x rdx 0x%x\n", regs->rax, regs->rbx, regs->rcx, regs->rdx);
-  dprint("rsi %0x%x rdi %0x%x\n", regs->rsi, regs->rdi);
-  dprint("cs 0x%x ds 0x%x es 0x%x fs 0x%x gs 0x%x\n", regs->cs, regs->ds, regs->es, regs->fs, regs->gs);
-  dprint("ss 0x%x rsp 0x%x rbp 0x%x\n", regs->ss, regs->rsp, regs->rbp);
-  dprint("rip 0x%x flags 0x%x\n", regs->rip, regs->rflags);
-  Enable();
+void BTask::DumpRegisters(TTaskRegisters *regs) {
+  TUint64 flags = GetFlags();
+  cli();
+  dlog("isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
+  dlog("rax 0x%x rbx 0x%x rcx 0x%x rdx 0x%x\n", regs->rax, regs->rbx, regs->rcx, regs->rdx);
+  dlog("rsi %0x%x rdi %0x%x\n", regs->rsi, regs->rdi);
+  dlog("cs 0x%x ds 0x%x es 0x%x fs 0x%x gs 0x%x\n", regs->cs, regs->ds, regs->es, regs->fs, regs->gs);
+  dlog("ss 0x%x rsp 0x%x rbp 0x%x\n", regs->ss, regs->rsp, regs->rbp);
+  dlog("rip 0x%x flags 0x%x\n", regs->rip, regs->rflags);
+  SetFlags(flags);
 }
 
 void BTask::Dump() {
-  Disable();
-  task_t *regs = &mRegisters;
-  dprint("\nTask 0x%x --- ", this); 
-  dputs(mNodeName);
-  dprintf( "---\n");
+  TUint64 flags = GetFlags();
+  cli();
+  TTaskRegisters *regs = &mRegisters;
+  dlog("\nTask Dump %016x --- %s ---\n", this, mNodeName);
   DumpRegisters(regs);
-  dprint("  STACK:\n");
+  dlog("  STACK:\n");
   TUint64 *addr = (TUint64 *)regs->rsp;
   for (TInt i = 0; i < 10; i++) {
     if (addr > mUpperSP) {
       break;
     }
-    dhex64((TUint64)addr);
-    dprint(": ");
-    dhex64(*addr++);
-    dprint("\n");
+    dlog("  %016x: %016x\n", addr, *addr++);
   }
-  Enable();
+  SetFlags(flags);
 }
 
 TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
+  TUint64 flags = GetFlags();
+  cli();
+  TInt8 sig = -1;
   if (aSignalNum == -1) {
-    for (TInt sig = 0; sig < 64; sig++) {
+    for (sig = 0; sig < 64; sig++) {
       TUint64 mask = 1 << sig;
       if ((mSigAlloc & mask) == 0) {
         mSigAlloc |= mask;
-        return sig;
       }
     }
   }
@@ -97,18 +96,23 @@ TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
     TUint64 mask = 1 << aSignalNum;
     if ((mSigAlloc & mask) == 0) {
       mSigAlloc |= mask;
-      return aSignalNum;
+      sig = aSignalNum;
     }
   }
+  SetFlags(flags);
   return -1;
 }
 
 TBool BTask::FreeSignal(TInt64 aSignalNum) {
+  TUint64 flags = GetFlags();
+  cli();
   TUint64 mask = 1 << aSignalNum;
   if (mSigAlloc & mask) {
     mSigAlloc &= ~mask;
+    SetFlags(flags);
     return ETrue;
   }
+  SetFlags(flags);
   return EFalse;
 }
 
@@ -117,55 +121,46 @@ extern "C" void pop_disable();
 
 void BTask::Signal(TInt64 aSignalSet) {
   mSigReceived |= aSignalSet;
-#ifdef DEBUGME
-  dprint("    BTASK Signal received %x\n", aSignalSet);
-#endif
   // assure this task is in active list and potentially perform a task switch
   gExecBase.Wake(this);
 }
 
 TUint64 BTask::Wait(TUint64 aSignalSet) {
-  gExecBase.Disable();
+  TUint64 flags = GetFlags();
+  cli();
   mSigWait |= aSignalSet;
 
-#ifdef DEBUGME
-  dprint("About to WaitSignal\n");
-#endif
-
+  SetFlags(flags);
   gExecBase.WaitSignal(this);
 
+  flags = GetFlags();
   volatile TUint64 received = mSigReceived;
   mSigReceived = 0;
 
-#ifdef DEBUGME
-  dprint("WaitSignal returned 0x%x\n", received);
-#endif
-
-  gExecBase.Enable();
-
+  SetFlags(flags);
   return received;
 }
 
 BMessagePort *BTask::CreateMessagePort(const char *aName, TInt64 aPri) {
-  Disable();
+  TUint64 flags = GetFlags();
+  cli();
   TInt64 sig = AllocSignal(-1);
   BMessagePort *p = new BMessagePort(aName, this, sig, aPri);
   gExecBase.AddMessagePort(*p);
-  Enable();
+  SetFlags(flags);
   return p;
 }
 
 void BTask::FreeMessagePort(BMessagePort *aMessagePort) {
-  Disable();
+  TUint64 flags = GetFlags();
+  cli();
   FreeSignal(aMessagePort->SignalNumber());
   gExecBase.RemoveMessagePort(*aMessagePort);
-  Enable();
+  SetFlags(flags);
   delete aMessagePort;
 }
 
 TUint64 BTask::WaitPort(BMessagePort *aMessagePort) {
-  //  dprint("WaitPort %x %d\n", aMessagePort, aMessagePort->SignalNumber());
-  //  return 1<<aMessagePort->SignalNumber();
   return Wait(1 << aMessagePort->SignalNumber());
 }
 
@@ -186,16 +181,18 @@ void BTask::Enable() {
 }
 
 void BTask::Forbid() {
-  Disable();
+  TUint64 flags = GetFlags();
+  cli();
   mForbidNestCount++;
-  Enable();
+  SetFlags(flags);
 }
 
 void BTask::Permit() {
-  Disable();
+  TUint64 flags = GetFlags();
+  cli();
   mForbidNestCount--;
   if (mForbidNestCount < 0) {
     mForbidNestCount = 0;
   }
-  Enable();
+  SetFlags(flags);
 }

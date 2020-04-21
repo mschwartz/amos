@@ -3,6 +3,10 @@
 
 #ifdef KERNEL
 #include <x86/bochs.h>
+#include <Exec/ExecBase.h>
+#else
+#include <stdio.h>
+#include <stdlib.h>
 #endif
 
 ///////////////////////////////////////////////////////////////////////
@@ -47,17 +51,20 @@ BList::BList(const char *aNodeName) : BNode(aNodeName) {
 /**
  * Print a message if the list is not empty when it is deleted.
  */
+#ifdef KERNEL
 BList::~BList() {
-//#ifndef PRODUCTION
-//#if (defined(__XTENSA__) && defined(DEBUGME)) || !defined(__XTENSA__)
-//#ifdef KERNEL
-//   if (mNext != this) {
-//     dprint("List not empty!");
-//   }
-//#endif
-//#endif
-//#endif
+  if (mNext != this) {
+    gExecBase.GuruMeditation("List not empty %s\n", mNodeName);
+  }
 }
+#else
+BList::~BList() {
+  if (mNext != this) {
+    printf("List not empty %s\n", mNodeName);
+    exit(1);
+  }
+}
+#endif
 
 /**
  * Add an element to the tail of the list.
@@ -138,32 +145,31 @@ BNode *BList::Find(BNode& aNode) {
 BListPri::BListPri() : BNodePri(0) {
   Reset();
 }
+#endif
 
 /**
  * Print a message if the list is not empty when it is deleted.
  */
 BListPri::~BListPri() {
-//#ifndef PRODUCTION
-//#if (defined(__XTENSA__) && defined(DEBUGME)) || !defined(__XTENSA__)
-//#ifdef KERNEL
-//   if (mNext != this) {
-//     dprint("List not empty!");
-//   }
-//#endif
-//#endif
-//#endif
-}
+  if (mNext != this) {
+#ifdef KERNEL
+    gExecBase.GuruMeditation("List not empty %s\n", mNodeName);
+#else
+    printf("List not empty %s\n", mNodeName);
+    exit(1);
 #endif
+  }
+}
 
 void BListPri::Dump(BNodePri *aStop) {
-//#ifdef KERNEL
-//  for (auto *s = First(); !End(s); s = Next(s)) {
-//    dprint("Node %p PRI(%d)\n", s, s->pri);
-//    if (aStop && s == aStop) {
-//      break;
-//    }
-//  }
-//#endif
+#ifdef KERNEL
+  for (auto *s = First(); !End(s); s = Next(s)) {
+    dlog("Node %p PRI(%d)\n", s, s->pri);
+    if (aStop && s == aStop) {
+      break;
+    }
+  }
+#endif
 }
 
 void BListPri::AddTail(BNodePri &aNode) { 

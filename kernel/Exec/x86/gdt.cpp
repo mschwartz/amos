@@ -82,10 +82,6 @@ extern "C" void tss_flush(TUint32 segment); // ASM funct
 
 GDT::GDT() {
   return;
-//  kprint("sizeof(GDT_t) = %d\n", sizeof(GDT_t));
-//  dprintf("sizeof(GDT_t) = %d\n", sizeof(GDT_t));
-//  dprint("sizeof(GDT_t) = %d %x\n", sizeof(GDT_t), 0xdeadbeef);
-  //  return;
   gp.limit = (sizeof(gdt_info) * 6) - 1;
   gp.base = (TUint64)&gdtmem[0];
 //  gp.Dump();
@@ -96,7 +92,7 @@ GDT::GDT() {
   set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xC0);                    // User Data (r3) segment
   set_gate(5, (TUint64)&tss, sizeof(tss_info), 0x89, 0x40); // TSS segment
 
-//  kprint("about to flush %x\n", &gp);
+//  dprint("\n\nabout to flush %x\n", &gp);
   gdt_flush(&gp);
 //  tss_install();
 }

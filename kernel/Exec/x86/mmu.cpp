@@ -29,7 +29,7 @@ TUint64 MMU::link_memory_pages(TUint64 address, TUint64 size) {
       kprint("DONE\n");
       break;
     }
-//      dprint("%d link %x %d size:%d pages:%d\r", count, src, src, size, pages);
+//      dlog("%d link %x %d size:%d pages:%d\r", count, src, src, size, pages);
     TUint64 *ptr = (TUint64 *)&src[0];
 //    bzero(src, PAGE_SIZE);
 //        memset(src, 0, PAGE_SIZE);
@@ -64,7 +64,7 @@ typedef struct {
   TUint32 type;
   TUint32 acpi;
   void Dump() {
-    dprint("  TMemoryInfo: %x address: %x size: $%x(%d) type: %x acpi: %x\n", this, address, size, size, type, acpi);
+    dlog("  TMemoryInfo: %x address: %x size: $%x(%d) type: %x acpi: %x\n", this, address, size, size, type, acpi);
   }
 } PACKED TMemoryInfo;
 
@@ -73,7 +73,7 @@ typedef struct {
   TMemoryInfo mInfo[];
   void Dump() {
 //    dhexdump((TUint8 *)BIOS_MEMORY, 16);
-    dprint("TBiosMemory: %x, %d entries\n", this, mCount);
+    dlog("TBiosMemory: %x, %d entries\n", this, mCount);
     for (TInt32 i=0; i<mCount; i++) {
       mInfo[i].Dump();
     }
@@ -92,17 +92,17 @@ MMU::MMU() {
 
   TInt32 count = m->mCount;
 #ifdef DEBUGME
-  dprint("init_memory %d chunks\n", count);
+  dlog("init_memory %d chunks\n", count);
 #endif
   for (TInt32 i=0; i<count; i++) {
     TMemoryInfo *b = &m->mInfo[i]; // defined in memory.inc
     TInt type = b->type;
-//    dprint("base: $%x size: %d pages: %d type: %d (%d)\n", b->address, b->size, b->size / PAGE_SIZE, type, MEMORYTYPE_RANGE);
+//    dlog("base: $%x size: %d pages: %d type: %d (%d)\n", b->address, b->size, b->size / PAGE_SIZE, type, MEMORYTYPE_RANGE);
     if (type != 1) {
       continue;
     }
 #ifdef DEBUGME
-    dprint("->> base: $%x size: $%x(%d) pages: %d type: %d (%d)\n", b->address, b->size, b->size, b->size / PAGE_SIZE, type, MEMORYTYPE_RANGE);
+    dlog("->> base: $%x size: $%x(%d) pages: %d type: %d (%d)\n", b->address, b->size, b->size, b->size / PAGE_SIZE, type, MEMORYTYPE_RANGE);
 #endif
     system_memory += b->size;
     //            link_memory_pages(b->address, b->size);
@@ -110,32 +110,11 @@ MMU::MMU() {
   }
   system_pages = (system_memory + PAGE_SIZE - 1) / PAGE_SIZE;
 
-#if 0
-  b->Dump();
-  dhexdump((TUint8 *)b, 10);
-  TInt type = b->type;
-  if (type > 2) {
-    type = 0;
-  }
-  for (TInt i=0; i<count; i++) {
-      dprint("base: $%x size: %d pages: %d type: %d (%d)\n", b->address, b->size, b->size / PAGE_SIZE, type, MEMORYTYPE_RANGE);
-    if (type == MEMORYTYPE_RANGE) {
-//      dprint("RANGE base: $%x size: %d pages: %d type: %d\n", b->address, b->size, b->size / PAGE_SIZE, type);
-      system_memory += b->size;
-      //            link_memory_pages(b->address, b->size);
-      link_memory_pages(b->address, GIGABYTE);
-    }
-    b = &b[1];
-  }
-  system_pages = (system_memory + PAGE_SIZE - 1) / PAGE_SIZE;
-#endif
- 
-
   // TODO: 64G+ address space mapping
   //  return;
   // blank page directory:
 #ifdef DEBUGME
-  dprint("blanking page directory\n");
+  dlog("blanking page directory\n");
 #endif
   for (TInt i = 0; i < 512; i++) {
     // kernel-mode access only, write eanbled, not present
@@ -143,7 +122,7 @@ MMU::MMU() {
   }
 
 #ifdef DEBUGME
-  dprint("set up page tables\n");
+  dlog("set up page tables\n");
 #endif
   for (TInt t = 0; t < 512; t++) {
     // supervisor level, r/w, present
@@ -153,7 +132,7 @@ MMU::MMU() {
   page_directory[0] = ((TUint64)page_table) | 3;
 
 #ifdef DEBUGME
-  dprint("page_directory: %x\n", page_directory);
+  dlog("page_directory: %x\n", page_directory);
 #endif
 //  bochs
 //  load_page_directory(page_directory);

@@ -1,9 +1,7 @@
 #include <Exec/BDevice.h>
 #include <x86/bochs.h>
 
-#define MAX_DEVICES 16
-
-BDeviceList gDeviceList;
+#define MAX_DEVICES 64
 
 /**
   * BDevice
@@ -26,11 +24,11 @@ BDeviceList::~BDeviceList() {
 }
 
 BDevice *BDeviceList::FindDevice(const char *aName) {
-  dprintf("Find device %s\n", aName);
+  dprintf("\nFind device %s\n", aName);
   return ENull;
 }
 
 void BDeviceList::AddDevice(BDevice& aDevice) {
-  dprintf("Add Device %x\n", &aDevice);
+  dprintf("\nAdd Device %x\n", &aDevice);
 }
 

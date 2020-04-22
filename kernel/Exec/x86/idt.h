@@ -4,8 +4,9 @@
 // Model/encapsulate the CPU interrupts facilities
 
 #include <Exec/BTypes.h>
+#include <Exec/Memory.h>
 #include <x86/bochs.h>
-#include <posix/string.h>
+//#include <posix/string.h>
 
 /*******************************************************/
 
@@ -17,7 +18,7 @@ typedef TBool (TInterruptHandler)(TInt64 aInterruptNumber, void *aData);
 typedef struct HANDLER_INFO {
   void set(TInt64 aInterruptNumber, TInterruptHandler *aHandler, void *aData, const char *aDescription) {
     handler = aHandler;
-    strcpy(description, aDescription);
+    CopyString(description, aDescription);
     mInterruptNumber = aInterruptNumber;
     data = aData;
   }

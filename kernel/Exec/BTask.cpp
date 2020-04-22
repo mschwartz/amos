@@ -124,12 +124,14 @@ void BTask::Dump() {
 TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
   TUint64 flags = GetFlags();
   cli();
+
   TInt8 sig = -1;
   if (aSignalNum == -1) {
     for (sig = 0; sig < 64; sig++) {
       TUint64 mask = 1 << sig;
       if ((mSigAlloc & mask) == 0) {
         mSigAlloc |= mask;
+        break;
       }
     }
   }
@@ -140,8 +142,9 @@ TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
       sig = aSignalNum;
     }
   }
+
   SetFlags(flags);
-  return -1;
+  return sig == 64 ? -1 : sig;
 }
 
 TBool BTask::FreeSignal(TInt64 aSignalNum) {
@@ -163,12 +166,15 @@ extern "C" void pop_disable();
 void BTask::Signal(TInt64 aSignalSet) {
   mSigReceived |= aSignalSet;
   // assure this task is in active list and potentially perform a task switch
-  gExecBase.Wake(this);
+  if (mSigReceived & mSigWait) {
+    gExecBase.Wake(this);
+  }
 }
 
 TUint64 BTask::Wait(TUint64 aSignalSet) {
   TUint64 flags = GetFlags();
   cli();
+
   mSigWait |= aSignalSet;
 
   SetFlags(flags);

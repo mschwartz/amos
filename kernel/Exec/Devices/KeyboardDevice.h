@@ -22,13 +22,17 @@ protected:
 };
 
 enum EKeyboardDeviceCommand {
+  EQueueChar,
   EReadChar,
 };
 
 class KeyboardMessage : public BMessage {
 public:
-  KeyboardMessage(BMessagePort *aReplyPort, EKeyboardDeviceCommand aCommand);
-  ~KeyboardMessage();
+  KeyboardMessage(BMessagePort *aReplyPort, EKeyboardDeviceCommand aCommand) : BMessage(mReplyPort) {
+    mCommand = aCommand;
+  }
+  ~KeyboardMessage() {}
+
 public:
   EKeyboardDeviceCommand mCommand;
   TInt64 mResult;

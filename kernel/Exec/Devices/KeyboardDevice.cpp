@@ -227,7 +227,7 @@ class KeyboardTask : public BTask {
 
 public:
   KeyboardTask() : BTask("Keyboard Task", LIST_PRI_MAX) {
-    mPtr1 = mPtr2 = 0;
+    mHead = mTail = 0;
     // install kernel handler
     gExecBase.SetIntVector(EKeyboardIRQ, new KeyboardInterrupt(this));
     // enable the keyboard interrupt
@@ -236,20 +236,23 @@ public:
 
   void Run();
 
+public:
+  BMessagePort *mMessagePort;
 protected:
   char mBuffer[KEYBOARD_BUFFER_SIZE];
-  int mPtr1, mPtr2;
-  BMessagePort *mMessagePort;
+  int mHead, mTail;
 };
 
 TBool KeyboardInterrupt::Run(TAny *aData) {
   TUint16 t = inb(KEYB_DR);
   TUint64 c = gExecBase.SystemTicks();
-  dlog(" keyboard data: %x\n", t);
+//  dlog(" keyboard data: %x\n", t);
   // add key to circular queue
-  mTask->mBuffer[mTask->mPtr2++] = t;
-  mTask->mPtr2 %= KEYBOARD_BUFFER_SIZE;
-  mTask->Signal(1 << 10);
+
+  // send message to task
+  KeyboardMessage *m = new KeyboardMessage(ENull, EQueueChar);
+  m->mResult = t;
+  m->SendMessage(mTask->mMessagePort);
   gPIC->ack(IRQ_KEYBOARD);
   return ETrue;
 }
@@ -258,17 +261,36 @@ void KeyboardTask::Run() {
   dlog("keyboard task alive!\n");
 
   // initialize message port and wait for messages
-  while (ETrue) {
-    TUint64 r = Wait(1 << 10);
-    dlog("KEYBOARD.TASK RETURNED Signal received %x\n", r);
-  }
-  /*
-  mMessagePort = CreateMessagePort();
+  mMessagePort = CreateMessagePort("keyboard.device");
+  mMessagePort->Dump();
+
   while (WaitPort(mMessagePort)) {
-    dprint("wait port returned\n");
-    halt();
+    while (KeyboardMessage *m = (KeyboardMessage*) mMessagePort->GetMessage()) {
+//          dlog("Queue key %d, %x\n", m->mResult, m->mResult);
+#if 1
+      switch (m->mCommand) {
+        case EQueueChar:
+          dlog("Queue key %d, %x\n", m->mResult, m->mResult);
+          if (((mTail+1) % KEYBOARD_BUFFER_SIZE) != mHead) {
+            mBuffer[mTail++] = m->mResult;
+            mTail %= KEYBOARD_BUFFER_SIZE;
+          }
+          else {
+            dlog("keyboard.device keyboard queue full\n");
+          }
+          // respond to message if keyboard message FIFO is not empty
+          break;
+        case EReadChar:
+          // add message/request to FIFO if keybaord queue is empty
+          break;
+        default:
+          dlog("keyboard.device: Unknown mCommand(%d/%x)\n", m->mCommand, m->mCommand);
+          break;
+      }
+#endif
+      delete m;
+    }
   }
-  */
 }
 
 KeyboardDevice::KeyboardDevice() : BDevice("keyboard.device") {

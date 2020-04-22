@@ -1,21 +1,28 @@
-#include <posix/malloc.h>
-#include <Exec/Memory.h>
 #include <Exec/BTypes.h>
+#include <Exec/Memory.h>
+#include <posix/malloc.h>
 
 #define LOCKMEM
-#undef LOCKMEM
+//#undef LOCKMEM
 
+#ifdef KERNEL
 #ifdef LOCKMEM
 #include <Exec/ExecBase.h>
 #endif
+#endif
 
 void *AllocMem(TInt64 aSize, TInt aFlags) {
+#ifdef KERNEL
 #ifdef LOCKMEM
-  gExecBase.Disable();
+  TUint64 flags = GetFlags();
+  cli();
+#endif
 #endif
   TUint8 *mem = (TUint8 *)malloc(aSize);
+#ifdef KERNEL
 #ifdef LOCKMEM
-  gExecBase.Enable();
+  SetFlags(flags);
+#endif
 #endif
   if (aFlags & MEMF_CLEAR) {
     SetMemory8(mem, 0, aSize);
@@ -24,7 +31,18 @@ void *AllocMem(TInt64 aSize, TInt aFlags) {
 }
 
 void FreeMem(TAny *memory) {
+#ifdef KERNEL
+#ifdef LOCKMEM
+  TUint64 flags = GetFlags();
+  cli();
+#endif
+#endif
   free(memory);
+#ifdef KERNEL
+#ifdef LOCKMEM
+  SetFlags(flags);
+#endif
+#endif
 }
 
 void *operator new(unsigned long aSize) {

@@ -43,8 +43,8 @@ PIC::~PIC() {
 }
 
 void IRQ_set_mask(unsigned char IRQline) {
-  uint16_t port;
-  uint8_t value;
+  TUint16 port;
+  TUint8 value;
 
   if (IRQline < 8) {
     port = PIC1_DATA;
@@ -58,8 +58,8 @@ void IRQ_set_mask(unsigned char IRQline) {
 }
 
 void IRQ_clear_mask(unsigned char IRQline) {
-  uint16_t port;
-  uint8_t value;
+  TUint16 port;
+  TUint8 value;
 
   if (IRQline < 8) {
     port = PIC1_DATA;
@@ -72,17 +72,17 @@ void IRQ_clear_mask(unsigned char IRQline) {
   outb(port, value);
 }
 
-void PIC::disable_interrupt(uint16_t irq) {
+void PIC::disable_interrupt(TUint16 irq) {
   irq -= IRQ_OFFSET;
   IRQ_set_mask(irq);
 }
 
-void PIC::enable_interrupt(uint16_t irq) {
+void PIC::enable_interrupt(TUint16 irq) {
   irq -= IRQ_OFFSET;
   IRQ_clear_mask(irq);
 }
 
-void PIC::ack(uint16_t irq) {
+void PIC::ack(TUint16 irq) {
   if (irq >= IRQ_OFFSET && irq < HW_INTERRUPTS) {
     ob(PIC1_CMD, PIC_EOI);
     if (irq >= IRQ_OFFSET + 8)

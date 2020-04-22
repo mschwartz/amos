@@ -28,6 +28,9 @@ public:
   ~BNode();
 
 public:
+  const char *NodeName() { return mNodeName ? mNodeName : "No name"; }
+
+public:
   // make this node last on the list, if node is key
   void InsertBeforeNode(BNode *aNextNode) {
     BNode *pnode = aNextNode->mPrev;
@@ -227,7 +230,7 @@ public:
     */
   BNodePri *Find(BNodePri& aNode);
 
-private:
+public:
   void AddHead(BNodePri &node);
   void AddTail(BNodePri &node);
 };

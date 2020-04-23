@@ -17,7 +17,7 @@ enum ERtcDeviceCommand {
 
 class RtcMessage : public BMessage {
 public:
-  RtcMessage(BMessagePort *aReplyPort, ERtcDeviceCommand aCommand);
+  RtcMessage(MessagePort *aReplyPort, ERtcDeviceCommand aCommand);
   ~RtcMessage();
 
 public:

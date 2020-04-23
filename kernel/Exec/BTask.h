@@ -7,7 +7,7 @@
 const TUint64 default_task_stack_size = 2 * 1024 * 1024;
 //const TUint64 default_task_stack_size = 64 * 1024;
 
-class BMessagePort;
+class MessagePort;
 
 class ExecBase;
 
@@ -66,9 +66,9 @@ public:
   void Signal(TInt64 aSignalBit);
 
 protected:
-  BMessagePort *CreateMessagePort(const char *aName = ENull, TInt64 aPri = LIST_PRI_DEFAULT);
-  void FreeMessagePort(BMessagePort *aMessagePort);
-  TUint64 WaitPort(BMessagePort *aMessagePort);
+  MessagePort *CreateMessagePort(const char *aName = ENull, TInt64 aPri = LIST_PRI_DEFAULT);
+  void FreeMessagePort(MessagePort *aMessagePort);
+  TUint64 WaitPort(MessagePort *aMessagePort);
 
   /**
     * Wait for some number of seconds.

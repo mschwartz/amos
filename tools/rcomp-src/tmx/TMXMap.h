@@ -1,7 +1,7 @@
 #ifndef RCOMP_TMXMAP_H
 #define RCOMP_TMXMAP_H
 
-#include <Exec/BTypes.h>
+#include <Exec/Types.h>
 #include "Optionsh"
 
 #ifdef ENABLE_TMXMAPS

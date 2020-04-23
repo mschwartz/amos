@@ -4,7 +4,7 @@
 #include <Exec/BBase.h>
 #include <Exec/BInterrupt.h>
 #include <Exec/BTask.h>
-#include <Exec/BMessagePort.h>
+#include <Exec/MessagePort.h>
 #include <Exec/BDevice.h>
 #include <Devices/Screen.h>
 #include <x86/gdt.h>
@@ -94,13 +94,13 @@ protected:
   // Message Ports
   //
 public:
-  void AddMessagePort(BMessagePort& aMessagePort);
-  TBool RemoveMessagePort(BMessagePort& aMessagePort);
+  void AddMessagePort(MessagePort& aMessagePort);
+  TBool RemoveMessagePort(MessagePort& aMessagePort);
 
-  BMessagePort *FindMessagePort(const char *aPortName);
+  MessagePort *FindMessagePort(const char *aPortName);
 
 protected:
-  BMessagePortList *mMessagePortList;
+  MessagePortList *mMessagePortList;
 
   //
   // DEVICES

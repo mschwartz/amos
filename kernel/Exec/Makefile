@@ -3,9 +3,9 @@ GFX=	Graphics/TRect.o Graphics/BBitmap.o
 
 DEVICES= Devices/KeyboardDevice.o Devices/PIC.o Devices/Screen.o Devices/TimerDevice.o Devices/RtcDevice.o
 
-TYPES=	BTypes.o Types/TBCD.o 
+TYPES=	Types.o Types/TBCD.o 
 
-OBJ= 	 $(TYPES) Memory.o BBase.o BList.o BMessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o $(DEVICES) $(GFX)
+OBJ= 	 $(TYPES) Memory.o BBase.o Random.o BList.o MessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o $(DEVICES) $(GFX)
 
 LIB=	libexec.a
 

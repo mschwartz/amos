@@ -5,7 +5,7 @@
  * 8259 Interrupt Controller
  */
 
-#include <Exec/BTypes.h>
+#include <Exec/Types.h>
 
 #define IRQ_OFFSET 0x20 /* Interrupt offset for external interrupts */
 

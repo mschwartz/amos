@@ -5,7 +5,7 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-#include <Exec/BTypes.h>
+#include <Exec/Types.h>
 //#include "../x86/types.h"
 
 const TInt VGA_WIDTH = 80;

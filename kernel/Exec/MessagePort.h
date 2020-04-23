@@ -7,26 +7,26 @@
  ********************************************************************************
  *******************************************************************************/
 
-class BMessagePort;
+class MessagePort;
 
 class BMessage : public BNodePri {
-  friend BMessagePort;
+  friend MessagePort;
 
 public:
   /**
     * if aRpleyPort is ENull, then Message cannot be replied to.
     */
-  BMessage(BMessagePort *aReplyPort = ENull);
+  BMessage(MessagePort *aReplyPort = ENull);
   ~BMessage();
 
-  void SendMessage(BMessagePort *aToPort);
+  void SendMessage(MessagePort *aToPort);
   void ReplyMessage();
 
 public:
   void Dump();
 
 protected:
-  BMessagePort *mReplyPort;
+  MessagePort *mReplyPort;
 };
 
 /********************************************************************************
@@ -45,13 +45,13 @@ public:
  ********************************************************************************
  *******************************************************************************/
 
-class BMessagePort : public BNodePri {
+class MessagePort : public BNodePri {
   friend ExecBase;
   friend BMessage;
 
 public:
-  BMessagePort(const char *aName, BTask *aOwner, TInt64 aSignalBit, TInt64 aPri = LIST_PRI_DEFAULT);
-  ~BMessagePort();
+  MessagePort(const char *aName, BTask *aOwner, TInt64 aSignalBit, TInt64 aPri = LIST_PRI_DEFAULT);
+  ~MessagePort();
 
   TInt64 SignalNumber() { return mSignalBit; }
 
@@ -72,14 +72,14 @@ protected:
  ********************************************************************************
  *******************************************************************************/
 
-class BMessagePortList : public BListPri {
+class MessagePortList : public BListPri {
 public:
-  BMessagePortList(const char *aName);
-  ~BMessagePortList();
+  MessagePortList(const char *aName);
+  ~MessagePortList();
 
 public:
-  BMessagePort *FindPort(const char *aName) {
-    return (BMessagePort *)Find(aName);
+  MessagePort *FindPort(const char *aName) {
+    return (MessagePort *)Find(aName);
   }
 };
 

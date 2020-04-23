@@ -99,7 +99,7 @@ ExecBase::ExecBase() {
   dlog("\n\nDisplay Mode:\n");
   modes->mDisplayMode.Dump();
 //  gDeviceList.FindDevice("FOO>DEVICE");
-  mMessagePortList = new BMessagePortList("ExecBase MessagePort List");
+  mMessagePortList = new MessagePortList("ExecBase MessagePort List");
 
   //  Screen s;
   mScreen = new Screen;
@@ -256,11 +256,11 @@ void ExecBase::RescheduleIRQ() {
   current_task = &mCurrentTask->mRegisters;
 }
 
-void ExecBase::AddMessagePort(BMessagePort &aMessagePort) {
+void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
   mMessagePortList->Add(aMessagePort);
 }
 
-TBool ExecBase::RemoveMessagePort(BMessagePort &aMessagePort) {
+TBool ExecBase::RemoveMessagePort(MessagePort &aMessagePort) {
   if (mMessagePortList->Find(aMessagePort)) {
     aMessagePort.Remove();
     return ETrue;
@@ -268,8 +268,8 @@ TBool ExecBase::RemoveMessagePort(BMessagePort &aMessagePort) {
   return EFalse;
 }
 
-BMessagePort *ExecBase::FindMessagePort(const char *aName) {
-  return (BMessagePort *)mMessagePortList->Find(aName);
+MessagePort *ExecBase::FindMessagePort(const char *aName) {
+  return (MessagePort *)mMessagePortList->Find(aName);
 }
 
 void ExecBase::GuruMeditation(const char *aFormat, ...) {

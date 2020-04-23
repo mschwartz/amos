@@ -6,7 +6,7 @@
  */
 
 #include <Exec/BDevice.h>
-#include <Exec/BMessagePort.h>
+#include <Exec/MessagePort.h>
 
 const int KEYBOARD_BUFFER_SIZE = 256; /* keyboard buffer size (software buffer) */
 
@@ -28,7 +28,7 @@ enum EKeyboardDeviceCommand {
 
 class KeyboardMessage : public BMessage {
 public:
-  KeyboardMessage(BMessagePort *aReplyPort, EKeyboardDeviceCommand aCommand) : BMessage(mReplyPort) {
+  KeyboardMessage(MessagePort *aReplyPort, EKeyboardDeviceCommand aCommand) : BMessage(mReplyPort) {
     mCommand = aCommand;
   }
   ~KeyboardMessage() {}

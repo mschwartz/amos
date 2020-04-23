@@ -1,11 +1,11 @@
-#include <BMessagePort.h>
-#include <ExecBase.h>
+#include <Exec/MessagePort.h>
+#include <Exec/ExecBase.h>
 
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
-BMessage::BMessage(BMessagePort *aReplyPort) : BNodePri("BMessage") {
+BMessage::BMessage(MessagePort *aReplyPort) : BNodePri("BMessage") {
   mReplyPort = aReplyPort;
 };
 
@@ -13,7 +13,7 @@ BMessage::~BMessage() {
   //
 }
 
-void BMessage::SendMessage(BMessagePort *aToPort) {
+void BMessage::SendMessage(MessagePort *aToPort) {
   aToPort->ReceiveMessage(this);
 }
 
@@ -31,7 +31,7 @@ void BMessage::Dump() {
  ********************************************************************************
  *******************************************************************************/
 
-BMessagePort::BMessagePort(const char *aName, BTask *aOwner, TInt64 aSignalBit, TInt64 aPri)
+MessagePort::MessagePort(const char *aName, BTask *aOwner, TInt64 aSignalBit, TInt64 aPri)
     : BNodePri(aName, aPri) {
   mOwner = aOwner;
   mSignalBit = aSignalBit;
@@ -39,11 +39,11 @@ BMessagePort::BMessagePort(const char *aName, BTask *aOwner, TInt64 aSignalBit, 
   mList = new BMessageList(aName);
 }
 
-BMessagePort::~BMessagePort() {
+MessagePort::~MessagePort() {
   //
 }
 
-BMessage *BMessagePort::GetMessage() {
+BMessage *MessagePort::GetMessage() {
   TUint64 flags = GetFlags();
   cli();
 
@@ -53,7 +53,7 @@ BMessage *BMessagePort::GetMessage() {
   return m;
 }
 
-void BMessagePort::ReceiveMessage(BMessage *aMessage) {
+void MessagePort::ReceiveMessage(BMessage *aMessage) {
   TUint64 flags = GetFlags();
   cli();
 
@@ -63,8 +63,8 @@ void BMessagePort::ReceiveMessage(BMessage *aMessage) {
   SetFlags(flags);
 }
 
-void BMessagePort::Dump() {
-  dprintf("BMessagePort: %x %s\n", this, this->NodeName());
+void MessagePort::Dump() {
+  dprintf("MessagePort: %x %s\n", this, this->NodeName());
   dprint("      mOwner: %s\n", mOwner->NodeName());
   dprint("  mSignalBit: %d\n", mSignalBit);
 }
@@ -95,10 +95,10 @@ void BMessageList::Dump() {
  ********************************************************************************
  *******************************************************************************/
 
-BMessagePortList::BMessagePortList(const char *aName) : BListPri(aName) {
+MessagePortList::MessagePortList(const char *aName) : BListPri(aName) {
   //
 }
 
-BMessagePortList::~BMessagePortList() {
+MessagePortList::~MessagePortList() {
 }
 

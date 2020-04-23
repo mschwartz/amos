@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <BTypes.h>
+#include <Types.h>
 
 // TODO: add these to CE proper
 extern void HexDump(TUint8 *ptr, TInt length, TInt width=8);

@@ -1,7 +1,7 @@
 #ifndef KERNEL_MMU_H
 #define KERNEL_MMU_H
 
-#include <Exec/BTypes.h>
+#include <Exec/Types.h>
 
 const TUint64 PAGE_SIZE = 4096;
 

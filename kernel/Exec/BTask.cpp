@@ -191,17 +191,17 @@ TUint64 BTask::Wait(TUint64 aSignalSet) {
   return received;
 }
 
-BMessagePort *BTask::CreateMessagePort(const char *aName, TInt64 aPri) {
+MessagePort *BTask::CreateMessagePort(const char *aName, TInt64 aPri) {
   TUint64 flags = GetFlags();
   cli();
   TInt64 sig = AllocSignal(-1);
-  BMessagePort *p = new BMessagePort(aName, this, sig, aPri);
+  MessagePort *p = new MessagePort(aName, this, sig, aPri);
   gExecBase.AddMessagePort(*p);
   SetFlags(flags);
   return p;
 }
 
-void BTask::FreeMessagePort(BMessagePort *aMessagePort) {
+void BTask::FreeMessagePort(MessagePort *aMessagePort) {
   TUint64 flags = GetFlags();
   cli();
   FreeSignal(aMessagePort->SignalNumber());
@@ -210,17 +210,17 @@ void BTask::FreeMessagePort(BMessagePort *aMessagePort) {
   delete aMessagePort;
 }
 
-TUint64 BTask::WaitPort(BMessagePort *aMessagePort) {
+TUint64 BTask::WaitPort(MessagePort *aMessagePort) {
   return Wait(1 << aMessagePort->SignalNumber());
 }
 
 void BTask::Sleep(TUint64 aSeconds) {
-  BMessagePort *timer = gExecBase.FindMessagePort("timer.device");
+  MessagePort *timer = gExecBase.FindMessagePort("timer.device");
   if (!timer) {
     dprint("***** can't find timer.device port\n");
     return;
   }
-  BMessagePort *replyPort = CreateMessagePort();
+  MessagePort *replyPort = CreateMessagePort();
   TimerMessage *m = new TimerMessage(replyPort, ETimerSleep);
   m->mArg1 = aSeconds;
   m->SendMessage(timer);

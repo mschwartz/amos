@@ -1,7 +1,7 @@
 #ifndef BDEVICE_H
 #define BDEVICE_H
 
-#include <Exec/BMessagePort.h>
+#include <Exec/MessagePort.h>
 
 class BDevice : public BNodePri {
 public:
@@ -34,7 +34,7 @@ public:
 
 class BDeviceMessage : public BMessage {
   public:
-    BDeviceMessage(BMessagePort *aReplyPort) :  BMessage(aReplyPort) {
+    BDeviceMessage(MessagePort *aReplyPort) :  BMessage(aReplyPort) {
       //
     }
     ~BDeviceMessage() {}

@@ -1,8 +1,8 @@
 #ifndef GENUS_TRGB_H
 #define GENUS_TRGB_H
 
-#include "BBase.h"
-#include "BTypes.h"
+#include <Exec/Types.h>
+#include <Exec/BBase.h>
 
 struct TRGB {
   TInt16 r, g, b;

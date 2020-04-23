@@ -1,7 +1,7 @@
 #ifndef KERNEL_X86_CPU_H
 #define KERNEL_X86_CPU_H
 
-#include <Exec/BTypes.h>
+#include <Exec/Types.h>
 
 #if 0
 class CPU {

@@ -57,7 +57,7 @@ public:
 
 protected:
   TimerDevice *mTimerDevice;
-  BMessagePort *mMessagePort;
+  MessagePort *mMessagePort;
   TUint16 mSignalBit;
 };
 

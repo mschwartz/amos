@@ -1,7 +1,7 @@
 #ifndef TASKING_H
 #define TASKING_H
 
-#include <Exec/BTypes.h>
+#include <Exec/Types.h>
 #include <x86/bochs.h>
 
 typedef struct Task {

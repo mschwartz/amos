@@ -6,7 +6,7 @@
 #define KERNEL_TIMER_DEVICE_H
 
 #include <Exec/BDevice.h>
-#include <Exec/BMessagePort.h>
+#include <Exec/MessagePort.h>
 
 class TimerDevice : public BDevice {
 public:
@@ -29,7 +29,7 @@ enum ETimerDeviceCommand {
 
 class TimerMessage : public BDeviceMessage {
 public:
-  TimerMessage(BMessagePort *aReplyPort, ETimerDeviceCommand aCommand, TUint64 aArg = 0) : BDeviceMessage(aReplyPort) {
+  TimerMessage(MessagePort *aReplyPort, ETimerDeviceCommand aCommand, TUint64 aArg = 0) : BDeviceMessage(aReplyPort) {
     mCommand = aCommand;
     mArg1 = aArg;
   }

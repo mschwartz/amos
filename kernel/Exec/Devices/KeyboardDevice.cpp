@@ -237,7 +237,7 @@ public:
   void Run();
 
 public:
-  BMessagePort *mMessagePort;
+  MessagePort *mMessagePort;
 protected:
   char mBuffer[KEYBOARD_BUFFER_SIZE];
   int mHead, mTail;

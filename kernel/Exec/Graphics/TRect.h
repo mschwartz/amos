@@ -1,7 +1,7 @@
 #ifndef GENUS_TRECT_H
 #define GENUS_TRECT_H
 
-#include <BTypes.h>
+#include <Exec/Types.h>
 
 struct TPoint {
   TInt32 x, y;

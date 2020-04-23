@@ -3,7 +3,7 @@
 
 // Model/encapsulate the CPU interrupts facilities
 
-#include <Exec/BTypes.h>
+#include <Exec/Types.h>
 #include <Exec/Memory.h>
 #include <x86/bochs.h>
 //#include <posix/string.h>

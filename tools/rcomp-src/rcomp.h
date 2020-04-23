@@ -3,7 +3,7 @@
 
 #include "Options.h"
 
-#include <BTypes.h>
+#include <Exec/Types.h>
 
 #include <cstdio>
 //#include <sys/types.h>
@@ -17,7 +17,6 @@
 #include <cctype>
 #include <libgen.h>
 //
-//#include <BTypes.h>
 #include "Memory.h"
 #include "Panic.h"
 

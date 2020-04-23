@@ -2,7 +2,7 @@
  * main() entrypoint for our example OS-like application
  */
 
-#include <Exec/BTypes.h>
+#include <Exec/Types.h>
 #include <x86/bochs.h>
 #include <Exec/ExecBase.h>
 

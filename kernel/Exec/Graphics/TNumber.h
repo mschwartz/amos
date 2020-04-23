@@ -1,7 +1,7 @@
 #ifndef GENUS_TNUMBER_H
 #define GENUS_TNUMBER_H
 
-#include <BTypes.h>
+#include <Exec/Types.h>
 #include <posix/string.h>
 
 struct TPad {

@@ -1,4 +1,5 @@
-#include <Exec/BRandom.h>
+#include <Exec/Types.h>
+#include <Exec/Random.h>
 
 /*
  * Random number generator

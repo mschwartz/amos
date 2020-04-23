@@ -3,13 +3,13 @@
 
 // Master Graphics include file - baseically defines all graphics methods and types.
 
-#include <BTypes.h>
-#include <Graphics/TRGB.h>
-#include <Graphics/TRect.h>
-#include <Graphics/TBCD.h>
-#include <Graphics/TNumber.h>
+#include <Exec/Types.h>
+#include <Exec/Graphics/TRGB.h>
+#include <Exec/Graphics/TRect.h>
+#include <Exec/Graphics/TBCD.h>
+#include <Exec/Graphics/TNumber.h>
 
-#include <Graphics/BBitmap.h>
-#include <Graphics/BFont.h>
+#include <Exec/Graphics/BBitmap.h>
+#include <Exec/Graphics/BFont.h>
 
 #endif

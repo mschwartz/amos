@@ -18,7 +18,7 @@ extern "C" void enter_next_task();
 
 class IdleTask : public BTask {
 public:
-  IdleTask() : BTask("Idle Task", INT64_MAX) {}
+  IdleTask() : BTask("Idle Task", LIST_PRI_MIN) {}
 
 public:
   void Run() {
@@ -28,6 +28,21 @@ public:
       halt();
     }
   }
+};
+
+class TestTask : public BTask {
+  public:
+    TestTask() : BTask("Test Task") {}
+
+  public:
+    void Run() {
+      dlog("***************************** TEST TASK RUNNING\n");
+      TInt64 time = 0;
+      while (1) {
+        Sleep(1);
+        dlog("TestTask: Time %d\n", ++time);
+      }
+    }
 };
 
 typedef struct {
@@ -54,6 +69,7 @@ typedef struct {
   }
 } PACKED TModes;
 
+// ExecBase constructor
 ExecBase::ExecBase() {
   in_bochs = *((TUint8 *)0x7c10);
 //  dlog("bochs %x\n", in_bochs);
@@ -122,6 +138,9 @@ ExecBase::ExecBase() {
 
   AddDevice(new KeyboardDevice);
   dlog("  initialized keyboard \n");
+
+  TestTask *test_task = new TestTask();
+  gExecBase.AddTask(test_task);
 }
 
 ExecBase::~ExecBase() {
@@ -165,10 +184,19 @@ void ExecBase::newline() {
 void ExecBase::AddTask(BTask *aTask) {
   TUint64 flags = GetFlags();
   cli();
+
   dlog("Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
-  aTask->Dump();
+//  aTask->Dump();
   mActiveTasks.Add(*aTask);
+//  mActiveTasks.Dump();
+//  dlog("x\n");
+      
+
   SetFlags(flags);
+}
+
+void ExecBase::DumpTasks() {
+  mActiveTasks.Dump();
 }
 
 void ExecBase::WaitSignal(BTask *aTask) {
@@ -240,19 +268,24 @@ TBool ExecBase::RemoveMessagePort(BMessagePort &aMessagePort) {
   return EFalse;
 }
 
+BMessagePort *ExecBase::FindMessagePort(const char *aName) {
+  return (BMessagePort *)mMessagePortList->Find(aName);
+}
+
 void ExecBase::GuruMeditation(const char *aFormat, ...) {
   cli();
   char buf[512];
-  dlog("\n\n***********************\n");
-  dlog("GURU MEDITATION at %dms\n", SystemTicks());
+  dprint("\n\n***********************\n");
+  dprint("GURU MEDITATION at %dms\n", SystemTicks());
   va_list args;
   va_start(args, aFormat);
   vsprintf(buf, aFormat, args);
-  dlog(buf);
+  dprint(buf);
+  dprint("\n");
 
   mCurrentTask->Dump();
   va_end(args);
-  dlog("***********************\n\n\nHalted.\n");
+  dprint("***********************\n\n\nHalted.\n");
   while (1) {
     halt();
   }
@@ -273,10 +306,8 @@ public:
 
 public:
   TBool Run(TAny *aData) {
-    char buf[128];
     cli();
-    sprintf(buf, "%s Exception", mNodeName);
-    gExecBase.GuruMeditation(buf);
+    gExecBase.GuruMeditation("%s Exception", mNodeName);
     // TODO: kill/remove current task
     halt();
     return ETrue;

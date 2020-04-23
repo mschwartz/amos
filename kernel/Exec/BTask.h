@@ -43,7 +43,7 @@ protected:
   volatile TUint64 mSigWait;
   volatile TUint64 mSigReceived;
 
-public:
+protected:
   /**
     * Allocate signals
     *
@@ -58,17 +58,24 @@ public:
     * Returns a mask of the signals actually received.
     */
   TUint64 Wait(TUint64 aSignalSet);
+
+public:
   /**
     * Receive a signal
     */
   void Signal(TInt64 aSignalBit);
 
-public:
+protected:
   BMessagePort *CreateMessagePort(const char *aName = ENull, TInt64 aPri = LIST_PRI_DEFAULT);
   void FreeMessagePort(BMessagePort *aMessagePort);
   TUint64 WaitPort(BMessagePort *aMessagePort);
 
-public:
+  /**
+    * Wait for some number of seconds.
+    */
+  void Sleep(TUint64 aSeconds);
+
+protected:
   void Disable();
   void Enable();
 
@@ -101,7 +108,7 @@ public:
 
   BTask *Prev(BTask *aCurrent) { return (BTask *)aCurrent->mPrev; }
 
-  TBool End(BTask *aCurrent) { return aCurrent == (BTask *)this; }
+  TBool End(BTask *aCurrent) { return BListPri::End(aCurrent); }
 };
 
 #endif

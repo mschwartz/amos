@@ -13,7 +13,11 @@
 #define I8253_CMD_LOAD 0x34
 #define I8253_CMD_LATCH 0x04
 
+#define QUANTUM 100
+
 class TimerTask;
+
+extern "C" void pic_100hz();
 
 class TimerInterrupt : public BInterrupt {
 public:
@@ -29,38 +33,93 @@ protected:
 };
 
 class TimerTask : public BTask {
+  friend TimerInterrupt;
+
 public:
   TimerTask(TimerDevice *aTimerDevice) : BTask("Timer Task", LIST_PRI_MAX) {
     mTimerDevice = aTimerDevice;
 
-    SetFrequency(gExecBase.Quantum());
+//    pic_100hz();
+    SetFrequency(QUANTUM);
+//    SetFrequency(gExecBase.Quantum());
     gExecBase.SetIntVector(ETimerIRQ, new TimerInterrupt(this));
     gPIC->enable_interrupt(IRQ_TIMER);
   }
 
   void SetFrequency(TInt hz) {
-    int divisor = 1193180 / hz;
+    TUint16 divisor = 1193180 / hz;
     outb(I8253_CMD, 0x36);
     outb(I8253_CH0, divisor & 0xff);
-    outb(I8253_CH0, divisor >> 8);
+    outb(I8253_CH0, (divisor >> 8) & 0xff);
   }
 
   void Run();
 
 protected:
   TimerDevice *mTimerDevice;
+  BMessagePort *mMessagePort;
+  TUint16 mSignalBit;
 };
 
 void TimerTask::Run() {
   dlog("TimerTask Alive!\n");
+
+  BMessageList timerQueue("timer.device queue");
+
+  mSignalBit = AllocSignal(-1);
+  mMessagePort = CreateMessagePort("timer.device");
+  gExecBase.AddMessagePort(*mMessagePort);
+
+  TUint64 port_mask = 1<<mMessagePort->SignalNumber();
+  TUint64 tick_mask = 1<<mSignalBit;
+  
   while (ETrue) {
-    TUint64 sigs = Wait(1 << 10);
-    mTimerDevice->IncrementTicks();
+//    dlog("Timer Device Wait\n");
+    TUint64 sigs = Wait(port_mask | tick_mask);
+    if (sigs & port_mask) {
+      while (TimerMessage *m = (TimerMessage *)mMessagePort->GetMessage()) {
+        switch (m->mCommand) {
+          case ETimerReadTicks:
+            m->mResult = mTimerDevice->GetTicks();
+            m->ReplyMessage();
+            break;
+          case ETimerSleep:
+            m->mPri = mTimerDevice->GetTicks() + m->mArg1 * QUANTUM;
+//            dlog("Queue %d %d\n", mTimerDevice->GetTicks(), m->mPri);
+            timerQueue.Add(*m);
+            break;
+          default:
+            dlog("timer.device: UnknownmCommand(%d/%x)\n", m->mCommand, m->mCommand);
+            break;
+        }
+      }
+    }
+    if (sigs & tick_mask) {
+      TUint64 current = mTimerDevice->IncrementTicks();
+      while (ETrue) {
+        TUint64 flags = GetFlags();
+        cli();
+        TimerMessage *m = (TimerMessage *)timerQueue.First();
+        if (timerQueue.End(m)) {
+          break;
+        }
+//        dlog("message %d %d\n", m->mPri, current);
+        if (m->mPri > current) {
+          SetFlags(flags);
+          break;
+        }
+//        dlog("Wake\n");
+        m->Remove();
+        SetFlags(flags);
+        m->ReplyMessage();
+//        dlog("reply %d\n", current);
+      }
+    }
   }
 }
 
 TBool TimerInterrupt::Run(TAny *aData) {
-  mTask->Signal(1 << 10);
+  mTask->Signal(1 << mTask->mSignalBit);
   gPIC->ack(IRQ_TIMER);
   // maybe wake up new task
   gExecBase.RescheduleIRQ();
@@ -73,4 +132,5 @@ TimerDevice::TimerDevice() : BDevice("timer.device") {
 }
 
 TimerDevice::~TimerDevice() {
+  //
 }

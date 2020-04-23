@@ -33,7 +33,7 @@ protected:
  ********************************************************************************
  *******************************************************************************/
 
-class BMessageList : public BList {
+class BMessageList : public BListPri {
 public:
   BMessageList(const char *aName);
   ~BMessageList();

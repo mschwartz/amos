@@ -1,6 +1,7 @@
-#include <Exec/BTask.h>
-#include <x86/bochs.h>
 #include <Exec/ExecBase.h>
+#include <Exec/BTask.h>
+#include <Exec/Devices/TimerDevice.h>
+#include <x86/bochs.h>
 
 #define DEBUGME
 #undef DEBUGME
@@ -49,6 +50,8 @@ BTask::~BTask() {
 void BTask::RunWrapper(BTask *aTask) {
   BTask *t = gExecBase.GetCurrentTask();
   t->Run();
+  t->Remove();
+  delete t;
 }
 
 static void print_flag(TUint64 flags, TInt bit, const char *m) {
@@ -64,23 +67,23 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   // print flags
   TUint64 f = regs->rflags;
   dprint("   flags: %016x ", f);
-  print_flag(f, 21, "ID");
-  print_flag(f, 20, "VIP");
-  print_flag(f, 19, "VIF");
-  print_flag(f, 18, "AC");
-  print_flag(f, 17, "VM");
-  print_flag(f, 16, "RF");
-  print_flag(f, 14, "NT");
-  dprint("IOPL(%d)", (f>>12) & 3);
-  print_flag(f, 11, "OF");
-  print_flag(f, 10, "DF");
-  dprint("IF(%s)", (f & (1<<9)) ? "STI" : "CLI");
-  print_flag(f, 8, "TF");
-  print_flag(f, 7, "SF");
-  print_flag(f, 6, "ZF");
-  print_flag(f, 4, "AF");
-  print_flag(f, 2, "PF");
-  print_flag(f, 0, "CF");
+  print_flag(f, 21, "ID ");
+  print_flag(f, 20, "VIP ");
+  print_flag(f, 19, "VIF ");
+  print_flag(f, 18, "AC ");
+  print_flag(f, 17, "VM ");
+  print_flag(f, 16, "RF ");
+  print_flag(f, 14, "NT ");
+  dprint("IOPL(%d) ", (f>>12) & 3);
+  print_flag(f, 11, "OF ");
+  print_flag(f, 10, "DF ");
+  dprint("IF(%s) ", (f & (1<<9)) ? "STI" : "CLI");
+  print_flag(f, 8, "TF ");
+  print_flag(f, 7, "SF ");
+  print_flag(f, 6, "ZF ");
+  print_flag(f, 4, "AF ");
+  print_flag(f, 2, "PF ");
+  print_flag(f, 0, "CF ");
   dprint("\n");
 
   dprint("   rax: %016x\n", regs->rax);
@@ -211,6 +214,23 @@ TUint64 BTask::WaitPort(BMessagePort *aMessagePort) {
   return Wait(1 << aMessagePort->SignalNumber());
 }
 
+void BTask::Sleep(TUint64 aSeconds) {
+  BMessagePort *timer = gExecBase.FindMessagePort("timer.device");
+  if (!timer) {
+    dprint("***** can't find timer.device port\n");
+    return;
+  }
+  BMessagePort *replyPort = CreateMessagePort();
+  TimerMessage *m = new TimerMessage(replyPort, ETimerSleep);
+  m->mArg1 = aSeconds;
+  m->SendMessage(timer);
+  WaitPort(replyPort);
+  while (m = (TimerMessage *)replyPort->GetMessage()) {
+    delete m;
+  }
+  FreeMessagePort(replyPort);
+}
+
 void BTask::Disable() {
   gExecBase.Disable();
   if (++mDisableNestCount != 1) {
@@ -241,5 +261,13 @@ void BTask::Permit() {
   if (mForbidNestCount < 0) {
     mForbidNestCount = 0;
   }
+  SetFlags(flags);
+}
+
+void BTaskList::Dump() {
+  TUint64 flags = GetFlags();
+  cli();
+  BListPri::Dump();
+  dprint("\n");
   SetFlags(flags);
 }

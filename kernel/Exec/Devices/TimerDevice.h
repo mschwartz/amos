@@ -15,7 +15,7 @@ public:
 
 public:
   TUint64 GetTicks() { return mTicks; }
-  void IncrementTicks() { mTicks++; }
+  TUint64 IncrementTicks() { return ++mTicks; }
 
 protected:
   volatile TUint64 mTicks; // ticks/interrupts since start
@@ -23,16 +23,22 @@ protected:
 
 
 enum ETimerDeviceCommand {
-  EReadTicks,
+  ETimerReadTicks,
+  ETimerSleep,           // mArgs1 = number of seconds
 };
 
-class TimerMessage : public BMessage {
+class TimerMessage : public BDeviceMessage {
 public:
-  TimerMessage(BMessagePort *aReplyPort, ETimerDeviceCommand aCommand);
-  ~TimerMessage();
+  TimerMessage(BMessagePort *aReplyPort, ETimerDeviceCommand aCommand, TUint64 aArg = 0) : BDeviceMessage(aReplyPort) {
+    mCommand = aCommand;
+    mArg1 = aArg;
+  }
+  ~TimerMessage() {}
+
 public:
   ETimerDeviceCommand mCommand;
-  TInt64 mResult;
+  TUint64 mArg1;
+  TUint64 mResult;
 };
 
 #endif

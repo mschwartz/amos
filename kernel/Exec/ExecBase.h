@@ -72,6 +72,7 @@ protected:
   //
 public:
   void AddTask(BTask *aTask);
+  void DumpTasks();
   BTask *GetCurrentTask() { return mCurrentTask; }
   /**
     * Put task to sleep until any of its sigwait signals are set.
@@ -96,7 +97,8 @@ public:
   void AddMessagePort(BMessagePort& aMessagePort);
   TBool RemoveMessagePort(BMessagePort& aMessagePort);
 
-  BMessagePort *FindPort(const char *aPortName);
+  BMessagePort *FindMessagePort(const char *aPortName);
+
 protected:
   BMessagePortList *mMessagePortList;
 

@@ -589,3 +589,17 @@ pop_disable:
                     popf
                     jmp rax
 
+                    global pic_100hz
+pic_100hz:
+                    push rdx
+                    mov dx, 1193180 / 100
+                    mov al, 110110
+                    out 0x43, al
+
+                    mov ax, dx
+                    out 0x40, al
+                    xchg ah, al
+                    out 0x40, al
+                    pop rdx
+                    ret
+

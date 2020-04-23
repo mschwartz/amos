@@ -32,4 +32,12 @@ public:
   TBool End(BDevice *aCurrent) { return aCurrent == (BDevice *)this; }
 };
 
+class BDeviceMessage : public BMessage {
+  public:
+    BDeviceMessage(BMessagePort *aReplyPort) :  BMessage(aReplyPort) {
+      //
+    }
+    ~BDeviceMessage() {}
+};
+
 #endif

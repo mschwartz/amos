@@ -262,12 +262,10 @@ void KeyboardTask::Run() {
 
   // initialize message port and wait for messages
   mMessagePort = CreateMessagePort("keyboard.device");
-  mMessagePort->Dump();
+  gExecBase.AddMessagePort(*mMessagePort);
 
   while (WaitPort(mMessagePort)) {
     while (KeyboardMessage *m = (KeyboardMessage*) mMessagePort->GetMessage()) {
-//          dlog("Queue key %d, %x\n", m->mResult, m->mResult);
-#if 1
       switch (m->mCommand) {
         case EQueueChar:
           dlog("Queue key %d, %x\n", m->mResult, m->mResult);
@@ -287,7 +285,6 @@ void KeyboardTask::Run() {
           dlog("keyboard.device: Unknown mCommand(%d/%x)\n", m->mCommand, m->mCommand);
           break;
       }
-#endif
       delete m;
     }
   }

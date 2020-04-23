@@ -4,10 +4,11 @@
 #include <Exec/BBase.h>
 #include <Exec/Memory.h>
 #include <stdint.h>
+#include <x86/bochs.h>
 
-const TInt64 LIST_PRI_MIN = INT64_MIN;
+const TInt64 LIST_PRI_MIN =  32767;
 const TInt64 LIST_PRI_DEFAULT = 0;
-const TInt64 LIST_PRI_MAX = INT64_MAX;
+const TInt64 LIST_PRI_MAX = -32768;
 
 /**
  * Two basic types of doubly linked lists:
@@ -60,10 +61,13 @@ public:
 /**
  * An element in a BListPri linked list.
  */
-class BNodePri : public BNode {
+class BNodePri : public BBase {
 public:
   BNodePri(const char *aNodeName, TInt aPri = 0);
   ~BNodePri();
+
+public:
+  const char *NodeName() { return mNodeName ? mNodeName : "No name"; }
 
 public:
   void InsertBeforeNode(BNodePri *aNode) {
@@ -88,7 +92,8 @@ public:
 
 public:
   BNodePri *mNext, *mPrev;
-  TInt pri;
+  char *mNodeName;
+  TInt64 mPri;
 };
 
 /**

@@ -31,7 +31,9 @@ BNode::~BNode() {
 
 /// BNodePri
 
-BNodePri::BNodePri(const char *aNodeName, TInt aPri) : BNode(aNodeName), pri(aPri) {}
+BNodePri::BNodePri(const char *aNodeName, TInt aPri) : BBase(), mPri(aPri) {
+  mNodeName = DuplicateString(aNodeName);
+}
 
 BNodePri::~BNodePri() {}
 
@@ -164,7 +166,7 @@ BListPri::~BListPri() {
 void BListPri::Dump(BNodePri *aStop) {
 #ifdef KERNEL
   for (auto *s = First(); !End(s); s = Next(s)) {
-    dlog("Node %p PRI(%d)\n", s, s->pri);
+    dprint("Node %s mPri(%d)\n", s->mNodeName, s->mPri);
     if (aStop && s == aStop) {
       break;
     }
@@ -216,7 +218,7 @@ void BListPri::RemoveNode(BNodePri *aNode) {
 
 void BListPri::Add(BNodePri &aNode) {
   for (BNodePri *n = First(); !End(n); n = n->mNext) {
-    if (aNode.pri < n->pri) {
+    if (aNode.mPri < n->mPri) {
       aNode.InsertBeforeNode(n);
       return;
     }

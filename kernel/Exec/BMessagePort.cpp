@@ -46,7 +46,9 @@ BMessagePort::~BMessagePort() {
 BMessage *BMessagePort::GetMessage() {
   TUint64 flags = GetFlags();
   cli();
+
   BMessage *m = (BMessage *)mList->RemHead();
+
   SetFlags(flags);
   return m;
 }
@@ -54,8 +56,10 @@ BMessage *BMessagePort::GetMessage() {
 void BMessagePort::ReceiveMessage(BMessage *aMessage) {
   TUint64 flags = GetFlags();
   cli();
+
   mList->AddTail(*aMessage);
   mOwner->Signal(1<<mSignalBit);
+
   SetFlags(flags);
 }
 
@@ -69,7 +73,7 @@ void BMessagePort::Dump() {
  ********************************************************************************
  *******************************************************************************/
 
-BMessageList::BMessageList(const char *aName) : BList(aName) {
+BMessageList::BMessageList(const char *aName) : BListPri(aName) {
   //
 }
 

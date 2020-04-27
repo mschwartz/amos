@@ -2,7 +2,8 @@
 #include <limits.h>
 
 #include <posix/sprintf.h>
-#include <x86/bochs.h>
+#include <Exec/x86/bochs.h>
+#include <Exec/x86/kprint.h>
 
 // small printf
 // https://www.menie.org/georges/embedded/small_printf_source_code.html

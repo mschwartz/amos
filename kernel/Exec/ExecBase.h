@@ -35,9 +35,17 @@ public:
 public:
   void GuruMeditation(const char *aFormat, ...);
 
+#ifdef KGFX
   ScreenVesa *GetScreen() { return mScreen; }
+#else
+  ScreenVGA *GetScreen() { return mScreen; }
+#endif
 protected:
+#ifdef KGFX
   ScreenVesa *mScreen;
+#else
+  ScreenVGA *mScreen;
+#endif
   GDT *mGDT;
   MMU *mMMU;
   IDT *mIDT;

@@ -1,6 +1,6 @@
 #include <stdarg.h>
 #include <posix/string.h>
-#include <posix/itoa.h>
+#include <posix/sprintf.h>
 #include <Devices/Screen.h>
 #include <Exec/ExecBase.h>
 
@@ -18,59 +18,15 @@ void kputs(const char *s) {
 }
 
 void kprint(const char *fmt, ...) {
-  va_list ap;
-  char *s, c, t, tt;
-  long d;
-  char buf[20];
+  TUint64 flags = GetFlags();
+  cli();
 
-  va_start(ap, fmt);
-  if (!fmt) {
-    gExecBase.puts("NULL FORMAT");
-    return;
-  }
+  char buf[512];
+  va_list args;
+  va_start(args, fmt);
 
-  while (true) {
-    t = *fmt++;
-    switch (t) {
-      case '\0':
-        return;
-      case '\n':
-        gExecBase.newline();
-        break;
-      case '%':
-        tt = *fmt++;
-        switch (tt) {
-          case '\0':
-            break;
-          case 's':
-            s = va_arg(ap, char *);
-            gExecBase.puts(s);
-            break;
-          case 'd':
-          case 'u':
-            d = va_arg(ap, long);
-            ltoa(d, buf, 10);
-            gExecBase.puts(buf);
-            break;
-          case 'x':
-          case 'X':
-            d = va_arg(ap, long);
-            ltoa(d, buf, 16);
-            gExecBase.puts(buf);
-            break;
-          case 'c':
-            c = (char)va_arg(ap, int);
-            gExecBase.putc(c);
-            break;
-          default:
-            gExecBase.putc('%');
-            gExecBase.putc(tt);
-            break;
-        }
-        break;
-      default:
-        gExecBase.putc(t);
-        break;
-    }
-  }
+  vsprintf(buf, fmt, args);
+  dputs(buf);
+  va_end(args);
+  SetFlags(flags);
 }

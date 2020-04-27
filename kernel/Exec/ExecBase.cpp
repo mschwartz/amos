@@ -1,5 +1,6 @@
 #include <Exec/ExecBase.h>
 #include <x86/bochs.h>
+#include <x86/kprint.h>
 #include <stdint.h>
 
 #include <Devices/KeyboardDevice.h>
@@ -34,13 +35,16 @@ public:
 
 class TestTask : public BTask {
 public:
-  TestTask() : BTask("Test Task") {}
+  TestTask() : BTask("Test Task") {
+    kprint("Construct TestTask\n");
+  }
 
 public:
   void Run() {
     dlog("***************************** TEST TASK RUNNING\n");
-    Sleep(2);
-
+    kprint("***************************** TEST TASK RUNNING\n");
+    Sleep(1);
+#ifdef KGFX
     ScreenVesa &screen = *gExecBase.GetScreen();
     BBitmap32 &bm = *screen.GetBitmap();
     bm.Dump();
@@ -52,21 +56,19 @@ public:
 
     bm.SetFont(&font);
     font.SetColors(fg, bg);
-    while (true) {
-      bm.Clear(0x0000ff);
-      for (TInt i = 0; i < 50; i++) {
-        dprint("Draw String Hello World at 100, %d\n", 100 + i*12);
-        font.Write(100, i*12 + 100, "Hello world!");
-        Sleep(1);
-      }
-    }
 
+    RtcDevice *rd = (RtcDevice *)gExecBase.FindDevice("rtc.device");
+//    if (!rd) {
+//      dprint("Can't find rct.device\n");
+//      halt();
+//    }
+    bm.Clear(0x0000ff);
 #if 0
       TRGB color;
 
       while (ETrue) {
         dlog("START!\n");
-        for (TInt n=0; n<1000; n++) {
+        for (TInt n=0; n<100000; n++) {
           if ((n % 100) == 0) {
             dlog("n = %d\n", n);
           }
@@ -82,7 +84,37 @@ public:
         dlog("END!\n");
         Sleep(1);
       }
+#else
+    while (true) {
+      char buf[128];
+      sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d\n", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
+      dlog("buf: %s\n", buf);
+      font.Write(100, 100, buf);
+      Sleep(1);
+    }
 #endif
+#else
+    RtcDevice *rd = ENull;
+    while (rd == ENull) {
+      rd = (RtcDevice *)gExecBase.FindDevice("rtc.device");
+      if (rd) {
+        break;
+      }
+      Sleep(1);
+    }
+    ScreenVGA &screen = *gExecBase.GetScreen();
+    screen.MoveTo(20,20);
+    kprint("Test Task\n");
+    while (true) {
+      char buf[128];
+      sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d\n", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
+      screen.MoveTo(10,10);
+      kprint(buf);
+      Sleep(1);
+    }
+
+#endif
+
     //      TInt64 time = 0;
     //      while (1) {
     //        Sleep(1);
@@ -93,8 +125,13 @@ public:
 
 // ExecBase constructor
 ExecBase::ExecBase() {
-  in_bochs = *((TUint8 *)0x7c10);
-  //  dlog("bochs %x\n", in_bochs);
+  //  Screen s;
+#ifdef KGFX
+  mScreen = new ScreenVesa();
+#else
+  mScreen = new ScreenVGA();
+#endif
+  dlog("  initialized screen\n");
 
   SeedRandom(SystemTicks());
   dlog("ExecBase constructor called\n");
@@ -102,6 +139,8 @@ ExecBase::ExecBase() {
   // set up paging
   mMMU = new MMU;
   dlog("  initialized MMU\n");
+
+  mMessagePortList = new MessagePortList("ExecBase MessagePort List");
 
   extern void *init_start, *init_end,
     *text_start, *text_end,
@@ -117,12 +156,6 @@ ExecBase::ExecBase() {
   dlog("          bss: %016x - %016x\n", &bss_start, &bss_end);
   dlog("   kernel_end: %016x\n", &kernel_end);
   dlog("system memory: %d (%d pages)\n", mMMU->total_memory(), mMMU->total_pages());
-
-  mMessagePortList = new MessagePortList("ExecBase MessagePort List");
-
-  //  Screen s;
-  mScreen = new ScreenVesa();
-  dlog("  initialized screen\n");
 
   mGDT = new GDT;
   dlog("  initialized GDT\n");
@@ -142,9 +175,9 @@ ExecBase::ExecBase() {
   // set up 8259 PIC
   gPIC = new PIC;
   mDisableNestCount = 0;
-  sti();
+//  sti();
   Disable();
-  dlog("  initialized 8259 PIC\n");
+  kprint("  initialized 8259 PIC\n");
   Enable();
 
   // initialize devices
@@ -159,6 +192,7 @@ ExecBase::ExecBase() {
 
   TestTask *test_task = new TestTask();
   gExecBase.AddTask(test_task);
+  dlog("  initialized Test Task \n");
 }
 
 ExecBase::~ExecBase() {

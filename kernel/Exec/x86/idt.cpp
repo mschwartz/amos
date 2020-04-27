@@ -1,9 +1,9 @@
-#include <x86/idt.h>
+#include <Exec/x86/idt.h>
 #include <posix/string.h>
-#include <x86/kprint.h>
-#include <x86/bochs.h>
-#include <x86/tasking.h>
-#include <x86/kernel_memory.h>
+#include <Exec/x86/kprint.h>
+#include <Exec/x86/bochs.h>
+#include <Exec/x86/tasking.h>
+#include <Exec/x86/kernel_memory.h>
 
 extern "C" void set_vector(void *idt_vector, void (*offset)(), TUint16 selector, uint8_t flags);
 extern "C" void load_idtr(void *ptr);

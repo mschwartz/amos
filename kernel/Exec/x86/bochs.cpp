@@ -1,6 +1,6 @@
 #include <stdarg.h>
-#include <x86/bochs.h>
-#include <x86/kprint.h>
+#include <Exec/x86/bochs.h>
+#include <Exec/x86/kprint.h>
 #include <posix/itoa.h>
 #include <posix/sprintf.h>
 #include <Exec/ExecBase.h>
@@ -12,21 +12,30 @@ extern "C" TUint64 GetFlags();
 extern "C" void SetFlags(TUint64 aFlags);
 
 extern "C" void eputs(const char *s);
+
 void dputs(const char *s) {
   TUint64 flags = GetFlags();
   cli();
-  eputs(s);
+  if (in_bochs) {
+    while (*s) { dputc(*s++); }
+  }
+  else {
+    while (*s) { kputc(*s++); }
+  }
   SetFlags(flags);
 }
 
 void dlog(const char *fmt, ...) {
+  if (!in_bochs) {
+    return;
+  }
   TUint64 flags = GetFlags();
   cli();
 
-  char buf[512];
   va_list args;
   va_start(args, fmt);
 
+  char buf[512];
   dprint("%020d ", gExecBase.SystemTicks());
   vsprintf(buf, fmt, args);
   dputs(buf);
@@ -43,7 +52,7 @@ void dprintf(const char *fmt, ...) {
   va_start(args, fmt);
 
   vsprintf(buf, fmt, args);
-  dputs(buf);
+  kputs(buf);
   va_end(args);
   SetFlags(flags);
 }

@@ -18,6 +18,9 @@ static void call_global_constructors(void) {
 }
 
 extern "C" int kernel_main(TUint64 ax) {
+  in_bochs = *((TUint8 *)0x7c10);
+  //  dlog("bochs %x\n", in_bochs);
+
   call_global_constructors();
 
   gExecBase.Kickstart();  // does not return

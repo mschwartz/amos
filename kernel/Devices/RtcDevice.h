@@ -8,6 +8,10 @@ public:
   RtcDevice();
   ~RtcDevice();
 public:
+  void Tick();
+public:
+  volatile TUint16 mMonth, mDay, mYear;
+  volatile TUint16 mHours, mMinutes, mSeconds, mFract;
   volatile TUint64 mMillis;
 };
 

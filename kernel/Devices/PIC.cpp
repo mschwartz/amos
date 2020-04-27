@@ -1,7 +1,7 @@
-#include <x86/idt.h>
-#include <x86/cpu.h>
-#include <x86/kprint.h>
-#include <x86/bochs.h>
+#include <Exec/x86/idt.h>
+#include <Exec/x86/cpu.h>
+#include <Exec/x86/kprint.h>
+#include <Exec/x86/bochs.h>
 #include <Devices/PIC.h>
 
 // 8259 PIC Interrupt Controller
@@ -34,6 +34,8 @@ PIC::PIC() {
   ob(PIC1_DATA, 0);
   ob(PIC2_DATA, 0);
 
+  kprint("Enabled PIC\n");
+//  halt();
   // PIC initialized, all external interrupts disabled
   // enable cascade, keyboard
   enable_interrupt(IRQ_SLAVE_PIC);

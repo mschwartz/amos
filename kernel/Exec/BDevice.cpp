@@ -24,8 +24,7 @@ BDeviceList::~BDeviceList() {
 }
 
 BDevice *BDeviceList::FindDevice(const char *aName) {
-  dprintf("\nFind device %s\n", aName);
-  return ENull;
+  return (BDevice *)Find(aName);
 }
 
 void BDeviceList::AddDevice(BDevice& aDevice) {

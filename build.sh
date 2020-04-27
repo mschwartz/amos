@@ -46,6 +46,22 @@ cd ..
 
 echo ""
 echo ""
+echo "Generating console font"
+
+cd kernel/Graphics/font/console
+FFILE=$KFONT
+if [[ ! -e $FFILE ]]; then
+	gzip -d $FFILE.gz
+	$OBJCOPY -O elf64-x86-64 -B i386 -I binary $FFILE ../../kfont.o
+	gzip  $FFILE
+else
+	$OBJCOPY -O elf64-x86-64 -B i386 -I binary $FFILE ../../kfont.o
+fi
+
+cd ../../../..
+
+echo ""
+echo ""
 echo "BUILDING KERNEL"
 
 cd kernel

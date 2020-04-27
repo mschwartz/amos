@@ -2,13 +2,13 @@
 #include <Graphics/font/BVectorFont.h>
 #include <Graphics/bitmap/BBitmap32.h>
 
-#include "VectorFonts/Font.h"
+#include "vectorfonts/Font.h"
 
 #include <posix/string.h>
 #include <stdarg.h>
 #include <math.h>
 
-BVectorFont::BVectorFont(BBitmap32 *aBitmap, const TInt16 **aCharset) : mBitmap(aBitmap) {
+BVectorFont::BVectorFont(BBitmap32 *aBitmap, const TInt16 **aCharset) : BFont("Vector Font"), mBitmap(aBitmap) {
   mCharset = aCharset;
   if (mCharset == ENull) {
     mCharset = gVectorCharset;
@@ -23,17 +23,17 @@ BVectorFont32::BVectorFont32(BBitmap32 *aBitmap, const TInt16 **aCharset) : BVec
 BVectorFont32::~BVectorFont32() {
 }
 
-void BVectorFont::Write(TInt aX, TInt aY, TInt16 aChar) {
+TInt BVectorFont::Write(TInt aX, TInt aY, TInt16 aChar) {
 }
 
-void BVectorFont::Write(TPoint &aPoint, TInt16 aChar) {
+TInt BVectorFont::Write(TPoint &aPoint, TInt16 aChar) {
   Write(aPoint.x, aPoint.y, aChar);
 }
 
-void BVectorFont::Write(TInt aX, TInt aY, const char *aString) {
+TInt BVectorFont::Write(TInt aX, TInt aY, const char *aString) {
 }
 
-void BVectorFont::Write(TPoint &aPoint, const char *aString) {
+TInt BVectorFont::Write(TPoint &aPoint, const char *aString) {
   Write(aPoint.x, aPoint.y, aString);
 }
 

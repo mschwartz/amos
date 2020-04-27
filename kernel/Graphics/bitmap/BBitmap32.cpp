@@ -1,4 +1,5 @@
 #include <Graphics/bitmap/BBitmap32.h>
+#include <Graphics/font/BConsoleFont.h>
 
 //BBitmap *BBitmap::CreateBitmap(TInt aWidth, TInt aHeight, TInt aDepth, TInt aPitch, TAny *aMemory) {
 //  if (aDepth == 32 || aDepth == 24) {
@@ -7,14 +8,23 @@
 //  return ENull;
 //}
 
-BBitmap32::BBitmap32(TInt aWidth, TInt aHeight, TInt aPitch, TAny *aMemory)
-    : BBitmap(aWidth, aHeight, 32, aPitch, aMemory) {
+BBitmap32::BBitmap32(TInt aWidth, TInt aHeight, TInt aPitch, TAny *aMemory) {
+  mWidth = aWidth;
+  mHeight = aHeight;
+  mDepth = 32;
+  mPitch = aPitch;
+
+  mFont = ENull;
   if (aMemory) {
     mPixels = (TUint32 *)aMemory;
+    mFreePixels = EFalse;
   }
   else {
     mPixels = (TUint32 *)AllocMem(aWidth * aHeight);
+    mFreePixels = ETrue;
   }
+  mPitch /= 4;
+  mRect.Set(0, 0, mWidth - 1, mHeight - 1);
 }
 
 BBitmap32::~BBitmap32() {
@@ -54,25 +64,25 @@ void BBitmap32::CopyPixels(BBitmap32 *aOther) {
 
 void BBitmap32::FastLineHorizontal(TUint32 aColor, TInt aX, TInt aY, TUint aW) {
   TInt xmax = aX + aW - 1;
-//  dlog("flh %d,%d %d/%d\n", aX, aY, aW, xmax);
+  //  dlog("flh %d,%d %d/%d\n", aX, aY, aW, xmax);
   for (TInt x = aX; x < xmax; x++) {
     if (mRect.PointInRect(x, aY)) {
-//      dlog("flh x=%d/%d\n", x, xmax);
+      //      dlog("flh x=%d/%d\n", x, xmax);
       PlotPixel(aColor, x, aY);
     }
-//    dlog("XXX\n");
+    //    dlog("XXX\n");
   }
 }
 
 void BBitmap32::FastLineVertical(TUint32 aColor, TInt aX, TInt aY, TUint aH) {
   TInt ymax = aY + aH - 1;
-//  dlog("flv %d,%d %d/%d\n", aX, aY, aH, ymax);
+  //  dlog("flv %d,%d %d/%d\n", aX, aY, aH, ymax);
   for (volatile TInt y = aY; y < ymax; y++) {
     if (mRect.PointInRect(aX, y)) {
-//      dlog("flv y=%d/%d\n", y, ymax);
+      //      dlog("flv y=%d/%d\n", y, ymax);
       PlotPixel(aColor, aX, y);
     }
-//    dlog("XXX\n");
+    //    dlog("XXX\n");
   }
 }
 
@@ -125,6 +135,14 @@ void BBitmap32::FillRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2)
   }
 }
 
+void BBitmap32::DrawText(TInt16 aX, TInt16 aY, const char *aString) {
+  if (!mFont) {
+    return;
+  }
+  mFont->SetColors(mForegroundColor, mBackgroundColor);
+  mFont->Write(aX, aY, aString);
+}
+
 #if 0
 void BBitmap32::DrawCircle(TUint32 aColor, TInt aX, TInt aY, TUint aRadius) {
 }
@@ -132,4 +150,3 @@ void BBitmap32::DrawCircle(TUint32 aColor, TInt aX, TInt aY, TUint aRadius) {
 void BBitmap32::FillCircle(TUint32 aColor, TInt aX, TInt aY, TUint aRadius) {
 }
 #endif
-

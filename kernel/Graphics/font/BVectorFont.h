@@ -11,10 +11,10 @@ public:
   virtual ~BVectorFont() = 0;
 
 public:
-  void Write(TInt aX, TInt aY, TInt16 aChar);
-  void Write(TPoint &aPoint, TInt16 aChar);
-  void Write(TInt aX, TInt aY, const char *aString);
-  void Write(TPoint &aPoint, const char *aString);
+  TInt Write(TInt aX, TInt aY, TInt16 aChar);
+  TInt Write(TPoint &aPoint, TInt16 aChar);
+  TInt Write(TInt aX, TInt aY, const char *aString);
+  TInt Write(TPoint &aPoint, const char *aString);
 //  virtual TInt PrintStringRotated(TInt x, TInt y, TFloat angle, const char *aString) = 0;
 protected:
   BBitmap32 *mBitmap;

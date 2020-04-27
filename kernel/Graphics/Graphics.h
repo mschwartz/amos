@@ -10,6 +10,8 @@
 #include <Graphics/TNumber.h>
 
 #include <Graphics/BBitmap.h>
+#include <Graphics/bitmap/BBitmap32.h>
+
 #include <Graphics/BFont.h>
 
 #endif

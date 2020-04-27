@@ -9,6 +9,7 @@
 #include <posix/sprintf.h>
 #include <Exec/Random.h>
 
+#include <Graphics/font/BConsoleFont.h>
 
 ExecBase gExecBase;
 
@@ -32,20 +33,35 @@ public:
 };
 
 class TestTask : public BTask {
-  public:
-    TestTask() : BTask("Test Task") {}
+public:
+  TestTask() : BTask("Test Task") {}
 
-  public:
-    void Run() {
-      dlog("***************************** TEST TASK RUNNING\n");
-      Sleep(2);
+public:
+  void Run() {
+    dlog("***************************** TEST TASK RUNNING\n");
+    Sleep(2);
 
-      ScreenVesa& screen = *gExecBase.GetScreen();
-      BBitmap32& bm = *screen.GetBitmap();
+    ScreenVesa &screen = *gExecBase.GetScreen();
+    BBitmap32 &bm = *screen.GetBitmap();
+    bm.Dump();
+    TRect rect, screenRect;
+    bm.GetRect(screenRect);
 
-      TRect rect, screenRect;
-      bm.GetRect(screenRect);
+    TRGB fg(255, 255, 255), bg(0, 0, 0);
+    BConsoleFont32 font(&bm);
 
+    bm.SetFont(&font);
+    font.SetColors(fg, bg);
+    while (true) {
+      bm.Clear(0x0000ff);
+      for (TInt i = 0; i < 50; i++) {
+        dprint("Draw String Hello World at 100, %d\n", 100 + i*12);
+        font.Write(100, i*12 + 100, "Hello world!");
+        Sleep(1);
+      }
+    }
+
+#if 0
       TRGB color;
 
       while (ETrue) {
@@ -66,18 +82,19 @@ class TestTask : public BTask {
         dlog("END!\n");
         Sleep(1);
       }
-//      TInt64 time = 0;
-//      while (1) {
-//        Sleep(1);
-//        dlog("TestTask: Time %d\n", ++time);
-//      }
-    }
+#endif
+    //      TInt64 time = 0;
+    //      while (1) {
+    //        Sleep(1);
+    //        dlog("TestTask: Time %d\n", ++time);
+    //      }
+  }
 };
 
 // ExecBase constructor
 ExecBase::ExecBase() {
   in_bochs = *((TUint8 *)0x7c10);
-//  dlog("bochs %x\n", in_bochs);
+  //  dlog("bochs %x\n", in_bochs);
 
   SeedRandom(SystemTicks());
   dlog("ExecBase constructor called\n");
@@ -130,7 +147,6 @@ ExecBase::ExecBase() {
   dlog("  initialized 8259 PIC\n");
   Enable();
 
-
   // initialize devices
   AddDevice(mTimer = new TimerDevice());
   dlog("  initialized timer\n");
@@ -151,7 +167,7 @@ ExecBase::~ExecBase() {
 
 TUint64 ExecBase::SystemTicks() {
   return mRtc->mMillis;
-//  return mTimer->GetTicks();
+  //  return mTimer->GetTicks();
 }
 
 void ExecBase::Disable() {
@@ -188,11 +204,10 @@ void ExecBase::AddTask(BTask *aTask) {
   cli();
 
   dlog("Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
-//  aTask->Dump();
+  //  aTask->Dump();
   mActiveTasks.Add(*aTask);
-//  mActiveTasks.Dump();
-//  dlog("x\n");
-      
+  //  mActiveTasks.Dump();
+  //  dlog("x\n");
 
   SetFlags(flags);
 }

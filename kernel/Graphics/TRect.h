@@ -106,11 +106,11 @@ public:
   void Height(TInt32 aHeight) { y2 = y1 + aHeight - 1; }
 
   void Dump(const char *aArgs = ENull) {
-//    if (aArgs) {
-//      printf("%s TRect x1:%i,y1:%i x2:%i,y2:%i\n", aArgs, x1, y1, x2, y2);
-//    } else {
-//      printf("TRect x1:%i,y1:%i x2:%i,y2:%i\n", x1, y1, x2, y2);
-//    }
+    if (aArgs) {
+      dprint("%s TRect x1:%d,y1:%d x2:%d,y2:%d\n", aArgs, x1, y1, x2, y2);
+    } else {
+      dprint("TRect x1:%d,y1:%d x2:%d,y2:%d\n", x1, y1, x2, y2);
+    }
   }
 
 public:

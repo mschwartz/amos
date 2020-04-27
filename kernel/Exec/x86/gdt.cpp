@@ -1,6 +1,6 @@
-#include <gdt.h>
-#include <kprint.h>
-#include <bochs.h>
+#include <Exec/x86/gdt.h>
+#include <Exec/x86/kprint.h>
+#include <Exec/x86/bochs.h>
 
 typedef struct _GDT_t_ {
   TUint16 segm_limit0;    /* segment limit, bits: 15:00	(00-15) */

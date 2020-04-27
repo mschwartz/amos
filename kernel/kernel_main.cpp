@@ -3,7 +3,7 @@
  */
 
 #include <Exec/Types.h>
-#include <x86/bochs.h>
+#include <Exec/x86/bochs.h>
 #include <Exec/ExecBase.h>
 
 typedef void (*func_ptr)(void);

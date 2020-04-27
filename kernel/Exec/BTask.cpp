@@ -1,6 +1,6 @@
 #include <Exec/ExecBase.h>
 #include <Exec/BTask.h>
-#include <Exec/Devices/TimerDevice.h>
+#include <Devices/TimerDevice.h>
 #include <x86/bochs.h>
 
 #define DEBUGME

@@ -61,6 +61,21 @@ void operator delete(void *aMemory, unsigned long aSize) {
 #endif
 }
 
+void operator delete(void *aMemory) {
+#ifdef KERNEL
+  FreeMem(aMemory);
+#else
+  free(aMemory);
+#endif
+}
+
+void operator delete[](void *aMemory) {
+#ifdef KERNEL
+  FreeMem(aMemory);
+#else
+  free(aMemory);
+#endif
+}
 TInt StringLength(const char *aString) {
   TInt len;
   for (len = 0; aString[len]; len++)

@@ -7,6 +7,7 @@
 #include <Devices/RtcDevice.h>
 
 #include <posix/sprintf.h>
+#include <Exec/Random.h>
 
 
 ExecBase gExecBase;
@@ -37,43 +38,48 @@ class TestTask : public BTask {
   public:
     void Run() {
       dlog("***************************** TEST TASK RUNNING\n");
-      TInt64 time = 0;
-      while (1) {
+      Sleep(2);
+
+      ScreenVesa& screen = *gExecBase.GetScreen();
+      BBitmap32& bm = *screen.GetBitmap();
+
+      TRect rect, screenRect;
+      bm.GetRect(screenRect);
+
+      TRGB color;
+
+      while (ETrue) {
+        dlog("START!\n");
+        for (TInt n=0; n<1000; n++) {
+          if ((n % 100) == 0) {
+            dlog("n = %d\n", n);
+          }
+          rect.x1 = Random(screenRect.x1, screenRect.x2);
+          rect.x2 = Random(rect.x1, screenRect.x2);
+          rect.y1 = Random(screenRect.y1, screenRect.y2);
+          rect.y2 = Random(rect.y1, screenRect.y2);
+          TRGB color(Random(0, 255), Random(0, 255), Random(0, 255));
+//          dlog("Fill %d,%d,%d,%d %x\n", rect.x1, rect.y1, rect.x2, rect.y2, color.rgb888());
+          bm.FillRect(color, rect);
+//          bm.DrawRect(color, rect);
+        }
+        dlog("END!\n");
         Sleep(1);
-        dlog("TestTask: Time %d\n", ++time);
       }
+//      TInt64 time = 0;
+//      while (1) {
+//        Sleep(1);
+//        dlog("TestTask: Time %d\n", ++time);
+//      }
     }
 };
-
-typedef struct {
-  TUint16 mMode;
-  TUint16 mWidth;
-  TUint16 mHeight;
-  TUint16 mPitch;
-  TUint16 mBitsPerPixel;
-  TUint16 mPad;
-  void Dump() {
-    dlog("Mode %x %d x %d %d bpp\n", mMode, mWidth, mHeight, mBitsPerPixel);
-  }
-} PACKED TModeInfo;
-
-typedef struct {
-  TInt16 mCount;          // number of modes found
-  TModeInfo mDisplayMode; // chosen display mode
-  TModeInfo mModes[];
-  void Dump() {
-    dlog("Found %d %x modes\n", mCount, mCount);
-    for (TInt16 i = 0; i < mCount; i++) {
-      mModes[i].Dump();
-    }
-  }
-} PACKED TModes;
 
 // ExecBase constructor
 ExecBase::ExecBase() {
   in_bochs = *((TUint8 *)0x7c10);
 //  dlog("bochs %x\n", in_bochs);
 
+  SeedRandom(SystemTicks());
   dlog("ExecBase constructor called\n");
 
   // set up paging
@@ -95,14 +101,10 @@ ExecBase::ExecBase() {
   dlog("   kernel_end: %016x\n", &kernel_end);
   dlog("system memory: %d (%d pages)\n", mMMU->total_memory(), mMMU->total_pages());
 
-  TModes *modes = (TModes *)0x5000;
-  dlog("\n\nDisplay Mode:\n");
-  modes->mDisplayMode.Dump();
-//  gDeviceList.FindDevice("FOO>DEVICE");
   mMessagePortList = new MessagePortList("ExecBase MessagePort List");
 
   //  Screen s;
-  mScreen = new Screen;
+  mScreen = new ScreenVesa();
   dlog("  initialized screen\n");
 
   mGDT = new GDT;
@@ -170,15 +172,15 @@ void ExecBase::AddInterruptHandler(TUint8 aIndex, TInterruptHandler *aHandler, T
 }
 
 void ExecBase::putc(char c) {
-  mScreen->putc(c);
+  mScreen->WriteChar(c);
 }
 
 void ExecBase::puts(const char *s) {
-  mScreen->puts(s);
+  mScreen->WriteString(s);
 }
 
 void ExecBase::newline() {
-  mScreen->newline();
+  mScreen->NewLine();
 }
 
 void ExecBase::AddTask(BTask *aTask) {

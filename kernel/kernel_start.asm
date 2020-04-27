@@ -1,6 +1,10 @@
 ;                    org 0x9000
                     [bits 64]
 
+                    %macro BOCHS 0
+                    xchg bx,bx
+                    %endmacro
+
 WHITE_ON_BLACK      equ 0x0f
 WHITE_ON_GREEN      equ 0x1e
 

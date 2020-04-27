@@ -37,7 +37,7 @@ echo ""
 echo ""
 echo "BUILDING BOOT SECTOR"
 cd $TOP_DIR/boot
-nasm -f bin -l boot.lst -o boot.img boot.asm
+nasm -f bin -l boot.lst $KGFX -o boot.img boot.asm
 ls -l boot.img
 cd ..
 
@@ -63,12 +63,12 @@ echo "  BUILDING EXEC"
 cd Exec
 make
 cd ..
-echo ""
-echo ""
-echo "  BUILDING X86"
-cd Exec/x86 
-make
-cd ../..
+#echo ""
+#echo ""
+#echo "  BUILDING X86"
+#cd Exec/x86 
+#make
+#cd ../..
 echo ""
 echo ""
 echo "  ============== BUILDING POSIX"

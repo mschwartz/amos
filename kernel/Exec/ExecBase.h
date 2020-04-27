@@ -35,8 +35,9 @@ public:
 public:
   void GuruMeditation(const char *aFormat, ...);
 
+  ScreenVesa *GetScreen() { return mScreen; }
 protected:
-  Screen *mScreen;
+  ScreenVesa *mScreen;
   GDT *mGDT;
   MMU *mMMU;
   IDT *mIDT;

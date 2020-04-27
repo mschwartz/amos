@@ -514,15 +514,15 @@ eputs               pushf
                     global ack_irq8
 ack_irq8:
                     push rax
-                    ; ack PIC
-                    mov al, 0x20
-                    out 0xa0, al
-                    out 0x20, al
-
                     ; ack RTC
                     mov al, 0x0c
                     out 0x70, al
                     in al, 0x71
+
+                    ; ack PIC
+                    mov al, 0x20
+                    out 0xa0, al
+                    out 0x20, al
 
                     pop rax
                     ret

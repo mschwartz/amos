@@ -16,13 +16,11 @@ export OBJCOPY=objcopy
 
 # use this one to use graphics mode
 export KGFX='-DKGFX'
-export KFONTNAME="cp866-8x8"
-export KFONT="$KFONTNAME.psf"
 # use this one to use text mode
 #export KGFX=''
-#export KFONTNAME="nofont"
 
-
+export KFONTNAME="cp866-8x16"
+export KFONT="$KFONTNAME.psf"
 
 export INCLUDE_PATH="\
 	-I$TOP_DIR/kernel/include/ \

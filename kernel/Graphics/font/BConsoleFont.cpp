@@ -29,8 +29,8 @@ typedef struct {
 //  return ENull;
 //}
 
-extern "C" TConsoleFontHeader _binary_cp866_8x8_psf_start;
-extern "C" TUint8 _binary_cp866_8x8_psf_end[];
+extern "C" TConsoleFontHeader _binary_cp866_8x16_psf_start;
+extern "C" TUint8 _binary_cp866_8x16_psf_end[];
 
 BConsoleFont::BConsoleFont(BBitmap *aBitmap, const TConsoleFont *aFont) : BFont("Console Font") {
   mBitmap = aBitmap;
@@ -38,8 +38,8 @@ BConsoleFont::BConsoleFont(BBitmap *aBitmap, const TConsoleFont *aFont) : BFont(
   mBitmap->GetRect(r);
   r.Dump();
   if (aFont == ENull) {
-    mFont.mHeader = &_binary_cp866_8x8_psf_start;
-    mFont.mEnd = &_binary_cp866_8x8_psf_end[0];
+    mFont.mHeader = &_binary_cp866_8x16_psf_start;
+    mFont.mEnd = &_binary_cp866_8x16_psf_end[0];
   }
   else {
     // copy
@@ -51,8 +51,8 @@ BConsoleFont32::BConsoleFont32(BBitmap32 *aBitmap, const TConsoleFont *aFont) {
   dprint("BConsoleFont32 %x\n", this);
   mBitmap32 = aBitmap;
   if (aFont == ENull) {
-    mFont.mHeader = &_binary_cp866_8x8_psf_start;
-    mFont.mEnd = &_binary_cp866_8x8_psf_end[0];
+    mFont.mHeader = &_binary_cp866_8x16_psf_start;
+    mFont.mEnd = &_binary_cp866_8x16_psf_end[0];
   }
   else {
     // copy

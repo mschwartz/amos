@@ -12,8 +12,8 @@ extern TUint8 in_bochs;
 
 //outputs a character to the debug console
 inline void dputc(char c) {
-    outb((int)c, 0xe9);
-    return;
+//    outb((int)c, 0xe9);
+//    return;
   if (in_bochs) {
     outb((int)c, 0xe9);
   }

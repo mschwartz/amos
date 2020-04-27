@@ -1,0 +1,6 @@
+clang
+%h -x c++-header
+-I./kernel
+-I./kernel/posix
+-I.
+-I/usr/include

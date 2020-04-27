@@ -18,7 +18,9 @@ extern void FreeMem(TAny *aMemory);
 extern void *operator new(unsigned long aSize);
 extern void *operator new[](unsigned long aSize);
 extern void operator delete(void *aMemory, unsigned long aSize);
+extern void operator delete(void *aMemory);
 extern void operator delete[](void *aMemory, unsigned long aSize);
+extern void operator delete[](void *aMemory);
 
 TInt StringLength(const char *aString);
 char *DuplicateString(const char *aString, EMemoryFlags aMemoryType = MEMF_PUBLIC);

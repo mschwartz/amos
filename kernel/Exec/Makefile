@@ -1,11 +1,18 @@
-#GFX=	Graphics/TRect.o Font.o Graphics/BBitmap.o
-GFX=	Graphics/TRect.o Graphics/BBitmap.o
+G=	../Graphics
+D=	../Devices
 
-DEVICES= Devices/KeyboardDevice.o Devices/PIC.o Devices/Screen.o Devices/TimerDevice.o Devices/RtcDevice.o
+#GFX=	$(G)/TRect.o Font.o $(G)/BBitmap.o
+GFX=	$(G)/TRect.o $(G)/BBitmap.o $(G)/bitmap/BBitmap32.o $(D)/screen/ScreenVGA.o $(D)/screen/ScreenVesa.o
+
+FONTS=  $(G)/BFont.o $(G)/font/BVectorFont.o $(G)/font/BConsoleFont.o
+
+DEVICES= $(D)/KeyboardDevice.o $(D)/PIC.o $(D)/Screen.o $(D)/TimerDevice.o $(D)/RtcDevice.o
+
+X86=	x86/bochs.o x86/gdt.o x86/idt.o x86/kernel_isr.o x86/kprint.o x86/mmu.o
 
 TYPES=	Types.o Types/TBCD.o 
 
-OBJ= 	 $(TYPES) Memory.o BBase.o Random.o BList.o MessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o $(DEVICES) $(GFX)
+OBJ= 	 $(TYPES) $(X86) Memory.o BBase.o Random.o BList.o MessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o $(DEVICES) $(GFX) $(FONTS)
 
 LIB=	libexec.a
 
@@ -23,7 +30,7 @@ $(LIB):	$(OBJ)
 	$(AR) rcs $(LIB) $(OBJ)
 	$(RANLIB) $(LIB)
 
-kernel_isr.o: kernel_isr.asm
+x86/kernel_isr.o: x86/kernel_isr.asm
 	@echo ""
 	@echo "*** NASM"
 	nasm -f elf64 -o $*.o $*.asm
@@ -31,4 +38,4 @@ kernel_isr.o: kernel_isr.asm
 	@echo ""
 
 clean:
-	rm -rf *.o *.a Devies/*.o Devices/*.a Graphics/*.o Graphics/*.a
+	rm -rf *.o *.a $(D)/*.o $(D)/*.a $(G)/*.o $(G)/*.a

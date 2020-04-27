@@ -20,6 +20,10 @@
                     xchg bx,bx
                     %endmacro
 
+                    %macro bochs 0
+                    xchg bx,bx
+                    %endmacro
+
                     %macro debugger 0
                     xchg bx,bx
                     %endmacro
@@ -211,24 +215,48 @@ mode_win_size       equ mode_win_granularity + 2
 mode_wina_segment   equ mode_win_size + 2
 mode_winb_segment   equ mode_wina_segment + 2
 mode_win_func_ptr   equ mode_winb_segment + 2
-mode_bytes_per_line equ mode_win_func_ptr + 4
-mode_width          equ mode_bytes_per_line + 2
+mode_pitch          equ mode_win_func_ptr + 4
+mode_width          equ mode_pitch + 2
 mode_height         equ mode_width + 2
 mode_x_charsize     equ mode_height + 2
 mode_y_charsize     equ mode_x_charsize + 1
 mode_num_planes     equ mode_y_charsize + 1
-mode_bitsperpixel   equ mode_num_planes + 1
+mode_bpp            equ mode_num_planes + 1
+mode_banks          equ mode_bpp + 1
+mode_memory_model   equ mode_banks + 1
+mode_bank_size      equ mode_memory_model + 1
+mode_image_pages    equ mode_bank_size + 1
+mode_reserved0      equ mode_image_pages + 1
+mode_red_mask       equ mode_reserved0+1
+mode_red_position   equ mode_red_mask+1
+mode_green_mask     equ mode_red_position+1
+mode_green_position equ mode_green_mask+1
+mode_blue_mask      equ mode_green_position+1
+mode_blue_position  equ mode_blue_mask+1
+mode_reserved_mask  equ mode_blue_position+1
+mode_reserved_position  equ mode_reserved_mask+1
+mode_direct_color_attributes equ mode_reserved_position+1
+mode_framebuffer    equ mode_direct_color_attributes+1
+mode_fb_offset      equ mode_framebuffer + 4
+mode_fb_size        equ mode_fb_offset+ 4
+mode_reserved1      equ mode_fb_size + 2
+mode_sizeof         equ mode_reserved1 + 206
+
+;;;;;;;;;
 
 video_mode_count    equ video_info
-display_mode        equ video_info + 2
+display_mode        equ video_info + 4
 
 video_mode          equ 0
-video_width         equ video_mode + 2
+video_fb            equ video_mode + 2
+video_pad0          equ video_fb + 4
+video_width         equ video_pad0 + 2
 video_height        equ video_width + 2
 video_pitch         equ video_height + 2
-video_bpp           equ video_pitch + 2
-video_pad           equ video_bpp + 2
-VIDEO_SIZE          equ video_pad + 2
+video_bpp           equ video_fb + 4
+video_reserved0     equ video_bpp + 2
+video_pad           equ video_reserved0 + 2
+VIDEO_SIZE          equ video_pad
 
 vesa_modes:
                     cli
@@ -247,12 +275,6 @@ vesa_modes:
                     lodsw
                     mov [edi + video_mode], ax
 
-;                    pusha
-;                    call hexword16
-;                    popa
-;                    pusha
-;                    call space16
-;                    popa
                     cmp ax, -1
                     je .done
 
@@ -265,30 +287,22 @@ vesa_modes:
                     popa
 
                     ; copy mode info to video_info
+                    mov eax, [mode_framebuffer]
+                    mov [edi + video_fb], eax
+
                     mov ax, [mode_width]
                     mov [edi + video_width], ax
-;                    pusha
-;                    call hexword16
-;                    call space16
-;                    popa
 
                     mov ax, [mode_height]
                     mov [edi + video_height], ax
-;                    pusha
-;                    call hexword16
-;                    call space16
-;                    popa
+
+                    mov ax, [mode_pitch]
+                    mov [edi + video_pitch], ax
 
                     xor ah, ah
-                    mov al, [mode_bitsperpixel]
+                    mov al, [mode_bpp]
                     mov [edi + video_bpp], ax
-;                    pusha
-;                    call hexbyte16
-;                    call newline16
-;                    popa
 
-                    mov ax, [mode_bytes_per_line]
-                    mov [edi + video_pitch], ax
 
                     ; try to choose highest resolution 32 bit display
                     mov ax, [display_mode]
@@ -314,14 +328,21 @@ vesa_modes:
 .choose:
                     mov ax, [edi + video_mode]
                     mov [display_mode], ax
+
                     mov ax, [edi + video_width]
                     mov [display_mode + video_width], ax
+
                     mov ax, [edi + video_height]
                     mov [display_mode + video_height], ax
+
                     mov ax, [edi + video_pitch]
                     mov [display_mode + video_pitch], ax
+
                     mov ax, [edi + video_bpp]
                     mov [display_mode + video_bpp], ax
+
+                    mov eax, [edi + video_fb]
+                    mov [display_mode + video_fb], eax
 
 .next:
                     add edi, VIDEO_SIZE
@@ -332,6 +353,18 @@ vesa_modes:
                     mov [video_mode_count], cx
                     mov word [edi], -1
 
+                    mov esi, display_mode
+                    mov ecx, VIDEO_SIZE
+                    call hexdump16
+
+%ifdef KGFX
+                    ; set chosen video display mode
+                    mov ah, 4fh
+                    mov al, 02h
+                    mov bx, [display_mode + video_mode]
+                    or bx, 1<<14
+                    int 10h
+%endif
 
 ;
 ;;; Query memory chunks via BIOS
@@ -548,7 +581,9 @@ b32:
                     mov ebp, ESP32
                     mov esp, ebp
 
-                    call screen_clear
+                    call cls32
+
+;                    call screen_clear
 
                     ;; go into long mode
                     jmp enter_long_mode
@@ -687,7 +722,6 @@ enter_long_mode:
                     or eax, 1<< 31 | 1<<0
                     mov cr0, eax
 
-
 ;                    lgdt [GDT64_Pointer]
                     lgdt [gdt_ptr64]
                     jmp CODE_SEG:go64
@@ -716,6 +750,26 @@ go64:
 
                     global call_main
 call_main:
+%if 0
+                    xor rax, rax
+                    mov ax, [display_mode + video_width]
+                    xor rbx, rbx
+                    mov bx, [display_mode + video_height]
+                    imul rax, rbx
+                    mov rcx, rax
+
+                    mov rax, 0
+                    xor rdi,rdi
+                    mov edi, [display_mode + video_fb]
+                    push rcx
+                    rep stosd
+                    pop rcx
+                    mov rax, 0xffffff
+                    xor rdi,rdi
+                    mov edi, [display_mode + video_fb]
+                    rep stosd
+%endif
+
 ;                    mov esi, CMAIN
 ;                    mov ecx, 16
 ;                    call hexdump

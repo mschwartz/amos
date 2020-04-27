@@ -15,6 +15,12 @@ export AR=ar
 export RANLIB=ranlib
 export OBJCOPY=objcopy
 
+# use this one to use graphics mode
+export KGFX='-DKGFX'
+# use this one to use text mode
+#export KGFX=''
+
+
 export INCLUDE_PATH="\
 	-I$TOP_DIR/kernel/include/ \
 	-I$TOP_DIR/kernel/ \
@@ -33,12 +39,12 @@ export CFLAGS="\
 	-fno-use-cxa-atexit \
 	-fno-rtti \
 	-DKERNEL \
+	$KGFX \
 	$INCLUDE_PATH \
 	"
 
 export LIBS="\
 	-L$TOP_DIR/kernel/Exec -lexec \
-	-L$TOP_DIR/kernel/Exec/x86 -lx86 \
 	-L$TOP_DIR/kernel/posix -lposix \
 	"
 

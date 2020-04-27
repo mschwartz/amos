@@ -1,0 +1,2 @@
+# Bitmap class methods
+

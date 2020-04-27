@@ -161,4 +161,6 @@ typedef float TFloat;
 #include "Types/TBCD.h"
 //#include "Types/TNumber.h"
 
+#include <Exec/x86/bochs.h>
+
 #endif // BTYPES_H

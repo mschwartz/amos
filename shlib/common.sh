@@ -2,7 +2,6 @@
 
 TOP_DIR=`git rev-parse --show-toplevel`
 echo $TOP_DIR
-
 #export GCC=/usr/bin/i686-elf-gcc
 #export LD=/usr/bin/i686-elf-ld
 #export AR=/usr/bin/i686-elf-ar
@@ -17,8 +16,12 @@ export OBJCOPY=objcopy
 
 # use this one to use graphics mode
 export KGFX='-DKGFX'
+export KFONTNAME="cp866-8x8"
+export KFONT="$KFONTNAME.psf"
 # use this one to use text mode
 #export KGFX=''
+#export KFONTNAME="nofont"
+
 
 
 export INCLUDE_PATH="\
@@ -39,6 +42,7 @@ export CFLAGS="\
 	-fno-use-cxa-atexit \
 	-fno-rtti \
 	-DKERNEL \
+  -DKFONTNAME=$KFONTNAME \
 	$KGFX \
 	$INCLUDE_PATH \
 	"

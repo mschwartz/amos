@@ -2,8 +2,11 @@
 #define EXEC_GRAPHICS_BBITMAP32_H
 
 #include <Graphics/BBitmap.h>
+#include <Graphics/BFont.h>
 
-class BBitmap32 : public BBitmap {
+class BConsoleFont32;
+
+class BBitmap32 : public BBase {
 public:
   BBitmap32(TInt32 aWidth, TInt32 aHeight, TInt32 aPitch, TAny *aMemory = nullptr);
   ~BBitmap32();
@@ -66,8 +69,39 @@ public:
   void FillCircle(TUint32 aColor, TInt aX, TInt aY, TUint r);
 #endif
 
+public:
+  void SetColors(TRGB &aForegroundColor, TRGB &aBackgroundColor) {
+    mForegroundColor.Set(aForegroundColor);
+    mBackgroundColor.Set(aBackgroundColor);
+  }
+  void GetColors(TRGB &aForegroundColor, TRGB &aBackgroundColor) {
+    aForegroundColor.Set(mForegroundColor);
+    aBackgroundColor.Set(mBackgroundColor);
+  }
+  void SetFont(BConsoleFont32 *aFont) { mFont = aFont; }
+  void DrawText(TInt16 aX, TInt16 aY, const char *aString);
+
+public:
+  void GetRect(TRect &aRect) { aRect = mRect; }
+  TInt Width() { return mWidth; }
+  TInt Height() { return mHeight; }
+
+public:
+  void Dump() {
+    dprint("BBitmap32 at %x\n", this);
+    dprint("   width: %d, height: %d, depth: %d, pitch: %d\n", mWidth, mHeight, mDepth, mPitch);
+    dprint("   mFont: %x mPixels: %x\n", mFont, mPixels);
+    mRect.Dump();
+    dprint("\n\n");
+  }
+
 protected:
+  TInt mWidth, mHeight, mDepth, mPitch;
+  BConsoleFont32 *mFont;
   TUint32 *mPixels;
+  TRGB mForegroundColor, mBackgroundColor;
+  TBool mFreePixels;
+  TRect mRect;
 };
 
 #endif

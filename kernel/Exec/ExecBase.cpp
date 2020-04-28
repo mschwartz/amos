@@ -10,6 +10,7 @@
 #include <posix/sprintf.h>
 #include <Exec/Random.h>
 
+#include <Graphics/BViewPort.h>
 #include <Graphics/font/BConsoleFont.h>
 
 ExecBase gExecBase;
@@ -47,7 +48,8 @@ public:
 #ifdef KGFX
     ScreenVesa &screen = *gExecBase.GetScreen();
     BBitmap32 &bm = *screen.GetBitmap();
-    bm.Dump();
+//    bm.Dump();
+    BViewPort32 *vp = new BViewPort32("test vp", &bm);
     TRect rect, screenRect;
     bm.GetRect(screenRect);
 
@@ -56,6 +58,10 @@ public:
 
     bm.SetFont(&font);
     font.SetColors(fg, bg);
+    vp->SetFont(&font);
+    vp->SetColors(fg, bg);
+    TRect vrect(50,200, 500, 300);
+    vp->SetRect(vrect);
 
     RtcDevice *rd = (RtcDevice *)gExecBase.FindDevice("rtc.device");
 //    if (!rd) {
@@ -87,9 +93,10 @@ public:
 #else
     while (true) {
       char buf[128];
-      sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d\n", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
-      dlog("buf: %s\n", buf);
-      font.Write(100, 100, buf);
+      sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
+//      dlog("buf: %s\n", buf);
+      vp->DrawText(0, 0, buf);
+//      font.Write(vp, 100, 100, buf);
       Sleep(1);
     }
 #endif
@@ -107,7 +114,7 @@ public:
     kprint("Test Task\n");
     while (true) {
       char buf[128];
-      sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d\n", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
+      sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
       screen.MoveTo(10,10);
       kprint(buf);
       Sleep(1);

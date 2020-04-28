@@ -1,10 +1,14 @@
 #ifndef GRAPHICS_CONSOLE_FONT_H
 #define GRAPHICS_CONSOLE_FONT_H
 
-#include <Graphics/font/BConsoleFont.h>
 #include <Graphics/Graphics.h>
+#include <Graphics/font/BConsoleFont.h>
+#include <Graphics/BBitmap.h>
+#include <Graphics/BViewPort.h>
 #include <Graphics/BFont.h>
-#include <Graphics/bitmap/BBitmap32.h>
+
+class BBitmap32;
+class BViewPort32;
 
 typedef struct {
   TUint32 mMagic;
@@ -68,6 +72,18 @@ public:
   TInt Write(TPoint &aPoint, TInt16 aChar);
   TInt Write(TInt aX, TInt y, const char *aString);
   TInt Write(TPoint &aPoint, const char *aString);
+
+public:
+  TInt Write(BBitmap32 *aBitmap, TInt aX, TInt aY, TInt16 aChar);
+  TInt Write(BBitmap32 *aBitmap, TPoint &aPoint, TInt16 aChar) { return Write(aBitmap, aPoint.x, aPoint.y, aChar); }
+  TInt Write(BBitmap32 *aBitmap, TInt aX, TInt aY, const char *aString);
+  TInt Write(BBitmap32 *aBitmap, TPoint &aPoint, const char *aString) { return Write(aBitmap, aPoint.x, aPoint.y, aString); }
+
+public:
+  TInt Write(BViewPort32 *aViewPort, TInt aX, TInt aY, TInt16 aChar);
+  TInt Write(BViewPort32 *aViewPort, TPoint &aPoint, TInt16 aChar) { return Write(aPoint.x, aPoint.y, aChar); }
+  TInt Write(BViewPort32 *aViewPort, TInt aX, TInt aY, const char *aString);
+  TInt Write(BViewPort32 *aViewPort, TPoint &aPoint, const char *aString) { return Write(aPoint.x, aPoint.y, aString); }
 
 protected:
   BBitmap32 *mBitmap32;

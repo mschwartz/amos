@@ -38,7 +38,7 @@ ScreenVesa::ScreenVesa() {
 
   TUint64 fb = (TUint64)i.mFrameBuffer;
   mBitmap = new BBitmap32(i.mWidth, i.mHeight, i.mPitch, (TAny *)fb);
-  mBitmap->ClearScreen(0xff00ff);
+  mBitmap->Clear(0xff00ff);
 }
 
 void ScreenVesa::MoveTo(int aX, int aY) {

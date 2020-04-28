@@ -2,6 +2,7 @@
 #define EXEX_GRAPHICS_BFONT_H
 
 #include <Graphics/Graphics.h>
+#include <Graphics/BBitmap.h>
 #include <Exec/BList.h>
 /**
   * BConsoleFont is a bitmapped glyph oriented font.  The fonts are found on a linux system in
@@ -24,6 +25,6 @@ public:
 };
 
 //#include <Graphics/font/BVectorFont.h>
-//#include <Graphics/font/BConsoleFont.h>
+#include <Graphics/font/BConsoleFont.h>
 
 #endif

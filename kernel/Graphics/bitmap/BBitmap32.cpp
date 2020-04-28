@@ -35,14 +35,6 @@ BBitmap32::~BBitmap32() {
   mFreePixels = false;
 }
 
-void BBitmap32::ClearScreen(TUint32 aColor) {
-  for (TInt y = 0; y < mHeight; y++) {
-    for (TInt x = 0; x < mWidth; x++) {
-      PlotPixel(aColor, x, y);
-    }
-  }
-}
-
 void BBitmap32::Clear(TUint32 aColor) {
   for (TInt y = 0; y < mHeight; y++) {
     for (TInt x = 0; x < mWidth; x++) {

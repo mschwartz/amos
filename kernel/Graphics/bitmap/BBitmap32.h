@@ -2,7 +2,7 @@
 #define EXEC_GRAPHICS_BBITMAP32_H
 
 #include <Graphics/BBitmap.h>
-#include <Graphics/BFont.h>
+//#include <Graphics/BFont.h>
 
 class BConsoleFont32;
 
@@ -12,7 +12,7 @@ public:
   ~BBitmap32();
 
 public:
-  inline void INLINE PlotPixel(TRGB aColor, TInt32 aX, TInt32 aY) {
+  inline void INLINE PlotPixel(TRGB& aColor, TInt32 aX, TInt32 aY) {
     mPixels[aY * mPitch + aX] = aColor.rgb888();
   }
 
@@ -20,7 +20,7 @@ public:
     mPixels[aY * mPitch + aX] = aColor;
   }
 
-  inline void INLINE SafePlotPixel(TRGB aColor, TInt32 aX, TInt32 aY) {
+  inline void INLINE SafePlotPixel(TRGB& aColor, TInt32 aX, TInt32 aY) {
     if (mRect.PointInRect(aX, aY)) {
       mPixels[aY * mPitch + aX] = aColor.rgb888();
     }
@@ -35,8 +35,6 @@ public:
   inline TUint32 INLINE ReadPixel(TInt32 aX, TInt32 aY) {
     return mPixels[aY * mPitch + aX];
   }
-
-  void ClearScreen(TUint32 aColor);
 
 public:
   void Clear(const TUint32 aColor);
@@ -82,7 +80,12 @@ public:
   void DrawText(TInt16 aX, TInt16 aY, const char *aString);
 
 public:
-  void GetRect(TRect &aRect) { aRect = mRect; }
+  void GetRect(TRect &aRect) { 
+    aRect.x1 = mRect.x1; 
+    aRect.y1 = mRect.y1; 
+    aRect.x2 = mRect.x2; 
+    aRect.y2 = mRect.y2; 
+  }
   TInt Width() { return mWidth; }
   TInt Height() { return mHeight; }
 

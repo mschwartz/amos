@@ -2,7 +2,7 @@ G=	../Graphics
 D=	../Devices
 
 #GFX=	$(G)/TRect.o Font.o $(G)/BBitmap.o
-GFX=	$(G)/TRect.o $(G)/BBitmap.o $(G)/bitmap/BBitmap32.o $(D)/screen/ScreenVGA.o $(D)/screen/ScreenVesa.o
+GFX=	$(G)/TRect.o $(G)/BBitmap.o $(G)/bitmap/BBitmap32.o $(G)/BViewPort.o $(D)/screen/ScreenVGA.o $(D)/screen/ScreenVesa.o
 
 FONTS=  $(G)/BFont.o $(G)/font/BVectorFont.o $(G)/font/BConsoleFont.o
 

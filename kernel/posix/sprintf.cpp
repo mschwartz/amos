@@ -1,9 +1,11 @@
 //#include <stdarg.h>
 #include <limits.h>
-
 #include <posix/sprintf.h>
-#include <Exec/x86/bochs.h>
-#include <Exec/x86/kprint.h>
+
+#ifdef KERNEL
+#include <Exec/Types.h>
+#endif
+
 
 // small printf
 // https://www.menie.org/georges/embedded/small_printf_source_code.html
@@ -54,8 +56,9 @@ static void printchar(char **str, int c) {
     **str = c;
     ++(*str);
   }
-  else
+  else {
     (void)putchar(c);
+  }
 }
 
 #define PAD_RIGHT 1
@@ -220,6 +223,6 @@ int sprintf(char *out, const char *format, ...) {
 }
 
 int vsprintf(char *buffer, const char *format, va_list parameters) {
-  return print(0, format, parameters);
+  return print(&buffer, format, parameters);
 }
 

@@ -176,6 +176,7 @@ isr_common:
                     mov [rdi + task_gs], gs
 
                     ; TODO check return value to see if task switch should be done
+                    mov rdi, [rdi + task_isrnum]
                     call kernel_isr
 
                     ; restore task state
@@ -421,8 +422,7 @@ set_vector:
                     global load_idtr
                     extern idt_p
 load_idtr:
-                    mov rax, rdi
-                    lidt [rax]
+                    lidt [rdi]
                     ret
 
                     global schedule_trap 
@@ -536,6 +536,22 @@ enable_irq8:
 ;                    and al, 11111110b
 ;                    out 0xa1, al
 
+	in al, 0xA1
+	mov al, 11111110b		; Enable RTC interrupt
+	out 0xA1, al
+
+	; Set the periodic flag in the RTC
+	mov al, 0x0B			; Status Register B
+	out 0x70, al			; Select the address
+	in al, 0x71			; Read the current settings
+	push rax
+	mov al, 0x0B			; Status Register B
+	out 0x70, al			; Select the address
+	pop rax
+	bts ax, 6			; Set Periodic(6)
+	out 0x71, al			; Write the new settings
+
+%if 0
                     ; enable RTC
                     mov al, 8bh
                     out 70h, al
@@ -560,9 +576,15 @@ enable_irq8:
                     out 70h, al
                     xchg al, bl
                     out 71h, al
+%endif
+	; Acknowledge the RTC
+	mov al, 0x0C			; Status Register C
+	out 0x70, al			; Select the address
+	in al, 0x71			; Read the current settings
                     pop rbx
                     pop rax
-                    jmp ack_irq8
+                    ret
+;                    jmp ack_irq8
 
                     global push_flags
 push_flags:
@@ -603,3 +625,8 @@ pic_100hz:
                     pop rdx
                     ret
 
+                    global mouse_trap
+MOUSE_TRAP          equ 0x20 + 12
+mouse_trap:
+                    int MOUSE_TRAP
+                    ret

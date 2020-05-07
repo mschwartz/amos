@@ -4,7 +4,6 @@
 #include <Graphics/font/BConsoleFont.h>
 
 #include <posix/string.h>
-#include <Exec/x86/bochs.h>
 #include <stdarg.h>
 #include <math.h>
 

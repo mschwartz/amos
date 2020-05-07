@@ -2,8 +2,6 @@
 
 
 #include <x86/cpu.h>
-#include <x86/bochs.h>
-#include <x86/kprint.h>
 #include <x86/kernel_memory.h>
 
 ScreenVGA::ScreenVGA() {

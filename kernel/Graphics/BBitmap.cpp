@@ -1,7 +1,6 @@
 #include <Graphics/BBitmap.h>
 #include <Graphics/TRGB.h>
 #include <Exec/Memory.h>
-#include <Exec/x86/bochs.h>
 
 //#include <Exec/Memory.h>
 

@@ -1,9 +1,8 @@
+#include <Exec/ExecBase.h>
+#include <Exec/x86/cpu.h>
+#include <Exec/x86/ps2.h>
 #include <Devices/KeyboardDevice.h>
 #include <Exec/BTask.h>
-#include <Devices/PIC.h>
-#include <x86/bochs.h>
-
-#include <Exec/ExecBase.h>
 
 const TUint16 KEYB_DR = 0x60; /* data register */
 const TUint16 KEYB_SR = 0x64; /* status register */
@@ -158,6 +157,45 @@ enum {
   OUTPUT_FIRST_PORT_DATA = (1 << 7),
 };
 
+const char kbdus[128] = {
+  0, 27, '1', '2', '3', '4', '5', '6', '7', '8',    /* 9 */
+  '9', '0', '-', '=', '\b',                         /* Backspace */
+  '\t',                                             /* Tab */
+  'q', 'w', 'e', 'r',                               /* 19 */
+  't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',     /* Enter key */
+  0,                                                /* 29   - Control */
+  'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', /* 39 */
+  '\'', '`', 0,                                     /* Left shift */
+  '\\', 'z', 'x', 'c', 'v', 'b', 'n',               /* 49 */
+  'm', ',', '.', '/', 0,                            /* Right shift */
+  '*',
+  0,   /* Alt */
+  ' ', /* Space bar */
+  0,   /* Caps lock */
+  0,   /* 59 - F1 key ... > */
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, /* < ... F10 */
+  0, /* 69 - Num lock*/
+  0, /* Scroll Lock */
+  0, /* Home key */
+  0, /* Up Arrow */
+  0, /* Page Up */
+  '-',
+  0, /* Left Arrow */
+  0,
+  0, /* Right Arrow */
+  '+',
+  0, /* 79 - End key*/
+  0, /* Down Arrow */
+  0, /* Page Down */
+  0, /* Insert Key */
+  0, /* Delete Key */
+  0, 0, 0,
+  0, /* F11 Key */
+  0, /* F12 Key */
+  0, /* All other keys are undefined */
+};
+
 //Keyboard *gKeyboard;
 
 static inline TUint8 read_config_byte(TUint8 offset) {
@@ -210,7 +248,7 @@ class KeyboardTask;
 
 class KeyboardInterrupt : public BInterrupt {
 public:
-  KeyboardInterrupt(KeyboardTask *aTask) : BInterrupt("Keyboard Interrupt Handler", LIST_PRI_MAX) {
+  KeyboardInterrupt(KeyboardTask *aTask) : BInterrupt("keyboard.device", LIST_PRI_MAX) {
     mTask = aTask;
   }
 
@@ -226,34 +264,80 @@ class KeyboardTask : public BTask {
   friend KeyboardInterrupt;
 
 public:
-  KeyboardTask() : BTask("Keyboard Task", LIST_PRI_MAX) {
+  KeyboardTask() : BTask("keyboard.device", LIST_PRI_MAX) {
     mHead = mTail = 0;
     // install kernel handler
     gExecBase.SetIntVector(EKeyboardIRQ, new KeyboardInterrupt(this));
     // enable the keyboard interrupt
-    gPIC->enable_interrupt(IRQ_KEYBOARD);
+    gExecBase.EnableIRQ(IRQ_KEYBOARD);
   }
 
   void Run();
 
 public:
   MessagePort *mMessagePort;
+
 protected:
   char mBuffer[KEYBOARD_BUFFER_SIZE];
   int mHead, mTail;
 };
 
 TBool KeyboardInterrupt::Run(TAny *aData) {
-  TUint16 t = inb(KEYB_DR);
-  TUint64 c = gExecBase.SystemTicks();
-//  dlog(" keyboard data: %x\n", t);
-  // add key to circular queue
+#if 1
+  TInt timeout;
+  //  dlog("1 kbd_sr = %02x\n", inb(KEYB_SR));
+  for (timeout = 1000; timeout > 0; timeout--) {
+    TUint8 t = inb(KEYB_DR);
+    if (t == 0) {
+      continue;
+    }
+    dlog("   keycode: %02x\n", t);
+    if (t & 0x80) {
+      TInt res = kbdus[t & 0x7f];
+      if (res) {
+        KeyboardMessage *m = new KeyboardMessage(ENull, EKeyUp);
+        m->mResult = res;
+        m->SendMessage(mTask->mMessagePort);
+      }
+    }
+    else {
+      TInt res = kbdus[t];
+      if (res) {
+        KeyboardMessage *m = new KeyboardMessage(ENull, EKeyDown);
+        m->mResult = res;
+        m->SendMessage(mTask->mMessagePort);
+      }
+      // send message to task
+      break;
+    }
+    if (timeout > 0) {
+      gExecBase.AckIRQ(IRQ_KEYBOARD);
+    }
+    return ETrue;
+  }
 
-  // send message to task
-  KeyboardMessage *m = new KeyboardMessage(ENull, EQueueChar);
-  m->mResult = t;
-  m->SendMessage(mTask->mMessagePort);
-  gPIC->ack(IRQ_KEYBOARD);
+//  TUint16 t = inb(KEYB_DR);
+//  dlog("2 kbd_sr = %02x\n", inb(KEYB_SR));
+#else
+  TInt timeout;
+  for (timeout = 1000; timeout > 0; timeout++) {
+    if ((inb(0x64) & 1) == 0) {
+      continue;
+    }
+  }
+  if (timeout > 0) {
+    TUint16 t = inb(KEYB_DR);
+    TUint64 c = gExecBase.SystemTicks();
+    //  dlog(" keyboard data: %x\n", t);
+    // add key to circular queue
+
+    // send message to task
+    KeyboardMessage *m = new KeyboardMessage(ENull, EQueueChar);
+    m->mResult = t;
+    m->SendMessage(mTask->mMessagePort);
+  }
+#endif
+  gExecBase.AckIRQ(IRQ_KEYBOARD);
   return ETrue;
 }
 
@@ -265,11 +349,23 @@ void KeyboardTask::Run() {
   gExecBase.AddMessagePort(*mMessagePort);
 
   while (WaitPort(mMessagePort)) {
-    while (KeyboardMessage *m = (KeyboardMessage*) mMessagePort->GetMessage()) {
+    while (KeyboardMessage *m = (KeyboardMessage *)mMessagePort->GetMessage()) {
       switch (m->mCommand) {
-        case EQueueChar:
-          dlog("Queue key %d, %x\n", m->mResult, m->mResult);
-          if (((mTail+1) % KEYBOARD_BUFFER_SIZE) != mHead) {
+        case EKeyUp:
+          dlog("Queue key UP %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
+          if (((mTail + 1) % KEYBOARD_BUFFER_SIZE) != mHead) {
+            mBuffer[mTail++] = m->mResult | 0x80;
+            mTail %= KEYBOARD_BUFFER_SIZE;
+          }
+          else {
+            dlog("keyboard.device keyboard queue full\n");
+          }
+          // respond to message if keyboard message FIFO is not empty
+          break;
+
+        case EKeyDown:
+          dlog("Queue key DOWN %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
+          if (((mTail + 1) % KEYBOARD_BUFFER_SIZE) != mHead) {
             mBuffer[mTail++] = m->mResult;
             mTail %= KEYBOARD_BUFFER_SIZE;
           }

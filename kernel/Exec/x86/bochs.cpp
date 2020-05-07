@@ -1,9 +1,10 @@
 #include <stdarg.h>
 #include <Exec/x86/bochs.h>
-#include <Exec/x86/kprint.h>
+//#include <Exec/x86/kprint.h>
 #include <posix/itoa.h>
 #include <posix/sprintf.h>
 #include <Exec/ExecBase.h>
+#include <Devices/SerialDevice.h>
 //#include <Screen.h>
 
 TUint8 in_bochs; //  = *((TUint8 *)0x7c10);
@@ -13,22 +14,28 @@ extern "C" void SetFlags(TUint64 aFlags);
 
 extern "C" void eputs(const char *s);
 
+extern "C" void sputc(char c);
+
+void dputc(char c) {
+  if (in_bochs) {
+    outb((int)c, 0xe9);
+  }
+  else {
+    sputc(c);
+  }
+}
+
 void dputs(const char *s) {
   TUint64 flags = GetFlags();
   cli();
-  if (in_bochs) {
-    while (*s) { dputc(*s++); }
-  }
-  else {
-    while (*s) { kputc(*s++); }
-  }
+  while (*s) { dputc(*s++); }
   SetFlags(flags);
 }
 
 void dlog(const char *fmt, ...) {
-  if (!in_bochs) {
-    return;
-  }
+//  if (!in_bochs) {
+//    return;
+//  }
   TUint64 flags = GetFlags();
   cli();
 
@@ -52,8 +59,9 @@ void dprintf(const char *fmt, ...) {
   va_start(args, fmt);
 
   vsprintf(buf, fmt, args);
-  kputs(buf);
+  dputs(buf);
   va_end(args);
+
   SetFlags(flags);
 }
 
@@ -96,9 +104,11 @@ void dhex64(const TUint64 l) {
   dhex32(l & 0xffffffff);
 }
 
-void dhexdump(TUint8 *src, int lines) {
+void dhexdump(TAny *aSource, int aLines) {
+  TUint8 *src = (TUint8 *)aSource;
+
   TUint64 address = (TUint64)src;
-  for (TInt i = 0; i < lines; i++) {
+  for (TInt i = 0; i < aLines; i++) {
     dprint("%x: ", address);
     for (TInt c = 0; c < 8; c++) {
       dhex8(*src++);
@@ -109,9 +119,10 @@ void dhexdump(TUint8 *src, int lines) {
   }
 }
 
-void dhexdump16(TUint16 *src, int lines) {
+void dhexdump16(TAny *aSource, int aLines) {
+  TUint16 *src = (TUint16 *)aSource;
   TUint64 address = (TUint64)src;
-  for (TInt i = 0; i < lines; i++) {
+  for (TInt i = 0; i < aLines; i++) {
     dprint("%x: ", address);
     for (TInt c = 0; c < 8; c++) {
       dhex16(*src++);

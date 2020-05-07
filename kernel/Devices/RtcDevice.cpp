@@ -61,11 +61,16 @@ public:
     ReadRtc();
     dlog("  --- Read RTC: %02d/%02d/%02d %02d:%02d:%02d\n", mRtcDevice->mMonth, mRtcDevice->mDay, mRtcDevice->mYear, mRtcDevice->mHours, mRtcDevice->mMinutes, mRtcDevice->mSeconds);
 
-    gExecBase.SetIntVector(ERtcClockIRQ, new RtcInterrupt(this));
-
+#if 0
     // enable RTC interrupt on the RTC controller
     // default rate is 1/1024 (1024 hz) or 0x06
+    outb(0x08, 0x70);
+    outb(inb(0x71) | 0x40, 0x71);
+#else
     enable_irq8();
+#endif
+    gExecBase.SetIntVector(ERtcClockIRQ, new RtcInterrupt(this));
+
 
     while (ETrue) {
       TUint64 sigs = Wait(1 << 10);
@@ -152,6 +157,7 @@ protected:
 extern "C" void ack_irq8();
 
 TBool RtcInterrupt::Run(TAny *aData) {
+//  dlog("RTC\n");
   //  cli();
   mTask->UpdateMillis();
   ack_irq8();
@@ -172,6 +178,7 @@ RtcDevice::RtcDevice() : BDevice("rtc.device") {
 }
 
 void RtcDevice::Tick() {
+  gExecBase.Tick();
   // should be called once per millisecond
   mFract++;
   while (mFract > 1000) {

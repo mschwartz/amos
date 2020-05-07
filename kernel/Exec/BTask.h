@@ -88,7 +88,9 @@ protected:
 
 class BTaskList : public BListPri {
 public:
-  BTaskList() : BListPri("Task List") {}
+  BTaskList(const char *aName = "Task List") : BListPri(aName) {
+//    dlog("Construct BTaskList %s\n", aName);
+  }
 
   static void DumpRegisters(TTaskRegisters *aRegisters);
   void Dump();

@@ -2,7 +2,6 @@
 #define TASKING_H
 
 #include <Exec/Types.h>
-#include <x86/bochs.h>
 
 typedef struct Task {
   // flags
@@ -47,6 +46,7 @@ typedef struct Task {
   void Dump() {
     extern char *isr_names[];
 
+#ifdef KERNEL
     dlog("task @ %x\n", this);
 
 //    dlog(" isr_num: (%s) %x\n", isr_names[isr_num], isr_num);
@@ -75,6 +75,7 @@ typedef struct Task {
       dlog("    %016x: %016x\n", i, *stack++);
     }
     dlog("\n");
+#endif
   }
 } PACKED TTaskRegisters;
 

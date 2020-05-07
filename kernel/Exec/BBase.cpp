@@ -1,5 +1,4 @@
 #include <Exec/BBase.h>
-#include <x86/bochs.h>
 
 #ifdef KERNEL
 #include <Exec/Memory.h>

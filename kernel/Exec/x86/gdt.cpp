@@ -1,6 +1,4 @@
 #include <Exec/x86/gdt.h>
-#include <Exec/x86/kprint.h>
-#include <Exec/x86/bochs.h>
 
 typedef struct _GDT_t_ {
   TUint16 segm_limit0;    /* segment limit, bits: 15:00	(00-15) */
@@ -26,13 +24,13 @@ struct gdt_info {
   TUint8 granularity;
   TUint8 base_high;
   void Dump() {
-    kprint("gdt_info @ %x (%d bytes long)\n", this, sizeof(gdt_info));
-    kprint("limit low %x ", limit_low);
-    kprint("base low %x ", base_low);
-    kprint("base middle %x ", base_middle);
-    kprint("access %x ", access);
-    kprint("granularity %x ", granularity);
-    kprint("base high %x\n", base_high);
+    dprint("gdt_info @ %x (%d bytes long)\n", this, sizeof(gdt_info));
+    dprint("limit low %x ", limit_low);
+    dprint("base low %x ", base_low);
+    dprint("base middle %x ", base_middle);
+    dprint("access %x ", access);
+    dprint("granularity %x ", granularity);
+    dprint("base high %x\n", base_high);
   }
 } PACKED;
 
@@ -40,9 +38,9 @@ struct gdtr {
   TUint16 limit;
   TUint64 base;
   void Dump() {
-    kprint("gdtr @ %x (%d bytes long)\n", this, sizeof(gdtr));
-    kprint("limit  %x\n", limit);
-    kprint("base  %x\n", base);
+    dprint("gdtr @ %x (%d bytes long)\n", this, sizeof(gdtr));
+    dprint("limit  %x\n", limit);
+    dprint("base  %x\n", base);
   }
 } PACKED;
 
@@ -104,7 +102,7 @@ GDT::~GDT() {
 void GDT::set_gate(TInt id, void *start_addr, TUint32 size, TUint32 priv_level) {
   TUint64 addr = (TUint64)start_addr;
   TUint32 gsize = size;
-  kprint("gsize: %x\n", gsize);
+  dprint("gsize: %x\n", gsize);
 #if 0
   gdtmem[id].limit_low = addr & 0x0000ffff;
   gdtmem[id].base_middle = (addr & 0x00ff0000) >> 16;

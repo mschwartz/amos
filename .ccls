@@ -1,5 +1,6 @@
 clang
 %h -x c++-header
+-DKERNEL
 -I./kernel
 -I./kernel/posix
 -I.

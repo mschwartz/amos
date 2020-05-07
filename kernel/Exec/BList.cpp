@@ -2,7 +2,6 @@
 #include <Exec/Memory.h>
 
 #ifdef KERNEL
-#include <x86/bochs.h>
 #include <Exec/ExecBase.h>
 #else
 #include <stdio.h>

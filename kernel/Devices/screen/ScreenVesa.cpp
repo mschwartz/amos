@@ -1,44 +1,34 @@
+#include <Exec/ExecBase.h>
 #include <Devices/screen/ScreenVesa.h>
-#include <Exec/x86/bochs.h>
-
-typedef struct {
-  TUint16 mPad0;
-  TUint16 mMode;
-  TUint32 mFrameBuffer;
-  TUint16 mPad1;
-  TUint16 mWidth;
-  TUint16 mHeight;
-  TUint16 mPitch;
-  TUint16 mDepth;
-  TUint16 mPad2;
-  void Dump() {
-    dlog("Mode %x %d x %d %d bpp pitch %d frame buffer at 0x%x\n",  mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
-  }
-} PACKED TModeInfo;
-
-typedef struct {
-  TInt16 mCount;          // number of modes found
-  TModeInfo mDisplayMode; // chosen display mode
-  TModeInfo mModes[];
-  void Dump() {
-    dlog("Found %d %x modes\n", mCount, mCount);
-    for (TInt16 i = 0; i < mCount; i++) {
-      mModes[i].Dump();
-    }
-  }
-} PACKED TModes;
 
 ScreenVesa::ScreenVesa() {
-  TModes *modes = (TModes *)0x5000;
-  dlog("\n\nDisplay Mode:\n");
-  modes->mDisplayMode.Dump();
+  dlog("Construct ScreenVesa\n");
+  TSystemInfo info;
+  gExecBase.GetSystemInfo(&info);
 
-  // fill screen with ff00ff
-  TModeInfo &i = modes->mDisplayMode;
+  TUint64 fb = (TUint64)info.mScreenFrameBuffer;
+  mBitmap = new BBitmap32(info.mScreenWidth, info.mScreenHeight, info.mScreenPitch, (TAny *)fb);
+//  i.Dump();
+  mBitmap->Dump();
 
-  TUint64 fb = (TUint64)i.mFrameBuffer;
-  mBitmap = new BBitmap32(i.mWidth, i.mHeight, i.mPitch, (TAny *)fb);
-  mBitmap->Clear(0xff00ff);
+  TUint32 *pixels = (TUint32 *)fb;
+  TUint32 color = 0x7f000000;
+  dprint("pixels (%x)\n", pixels);
+#if 0
+  TInt w = info.mScreenWidth,
+       h = info.mScreenHeight,
+       x,y;
+
+  for (y = 0; y < h; y++) {
+    for (x=0; x < w; x++) {
+    dprint("clear %08x x=%d/%d, y=%d/%d\n", color, x, w, y, h);
+      *pixels++ = color++;
+//      mBitmap->PlotPixel(color++, x, y);
+    }
+  }
+
+#endif
+//  mBitmap->Clear(0xff00ff);
 }
 
 void ScreenVesa::MoveTo(int aX, int aY) {

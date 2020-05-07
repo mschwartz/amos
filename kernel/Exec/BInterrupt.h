@@ -40,7 +40,7 @@ enum EInterruptNumber {
   EMasterPicIRQ,
   EReserved1IRQ,
   EReserved2IRQ,
-  EReserved3IRQ,
+  EMouseIRQ,
   ECoprocessorIRQ,
   EHardDiskIRQ,
   EReserved4IRQ,
@@ -69,7 +69,8 @@ public:
 
 class BInterruptList : public BListPri {
 public:
-  BInterruptList() : BListPri("Interrupt List") {}
+  BInterruptList() : BListPri("Interrupt List") {
+  }
   ~BInterruptList() {}
 };
 

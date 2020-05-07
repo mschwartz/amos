@@ -1,13 +1,17 @@
 #include <unistd.h>
-#include <x86/bochs.h>
+#ifdef KERNEL
+#include <Exec/ExecBase.h>
+#endif
 
 extern void *kernel_end;
 static uint8_t *gProgramBreak = 0;
 
 // sets end of the data segment to the value specified by addr
 extern "C" int brk(void *aAddress) {
+#ifdef KERNEL
   dlog("brk called %x\n", aAddress);
   bochs
+#endif
   return 0;
 }
 

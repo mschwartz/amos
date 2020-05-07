@@ -1,7 +1,7 @@
 ;; screen.inc
 
 	%macro puts 1
-	push eax
+	push rax
 	mov esi, %%puts_str
 	call screen_puts
 	jmp %%puts_end
@@ -9,7 +9,7 @@
 	db %1
 	db 0
 %%puts_end:
-	pop eax
+	pop rax
 	%endmacro
        
 WHITE_ON_BLACK equ 0x0f
@@ -48,22 +48,26 @@ screen_moveto:
                     
 ; clear screen
 screen_clear:
-                    push es
-                    pusha
-                    mov cx, 25*80
-                    mov edi, 0xb8000
+;                    push es
+                    push rax
+                    push rcx
+                    push rdi
+
+                    mov rcx, 25*80
+                    mov rdi, 0xb8000
 
                     mov ah, WHITE_ON_GREEN
-                    mov al, 'x'
+;                    mov al, 'x'
                     rep stosw
 
-                    xor ax,ax
+                    xor rax, rax
                     mov [screen_row],ax
                     mov [screen_col],ax
                     call screen_moveto
-                    
-                    popa
-                    pop es
+                   
+                    pop rdi
+                    pop rcx
+                    pop rax
                     ret
 
 ; output character to screen
@@ -79,7 +83,11 @@ screen_putc:
                     ret
 
 screen_putc_character:
-                    pusha
+                    push rax
+                    push rbx
+                    push rcx
+                    push rdx
+
                     mov edx, 0b8000h
 
                     xor ebx, ebx
@@ -103,7 +111,10 @@ screen_putc_character:
 screen_putc_advanced:
                     mov [screen_col], ax
                     call screen_moveto
-                    popa
+                    pop rdx
+                    pop rcx
+                    pop rbx
+                    pop rax
                     ret
 
 screen_puts:			; Routine: output string in SI to screen
@@ -131,3 +142,112 @@ screen_puts:			; Routine: output string in SI to screen
 
 .done:
 	ret
+
+screen_space:
+                    mov al, ' '
+                    jmp screen_putc
+screen_newline:
+                    mov al, 10
+                    jmp screen_newline
+
+screen_nybbles:
+	db "0123456789ABCDEF"
+
+screen_hexnybble:
+;                    push rbx
+	and rax, 0x0f
+;                    xor rbx, rbx
+;                    mov rbx, rax
+	mov al, [screen_nybbles+rax]
+	call  screen_putc
+;                    pop rbx
+	ret
+
+screen_hexbyte:
+	push rax
+	push rcx
+
+	push rax
+	ror rax, 4
+	call screen_hexnybble
+	pop rax
+	call screen_hexnybble
+
+	pop rcx
+	pop rax
+	ret
+
+screen_hexword:
+	push rax
+	push rcx
+	push rax
+	ror rax, 8
+	and rax, 0xff
+	call screen_hexbyte
+	pop rax
+	and rax, 0xff
+	call screen_hexbyte
+	pop rcx
+	pop rax
+	ret
+
+screen_hexlong:
+	push rax
+	push rcx
+	push rax
+	ror rax, 16
+	and rax, 0xffff
+	call screen_hexword
+	pop rax
+	and rax, 0xffff
+	call screen_hexword
+	pop rcx
+	pop rax
+	ret
+
+screen_hexquad:
+	push rax
+	push rcx
+	push rax
+	ror rax, 32
+	and rax, 0xffffffff
+	call screen_hexlong
+	pop rax
+	and rax, 0xffffffff
+	call screen_hexlong
+	pop rcx
+	pop rax
+	ret
+
+screen_hexdump:
+;                    push cx
+;                    push si
+;                    mov ax, si
+;                    call hexword
+;                    call space
+;                    pop si
+;                    pop cx
+                    mov rax, rsi
+                    call screen_hexquad
+                    call screen_space
+.loop:
+	lodsb
+	call screen_hexbyte
+                    call screen_space
+	dec rcx
+	ja .loop
+                    call screen_newline
+	ret
+
+screen_hexbytes:    call screen_hexbyte
+                    jmp screen_space
+screen_hexwords:    call screen_hexword
+                    jmp screen_space
+screen_hexlongs:    call screen_hexlong
+                    jmp screen_space
+screen_hexbyten:    call screen_hexbyte
+                    jmp screen_newline
+screen_hexwordn:    call screen_hexword
+                    jmp screen_newline
+screen_hexlongn:    call screen_hexlong
+                    jmp screen_newline

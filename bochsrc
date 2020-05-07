@@ -50,7 +50,8 @@ info: action=report
 error: action=report
 panic: action=ask
 keyboard: type=mf, serial_delay=250, paste_delay=100000, user_shortcut=none
-mouse: type=ps2, enabled=0, toggle=ctrl+mbutton
+#mouse: type=ps2, enabled=1, toggle=ctrl+mbutton
+mouse: type=ps2, enabled=1, toggle=ctrl+f10
 speaker: enabled=1, mode=system
 parport1: enabled=1, file=none
 parport2: enabled=0

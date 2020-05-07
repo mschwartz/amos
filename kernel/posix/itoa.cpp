@@ -1,9 +1,9 @@
-#include <posix.h>
+#include <include/posix.h>
+#include <Exec/Types.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <itoa.h>
 #include <posix/string.h>
-#include <x86/bochs.h>
 
 typedef struct {
   long quot, rem;

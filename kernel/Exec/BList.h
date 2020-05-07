@@ -4,7 +4,6 @@
 #include <Exec/BBase.h>
 #include <Exec/Memory.h>
 #include <stdint.h>
-#include <x86/bochs.h>
 
 const TInt64 LIST_PRI_MIN =  32767;
 const TInt64 LIST_PRI_DEFAULT = 0;

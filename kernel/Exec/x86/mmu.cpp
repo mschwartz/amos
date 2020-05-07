@@ -1,7 +1,5 @@
-#include <x86/mmu.h>
-#include <x86/bochs.h>
-#include <x86/kprint.h>
-#include <x86/kernel_memory.h>
+#include <Exec/x86/mmu.h>
+#include <Exec/x86/kernel_memory.h>
 
 #define DEBUGME
 #undef DEBUGME
@@ -26,7 +24,7 @@ TUint64 MMU::link_memory_pages(TUint64 address, TUint64 size) {
   TInt pages = size / PAGE_SIZE - 1;
   for (TInt count = 0; count < pages; count++) {
     if ((TUint64)src >= 4 * GIGABYTE) {
-      kprint("DONE\n");
+//      kprint("DONE\n");
       break;
     }
 //      dlog("%d link %x %d size:%d pages:%d\r", count, src, src, size, pages);

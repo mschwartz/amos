@@ -1,8 +1,6 @@
 #include <Devices/Screen.h>
 #include <Devices/screen/ScreenVGA.h>
 #include <Devices/screen/ScreenVesa.h>
-#include <Exec/x86/bochs.h>
-#include <Exec/x86/kprint.h>
 #include <Exec/x86/kernel_memory.h>
 
 BScreen *BScreen::CreateScreen() {

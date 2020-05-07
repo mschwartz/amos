@@ -1,6 +1,8 @@
 ;                    org 0x9000
                     [bits 64]
 
+%define SERIAL
+COM1                equ 0x3f8
                     %macro BOCHS 0
                     xchg bx,bx
                     %endmacro
@@ -18,7 +20,7 @@ _start:
 ;                    rep stosw                     ; Clear the screen.
                     jmp boot
 
-                    %include "Exec/x86/debug64.inc"
+                    %include "../boot/debug64.inc"
                     global foo
 foo:
                     nop
@@ -27,7 +29,14 @@ foo:
                     extern _init, _fini
                     extern kernel_main
 
+start_msg:          db 'kernel_start', 13, 10, 0
 boot:
+%ifdef SERIAL
+                    call debug64_init
+%endif
+                    mov rsi, start_msg
+                    call puts64
+
                     push rbp
                     mov rbp, rsp
 ;                    call _init
@@ -39,10 +48,18 @@ boot:
                     leave
                     ret
 
-                    global bzero
+                    global sputc
+sputc:
+                    push rax
+                    mov rax, rdi
+                    call putc64
+                    pop rax
+                    ret
+
 ;; inputs:
 ;;   rdi = address of memory to zero
 ;;   rsi = number of bytes to zero
+                    global bzero
 bzero:              
                     push rsi
                     push rdi

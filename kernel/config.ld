@@ -3,7 +3,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x10000;
+    . = 0x80000;
     init_start = .;
     .init : {
 	    *(.init)

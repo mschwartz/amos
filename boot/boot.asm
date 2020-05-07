@@ -11,7 +11,11 @@
 ;  * BIOS int 0x10 is used to perform console output
 ;  * BIOS int 0x13 is used to perform disk I/O
 ;  */
+
 	BITS 16
+
+%define SERIAL
+COM1                equ 0x3f8
 
                     %include "memory.inc"
                     %include "cga.inc"
@@ -43,11 +47,9 @@ boot_sectors:       dw 0
 kernel_sector:      dw 0
 kernel_sectors:     dw 0
 bochs_present:      db 0
-;msg                 db 'here', 0
 ; Variables
 BOOT_DRIVE:         db 0
-loading_msg         db 'Loading...', 13, 10, 0
-;memory_msg          db 'memory', 13, 10, 0
+loading_msg         db 'Loading... ', 0
 
 ; ---------------------------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------------------------
@@ -66,6 +68,8 @@ main:
                     mov gs, ax
 
                     mov [BOOT_DRIVE], dl
+
+                    call debug16_init
 
                     ; detect running in bochs
 detect_bochs:
@@ -97,11 +101,13 @@ load_error1:
                     mov si, emsg1
                     jmp load_error
 emsg1               db 'e1', 0
+
                     align 4
 load_error2:
                     mov si, emsg2
                     jmp load_error
 emsg2               db 'e2', 0
+
                     align 4
 load_error:
                     push si
@@ -120,10 +126,19 @@ load_error:
 
                     global load
 load:
+                    mov si, loading_msg
+                    call puts16
+                    mov al, [BOOT_DRIVE]
+                    call hexbytes16
+                    mov al, [boot_sector]
+                    call hexbytes16
+                    mov ax, [boot_sectors]
+                    call hexwordn16
+
                     mov dh, 0                               ; head 0
                     mov dl, [BOOT_DRIVE]
                     mov cx, [boot_sector]                   ; start sector
-                    mov ch, 0                               ; cylender 0
+                    mov ch, 0                               ; cylinder 0
                     mov bx, 0x7e00
                     mov ax, [boot_sectors]                  ; number of sectors to read
                     mov ah, 0x02                            ; operation: read sectors
@@ -138,11 +153,26 @@ load:
 	times 510-($-$$) db 0	; Pad remainder of boot sector with 0s
 	dw 0xAA55		; The standard PC boot signature
 
+
+
+
+
+
+
 ; ---------------------------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------------------------
 
 ;; start of second sector
+
+; ---------------------------------------------------------------------------------------------
+; ---------------------------------------------------------------------------------------------
+; ---------------------------------------------------------------------------------------------
+
+
+
+
+
 
 
 gdt_start:
@@ -173,111 +203,330 @@ gdtr:
 CODE_SEG            equ gdt_code - gdt_start
 DATA_SEG            equ gdt_data - gdt_start
 
+                    align 4
+DAPACK:             db 0x10             ; size of DAPACK
+                    db 0
+blkcnt:             dw 16               ; int 13 resets this to # of blocks actually read/written
+db_add:             dw 0x0000           ; memory buffer destination address (0:7c00)
+                    dw 0x1000           ; in memory page zero
+d_lba:              dd 1                ; put the lba to read in this spot
+                    dd 0                ; more storage bytes only for big lba's ( > 4 bytes )
+
+;;
+;; load # of sectors starting at sector al for cx sectors to es:di
+;;
+                    global load_sectors
+                    align 2
+ls_count            dw 0
+ls_message          db 'Loading sectors ', 0
+ls_sect             db 0
+ls_cyl              db 0
+ls_head             db 0
+
+                    align 2
+
+; https://stackoverflow.com/questions/45434899/why-isnt-my-root-directory-being-loaded-fat12/45495410#45495410
+;
+;    Function: lba_to_chs
+; Description: Translate Logical block address to CHS (Cylinder, Head, Sector).
+;              Works for all valid FAT12 compatible disk geometries.
+;
+;   Resources: http://www.ctyme.com/intr/rb-0607.htm
+;              https://en.wikipedia.org/wiki/Logical_block_addressing#CHS_conversion
+;              https://stackoverflow.com/q/45434899/3857942
+;              Sector    = (LBA mod SPT) + 1
+;              Head      = (LBA / SPT) mod HEADS
+;              Cylinder  = (LBA / SPT) / HEADS
+;
+;      Inputs: SI = LBA
+;     Outputs: DL = Boot Drive Number
+;              DH = Head
+;              CH = Cylinder (lower 8 bits of 10-bit cylinder)
+;              CL = Sector/Cylinder
+;                   Upper 2 bits of 10-bit Cylinders in upper 2 bits of CL
+;                   Sector in lower 6 bits of CL
+;
+;       Notes: Output registers match expectation of Int 13h/AH=2 inputs
+;
+SectorsPerTrack:    dw 18
+NumberOfHeads:      dw 2
+
+lba_to_chs:
+                    push ax                    ; Preserve AX
+                    mov ax, si                 ; Copy LBA to AX
+                    xor dx, dx                 ; Upper 16-bit of 32-bit value set to 0 for DIV
+                    div word [SectorsPerTrack] ; 32-bit by 16-bit DIV : LBA / SPT
+                    mov cl, dl                 ; CL = S = LBA mod SPT
+                    inc cl                     ; CL = S = (LBA mod SPT) + 1
+                    xor dx, dx                 ; Upper 16-bit of 32-bit value set to 0 for DIV
+                    div word [NumberOfHeads]   ; 32-bit by 16-bit DIV : (LBA / SPT) / HEADS
+                    mov dh, dl                 ; DH = H = (LBA / SPT) mod HEADS
+                    mov dl, [BOOT_DRIVE]       ; boot device, not necessary to set but convenient
+                    mov ch, al                 ; CH = C(lower 8 bits) = (LBA / SPT) / HEADS
+                    shl ah, 6                  ; Store upper 2 bits of 10-bit Cylinder into
+                    or  cl, ah                 ;     upper 2 bits of Sector (CL)
+                    pop ax                     ; Restore scratch registers
+                    ret
+
+;;
+;; start of code to execute in second+ boot sector
+;;
+loading_kernel_msg  db 'xkernel... ', 0
+                    align 4
 boot2:
-                    ; load kernel to 0x10000
-                    mov ax, 0x1000
-                    mov es, ax
+                    mov si, loading_kernel_msg
+                    call puts16
+                    mov al, [BOOT_DRIVE]
+                    call hexbytes16
+                    mov al, [kernel_sector]
+                    call hexbytes16
+                    mov ax, [kernel_sectors]
+                    call hexwordn16
+
+;                     load kernel to 0x10000
+                    xor ax, ax
+                    mov al, [kernel_sector]
+                    dec al
+
+                    mov cx, [kernel_sectors]
+                    mov bx, KERNEL_LOAD_SEG
+                    mov es, bx
                     xor bx, bx
-                    mov dh, 0                               ; head 0
-                    mov dl, [BOOT_DRIVE]
-                    mov cx, [kernel_sector]                   ; start sector
-                    mov ch, 0                               ; cylender 0
-                    mov ax, [kernel_sectors]                  ; number of sectors to read
-                    mov ah, 0x02                            ; operation: read sectors
+                    mov si, ax
+.loop:
+                    pusha
+                    call .print_loading
+                    popa
+
+                    pusha
+                    call lba_to_chs
+;                    call .print_chs
+                    mov ah, 02h
                     int 13h
-                    jc .error
-                    xor eax,eax
-                    mov es, ax
-                    ; jump to start of 2nd sector
+                    popa
+                    jc load_error2
+
+;                    pusha
+;                    mov al, ' '
+;                    call putc16
+;                    mov al, ' '
+;                    call putc16
+;                    mov al, [es:bx]
+;                    call hexbytes16
+;                    mov al, [es:bx+1]
+;                    call hexbytes16
+;                    call newline16
+;                    popa
+
+                    add ebx, 512
+;                    pusha
+;                    mov eax, ebx
+;                    call hexlongn16
+;                    popa
+
+                    inc si
+                    dec cx
+                    jnz .loop
+                    mov si, .loaded_msg
+                    call puts16
+
                     jmp .done
-.error:
-                    xor eax, eax
-                    mov es, ax
-                    jmp load_error2
+
+.loaded_msg:        db 'kernel loaded', 13, 10, 0
+.chs_msg:           db 'chs: ', 0
+
+                    align 4
+.print_chs:
+                    pusha
+                    mov si, .chs_msg
+                    call puts16
+                    popa
+
+                    pusha
+                    mov ax, si
+                    call hexwords16
+                    popa
+
+                    pusha
+                    mov al, ch
+                    call hexbytes16
+                    popa
+
+                    pusha
+                    mov al, dh
+                    call hexbytes16
+                    popa
+
+                    pusha
+                    mov al, cl
+                    call hexbytes16
+                    popa
+
+                    ret
+
+.print_loading:
+                    ret
+
+                    ; LBA
+                    pusha
+                    mov ax, si
+                    call hexwords16
+                    popa
+
+                    ; count
+                    pusha
+                    mov ax, cx
+                    call hexwords16
+                    popa
+
+                    ; destination segment
+                    pusha
+                    mov ax, es
+                    call hexword16
+
+                    mov al, ':'
+                    call putc16
+
+                    ; destination offset
+                    popa
+                    pusha
+                    mov ax, bx
+                    call hexwords16
+                    popa
+
+                    ret
+.msg                db 'loading sector ', 0
+
+
+.done_msg           db 'Loading completed', 13, 10, 0
 .done:
+;                    mov si, .done_msg
+;                    call puts16
+
+                    jmp init_graphics
+
 
 ;; query vesa graphics modes
 ; CAVEAT PROGRAMMER!  This code overwrites memory_info, so be sure to run this logic before setting up memory_info
 
-                    global vesa_modes
-vesa_signature      equ misc_buffer
-vesa_version        equ vesa_signature + 4
-vesa_oem_string     equ vesa_version + 2
-vesa_capabilities   equ vesa_oem_string + 4
-vesa_mode_ptr       equ vesa_capabilities + 4
-vesa_total_memory   equ vesa_mode_ptr + 4
-
-mode_attribute      equ memory_info
-mode_wina_attribute equ mode_attribute + 2
-mode_winb_attribute equ mode_wina_attribute + 1
-mode_win_granularity equ mode_winb_attribute + 1
-mode_win_size       equ mode_win_granularity + 2
-mode_wina_segment   equ mode_win_size + 2
-mode_winb_segment   equ mode_wina_segment + 2
-mode_win_func_ptr   equ mode_winb_segment + 2
-mode_pitch          equ mode_win_func_ptr + 4
-mode_width          equ mode_pitch + 2
-mode_height         equ mode_width + 2
-mode_x_charsize     equ mode_height + 2
-mode_y_charsize     equ mode_x_charsize + 1
-mode_num_planes     equ mode_y_charsize + 1
-mode_bpp            equ mode_num_planes + 1
-mode_banks          equ mode_bpp + 1
-mode_memory_model   equ mode_banks + 1
-mode_bank_size      equ mode_memory_model + 1
-mode_image_pages    equ mode_bank_size + 1
-mode_reserved0      equ mode_image_pages + 1
-mode_red_mask       equ mode_reserved0+1
-mode_red_position   equ mode_red_mask+1
-mode_green_mask     equ mode_red_position+1
-mode_green_position equ mode_green_mask+1
-mode_blue_mask      equ mode_green_position+1
-mode_blue_position  equ mode_blue_mask+1
-mode_reserved_mask  equ mode_blue_position+1
-mode_reserved_position  equ mode_reserved_mask+1
-mode_direct_color_attributes equ mode_reserved_position+1
-mode_framebuffer    equ mode_direct_color_attributes+1
-mode_fb_offset      equ mode_framebuffer + 4
-mode_fb_size        equ mode_fb_offset+ 4
-mode_reserved1      equ mode_fb_size + 2
-mode_sizeof         equ mode_reserved1 + 206
+struc VesaMode
+.attributes         resw 1
+.wina               resb 1
+.winb               resb 1
+.granulatirty       resw 1
+.win_size           resw 1
+.wina_seg           resw 1
+.winb_seg           resw 1
+.win_func           resd 1
+.pitch              resw 1
+.width              resw 1
+.height             resw 1
+.x_charsize         resb 1
+.y_charsize         resb 1
+.planes             resb 1
+.depth              resb 1
+.banks              resb 1
+.model              resb 1
+.banksize           resb 1
+.img_pages          resb 1
+.reserved0          resb 1
+.red_mask           resb 1
+.red_pos            resb 1
+.green_mask         resb 1
+.green_pos          resb 1
+.blue_mask          resb 1
+.blue_pos           resb 1
+.reserved_mas       resb 1
+.reserved_pos       resb 1
+.color_attr         resb 1
+.fb                 resd 1
+.fb_offset          resd 1
+.fb_size            resw 1
+endstruc
 
 ;;;;;;;;;
 
 video_mode_count    equ video_info
 display_mode        equ video_info + 4
 
-video_mode          equ 0
-video_fb            equ video_mode + 2
-video_pad0          equ video_fb + 4
-video_width         equ video_pad0 + 2
-video_height        equ video_width + 2
-video_pitch         equ video_height + 2
-video_bpp           equ video_fb + 4
-video_reserved0     equ video_bpp + 2
-video_pad           equ video_reserved0 + 2
-VIDEO_SIZE          equ video_pad
+struc VideoMode
+.mode               resd 1
+.fb                 resd 1
+.width              resd 1
+.height             resd 1
+.pitch              resd 1
+.depth              resd 1
+endstruc
 
-vesa_modes:
+vesa_mode_msg1      db 'Getting VESA modes', 13, 10, 0
+vesa_mode_msg2      db '  got mode list', 13, 10, 0
+vesa_got_mode_msg   db '  got mode ', 0
+vesa_mode_msgx      db 'Got VESA modes', 13, 10, 0
+
+vesa_info_block     equ misc_buffer
+vesa_signature      equ vesa_info_block
+vesa_version        equ vesa_signature + 4
+vesa_oem_string     equ vesa_version + 2
+vesa_capabilities   equ vesa_oem_string + 4
+vesa_mode_ptr       equ vesa_capabilities + 4
+vesa_total_memory   equ vesa_mode_ptr + 4
+
+struc foo
+.foo                resw 1
+.bar                resq 1
+.baz                resb 1
+.end                resb 1
+endstruc
+                    global init_graphics
+init_graphics:
                     cli
+
+                    mov si, vesa_mode_msg1
+                    call puts16
+
                     xor ecx, ecx
-                    mov [video_mode_count], cx
-                    mov [display_mode], cx
+                    mov [video_mode_count], ecx
+                    mov [display_mode], ecx
+                    mov es, cx
 
-                    mov ah, 4fh
-                    mov al, 00h
-                    mov edi, misc_buffer
+                    mov eax, [.vbe2] 
+                    mov [vesa_signature], eax
+
+                    push es
+                    push ds
+                    pop es
+                    mov ax, 4f00h
+                    mov di, vesa_info_block
                     int 10h
+                    pop es
 
+                    cmp ah, 0
+                    jz .success
+
+                    mov si, .failmsg
+                    call puts16
+                    jmp $
+
+.vbe2               db "VBE2"
+.failmsg            db 'int 10h/4f00h failed', 13, 10, 0
+
+                    align 4
+.success:
                     mov esi, [vesa_mode_ptr]
-                    mov edi, video_info + 2 + VIDEO_SIZE
+                    test esi, esi
+                    jz .done
+
+                    ; loop through modes, adding mode info to video_info array
+                    mov edi, video_info + 2 + VideoMode_size
 .loop:
+                    xor eax, eax
                     lodsw
-                    mov [edi + video_mode], ax
+                    mov [edi + VideoMode.mode], eax
 
                     cmp ax, -1
                     je .done
 
+                    ; get the info for this mode
                     pusha
                     mov cx, ax          ; mode
                     mov ah, 4fh
@@ -287,93 +536,160 @@ vesa_modes:
                     popa
 
                     ; copy mode info to video_info
-                    mov eax, [mode_framebuffer]
-                    mov [edi + video_fb], eax
 
-                    mov ax, [mode_width]
-                    mov [edi + video_width], ax
+                    mov eax, [memory_info + VesaMode.fb]
+                    mov [edi + VideoMode.fb], eax
 
-                    mov ax, [mode_height]
-                    mov [edi + video_height], ax
+                    xor eax, eax
+                    mov ax, [memory_info + VesaMode.width]
+                    mov [edi + VideoMode.width], eax
 
-                    mov ax, [mode_pitch]
-                    mov [edi + video_pitch], ax
+                    mov ax, [memory_info + VesaMode.height]
+                    mov [edi + VideoMode.height], eax
 
-                    xor ah, ah
-                    mov al, [mode_bpp]
-                    mov [edi + video_bpp], ax
+                    mov ax, [memory_info + VesaMode.pitch]
+                    mov [edi + VideoMode.pitch], eax
 
+                    xor eax, eax
+                    mov al, [memory_info + VesaMode.depth]
+                    mov [edi + VideoMode.depth], eax
 
                     ; try to choose highest resolution 32 bit display
-                    mov ax, [display_mode]
-                    test ax, ax
+                    mov eax, [edi + VideoMode.depth]
+                    cmp eax, 32
+                    jne .next
+
+                    mov eax, [display_mode]
+                    test eax, eax
                     je .choose          ; no mode chosen yet, so choose this one
 
-                    mov ax, [edi + video_height]
-                    cmp ax, [display_mode + video_height]
+                    mov eax, [edi + VideoMode.depth]
+                    cmp eax, [display_mode + VideoMode.depth]
+                    jl .next         ; lower depth, skip it
+
+                    ; same depth
+                    mov eax, [edi + VideoMode.height]
+                    cmp eax, [display_mode + VideoMode.height]
                     ja .choose         ; higher resolution, use it
                     jne .next           ; lower resolution skip to next
 
                     ; same height
-                    mov ax, [edi + video_width]
-                    cmp ax, [display_mode + video_width]
+                    mov eax, [edi + VideoMode.width]
+                    cmp eax, [display_mode + VideoMode.width]
                     ja .choose         ; same height, higher width
                     jne .next           ; lower resolution, so skip it
 
-                    ; same width and height
-                    mov ax, [edi + video_bpp]
-                    cmp ax, [display_mode + video_bpp]
-                    jl .next         ; lower bpp, skip it
-
 .choose:
-                    mov ax, [edi + video_mode]
+                    mov eax, [edi + VideoMode.mode]
                     mov [display_mode], ax
 
-                    mov ax, [edi + video_width]
-                    mov [display_mode + video_width], ax
+                    mov eax, [edi + VideoMode.width]
+                    mov [display_mode + VideoMode.width], eax
 
-                    mov ax, [edi + video_height]
-                    mov [display_mode + video_height], ax
+                    mov eax, [edi + VideoMode.height]
+                    mov [display_mode + VideoMode.height], eax
 
-                    mov ax, [edi + video_pitch]
-                    mov [display_mode + video_pitch], ax
+                    mov eax, [edi + VideoMode.pitch]
+                    mov [display_mode + VideoMode.pitch], eax
 
-                    mov ax, [edi + video_bpp]
-                    mov [display_mode + video_bpp], ax
+                    mov eax, [edi + VideoMode.depth]
+                    mov [display_mode + VideoMode.depth], eax
 
-                    mov eax, [edi + video_fb]
-                    mov [display_mode + video_fb], eax
+                    mov eax, [edi + VideoMode.fb]
+                    mov [display_mode + VideoMode.fb], eax
+
+;                    mov eax, [edi + VideoMode.planes]
+;                    mov [display_mode + VideoMode.planes], eax
+
+;                    mov eax, [edi + VideoMode.banks]
+;                    mov [display_mode + VideoMode.banks], eax
+
+;                    mov eax, [edi + VideoMode.banksize]
+;                    mov [display_mode + VideoMode.banksize], eax
+
+;                    mov eax, [edi + VideoMode.model]
+;                    mov [display_mode + VideoMode.model], eax
+
+;                    mov eax, [edi + VideoMode.fboff]
+;                    mov [display_mode + VideoMode.fboff], eax
+
+;                    mov eax, [edi + VideoMode.fbsize]
+;                    mov [display_mode + VideoMode.fbsize], eax
+
 
 .next:
-                    add edi, VIDEO_SIZE
-                    inc cx
+                    add edi, VideoMode_size
+                    inc ecx
 
                     jmp .loop
+.modemsg            db 'Mode depth ', 0
 .done:
-                    mov [video_mode_count], cx
-                    mov word [edi], -1
+                    mov [video_mode_count], ecx
+                    mov long [edi], -1
 
-                    mov esi, display_mode
-                    mov ecx, VIDEO_SIZE
-                    call hexdump16
+;                    mov si, vesa_mode_msgx
+;                    call puts16
 
 %ifdef KGFX
+                    mov si, gfx_msg
+                    call puts16
+
+                    mov esi, display_mode
+
+                    mov eax, [esi + VideoMode.mode]
+                    call hexwords16
+
+                    mov eax, [esi + VideoMode.width]
+                    call hexwords16
+
+                    mov eax, [esi + VideoMode.height]
+                    call hexwords16
+
+                    mov eax, [esi + VideoMode.depth]
+                    call hexwords16
+
+                    mov eax, [esi + VideoMode.fb]
+                    call hexlongn16
+
                     ; set chosen video display mode
                     mov ah, 4fh
                     mov al, 02h
-                    mov bx, [display_mode + video_mode]
-                    or bx, 1<<14
+                    mov ebx, [display_mode + VideoMode.mode]
+                    or ebx, 1<<14
                     int 10h
+                    jmp probe_memory
+
+gfx_msg             db '  Setting graphics mode ', 0
+%else
+                    mov si, text_msg
+                    call puts16
+                    jmp probe_memory
+text_msg            db 'kernel text mode', 13, 10, 0
 %endif
 
 ;
 ;;; Query memory chunks via BIOS
 ;
-                    jmp probe_memory
-
-                    ; ebx: which memory block t oget
+                    ; ebx: which memory block to oget
                     ; edi: where to copy memory info
 get_memory_block:
+;                    pusha
+;                    mov si, .msg
+;                    call puts16
+;                    popa
+
+;                    pusha
+;                    mov eax, ebx
+;                    call hexwords16
+;                    popa
+
+;                    pusha
+;                    mov eax, edi
+;                    call hexwordn16
+;                    popa
+
+
+
 	mov eax, 0xe820
 	mov [es:edi + 20], dword 1	; force a valid ACPI 3.X entry
 	mov ecx, 24		; ask for 24 bytes
@@ -387,13 +703,22 @@ get_memory_block:
 	je .failed
 .skip               clc
                     ret
-.failed             stc
+.failed:
+;                    mov si, .failmsg
+;                    call puts16
+                    stc
                     ret
+.failmsg            db '  *** get_memory_block failed', 13, 10, 0
+.msg                db '  get_memory_block ', 0
 
 memory_count        equ memory_info
 memory_infos        equ memory_count + 4
 
+probe_memory_msg    db 'Probing memory...', 13, 10, 0
 probe_memory:
+                    mov si, probe_memory_msg
+                    call puts16
+
                     xor ebx, ebx                            ; must be zero to start
                     mov [memory_count], ebx
                     mov edi, memory_infos
@@ -401,40 +726,6 @@ probe_memory:
                     call get_memory_block
                     jc .done
 
-                    pusha
-                    push edi
-
-                    ; hex dump 24 bytes
-;                    mov esi, edi
-;                    mov ecx, 24
-;                    call hexdump16
-;                    call newline16
-
-                    ; address 
-%if 0
-                    mov edi, [esp]
-                    mov eax, [edi + 4]
-                    call hexlong16
-                    mov edi, [esp]
-                    mov eax, [edi + 0]
-                    call hexlong16
-                    call space16
-                    ; length
-                    mov edi, [esp]
-                    mov eax, [edi + 12]
-                    call hexlong16
-                    mov edi, [esp]
-                    mov eax, [edi + 8]
-                    call hexlong16
-                    call space16
-                    ; type
-                    mov edi, [esp]
-                    mov al, [edi + 16]
-                    call hexbyte16
-                    call newline16
-                    pop edi
-                    popa
-%endif
                     add edi, 24
 
                     mov eax, [memory_count]
@@ -442,135 +733,52 @@ probe_memory:
                     mov [memory_count], eax
 
                     jmp .loop
+
+.msg                db 'Probed memory ', 0
+
+                    align 4
 .done:
-                    mov eax, [memory_count]
+;                    mov si, .msg
+;                    call puts16
+
+;                    mov eax, [memory_count]
+;                    call hexlongn16
 
 ;                    mov esi, memory_info
 ;                    mov ecx, 32
 ;                    call hexdump16
 ;                    call newline16
 
-%if 0
-
-mmap_ent            equ memory_info                         ; the number of entries will be stored at 0x8000
-do_e820:
-                    mov di, memory_info+4                   ; Set di to 0x8004. Otherwise this code will get stuck in `int 0x15` after some entries are fetched 
-	xor ebx, ebx		; ebx must be 0 to start
-	xor ebp, ebp		; keep an entry count in bp
-	mov edx, 0x0534D4150	; Place "SMAP" into edx
-	mov eax, 0xe820
-	mov [es:di + 20], dword 1	; force a valid ACPI 3.X entry
-	mov ecx, 24		; ask for 24 bytes
-	int 0x15
-	jc short .failed	                    ; carry set on first call means "unsupported function"
-	mov edx, 0x0534D4150	; Some BIOSes apparently trash this register?
-	cmp eax, edx		; on success, eax must have been reset to "SMAP"
-	jne short .failed
-	test ebx, ebx		; ebx = 0 implies list is only 1 entry long (worthless)
-	je short .failed
-	jmp short .jmpin
-.e820lp:
-	mov eax, 0xe820		; eax, ecx get trashed on every int 0x15 call
-	mov [es:di + 20], dword 1	; force a valid ACPI 3.X entry
-	mov ecx, 24		; ask for 24 bytes again
-	int 0x15
-	jc short .e820f		; carry set means "end of list already reached"
-	mov edx, 0x0534D4150	; repair potentially trashed register
-.jmpin:
-	jcxz .skipent		; skip any 0 length entries
-	cmp cl, 20		; got a 24 byte ACPI 3.X response?
-	jbe short .notext
-	test byte [es:di + 20], 1	; if so: is the "ignore this data" bit clear?
-	je short .skipent
-.notext:
-	mov ecx, [es:di + 8]	; get lower uint32_t of memory region length
-	or ecx, [es:di + 12]	; "or" it with upper uint32_t to test for zero
-	jz .skipent		; if length uint64_t is 0, skip entry
-	inc ebp		; got a good entry: ++count, move to next storage spot
-	add di, 24
-.skipent:
-	test ebx, ebx		; if ebx resets to 0, list is complete
-	jne short .e820lp
-.e820f:
-	mov [mmap_ent], ebp	                    ; store the entry count
-	clc		; there is "jc" on end of list to this point, so the carry must be cleared
-	jmp .done
-.failed:
-	stc		; "function unsupported" error exit
-.done:
-%endif
-
-%if 0
-SMAP                equ                 0x0534d4150
-                    global init_memory
-init_memory:        
-                    mov di, memory_info
-                    xor ebx, ebx        ; initial continuation value
-                    xor ebp, ebp
-                    mov edx, SMAP
-                    mov [es:di + 20], dword 1
-                    mov ecx, 24
-                    mov eax, 0xe820
-                    int 15h
-                    jc .error
-                    or ebx,ebx
-                    je .done
-                   
-;                    pusha
-;                    mov si, di
-;                    mov cx, 32
-;                    call hexdump16
-;                    mov eax, memory_info
-;                    call hexlong16
-;                    call newline16
-;                    popa
-.top:
-                    add di, 24
-                    mov edx, SMAP
-                    mov ecx, 24
-                    mov eax, 0xe820
-                    int 15h
-                    jc .error
-                    or ebx,ebx
-                    je .done
-
-                    jmp .top
-.error:
-                    call cls16
-                    jmp $
-.done:
-                    xor eax, eax
-                    mov ecx, 8
-                    rep stosd
-%endif
+enter_32bit_mode:
                     cli
+;                    mov si, .lgdt_msg
+;                    call puts16
                     lgdt [gdtr]
 
+;                    mov si, .cr0_msg
+;                    call puts16
                     mov eax, cr0
                     or al, 1
                     mov cr0, eax
 
+;                    mov si, .b32_msg
+;                    call puts16
                     jmp 8:b32
-                    nop
-                    nop
+
+.lgdt_msg           db 'about to lgdt', 13, 10, 0
+.cr0_msg            db 'about to cr0', 13, 10, 0
+.b32_msg            db 'about to jmp to b32', 13, 10, 0
+
 
 
                     [bits 32]
 
-                    %include "screen.inc"
-cls32:
-                    push edi
-                    push 0
-                    pop esi
-                    mov edi, 0xb8000
-                    mov ecx, 25*50
-                    mov ah, GREEN_ON_BLACK
-                    mov al, 'x'
-                    rep stosw
-                    pop edi
-                    ret
-
+                    %include "debug32.inc"
+b32msg:             db 'Entered 32 bit mode', 13, 10,0
+                    align 16
 b32:
+                    mov esi, b32msg
+                    call puts32
 
                     mov ax, 16
                     mov ds, ax
@@ -581,7 +789,9 @@ b32:
                     mov ebp, ESP32
                     mov esp, ebp
 
-                    call cls32
+;                    call cls32
+;                    mov esi, b32msg
+;                    call puts32
 
 ;                    call screen_clear
 
@@ -590,6 +800,7 @@ b32:
 
 ; Global Descriptor Table (64-bit).
 
+%if 0
 gdt64:
 	dq 0x0000000000000000
 	dq 0x00209b0000000000 ;// 64 bit ring0 code segment
@@ -606,7 +817,9 @@ gdt_ptr:
 gdt_ptr64:
 	dw (gdt_ptr - gdt64 - 1)
 	dq (gdt64)
-%if 0
+%endif
+
+%if 1
 GDT64:                           
 Null:               equ $ - GDT64                           ; The null descriptor.
                     dw 0xFFFF                               ; Limit (low).
@@ -640,6 +853,11 @@ PTE_LARGE           equ 1<<7
 PAGE_SIZE           equ 4096
 
 setup_identity_tables:
+                    mov edi, PLL4T
+                    mov cr3, edi
+                    mov si, .cr3_msg
+                    call puts32
+
                     mov edx, PLL4T
                     mov eax, PLL4T + PAGE_SIZE
                     or eax, PTE_PRESENT + PTE_WRITE
@@ -671,67 +889,200 @@ setup_identity_tables:
                     add edx, 8
                     loop .loop
 
+                    mov eax, PLL4T
                     ret
+.cr3_msg            db 'enter cr3', 13, 10, 0
 
-setup_page_tables:
+osdev_page_tables:
+                    mov edi, 0x1000    ; Set the destination index to 0x1000.
+                    mov cr3, edi       ; Set control register 3 to the destination index.
+;                    mov si, .cr3_msg
+;                    call puts32
+
+                    xor eax, eax       ; Nullify the A-register.
+                    mov ecx, 4096      ; Set the C-register to 4096.
+                    rep stosd          ; Clear the memory.
+                    mov edi, cr3       ; Set the destination index to control register 3.
+
+                    mov DWORD [edi], 0x2003      ; Set the uint32_t at the destination index to 0x2003.
+                    add edi, 0x1000              ; Add 0x1000 to the destination index.
+                    mov DWORD [edi], 0x3003      ; Set the uint32_t at the destination index to 0x3003.
+                    add edi, 0x1000              ; Add 0x1000 to the destination index.
+                    mov DWORD [edi], 0x4003      ; Set the uint32_t at the destination index to 0x4003.
+                    add edi, 0x1000              ; Add 0x1000 to the destination index.
+
+                    mov ebx, 0x00000003          ; Set the B-register to 0x00000003.
+                    mov ecx, 512                 ; Set the C-register to 512.
+
+.SetEntry:
+                    mov DWORD [edi], ebx         ; Set the uint32_t at the destination index to the B-register.
+                    add ebx, 0x1000              ; Add 0x1000 to the B-register.
+                    add edi, 8                   ; Add eight to the destination index.
+                    loop .SetEntry               ; Set the next entry.
+
+                    mov eax, 0x1000
+                    ret
+.cr3_msg            db 'enter cr3', 13, 10, 0
+
+;
+; Create page tables that identity maps the first 2G of address space
+;
+identity_map_2g:
+                    mov edi, PLL4T
+                    mov cr3, edi       ; Set the destination index to control register 3.
+;                    mov si, .cr3_msg
+;                    call puts32
+
+                    ; zero the page tables
+                    ; this makes all pages not present
+;                    mov edi, PLL4T
+                    xor eax, eax       ; Nullify the A-register.
+                    mov ecx, 4096      ; Set the C-register to 4096.
+                    rep stosd          ; Clear the memory.
+
+                    ; map first PLL4T entry to the PDT
+                    mov eax, PDT
+                    or eax, PTE_PRESENT + PTE_WRITE        ; present + writable
+                    mov [PLL4T], eax
+
+                    ; map first PDT entry to PDPT table
+                    mov eax, PDPT
+                    or eax, PTE_PRESENT + PTE_WRITE
+                    mov ebx, 128
+                    xor ecx, ecx
+.l:                 mov [PDT + ecx * 8], eax
+;                    mov [PDT], eax
+                    inc ecx
+                    cmp ecx, ebx
+                    jl .l
+
+                    ; map the PDT
+                    xor ecx, ecx
+.loop:
+;                    mov eax, 0x200000  
                     xor eax, eax
-                    mov ecx, 4096
-                    rep stosd
-                    mov edi, cr3
+                    mul ecx
+                    or eax, PTE_PRESENT + PTE_WRITE + PTE_LARGE
+                    mov [PDT + ecx * 8], eax
 
-                    mov DWORD [edi], 0x2003
-                    add edi, 0x1000
-                    mov DWORD [edi], 0x3003
-                    add edi, 0x1000
-                    mov DWORD [edi], 0x4003
-                    add edi, 0x1000
+                    inc ecx
+                    cmp ecx, 512
+                    jne .loop
 
-                    mov ebx, 03h
-                    mov ecx, 512
-.set_entry:
-                    mov dword [edi], ebx
-                    add ebx, 0x1000
-                    add edi, 8
-                    loop .set_entry
+                    mov eax, cr4                 ; Set the A-register to control register 4.
+                    or eax, 1 << 5               ; Set the PAE-bit, which is the 6th bit (bit 5).
+                    mov cr4, eax                 ; Set control register 4 to the A-register.
 
+                    mov eax, PLL4T
                     ret
+.cr3_msg            db 'enter cr3', 13, 10, 0
 
                     align 4
+
+identity_map_pure64:
+                    ; Clear memory for the Page Descriptor Entries (0x10000 - 0x5FFFF)
+	mov edi, 0x00010000
+	mov ecx, 81920
+	rep stosd			; Write 320KiB
+
+                    ; Create the Level 4 Page Map. (Maps 4GBs of 2MB pages)
+                    ; First create a PML4 entry.
+                    ; PML4 is stored at 0x0000000000002000, create the first entry there
+                    ; A single PML4 entry can map 512GB with 2MB pages.
+	cld
+	mov edi, 0x00002000		; Create a PML4 entry for the first 4GB of RAM
+	mov eax, 0x00003007		; location of low PDP
+	stosd
+	xor eax, eax
+	stosd
+
+	mov edi, 0x00002800		; Create a PML4 entry for higher half (starting at 0xFFFF800000000000)
+	mov eax, 0x00004007		; location of high PDP
+	stosd
+	xor eax, eax
+	stosd
+
+                    ; Create the PDP entries.
+                    ; The first PDP is stored at 0x0000000000003000, create the first entries there
+                    ; A single PDP entry can map 1GB with 2MB pages
+                    mov ecx, 4			; number of PDPE's to make.. each PDPE maps 1GB of physical memory
+	mov edi, 0x00003000		; location of low PDPE
+	mov eax, 0x00010007		; location of first low PD
+create_pdpe_low:
+	stosd
+	push eax
+	xor eax, eax
+	stosd
+	pop eax
+	add eax, 0x00001000		; 4K later (512 records x 8 bytes)
+	dec ecx
+	cmp ecx, 0
+	jne create_pdpe_low
+
+                    ; Create the low PD entries.
+                    mov edi, 0x00010000
+                    mov eax, 0x0000008F		; Bits 0 (P), 1 (R/W), 2 (U/S), 3 (PWT), and 7 (PS) set
+                    xor ecx, ecx
+pd_low:					; Create a 2 MiB page
+	stosd
+	push eax
+	xor eax, eax
+	stosd
+	pop eax
+	add eax, 0x00200000
+	inc ecx
+	cmp ecx, 2048
+	jne pd_low			; Create 2048 2 MiB page maps.
+
+	mov eax, 0x00002008		; Write-thru enabled (Bit 3)
+                    ret
+
 enter_long_mode:
+;                    mov si, .enter_msg
+;                    call puts32
+
                     mov eax, cr0
                     and eax, ~(1<<31)
                     mov cr0, eax
 
-;                    call setup_page_tables
-                    call setup_identity_tables
+;                    call setup_identity_tables
+;                    call osdev_page_tables
+;                    call identity_map_2g
+                    call identity_map_pure64
 
-                    mov edi, PLL4T
-                    mov cr3, edi
-                    ; enable PAE paging
-                    mov eax, cr4
-                    or eax, 1<<5
-                    mov cr4, eax
+                    ; eax is address of page table (for cr3)
 
-                    ; set LM bit
-                    mov ecx, 0xC0000080          ; Set the C-register to 0xC0000080, which is the EFER MSR.
-                    rdmsr
-                    or eax, 1<<8
-                    wrmsr
+                    ; Enable extended properties
+                    push eax
+	mov eax, cr4
+	or eax, 0x0000000B0		; PGE (Bit 7), PAE (Bit 5), and PSE (Bit 4)
+	mov cr4, eax
+                    pop eax
 
-                    mov eax, cr0
-                    or eax, 1<< 31 | 1<<0
-                    mov cr0, eax
+                    ; Point cr3 at PML4
+	mov cr3, eax
 
-;                    lgdt [GDT64_Pointer]
-                    lgdt [gdt_ptr64]
+                    ; Enable long mode and SYSCALL/SYSRET
+	mov ecx, 0xC0000080		; EFER MSR number
+	rdmsr				; Read EFER
+	or eax, 0x00000101 		; LME (Bit 8)
+	wrmsr				; Write EFER
+
+                    ; Enable paging to activate long mode
+	mov eax, cr0
+	or eax, 0x80000000		; PG (Bit 31)
+	mov cr0, eax
+
+
+                    lgdt [GDT64_Pointer]
                     jmp CODE_SEG:go64
-                    nop
-                    nop
-                    nop
-                    align 8
+
 
                     [bits 64]
                     %include "debug64.inc"
+                    %include 'screen.inc'
+
+boot64msg           db 'Entered long mode', 13, 10, 0
 go64:
                     cli
                     mov ax, DATA_SEG
@@ -743,36 +1094,42 @@ go64:
                     mov rbp, RSP64
                     mov rsp, rbp
 
-;                    debugger
-;                    mov rsi, memory_info
-;                    mov rcx, 16
-;                    call hexdump
+                    mov rsi, boot64msg
+                    call puts64
 
                     global call_main
 call_main:
-%if 0
+;                    mov eax, [display_mode + video_width]
+;                    call hexwords64
+;                    mov eax, [display_mode + video_height]
+;                    call hexwords64
+;                    mov eax, [display_mode + video_depth]
+;                    call hexwords64
+;                    mov eax, [display_mode + video_fb]
+;                    call hexlongn64
+
+                    ;; copy kernel to final destination
+                    mov rsi, KERNEL_LOAD
+                    mov rdi, KERNEL_ORG
                     xor rax, rax
-                    mov ax, [display_mode + video_width]
-                    xor rbx, rbx
-                    mov bx, [display_mode + video_height]
-                    imul rax, rbx
+                    mov ax, [kernel_sectors]
+                    mov rcx, 512
+                    mul rcx
                     mov rcx, rax
+                    rep movsb
 
-                    mov rax, 0
-                    xor rdi,rdi
-                    mov edi, [display_mode + video_fb]
-                    push rcx
-                    rep stosd
-                    pop rcx
-                    mov rax, 0xffffff
-                    xor rdi,rdi
-                    mov edi, [display_mode + video_fb]
-                    rep stosd
-%endif
+                    mov rsi, KERNEL_ORG
+                    mov rcx, 16
+                    call hexdump64 
 
-;                    mov esi, CMAIN
-;                    mov ecx, 16
-;                    call hexdump
-                    call CMAIN
+;                    mov rsi, .call_message
+;                    call puts64
+;                    mov rax, KERNEL_ORG
+;                    call hexquadn64
+
+                    call KERNEL_ORG
+                    cli
                     jmp $
+
+.call_message       db 'calling KERNEL_ORG ', 0
 

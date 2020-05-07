@@ -22,7 +22,8 @@ protected:
 };
 
 enum EKeyboardDeviceCommand {
-  EQueueChar,
+  EKeyDown,
+  EKeyUp,
   EReadChar,
 };
 

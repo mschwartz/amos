@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
@@ -116,12 +116,23 @@ cat < bare.img 1<>c.img
 
 #############################
 
+if [ ! -x "$WSL"  ]; then
+  echo "WSL! copy to C:\dev"
+  cp bochsrc /mnt/c/dev/
+  cp bare.img /mnt/c/dev
+fi
+
 echo ""
 echo "COMPLETE!"
 ls -l  */*.img 
 echo ""
 ls -l *.img
 echo ""
+if [ ! -x "$WSL" ]; then
+  echo "=== WSL c:\dev"
+  ls -l /mnt/c/dev
+  echo " "
+fi
 nm kernel/kernel.elf | grep " T " | awk '{ print $1" "$3 }' > kernel.sym
 echo ""
 wc -l kernel.sym

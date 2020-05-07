@@ -1,7 +1,5 @@
 #include <Exec/x86/idt.h>
 #include <posix/string.h>
-#include <Exec/x86/kprint.h>
-#include <Exec/x86/bochs.h>
 #include <Exec/x86/tasking.h>
 #include <Exec/x86/kernel_memory.h>
 
@@ -9,180 +7,213 @@ extern "C" void set_vector(void *idt_vector, void (*offset)(), TUint16 selector,
 extern "C" void load_idtr(void *ptr);
 
 // exceptions
-extern "C" uint64_t isr0;
-extern "C" uint64_t isr1;
-extern "C" uint64_t isr2;
-extern "C" uint64_t isr3;
-extern "C" uint64_t isr4;
-extern "C" uint64_t isr5;
-extern "C" uint64_t isr6;
-extern "C" uint64_t isr7;
-extern "C" uint64_t isr8;
-extern "C" uint64_t isr9;
-extern "C" uint64_t isr10;
-extern "C" uint64_t isr11;
-extern "C" uint64_t isr12;
-extern "C" uint64_t isr13;
-extern "C" uint64_t isr14;
-extern "C" uint64_t isr15;
-extern "C" uint64_t isr16;
-extern "C" uint64_t isr17;
-extern "C" uint64_t isr18;
-extern "C" uint64_t isr19;
-extern "C" uint64_t isr20;
-extern "C" uint64_t isr21;
-extern "C" uint64_t isr22;
-extern "C" uint64_t isr23;
-extern "C" uint64_t isr24;
-extern "C" uint64_t isr25;
-extern "C" uint64_t isr26;
-extern "C" uint64_t isr27;
-extern "C" uint64_t isr28;
-extern "C" uint64_t isr29;
-extern "C" uint64_t isr30;
-extern "C" uint64_t isr31;
+extern "C" TUint64 isr0;
+extern "C" TUint64 isr1;
+extern "C" TUint64 isr2;
+extern "C" TUint64 isr3;
+extern "C" TUint64 isr4;
+extern "C" TUint64 isr5;
+extern "C" TUint64 isr6;
+extern "C" TUint64 isr7;
+extern "C" TUint64 isr8;
+extern "C" TUint64 isr9;
+extern "C" TUint64 isr10;
+extern "C" TUint64 isr11;
+extern "C" TUint64 isr12;
+extern "C" TUint64 isr13;
+extern "C" TUint64 isr14;
+extern "C" TUint64 isr15;
+extern "C" TUint64 isr16;
+extern "C" TUint64 isr17;
+extern "C" TUint64 isr18;
+extern "C" TUint64 isr19;
+extern "C" TUint64 isr20;
+extern "C" TUint64 isr21;
+extern "C" TUint64 isr22;
+extern "C" TUint64 isr23;
+extern "C" TUint64 isr24;
+extern "C" TUint64 isr25;
+extern "C" TUint64 isr26;
+extern "C" TUint64 isr27;
+extern "C" TUint64 isr28;
+extern "C" TUint64 isr29;
+extern "C" TUint64 isr30;
+extern "C" TUint64 isr31;
 
 // IRQs
-extern "C" uint64_t isr32; // the timer irq (0)
-extern "C" uint64_t isr33; // the kb irq (1)
-extern "C" uint64_t isr34;
-extern "C" uint64_t isr35;
-extern "C" uint64_t isr36;
-extern "C" uint64_t isr37;
-extern "C" uint64_t isr38;
-extern "C" uint64_t isr39;
-extern "C" uint64_t isr40;
-extern "C" uint64_t isr41;
-extern "C" uint64_t isr42;
-extern "C" uint64_t isr43;
-extern "C" uint64_t isr44;
-extern "C" uint64_t isr45;
-extern "C" uint64_t isr46; // ata 0,0 (14)
-extern "C" uint64_t isr47; // ata 0,1 (15)
+extern "C" TUint64 isr32; // the timer irq (0)
+extern "C" TUint64 isr33; // the kb irq (1)
+extern "C" TUint64 isr34;
+extern "C" TUint64 isr35;
+extern "C" TUint64 isr36;
+extern "C" TUint64 isr37;
+extern "C" TUint64 isr38;
+extern "C" TUint64 isr39;
+extern "C" TUint64 isr40;
+extern "C" TUint64 isr41;
+extern "C" TUint64 isr42;
+extern "C" TUint64 isr43;
+extern "C" TUint64 isr44;
+extern "C" TUint64 isr45;
+extern "C" TUint64 isr46; // ata 0,0 (14)
+extern "C" TUint64 isr47; // ata 0,1 (15)
 
-extern "C" uint64_t isr48; // unexpected
+extern "C" TUint64 isr48; // unexpected
 
-extern "C" uint64_t isr128; // syscall (0x80, or 0x60 + 32)
-extern "C" uint64_t isr130; // interrupt scheduler
+extern "C" TUint64 isr128; // syscall (0x80, or 0x60 + 32)
+extern "C" TUint64 isr130; // interrupt scheduler
 
-static isr_handler_t interrupt_handlers[INTERRUPTS];
+static TIsrHandler interrupt_handlers[INTERRUPTS];
 
-extern "C" bool kernel_isr() {
-  isr_handler_t *info = &interrupt_handlers[current_task->isr_num];
-  if (!info->handler) {
-    const char *desc = IDT::interrupt_description(current_task->isr_num);
+/**
+  * kernel_isr
+  *
+  * This method is called from the assembly ISR handler(s) and Exception handlers.
+  */
+extern "C" bool kernel_isr(TInt64 aIsrNumber) {
+  TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
+  if (!info->mHandler) {
+    const char *desc = IDT::InterruptDescription(current_task->isr_num);
     dlog("no handler: %s\n", desc);
     return false;
   }
-  bool ret = info->handler(info->mInterruptNumber, info->data);
+  bool ret = info->mHandler(info->mInterruptNumber, info->mData);
   return ret;
 };
 
-#define IDT_PRESENT    ((uint64_t)1 << 47)
-#define IDT_64INT      ((uint64_t)14 << 40)
-#define IDT_64TRAP     ((uint64_t)15 << 40)
-#define IDT_USER       ((uint64_t)3 << 45)
-#define IDT_SYSCALL    0x80
-#define IDT_SIZE       (IDT_SYSCALL + 1)
-#define IDT_IRQS       16
+#if 0
+#define IDT_PRESENT ((TUint64)1 << 47)
+#define IDT_64INT ((TUint64)14 << 40)
+#define IDT_64TRAP ((TUint64)15 << 40)
+#define IDT_USER ((TUint64)3 << 45)
+#define IDT_SYSCALL 0x80
+#define IDT_SIZE (IDT_SYSCALL + 1)
+#define IDT_IRQS 16
 #define IDT_EXCEPTIONS 32
+#endif
 
-typedef struct idt_entry {
-  uint64_t low;
-  uint64_t high;
-  void set(uint64_t isr, uint64_t flags) {
-    uint64_t cs = 8;
-    low = (isr & 0xFFFFul) | ((uint64_t)cs << 16) | ((isr & 0xFFFF0000ul) << 32) | flags | IDT_PRESENT;
-    high = (isr >> 32) & 0xFFFFFFFFul;
-  }
-} PACKED idt_entry_t;
+#pragma pack(1)
+typedef struct {
+  TUint16 mAddressLow;
+  TUint16 mSelector;
+  TUint8 mIst : 3;
+  TUint8 mZeroes1 : 5;
+  TUint8 mType : 1;
+  TUint8 mOnes1 : 3;
+  TUint8 mZeroes2 : 1;
+  TUint8 mDpl : 2;
+  TUint8 mPresent : 1;
+  TUint16 mAddressMiddle;
+  TUint32 mAddressHigh;
+  TUint32 mZeroes3;
+} PACKED TIdtEntry;
 
 typedef struct {
   TUint16 limit;
-  idt_entry_t *base;
-} PACKED idt_ptr_t;
+  TIdtEntry *base;
+} PACKED TIdtPtr;
 
-static idt_entry_t idt_entries[IDT_SIZE];
-static idt_ptr_t idt_ptr;
+#pragma pack(0)
+
+const TInt IDT_SIZE = 256;
+
+static TIdtEntry idt_entries[IDT_SIZE];
+static TIdtPtr idt_ptr;
+
+static void set_entry(TInt aIndex, TUint64 aVec) {
+  TIdtEntry &e = idt_entries[aIndex];
+  e.mAddressLow = (TUint16)aVec;
+  e.mAddressMiddle = (TUint16)(aVec >> 16);
+  e.mAddressHigh = (TUint32)(aVec >> 32);
+  e.mZeroes1 = 0;
+  e.mZeroes2 = 0;
+  e.mType = 0;
+  e.mIst = 0;
+  e.mDpl = 0;
+  e.mOnes1 = 0b111;
+  e.mSelector = 8;
+  e.mPresent = 1;
+}
 
 IDT::IDT() {
-  disable_interrupts();
+  DisableInterrupts();
   // initialize C ISRs
   for (int i = 0; i < INTERRUPTS; i++) {
-    interrupt_handlers[i].set(i, nullptr, nullptr, "Not installed");
+    interrupt_handlers[i].Set(i, nullptr, nullptr, "Not installed");
   }
 
   // EXCEPTIONS
-  idt_entries[0].set(isr0, IDT_64INT);
-  idt_entries[1].set(isr1, IDT_64INT);
-  idt_entries[2].set(isr2, IDT_64INT);
-  idt_entries[3].set(isr3, IDT_64INT);
-  idt_entries[4].set(isr4, IDT_64INT);
-  idt_entries[5].set(isr5, IDT_64INT);
-  idt_entries[6].set(isr6, IDT_64INT);
-  idt_entries[7].set(isr7, IDT_64INT);
-  idt_entries[8].set(isr8, IDT_64INT);
-  idt_entries[9].set(isr9, IDT_64INT);
-  idt_entries[10].set(isr10, IDT_64INT);
-  idt_entries[11].set(isr11, IDT_64INT);
-  idt_entries[12].set(isr12, IDT_64INT);
-  idt_entries[13].set(isr13, IDT_64INT);
-  idt_entries[14].set(isr14, IDT_64INT);
-  idt_entries[15].set(isr15, IDT_64INT);
-  idt_entries[16].set(isr16, IDT_64INT);
-  idt_entries[17].set(isr17, IDT_64INT);
-  idt_entries[18].set(isr18, IDT_64INT);
-  idt_entries[19].set(isr19, IDT_64INT);
-  idt_entries[20].set(isr20, IDT_64INT);
-  idt_entries[21].set(isr21, IDT_64INT);
-  idt_entries[22].set(isr22, IDT_64INT);
-  idt_entries[23].set(isr23, IDT_64INT);
-  idt_entries[24].set(isr24, IDT_64INT);
-  idt_entries[25].set(isr25, IDT_64INT);
-  idt_entries[26].set(isr26, IDT_64INT);
-  idt_entries[27].set(isr27, IDT_64INT);
-  idt_entries[28].set(isr28, IDT_64INT);
-  idt_entries[29].set(isr29, IDT_64INT);
-  idt_entries[30].set(isr30, IDT_64INT);
-  idt_entries[31].set(isr31, IDT_64INT);
+  set_entry(0, isr0);
+  set_entry(1, isr1);
+  set_entry(2, isr2);
+  set_entry(3, isr3);
+  set_entry(4, isr4);
+  set_entry(5, isr5);
+  set_entry(6, isr6);
+  set_entry(7, isr7);
+  set_entry(8, isr8);
+  set_entry(9, isr9);
+  set_entry(10, isr10);
+  set_entry(11, isr11);
+  set_entry(12, isr12);
+  set_entry(13, isr13);
+  set_entry(14, isr14);
+  set_entry(15, isr15);
+  set_entry(16, isr16);
+  set_entry(17, isr17);
+  set_entry(18, isr18);
+  set_entry(19, isr19);
+  set_entry(20, isr20);
+  set_entry(21, isr21);
+  set_entry(22, isr22);
+  set_entry(23, isr23);
+  set_entry(24, isr24);
+  set_entry(25, isr25);
+  set_entry(26, isr26);
+  set_entry(27, isr27);
+  set_entry(28, isr28);
+  set_entry(29, isr29);
+  set_entry(30, isr30);
+  set_entry(31, isr31);
 
   // IRQs
-  idt_entries[32].set(isr32, IDT_64INT);
-  idt_entries[33].set(isr33, IDT_64INT);
-  idt_entries[34].set(isr34, IDT_64INT);
-  idt_entries[35].set(isr35, IDT_64INT);
-  idt_entries[36].set(isr36, IDT_64INT);
-  idt_entries[37].set(isr37, IDT_64INT);
-  idt_entries[38].set(isr38, IDT_64INT);
-  idt_entries[39].set(isr39, IDT_64INT);
-  idt_entries[40].set(isr40, IDT_64INT);
-  idt_entries[41].set(isr41, IDT_64INT);
-  idt_entries[42].set(isr42, IDT_64INT);
-  idt_entries[43].set(isr43, IDT_64INT);
-  idt_entries[44].set(isr44, IDT_64INT);
-  idt_entries[45].set(isr45, IDT_64INT);
-  idt_entries[46].set(isr46, IDT_64INT);
-  idt_entries[47].set(isr47, IDT_64INT);
+  set_entry(32, isr32);
+  set_entry(33, isr33);
+  set_entry(34, isr34);
+  set_entry(35, isr35);
+  set_entry(36, isr36);
+  set_entry(37, isr37);
+  set_entry(38, isr38);
+  set_entry(39, isr39);
+  set_entry(40, isr40);
+  set_entry(41, isr41);
+  set_entry(42, isr42);
+  set_entry(43, isr43);
+  set_entry(44, isr44);
+  set_entry(45, isr45);
+  set_entry(46, isr46);
+  set_entry(47, isr47);
 
   // install handler for unexpected interrupts
-  for (int i=48; i<IDT_SIZE; i++) {
+  for (int i = 48; i < IDT_SIZE; i++) {
     // TODO: make a special handler
-    idt_entries[i].set(isr48, IDT_64INT);
+    set_entry(i, isr48);
   }
-  idt_entries[128].set(isr128, IDT_64INT);
-  idt_entries[130].set(isr130, IDT_64INT);
+  set_entry(128, isr128);
+  set_entry(130, isr130);
 
-  idt_ptr.limit = sizeof(idt_entry_t) * 256 - 1;
+  idt_ptr.limit = sizeof(TIdtEntry) * IDT_SIZE - 1;
   idt_ptr.base = &idt_entries[0];
   load_idtr(&idt_ptr);
+  mAlive = ETrue;
 }
 
 IDT::~IDT() {
-  disable_interrupts();
+  DisableInterrupts();
 }
 
-void IDT::install_handler(uint8_t index, TInterruptHandler *handler, void *aData, const char *description) {
-  interrupt_handlers[index].set(index, handler, aData, description);
+void IDT::InstallHandler(uint8_t index, TInterruptHandler *handler, void *aData, const char *description) {
+  interrupt_handlers[index].Set(index, handler, aData, description);
 }
 
 static const char *int_desc[] = {
@@ -244,7 +275,7 @@ static const char *int_desc[] = {
   "Software interrupt"
 };
 
-const char *IDT::interrupt_description(TUint16 n) {
+const char *IDT::InterruptDescription(TUint16 n) {
   /* Interrupts descriptions */
 
   if (n < INTERRUPTS)

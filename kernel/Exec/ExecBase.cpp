@@ -1,11 +1,18 @@
 #include <Exec/ExecBase.h>
-#include <x86/bochs.h>
-#include <x86/kprint.h>
 #include <stdint.h>
 
+#include <Exec/x86/mmu.h>
+#include <Exec/x86/idt.h>
+#include <Exec/x86/gdt.h>
+#include <Exec/x86/cpu.h>
+#include <Exec/x86/pic.h>
+#include <Exec/x86/ps2.h>
+
+#include <Devices/SerialDevice.h>
 #include <Devices/KeyboardDevice.h>
 #include <Devices/TimerDevice.h>
 #include <Devices/RtcDevice.h>
+#include <Devices/MouseDevice.h>
 
 #include <posix/sprintf.h>
 #include <Exec/Random.h>
@@ -37,18 +44,17 @@ public:
 class TestTask : public BTask {
 public:
   TestTask() : BTask("Test Task") {
-    kprint("Construct TestTask\n");
+    dprint("Construct TestTask\n");
   }
 
 public:
   void Run() {
     dlog("***************************** TEST TASK RUNNING\n");
-    kprint("***************************** TEST TASK RUNNING\n");
     Sleep(1);
 #ifdef KGFX
     ScreenVesa &screen = *gExecBase.GetScreen();
     BBitmap32 &bm = *screen.GetBitmap();
-//    bm.Dump();
+    //    bm.Dump();
     BViewPort32 *vp = new BViewPort32("test vp", &bm);
     TRect rect, screenRect;
     bm.GetRect(screenRect);
@@ -60,14 +66,14 @@ public:
     font.SetColors(fg, bg);
     vp->SetFont(&font);
     vp->SetColors(fg, bg);
-    TRect vrect(50,200, 500, 300);
+    TRect vrect(50, 200, 500, 300);
     vp->SetRect(vrect);
 
     RtcDevice *rd = (RtcDevice *)gExecBase.FindDevice("rtc.device");
-//    if (!rd) {
-//      dprint("Can't find rct.device\n");
-//      halt();
-//    }
+    //    if (!rd) {
+    //      dprint("Can't find rct.device\n");
+    //      halt();
+    //    }
     bm.Clear(0x0000ff);
 #if 0
       TRGB color;
@@ -94,9 +100,9 @@ public:
     while (true) {
       char buf[128];
       sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
-//      dlog("buf: %s\n", buf);
+      //      dlog("buf: %s\n", buf);
       vp->DrawText(0, 0, buf);
-//      font.Write(vp, 100, 100, buf);
+      //      font.Write(vp, 100, 100, buf);
       Sleep(1);
     }
 #endif
@@ -110,13 +116,13 @@ public:
       Sleep(1);
     }
     ScreenVGA &screen = *gExecBase.GetScreen();
-    screen.MoveTo(20,20);
-    kprint("Test Task\n");
+    screen.MoveTo(20, 20);
+    dprint("Test Task\n");
     while (true) {
       char buf[128];
       sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
-      screen.MoveTo(10,10);
-      kprint(buf);
+      screen.MoveTo(10, 10);
+      dprint(buf);
       Sleep(1);
     }
 
@@ -130,39 +136,84 @@ public:
   }
 };
 
+typedef struct {
+  //  TUint16 mPad0;
+  TUint32 mMode;
+  TUint32 mFrameBuffer;
+  TUint32 mWidth;
+  TUint32 mHeight;
+  TUint32 mPitch;
+  TUint32 mDepth;
+  TUint32 mPlanes;
+  TUint32 mBanks;
+  TUint32 mBankSize;
+  TUint32 mMemoryModel;
+  TUint32 mFrameBufferOffset;
+  TUint32 mFrameBufferSize;
+  TUint32 mPad2;
+  void Dump() {
+    dprint("Mode(%x) mode(%x) dimensions(%dx%d) depth(%d)  pitch(%d) lfb(0x%x)\n",
+      this, mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
+    //    dlog("Mode(%x) mode(%x) dimensions(%xx%x) bpp(%x)  pitch(%x) lfb(0x%x)\n",
+    //        this, mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
+  }
+} PACKED TModeInfo;
+
+typedef struct {
+  TInt32 mCount;          // number of modes found
+  TModeInfo mDisplayMode; // chosen display mode
+  TModeInfo mModes[];
+  void Dump() {
+    dlog("Found %d %x modes\n", mCount, mCount);
+    for (TInt16 i = 0; i < mCount; i++) {
+      mModes[i].Dump();
+    }
+  }
+} PACKED TModes;
+
 // ExecBase constructor
 ExecBase::ExecBase() {
+  dlog("ExecBase constructor called\n");
+  //  cli(); halt();
   //  Screen s;
+  TModes *modes = (TModes *)0xa000;
+  TModeInfo &i = modes->mDisplayMode;
+
+#if 0
+  dprintf("video_mode_count = %x %d\n", &modes->mCount, modes->mCount);
+  dprintf("display_mode = %x\n", &modes->mDisplayMode);
+  dprintf("fb = %x %x\n", &i.mFrameBuffer, i.mFrameBuffer);
+  dprintf("width = %x %d\n", &i.mWidth, i.mWidth);
+  dprintf("height = %x %d\n", &i.mHeight, i.mHeight);
+  dprintf("pitch = %x %d\n", &i.mPitch, i.mPitch);
+  dprintf("depth = %x %d\n", &i.mDepth, i.mDepth);
+#endif
+
+  mSystemInfo.mScreenWidth = i.mWidth;
+  mSystemInfo.mScreenHeight = i.mHeight;
+  mSystemInfo.mScreenDepth = i.mDepth;
+  mSystemInfo.mScreenPitch = i.mPitch;
+  TUint64 fb = (TUint64)i.mFrameBuffer;
+  mSystemInfo.mScreenFrameBuffer = (TAny *)fb;
+  mSystemInfo.mMillis = 0;
+
 #ifdef KGFX
   mScreen = new ScreenVesa();
+  dprintf("Using VESA screen\n");
 #else
   mScreen = new ScreenVGA();
 #endif
   dlog("  initialized screen\n");
 
   SeedRandom(SystemTicks());
-  dlog("ExecBase constructor called\n");
+  dlog("\n\nDisplay Mode:\n");
+  modes->mDisplayMode.Dump();
 
   // set up paging
   mMMU = new MMU;
   dlog("  initialized MMU\n");
 
   mMessagePortList = new MessagePortList("ExecBase MessagePort List");
-
-  extern void *init_start, *init_end,
-    *text_start, *text_end,
-    *rodata_start, *rodata_end,
-    *data_start, *data_end,
-    *bss_start, *bss_end,
-    *kernel_end;
-  dlog("Amigo V1.0\n");
-  dlog("         init: %016x - %016x\n", &init_start, &init_end);
-  dlog("         text: %016x - %016x\n", &text_start, &text_end);
-  dlog("       rodata: %016x - %016x\n", &rodata_start, &rodata_end);
-  dlog("         data: %016x - %016x\n", &data_start, &data_end);
-  dlog("          bss: %016x - %016x\n", &bss_start, &bss_end);
-  dlog("   kernel_end: %016x\n", &kernel_end);
-  dlog("system memory: %d (%d pages)\n", mMMU->total_memory(), mMMU->total_pages());
 
   mGDT = new GDT;
   dlog("  initialized GDT\n");
@@ -180,35 +231,43 @@ ExecBase::ExecBase() {
   next_task = &mCurrentTask->mRegisters;
 
   // set up 8259 PIC
-  gPIC = new PIC;
+  mPIC = new PIC;
   mDisableNestCount = 0;
-//  sti();
+  //  sti();
   Disable();
-  kprint("  initialized 8259 PIC\n");
-  Enable();
+  dlog("  initialized 8259 PIC\n");
+
+#ifdef ENABLE_PS2
+  mPS2 = new PS2();
+#else
+  mPS2 = ENull;
+#endif
 
   // initialize devices
-  AddDevice(mTimer = new TimerDevice());
-  dlog("  initialized timer\n");
+  dlog("  initialize timer\n");
+  AddDevice(new TimerDevice());
 
-  AddDevice(mRtc = new RtcDevice());
-  dlog("  initialized rtc \n");
+  dlog("  initialize serial\n");
+  AddDevice(new SerialDevice());
 
+  dlog("  initialize rtc \n");
+  AddDevice(new RtcDevice());
+
+  dlog("  initialize keyboard \n");
   AddDevice(new KeyboardDevice);
-  dlog("  initialized keyboard \n");
 
+  dlog("  initialize mouse \n");
+  AddDevice(new MouseDevice());
+
+  dlog("  initialize Test Task \n");
   TestTask *test_task = new TestTask();
   gExecBase.AddTask(test_task);
   dlog("  initialized Test Task \n");
+  Enable();
 }
 
 ExecBase::~ExecBase() {
   dlog("ExecBase destructor called\n");
-}
-
-TUint64 ExecBase::SystemTicks() {
-  return mRtc->mMillis;
-  //  return mTimer->GetTicks();
 }
 
 void ExecBase::Disable() {
@@ -224,9 +283,9 @@ void ExecBase::Enable() {
   }
 }
 
-void ExecBase::AddInterruptHandler(TUint8 aIndex, TInterruptHandler *aHandler, TAny *aData, const char *aDescription) {
-  mIDT->install_handler(aIndex, aHandler, aData, aDescription);
-}
+//void ExecBase::AddInterruptHandler(TUint8 aIndex, TInterruptHandler *aHandler, TAny *aData, const char *aDescription) {
+//  mIDT->InstallHandler(aIndex, aHandler, aData, aDescription);
+//}
 
 void ExecBase::putc(char c) {
   mScreen->WriteChar(c);
@@ -244,7 +303,7 @@ void ExecBase::AddTask(BTask *aTask) {
   TUint64 flags = GetFlags();
   cli();
 
-  dlog("Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
+  dlog("    Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
   //  aTask->Dump();
   mActiveTasks.Add(*aTask);
   //  mActiveTasks.Dump();
@@ -402,6 +461,18 @@ void ExecBase::SetIntVector(EInterruptNumber aInterruptNumber, BInterrupt *aInte
   mInterrupts[aInterruptNumber].Add(*aInterrupt);
 }
 
+void ExecBase::EnableIRQ(TUint16 aIRQ) {
+  mPIC->EnableIRQ(aIRQ);
+}
+
+void ExecBase::DisableIRQ(TUint16 aIRQ) {
+  mPIC->DisableIRQ(aIRQ);
+}
+
+void ExecBase::AckIRQ(TUint16 aIRQ) {
+  mPIC->AckIRQ(aIRQ);
+}
+
 extern "C" TUint64 GetRFLAGS();
 
 TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
@@ -420,7 +491,7 @@ TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
 void ExecBase::SetException(EInterruptNumber aIndex, const char *aName) {
   TUint64 flags = GetFlags();
   cli();
-  IDT::install_handler(aIndex, ExecBase::RootHandler, this, aName);
+  IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
   SetIntVector(aIndex, new DefaultException(aName));
   SetFlags(flags);
 }
@@ -428,7 +499,7 @@ void ExecBase::SetException(EInterruptNumber aIndex, const char *aName) {
 void ExecBase::SetInterrupt(EInterruptNumber aIndex, const char *aName) {
   TUint64 flags = GetFlags();
   cli();
-  IDT::install_handler(aIndex, ExecBase::RootHandler, this, aName);
+  IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
   SetIntVector(aIndex, new DefaultIRQ(aName));
   SetFlags(flags);
 }
@@ -436,8 +507,8 @@ void ExecBase::SetInterrupt(EInterruptNumber aIndex, const char *aName) {
 void ExecBase::SetTrap(EInterruptNumber aIndex, const char *aName) {
   TUint64 flags = GetFlags();
   cli();
-  dlog("Add Trap %d %s\n", aIndex, aName);
-  IDT::install_handler(aIndex, ExecBase::RootHandler, this, aName);
+//  dlog("Add Trap %d %s\n", aIndex, aName);
+  IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
   SetIntVector(aIndex, new NextTaskTrap(aName));
   SetFlags(flags);
 }
@@ -481,7 +552,7 @@ void ExecBase::InitInterrupts() {
   SetInterrupt(EMasterPicIRQ, "MasterPic");
   SetInterrupt(EReserved1IRQ, "Reserved1");
   SetInterrupt(EReserved2IRQ, "Reserved2");
-  SetInterrupt(EReserved3IRQ, "Reserved3");
+  SetInterrupt(EMouseIRQ, "Mouse");
   SetInterrupt(ECoprocessorIRQ, "Coprocessor");
   SetInterrupt(EHardDiskIRQ, "HardDisk");
   //  SetInterrupt(EReserved4IRQ, "Reserved4");

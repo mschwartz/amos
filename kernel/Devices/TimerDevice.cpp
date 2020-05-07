@@ -1,7 +1,6 @@
-#include <Devices/TimerDevice.h>
+#include <Exec/Types.h>
 #include <Exec/ExecBase.h>
-#include <Devices/PIC.h>
-#include <x86/bochs.h>
+#include <Devices/TimerDevice.h>
 
 #define PIT_TICKS_PER_DAY 0x1800b0
 
@@ -43,7 +42,7 @@ public:
     SetFrequency(QUANTUM);
 //    SetFrequency(gExecBase.Quantum());
     gExecBase.SetIntVector(ETimerIRQ, new TimerInterrupt(this));
-    gPIC->enable_interrupt(IRQ_TIMER);
+    gExecBase.EnableIRQ(IRQ_TIMER);
   }
 
   void SetFrequency(TInt hz) {
@@ -120,7 +119,7 @@ void TimerTask::Run() {
 
 TBool TimerInterrupt::Run(TAny *aData) {
   mTask->Signal(1 << mTask->mSignalBit);
-  gPIC->ack(IRQ_TIMER);
+  gExecBase.AckIRQ(IRQ_TIMER);
   // maybe wake up new task
   gExecBase.RescheduleIRQ();
   return ETrue;

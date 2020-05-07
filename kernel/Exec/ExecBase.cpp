@@ -98,6 +98,7 @@ public:
       }
 #else
     while (true) {
+//      dprint("test task loop\n");
       char buf[128];
       sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
       //      dlog("buf: %s\n", buf);

@@ -35,10 +35,11 @@ PIC::PIC() {
   ob(PIC1_DATA, 0x1); /* 8086 mode */
   ob(PIC2_DATA, 0x1);
 
+
+#if 0
+  // disable all interrupts
   mMasterMask = mSlaveMask = 0xff;
 
-#if 1
-  // disable all interrupts
   ob(PIC1_DATA, 0xff);
   ob(PIC2_DATA, 0xff);
 
@@ -47,6 +48,7 @@ PIC::PIC() {
   EnableIRQ(IRQ_SLAVE_PIC);
 #else
   //eenable all interrupts
+  mMasterMask = mSlaveMask = 0x00;
   ob(PIC1_DATA, 0);
   ob(PIC2_DATA, 0);
 #endif

@@ -190,8 +190,8 @@ extern void dhex16(const TUint16 w);
 extern void dhex32(const TUint32 w);
 extern void dhex64(const TUint64 w);
 
-extern void dhexdump(TAny *aSource, int aLines);
-extern void dhexdump16(TAny *aSource, int aLines);
+extern void dhexdump(const TAny *aSource, int aLines);
+extern void dhexdump16(const TAny *aSource, int aLines);
 #endif
 
 #endif // BTYPES_H

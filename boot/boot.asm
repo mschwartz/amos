@@ -276,6 +276,27 @@ loading_kernel_msg  db 'xkernel... ', 0
 boot2:
                     mov si, loading_kernel_msg
                     call puts16
+
+                    ; deterine SectorsPerTrack and Numberofheads
+                    mov al, [BOOT_DRIVE]
+                    cmp al, 0x80
+                    jne .floppy
+.disk:
+                    mov ch, 0
+                    mov cl, [kernel_sector]                 ; sector number
+                    mov dh, 0                               ; head
+                    mov dl, [BOOT_DRIVE]                    ; drive number
+                    mov ah, 2
+                    mov al, [kernel_sectors]
+                    push es
+                    mov bx, KERNEL_LOAD_SEG
+                    mov es, bx
+                    xor bx, bx
+                    int 13h
+                    pop es
+                    jmp .done
+.floppy:
+
                     mov al, [BOOT_DRIVE]
                     call hexbytes16
                     mov al, [kernel_sector]
@@ -359,7 +380,7 @@ boot2:
 
                     pusha
                     mov al, cl
-                    call hexbytes16
+                    call hexbyten16
                     popa
 
                     ret
@@ -1118,9 +1139,9 @@ call_main:
                     mov rcx, rax
                     rep movsb
 
-                    mov rsi, KERNEL_ORG
-                    mov rcx, 16
-                    call hexdump64 
+;                    mov rsi, KERNEL_ORG
+;                    mov rcx, 16
+;                    call hexdump64 
 
 ;                    mov rsi, .call_message
 ;                    call puts64

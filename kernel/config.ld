@@ -3,7 +3,8 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x80000;
+    . = 0x100000;
+
     init_start = .;
     .init : {
 	    *(.init)
@@ -31,7 +32,10 @@ SECTIONS
     .rodata : { *(.rodata) }
     rodata_end = .;
     data_start = .;
-    .data : { *(.data) }
+    .data : { 
+	    *(.data) 
+	    *(.rodata)
+    }
     data_end = .;
     bss_start = .;
     .bss  : { *(.bss) *(COMMON) }

@@ -39,13 +39,13 @@ debug64_init:
                     
                     %endif
                     ret
-cls64:
-                    mov rdi, 0xb8000
-                    mov ah, WHITE_ON_BLACK
-                    mov al, '-'
-                    mov rcx, 25*80
-                    rep stosw
-                    ret
+;cls64:
+;                    mov rdi, 0xb8000
+;                    mov ah, WHITE_ON_BLACK
+;                    mov al, '-'
+;                    mov rcx, 25*80
+;                    rep stosw
+;                    ret
 
 putc64:
 %ifdef SERIAL
@@ -154,10 +154,12 @@ hexquad64:
                     push rcx
                     push rax
                     ror rax, 32
-                    and rax, 0xffffffff
+                    mov rcx, 0xffffffff
+                    and rax, rcx
                     call hexlong64
                     pop rax
-                    and rax, 0xffffffff
+                    mov rcx, 0xffffffff
+                    and rax, rcx
                     call hexlong64
                     pop rcx
                     pop rax

@@ -17,7 +17,10 @@ extern "C" void eputs(const char *s);
 extern "C" void sputc(char c);
 
 void dputc(char c) {
-  if (in_bochs) {
+//  sputc(c);
+//    outb((int)c, 0xe9);
+//  sputc(c);
+  if (false || in_bochs) {
     outb((int)c, 0xe9);
   }
   else {
@@ -28,14 +31,13 @@ void dputc(char c) {
 void dputs(const char *s) {
   TUint64 flags = GetFlags();
   cli();
-  while (*s) { dputc(*s++); }
+  while (*s) { 
+    dputc(*s++); 
+  }
   SetFlags(flags);
 }
 
 void dlog(const char *fmt, ...) {
-//  if (!in_bochs) {
-//    return;
-//  }
   TUint64 flags = GetFlags();
   cli();
 
@@ -104,7 +106,7 @@ void dhex64(const TUint64 l) {
   dhex32(l & 0xffffffff);
 }
 
-void dhexdump(TAny *aSource, int aLines) {
+void dhexdump(const TAny *aSource, int aLines) {
   TUint8 *src = (TUint8 *)aSource;
 
   TUint64 address = (TUint64)src;
@@ -119,7 +121,7 @@ void dhexdump(TAny *aSource, int aLines) {
   }
 }
 
-void dhexdump16(TAny *aSource, int aLines) {
+void dhexdump16(const TAny *aSource, int aLines) {
   TUint16 *src = (TUint16 *)aSource;
   TUint64 address = (TUint64)src;
   for (TInt i = 0; i < aLines; i++) {

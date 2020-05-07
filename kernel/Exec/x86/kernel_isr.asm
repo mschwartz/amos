@@ -1,10 +1,10 @@
-FLAG_INTERRUPT	equ 0x0e
-FLAG_R0             equ 0<<5            ; RINGS 0-3
-FLAG_P              equ 1<<7
-IDT_ENTRIES         equ 256
-VIRT_BASE           equ 0
-CODE_SEL_64         equ 1
+;FLAG_INTERRUPT	equ 0x0e
+;FLAG_R0             equ 0<<5            ; RINGS 0-3
+;FLAG_P              equ 1<<7
+;VIRT_BASE           equ 0
+;CODE_SEL_64         equ 1
 
+IDT_ENTRIES         equ 256
                     section .text
 
                     ; kernel_isr is the "C/C++" function to be called
@@ -102,10 +102,8 @@ isr%1:              dq xisr%1
 ; each of the isr handlers pushes a word of it's IRQ number and jumps here
 ; this code puashes all the registers on the stack, and calls our single C IRQ handler
 ; the C IRQ handler expects this specific order of items on the stack!  See the ISR_REGISTERS struct.
-                    extern stackdump
                     global isr_common
 isr_common:
-;                    call stackdump
 
                     push rdi            ; save rdi so we don't clobber it
 ;                    xchg bx, bx
@@ -287,56 +285,6 @@ enter_next_task:
                     mov rdi, [rdi + task_rdi]
 
                     iretq
-
-%if 0
-                    ; restore task state
-                    ; set up the return stack using the task's stack memory
-                    mov ax, [rdi + task_ss]
-                    mov ss, ax
-                    mov rsp, [rdi + task_rsp]
-
-                    ; we save/restore the return stack in case we switch stacks on a task switch
-                    xor rax, rax
-                    mov eax, [rdi + task_ss]
-                    push rax
-
-                    mov rax, [rdi + task_rsp]
-                    push rax
-
-                    mov rax, [rdi + task_flags]
-                    push rax
-
-                    mov eax, [rdi + task_cs]
-                    push rax
-
-                    mov rax, [rdi + task_rip]
-                    push rax
-
-                    ; stack is now ready for iretq
-
-                    mov rax, [rdi + task_rax]
-                    mov rbx, [rdi + task_rbx]
-                    mov rcx, [rdi + task_rcx]
-                    mov rdx, [rdi + task_rdx]
-
-                    mov rsi, [rdi + task_rsi]
-
-                    mov gs, [rdi + task_gs]
-                    mov fs, [rdi + task_fs]
-                    mov es, [rdi + task_es]
-                    mov ds, [rdi + task_ds]
-                   
-                    mov rbp, [rdi + task_rbp]
-                    ; finally restore rdi (we don't need it anymore)
-                    mov rdi, [rdi + task_rdi]
-
-                    global dump_it
-dump_it:
-;bochs
-;                    call stackdump
-                    iretq
-
-%endif
 
                     global save_rsp
 save_rsp:

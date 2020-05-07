@@ -7,29 +7,20 @@ COM1                equ 0x3f8
                     xchg bx,bx
                     %endmacro
 
-WHITE_ON_BLACK      equ 0x0f
-WHITE_ON_GREEN      equ 0x1e
-
                     section start
                     global _start
 _start:
-;                    mov edi, 0xB8000
-;                    mov ah, WHITE_ON_BLACK
-;                    mov al, '.'
-;                    mov ecx, 25*80
-;                    rep stosw                     ; Clear the screen.
                     jmp boot
 
                     %include "../boot/debug64.inc"
-                    global foo
-foo:
-                    nop
-                    ret
 
-                    extern _init, _fini
                     extern kernel_main
 
-start_msg:          db 'kernel_start', 13, 10, 0
+start_msg:          db 13, 10, 'kernel_start', 13, 10, 0
+
+                    align 8
+
+                    extern init_start, rodata_start
 boot:
 %ifdef SERIAL
                     call debug64_init
@@ -37,14 +28,16 @@ boot:
                     mov rsi, start_msg
                     call puts64
 
+;                    mov rsi, rodata_start
+;                    mov rcx, 64
+;                    call hexdump64
+
                     push rbp
                     mov rbp, rsp
-;                    call _init
                     mov rax, 0xdeadbeef
                     push rax
                     call kernel_main
                     add esp, 8
-;                    call _fini
                     leave
                     ret
 
@@ -56,6 +49,16 @@ sputc:
                     pop rax
                     ret
 
+                    global sputs
+sputs:
+                    push rax
+                    push rsi
+                    mov rsi, rdi
+                    call puts64
+                    pop rsi
+                    pop rax
+                    ret
+                    
 ;; inputs:
 ;;   rdi = address of memory to zero
 ;;   rsi = number of bytes to zero

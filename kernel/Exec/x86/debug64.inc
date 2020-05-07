@@ -14,18 +14,6 @@ putc:
                     pop dx
                     ret
 
-;                    push rdx
-
-;                    mov rdx, [screen]
-;                    mov ah, WHITE_ON_BLACK
-;                    mov [rdx], ax
-;                    add rdx, 2
-;                    mov [screen], rdx
-
-;                    pop rdx
-;                    ret
-
-;                    ret
                    
 newline64:
                     mov al, 13

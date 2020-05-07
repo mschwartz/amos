@@ -9,8 +9,8 @@ BOOTSTRAP_ORG       equ 0x7c00
 
 ; kernel address (loaded here)
 KERNEL_ORG          equ 0x100000
-KERNEL_LOAD         equ 0x80000
-KERNEL_LOAD_SEG     equ 0x8000
+KERNEL_LOAD         equ 0x60000
+KERNEL_LOAD_SEG     equ 0x6000
 
 ; display
 CGA                 equ 0xb8000

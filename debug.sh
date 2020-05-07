@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ./build.sh
-if [ ! -x "$WSL" ]; then
+if [ "$WSL" != "" ]; then
   if [ -e "/mnt/c/dev/bare.log" ]; then
     mv /mnt/c/dev/bare.log /mnt/c/dev/bare.log.1
   fi

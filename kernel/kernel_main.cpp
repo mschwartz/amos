@@ -8,6 +8,7 @@
 typedef void (*func_ptr)(void);
 
 extern "C" void sputc(char c);
+extern "C" void sputs(const char *s);
 
 // these are for calling global constructors
 extern "C" func_ptr __init_array_start[0], __init_array_end[0];
@@ -22,8 +23,6 @@ static void call_global_constructors(void) {
 }
 
 extern "C" int kernel_main(TUint64 ax) {
-  in_bochs = *((TUint8 *)0x7c10);
-  dlog("Entered kernel_main\n");
   extern void *init_start, *init_end,
     *text_start, *text_end,
     *rodata_start, *rodata_end,
@@ -31,7 +30,9 @@ extern "C" int kernel_main(TUint64 ax) {
     *bss_start, *bss_end,
     *kernel_end;
 
-  dlog("Amigo V1.0\n");
+  in_bochs = *((TUint8 *)0x7c10);
+
+  dlog("Amigo V1.0 %s\n",in_bochs ? "BOCHS ENABLED" : "NO BOCHS");
   dlog("         init: %016x - %016x\n", &init_start, &init_end);
   dlog("         text: %016x - %016x\n", &text_start, &text_end);
   dlog("       rodata: %016x - %016x\n", &rodata_start, &rodata_end);

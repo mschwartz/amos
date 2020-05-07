@@ -71,7 +71,9 @@ public:
 #endif
     gExecBase.SetIntVector(ERtcClockIRQ, new RtcInterrupt(this));
 
+    SetFlags(flags);
 
+    dlog("RTC Wait Signal\n");
     while (ETrue) {
       TUint64 sigs = Wait(1 << 10);
     };

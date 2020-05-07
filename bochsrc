@@ -9,6 +9,7 @@ vgaromimage: file="/usr/share/bochs/VGABIOS-lgpl-latest"
 boot: disk
 floppy_bootsig_check: disabled=0
 #floppya: image="c.img", mode="flat", status=inserted
+floppya: 1_44="c.img", status=inserted
 # no floppya
 # no floppyb
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
@@ -55,14 +56,14 @@ mouse: type=ps2, enabled=1, toggle=ctrl+f10
 speaker: enabled=1, mode=system
 parport1: enabled=1, file=none
 parport2: enabled=0
-com1: enabled=1, mode=null
+com1: enabled=1, mode=file, dev=/tmp/serial.txt
 com2: enabled=0
 com3: enabled=0
 com4: enabled=0
 
 # 4096 = 4G, but makes bocks load slow
 #memory: guest=4096, host=250
-memory: guest=1024, host=250
+memory: guest=2048, host=250
 clock: sync_realtime, time0=local, rtc_sync=1
 #clock: sync=both,time0=local
 #clock: sync=slowdown

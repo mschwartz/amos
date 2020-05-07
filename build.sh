@@ -116,7 +116,7 @@ cat < bare.img 1<>c.img
 
 #############################
 
-if [ ! -x "$WSL"  ]; then
+if [ "$WSL" != "" ]; then
   echo "WSL! copy to C:\dev"
   cp bochsrc /mnt/c/dev/
   cp bare.img /mnt/c/dev
@@ -128,7 +128,7 @@ ls -l  */*.img
 echo ""
 ls -l *.img
 echo ""
-if [ ! -x "$WSL" ]; then
+if [ "$WSL" != "" ]; then
   echo "=== WSL c:\dev"
   ls -l /mnt/c/dev
   echo " "

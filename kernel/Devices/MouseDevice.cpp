@@ -227,19 +227,30 @@ void MouseTask::Run() {
 
   SetFlags(flags);
 
-  dlog("mouse waitport\n");
-  TBool mouse_rendered = EFalse;
+  BMessageList messages("mouselist");
+
   while (WaitPort(mMessagePort)) {
     while (MouseMessage *m = (MouseMessage *)mMessagePort->GetMessage()) {
       switch (m->mCommand) {
-        case EMouseUpdate:
-          mDevice->mX = m->mMouseX;
-          mDevice->mY = m->mMouseY;
-          mDevice->mButtons = m->mButtons;
+        case EMouseUpdate: {
+          TInt32 x = m->mMouseX,
+                 y = m->mMouseY;
+          TUint8 buttons = m->mButtons;
+
+          mDevice->mX = x;
+          mDevice->mY = y;
+          mDevice->mButtons = buttons;
           delete m;
+          while ((m = (MouseMessage *)messages.RemHead())) {
+            m->mMouseX = x;
+            m->mMouseY = y;
+            m->mButtons = buttons;
+            m->ReplyMessage();
+          }
           dlog("mouse move %d,%d %x\n", mDevice->mX, mDevice->mY, mDevice->mButtons);
-          break;
-        case EMouseState:
+        } break;
+        case EMouseMove:
+          messages.AddTail(*m);
           break;
         default:
           break;

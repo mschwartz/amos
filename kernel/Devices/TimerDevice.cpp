@@ -45,11 +45,21 @@ public:
     gExecBase.EnableIRQ(IRQ_TIMER);
   }
 
+  /*
+  mov al, 0x36
+    out 0x43, al    ;tell the PIT which channel we're setting
+
+    mov ax, 11931
+    out 0x40, al    ;send low byte
+    mov al, ah
+    out 0x40, al    ;send high byte
+*/
+
   void SetFrequency(TInt hz) {
     TUint16 divisor = 1193180 / hz;
-    outb(I8253_CMD, 0x36);
-    outb(I8253_CH0, divisor & 0xff);
-    outb(I8253_CH0, (divisor >> 8) & 0xff);
+    outb(0x36, I8253_CMD);
+    outb(divisor & 0xff, I8253_CH0);
+    outb((divisor >> 8) & 0xff, I8253_CH0);
   }
 
   void Run();

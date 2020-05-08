@@ -24,7 +24,7 @@ protected:
 
 enum EMouseDeviceCommand {
   EMouseUpdate,
-  EMouseState,
+  EMouseMove,
 };
 
 class MouseMessage : public BMessage {

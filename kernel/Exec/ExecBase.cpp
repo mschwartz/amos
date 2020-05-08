@@ -1,4 +1,5 @@
 #include <Exec/ExecBase.h>
+#include <Inspiration/Inspiration.h>
 #include <stdint.h>
 
 #include <Exec/x86/mmu.h>
@@ -97,8 +98,9 @@ public:
         Sleep(1);
       }
 #else
+    TInt count = 0;
     while (true) {
-//      dprint("test task loop\n");
+      dprint("test task loop %d\n", ++count);;
       char buf[128];
       sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
       //      dlog("buf: %s\n", buf);
@@ -259,6 +261,9 @@ ExecBase::ExecBase() {
 
   dlog("  initialize mouse \n");
   AddDevice(new MouseDevice());
+
+  dlog("  initialize Inspiration\n");
+  gInspirationBase = *new InspirationBase();
 
   dlog("  initialize Test Task \n");
   TestTask *test_task = new TestTask();
@@ -508,7 +513,7 @@ void ExecBase::SetInterrupt(EInterruptNumber aIndex, const char *aName) {
 void ExecBase::SetTrap(EInterruptNumber aIndex, const char *aName) {
   TUint64 flags = GetFlags();
   cli();
-//  dlog("Add Trap %d %s\n", aIndex, aName);
+  //  dlog("Add Trap %d %s\n", aIndex, aName);
   IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
   SetIntVector(aIndex, new NextTaskTrap(aName));
   SetFlags(flags);

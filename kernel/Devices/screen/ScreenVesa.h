@@ -17,6 +17,13 @@ public:
 //    attribute = ((bg << 4) & 0xf0) | (fg & 0x0f);
   }
 
+public:
+  // mouse curor methods
+  void MoveCursor(TInt aX, TInt aY);
+  void ShowCursor();
+  void HideCursor();
+
+public:
   void MoveTo(int x, int y);
   void GetXY(int &x, int &y);
   void Down();
@@ -31,15 +38,18 @@ public:
   void WriteChar(char c);
   void ClearScreen(TUint8 ch = ' ');
   void WriteString(const char *s);
+  void WriteString(TInt aX, TInt aY, const char *s);
 
   BBitmap32 *GetBitmap() { return mBitmap; }
 
 protected:
   BBitmap32 *mBitmap;
 //  TUint8 *screen;
-  TUint8 attribute;
   TInt mX, mY;
+  TInt mMouseX, mMouseY;
   char buf[256];
+  TBool mMouseHidden;
+  TUint8 attribute;
 };
 
 #endif

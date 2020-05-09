@@ -98,13 +98,16 @@ public:
         Sleep(1);
       }
 #else
-    TInt count = 0;
+      bm.FillRect(0xffffff, 300, 300, 500, 500);
+//    TInt count = 0;
     while (true) {
-      dprint("test task loop %d\n", ++count);;
+//      dlog("test task loop %d\n", ++count);;
       char buf[128];
       sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
       //      dlog("buf: %s\n", buf);
+      screen.HideCursor();
       vp->DrawText(0, 0, buf);
+      screen.ShowCursor();
       //      font.Write(vp, 100, 100, buf);
       Sleep(1);
     }

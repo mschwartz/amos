@@ -12,7 +12,10 @@ public:
   ~BBitmap32();
 
 public:
-  inline void INLINE PlotPixel(TRGB& aColor, TInt32 aX, TInt32 aY) {
+  TBool PointInRect(TInt aX, TInt aY) { return mRect.PointInRect(aX, aY); }
+
+public:
+  inline void INLINE PlotPixel(TRGB &aColor, TInt32 aX, TInt32 aY) {
     mPixels[aY * mPitch + aX] = aColor.rgb888();
   }
 
@@ -20,7 +23,7 @@ public:
     mPixels[aY * mPitch + aX] = aColor;
   }
 
-  inline void INLINE SafePlotPixel(TRGB& aColor, TInt32 aX, TInt32 aY) {
+  inline void INLINE SafePlotPixel(TRGB &aColor, TInt32 aX, TInt32 aY) {
     if (mRect.PointInRect(aX, aY)) {
       mPixels[aY * mPitch + aX] = aColor.rgb888();
     }
@@ -80,11 +83,11 @@ public:
   void DrawText(TInt16 aX, TInt16 aY, const char *aString);
 
 public:
-  void GetRect(TRect &aRect) { 
-    aRect.x1 = mRect.x1; 
-    aRect.y1 = mRect.y1; 
-    aRect.x2 = mRect.x2; 
-    aRect.y2 = mRect.y2; 
+  void GetRect(TRect &aRect) {
+    aRect.x1 = mRect.x1;
+    aRect.y1 = mRect.y1;
+    aRect.x2 = mRect.x2;
+    aRect.y2 = mRect.y2;
   }
   TInt Width() { return mWidth; }
   TInt Height() { return mHeight; }

@@ -25,7 +25,6 @@ public:
 public:
   void Dump();
 
-protected:
   MessagePort *mReplyPort;
 };
 

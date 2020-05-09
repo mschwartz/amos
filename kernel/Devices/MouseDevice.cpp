@@ -242,14 +242,16 @@ void MouseTask::Run() {
           mDevice->mButtons = buttons;
           delete m;
           while ((m = (MouseMessage *)messages.RemHead())) {
+//            dlog("mouse move %x %d,%d %x\n", m, mDevice->mX, mDevice->mY, mDevice->mButtons);
             m->mMouseX = x;
             m->mMouseY = y;
             m->mButtons = buttons;
+            dlog(" Reply message %x to port %x\n", m, m->mReplyPort);
             m->ReplyMessage();
           }
-          dlog("mouse move %d,%d %x\n", mDevice->mX, mDevice->mY, mDevice->mButtons);
         } break;
         case EMouseMove:
+          dlog("mouse.device queued %x\n", m);
           messages.AddTail(*m);
           break;
         default:

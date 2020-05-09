@@ -12,7 +12,8 @@
 #define I8253_CMD_LOAD 0x34
 #define I8253_CMD_LATCH 0x04
 
-#define QUANTUM 100
+//#define QUANTUM 100
+#define QUANTUM gExecBase.Quantum()
 
 class TimerTask;
 
@@ -38,22 +39,10 @@ public:
   TimerTask(TimerDevice *aTimerDevice) : BTask("Timer Task", LIST_PRI_MAX) {
     mTimerDevice = aTimerDevice;
 
-//    pic_100hz();
     SetFrequency(QUANTUM);
-//    SetFrequency(gExecBase.Quantum());
     gExecBase.SetIntVector(ETimerIRQ, new TimerInterrupt(this));
     gExecBase.EnableIRQ(IRQ_TIMER);
   }
-
-  /*
-  mov al, 0x36
-    out 0x43, al    ;tell the PIT which channel we're setting
-
-    mov ax, 11931
-    out 0x40, al    ;send low byte
-    mov al, ah
-    out 0x40, al    ;send high byte
-*/
 
   void SetFrequency(TInt hz) {
     TUint16 divisor = 1193180 / hz;

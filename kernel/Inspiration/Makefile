@@ -1,6 +1,8 @@
+# INSPIRATION
+
 LIB=	libinspiration.a
 
-OBJ=	Inspiration.o
+OBJ=	Inspiration.o ScreenVesa.o BWindow.o TestTask.o
 
 .cpp.o:
 	@echo $*.cpp

@@ -24,7 +24,7 @@ void BMessage::ReplyMessage() {
 }
 
 void BMessage::Dump() {
-  dprint("BMessage: %x %s\n", mReplyPort, mReplyPort ? mReplyPort->NodeName() : "No Name");
+  dlog("BMessage: %x %s\n", mReplyPort, mReplyPort ? mReplyPort->NodeName() : "No Name");
 }
 
 /********************************************************************************
@@ -64,9 +64,9 @@ void MessagePort::ReceiveMessage(BMessage *aMessage) {
 }
 
 void MessagePort::Dump() {
-  dprintf("MessagePort: %x %s\n", this, this->NodeName());
-  dprint("      mOwner: %s\n", mOwner->NodeName());
-  dprint("  mSignalBit: %d\n", mSignalBit);
+  dlog("MessagePort: %x %s\n", this, this->NodeName());
+  dlog("      mOwner: %s\n", mOwner->NodeName());
+  dlog("  mSignalBit: %d\n", mSignalBit);
 }
 
 /********************************************************************************

@@ -18,9 +18,6 @@
 #include <posix/sprintf.h>
 #include <Exec/Random.h>
 
-#include <Graphics/BViewPort.h>
-#include <Graphics/font/BConsoleFont.h>
-
 ExecBase gExecBase;
 
 extern "C" void schedule_trap();
@@ -37,110 +34,12 @@ public:
     //    sti();
     dlog("IdleTask Running\n");
     while (1) {
+      dlog("IT Run\n");
       halt();
     }
   }
 };
 
-class TestTask : public BTask {
-public:
-  TestTask() : BTask("Test Task") {
-    dprint("Construct TestTask\n");
-  }
-
-public:
-  void Run() {
-    dlog("***************************** TEST TASK RUNNING\n");
-    Sleep(1);
-#ifdef KGFX
-    ScreenVesa &screen = *gExecBase.GetScreen();
-    BBitmap32 &bm = *screen.GetBitmap();
-    //    bm.Dump();
-    BViewPort32 *vp = new BViewPort32("test vp", &bm);
-    TRect rect, screenRect;
-    bm.GetRect(screenRect);
-
-    TRGB fg(255, 255, 255), bg(0, 0, 0);
-    BConsoleFont32 font(&bm);
-
-    bm.SetFont(&font);
-    font.SetColors(fg, bg);
-    vp->SetFont(&font);
-    vp->SetColors(fg, bg);
-    TRect vrect(50, 200, 500, 300);
-    vp->SetRect(vrect);
-
-    RtcDevice *rd = (RtcDevice *)gExecBase.FindDevice("rtc.device");
-    //    if (!rd) {
-    //      dprint("Can't find rct.device\n");
-    //      halt();
-    //    }
-    bm.Clear(0x0000ff);
-#if 0
-      TRGB color;
-
-      while (ETrue) {
-        dlog("START!\n");
-        for (TInt n=0; n<100000; n++) {
-          if ((n % 100) == 0) {
-            dlog("n = %d\n", n);
-          }
-          rect.x1 = Random(screenRect.x1, screenRect.x2);
-          rect.x2 = Random(rect.x1, screenRect.x2);
-          rect.y1 = Random(screenRect.y1, screenRect.y2);
-          rect.y2 = Random(rect.y1, screenRect.y2);
-          TRGB color(Random(0, 255), Random(0, 255), Random(0, 255));
-//          dlog("Fill %d,%d,%d,%d %x\n", rect.x1, rect.y1, rect.x2, rect.y2, color.rgb888());
-          bm.FillRect(color, rect);
-//          bm.DrawRect(color, rect);
-        }
-        dlog("END!\n");
-        Sleep(1);
-      }
-#else
-      bm.FillRect(0xffffff, 300, 300, 500, 500);
-//    TInt count = 0;
-    while (true) {
-//      dlog("test task loop %d\n", ++count);;
-      char buf[128];
-      sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
-      //      dlog("buf: %s\n", buf);
-      screen.HideCursor();
-      vp->DrawText(0, 0, buf);
-      screen.ShowCursor();
-      //      font.Write(vp, 100, 100, buf);
-      Sleep(1);
-    }
-#endif
-#else
-    RtcDevice *rd = ENull;
-    while (rd == ENull) {
-      rd = (RtcDevice *)gExecBase.FindDevice("rtc.device");
-      if (rd) {
-        break;
-      }
-      Sleep(1);
-    }
-    ScreenVGA &screen = *gExecBase.GetScreen();
-    screen.MoveTo(20, 20);
-    dprint("Test Task\n");
-    while (true) {
-      char buf[128];
-      sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
-      screen.MoveTo(10, 10);
-      dprint(buf);
-      Sleep(1);
-    }
-
-#endif
-
-    //      TInt64 time = 0;
-    //      while (1) {
-    //        Sleep(1);
-    //        dlog("TestTask: Time %d\n", ++time);
-    //      }
-  }
-};
 
 typedef struct {
   //  TUint16 mPad0;
@@ -158,7 +57,7 @@ typedef struct {
   TUint32 mFrameBufferSize;
   TUint32 mPad2;
   void Dump() {
-    dprint("Mode(%x) mode(%x) dimensions(%dx%d) depth(%d)  pitch(%d) lfb(0x%x)\n",
+    dlog("Mode(%x) mode(%x) dimensions(%dx%d) depth(%d)  pitch(%d) lfb(0x%x)\n",
       this, mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
     //    dlog("Mode(%x) mode(%x) dimensions(%xx%x) bpp(%x)  pitch(%x) lfb(0x%x)\n",
     //        this, mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
@@ -181,19 +80,8 @@ typedef struct {
 ExecBase::ExecBase() {
   dlog("ExecBase constructor called\n");
   //  cli(); halt();
-  //  Screen s;
   TModes *modes = (TModes *)0xa000;
   TModeInfo &i = modes->mDisplayMode;
-
-#if 0
-  dprintf("video_mode_count = %x %d\n", &modes->mCount, modes->mCount);
-  dprintf("display_mode = %x\n", &modes->mDisplayMode);
-  dprintf("fb = %x %x\n", &i.mFrameBuffer, i.mFrameBuffer);
-  dprintf("width = %x %d\n", &i.mWidth, i.mWidth);
-  dprintf("height = %x %d\n", &i.mHeight, i.mHeight);
-  dprintf("pitch = %x %d\n", &i.mPitch, i.mPitch);
-  dprintf("depth = %x %d\n", &i.mDepth, i.mDepth);
-#endif
 
   mSystemInfo.mScreenWidth = i.mWidth;
   mSystemInfo.mScreenHeight = i.mHeight;
@@ -202,14 +90,6 @@ ExecBase::ExecBase() {
   TUint64 fb = (TUint64)i.mFrameBuffer;
   mSystemInfo.mScreenFrameBuffer = (TAny *)fb;
   mSystemInfo.mMillis = 0;
-
-#ifdef KGFX
-  mScreen = new ScreenVesa();
-  dprintf("Using VESA screen\n");
-#else
-  mScreen = new ScreenVGA();
-#endif
-  dlog("  initialized screen\n");
 
   SeedRandom(SystemTicks());
   dlog("\n\nDisplay Mode:\n");
@@ -229,13 +109,6 @@ ExecBase::ExecBase() {
 
   InitInterrupts();
 
-  // Before enabling interrupts, we need to have the idle task set up
-  IdleTask *task = new IdleTask();
-  mActiveTasks.Add(*task);
-  mCurrentTask = mActiveTasks.First();
-  current_task = ENull;
-  next_task = &mCurrentTask->mRegisters;
-
   // set up 8259 PIC
   mPIC = new PIC;
   mDisableNestCount = 0;
@@ -248,6 +121,13 @@ ExecBase::ExecBase() {
 #else
   mPS2 = ENull;
 #endif
+
+  // Before enabling interrupts, we need to have the idle task set up
+  IdleTask *task = new IdleTask();
+  mActiveTasks.Add(*task);
+  mCurrentTask = mActiveTasks.First();
+  current_task = ENull;
+  next_task = &mCurrentTask->mRegisters;
 
   // initialize devices
   dlog("  initialize timer\n");
@@ -265,13 +145,18 @@ ExecBase::ExecBase() {
   dlog("  initialize mouse \n");
   AddDevice(new MouseDevice());
 
-  dlog("  initialize Inspiration\n");
-  gInspirationBase = *new InspirationBase();
 
+  dlog("  initialize Inspiration\n");
+  mInspirationBase = new InspirationBase();
+  mInspirationBase->Init();
+
+#if 0
   dlog("  initialize Test Task \n");
   TestTask *test_task = new TestTask();
   gExecBase.AddTask(test_task);
   dlog("  initialized Test Task \n");
+#endif
+
   Enable();
 }
 
@@ -296,18 +181,6 @@ void ExecBase::Enable() {
 //  mIDT->InstallHandler(aIndex, aHandler, aData, aDescription);
 //}
 
-void ExecBase::putc(char c) {
-  mScreen->WriteChar(c);
-}
-
-void ExecBase::puts(const char *s) {
-  mScreen->WriteString(s);
-}
-
-void ExecBase::newline() {
-  mScreen->NewLine();
-}
-
 void ExecBase::AddTask(BTask *aTask) {
   TUint64 flags = GetFlags();
   cli();
@@ -322,7 +195,11 @@ void ExecBase::AddTask(BTask *aTask) {
 }
 
 void ExecBase::DumpTasks() {
+  dprint("\n\nActive Tasks\n");
   mActiveTasks.Dump();
+  dprint("Waiting Tasks\n");
+  mWaitingTasks.Dump();
+  dprint("\n\n");
 }
 
 void ExecBase::WaitSignal(BTask *aTask) {
@@ -352,6 +229,7 @@ void ExecBase::Wake(BTask *aTask) {
   aTask->Remove();
   mActiveTasks.Add(*aTask);
   aTask->mTaskState = ETaskRunning;
+//  DumpTasks();
 }
 
 void ExecBase::Schedule() {

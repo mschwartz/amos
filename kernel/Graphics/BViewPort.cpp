@@ -6,8 +6,9 @@
  ********************************************************************************
  *******************************************************************************/
 
+// constructor
 BViewPort::BViewPort(const char *aName, BBitmap *aBitmap) : BNodePri(aName) {
-  dlog("BViewPort constructor\n");
+  //  dlog("BViewPort constructor\n");
   mBitmap = aBitmap;
 }
 
@@ -18,15 +19,15 @@ BViewPort::~BViewPort() {
  ********************************************************************************
  *******************************************************************************/
 
+// constructor
 BViewPort32::BViewPort32(const char *aName, BBitmap32 *aBitmap) : BViewPort(aName, (BBitmap *)aBitmap) {
-  dlog("BViewPort32 constructor\n");
   mBitmap32 = aBitmap;
-  mBitmap32->Dump();
   mBitmap32->GetRect(mRect);
 }
 
 void BViewPort32::Clear(TUint32 aColor) {
-  mBitmap32->FillRect(aColor, mRect.x1, mRect.y1, mRect.x2, mRect.y2);
+  TRGB c(aColor);
+  mBitmap32->FillRect(c, mRect);
 }
 
 void BViewPort32::FastLineHorizontal(TUint32 aColor, TInt aX, TInt aY, TUint aW) {
@@ -36,7 +37,7 @@ void BViewPort32::FastLineHorizontal(TUint32 aColor, TInt aX, TInt aY, TUint aW)
 
   for (TInt x = x1; x < xmax; x++) {
     if (mRect.PointInRect(x, y1)) {
-      mBitmap32->PlotPixel(aColor, x, y1++);
+      mBitmap32->PlotPixel(aColor, x, y1);
     }
   }
 }
@@ -48,7 +49,7 @@ void BViewPort32::FastLineVertical(TUint32 aColor, TInt aX, TInt aY, TUint aH) {
 
   for (TInt y = y1; y < ymax; y++) {
     if (mRect.PointInRect(x1, y)) {
-      mBitmap32->PlotPixel(aColor, x1++, y);
+      mBitmap32->PlotPixel(aColor, x1, y);
     }
   }
 }

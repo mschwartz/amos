@@ -6,8 +6,15 @@
 #include <Exec/BTask.h>
 #include <Exec/MessagePort.h>
 #include <Exec/BDevice.h>
+#include <Exec/Random.h>
 
-#include <Devices/Screen.h>
+extern "C" TUint64 GetFlags();
+extern "C" void SetFlags(TUint64 aFlags);
+
+#define DISABLE TUint64 ___flags = GetFlags(); cli();
+#define ENABLE SetFlags(___flags);
+
+//#include <Devices/Screen.h>
 //#include <Exec/x86/cpu.h>
 
 class RtcDevice;
@@ -16,6 +23,7 @@ class MMU;
 class IDT;
 class PIC;
 class PS2;
+class InspirationBase;
 
 /* External interrupts */
 #define IRQ_OFFSET 0x20 /* Interrupt offset for external interrupts */
@@ -62,7 +70,7 @@ class ExecBase : public BBase {
   friend RtcDevice;
 
 protected:
-  void Tick() { mSystemInfo.mMillis++; }
+  void Tick() { mSystemInfo.mMillis++; Random(); }
 
 public:
   ExecBase();
@@ -74,25 +82,13 @@ public:
   TInt Quantum() { return 100; }
 
 public:
-  // put character, string to console, wherever console is.
-  void putc(char c);
-  void puts(const char *s);
-  void newline();
-
-public:
   void GuruMeditation(const char *aFormat, ...);
 
-#ifdef KGFX
-  ScreenVesa *GetScreen() { return mScreen; }
-#else
-  ScreenVGA *GetScreen() { return mScreen; }
-#endif
+public:
+  InspirationBase *GetInspirationBase() { return mInspirationBase; }
+
 protected:
-#ifdef KGFX
-  ScreenVesa *mScreen;
-#else
-  ScreenVGA *mScreen;
-#endif
+  InspirationBase *mInspirationBase;
 
 protected:
   GDT *mGDT;
@@ -142,6 +138,7 @@ public:
   void AddTask(BTask *aTask);
   void DumpTasks();
   BTask *GetCurrentTask() { return mCurrentTask; }
+  const char *CurrentTaskName() { return mCurrentTask ? mCurrentTask->mNodeName : "NO TASK"; }
   /**
     * Put task to sleep until any of its sigwait signals are set.
     */
@@ -193,8 +190,5 @@ public:
 };
 
 extern ExecBase gExecBase;
-
-extern "C" TUint64 GetFlags();
-extern "C" void SetFlags(TUint64 aFlags);
 
 #endif

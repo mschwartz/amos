@@ -45,7 +45,7 @@ void dlog(const char *fmt, ...) {
   va_start(args, fmt);
 
   char buf[512];
-  dprint("%020d ", gExecBase.SystemTicks());
+  dprint("%020d %-16s ", gExecBase.SystemTicks(), gExecBase.CurrentTaskName());
   vsprintf(buf, fmt, args);
   dputs(buf);
   va_end(args);

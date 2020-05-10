@@ -8,7 +8,7 @@ class BConsoleFont32;
 
 class BBitmap32 : public BBase {
 public:
-  BBitmap32(TInt32 aWidth, TInt32 aHeight, TInt32 aPitch, TAny *aMemory = nullptr);
+  BBitmap32(TInt32 aWidth, TInt32 aHeight, TInt32 aPitch = 0, TAny *aMemory = nullptr);
   ~BBitmap32();
 
 public:
@@ -44,6 +44,8 @@ public:
   void Clear(TRGB &aColor) { return Clear(aColor.rgb888()); }
   void CopyPixels(BBitmap32 *aOther);
 
+  // copy bitmap from aOther to screen at aDestX, aDesty
+  void BltBitmap(BBitmap32 *aOther, TInt aDestX, TInt aDestY);
 public:
   void FastLineHorizontal(TUint32 aColor, TInt aX, TInt aY, TUint aW);
 
@@ -94,9 +96,10 @@ public:
 
 public:
   void Dump() {
-    dprint("BBitmap32 at %x\n", this);
-    dprint("   width: %d, height: %d, depth: %d, pitch: %d\n", mWidth, mHeight, mDepth, mPitch);
-    dprint("   mFont: %x mPixels: %x\n", mFont, mPixels);
+    dlog("BBitmap32 at %x\n", this);
+    dlog("   width: %d, height: %d, depth: %d, pitch: %d\n", mWidth, mHeight, mDepth, mPitch);
+    dlog("   mFont: %x mPixels: %x\n", mFont, mPixels);
+    dlog("   mRect\n");
     mRect.Dump();
     dprint("\n\n");
   }

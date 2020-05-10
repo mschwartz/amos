@@ -10,6 +10,8 @@ const TUint64 default_task_stack_size = 2 * 1024 * 1024;
 class MessagePort;
 
 class ExecBase;
+class InspirationBase;
+
 
 enum ETaskState {
   ETaskRunning,
@@ -32,6 +34,9 @@ protected:
 
 public:
   virtual void Run() = 0;
+
+public:
+  const char *TaskName() { return mNodeName; }
   void DumpRegisters(TTaskRegisters *regs);
   void Dump();
 
@@ -84,6 +89,8 @@ protected:
 
 protected:
   volatile TInt64 mForbidNestCount, mDisableNestCount;
+protected:
+  InspirationBase& mInspirationBase;
 };
 
 class BTaskList : public BListPri {

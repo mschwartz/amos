@@ -74,6 +74,7 @@ void TimerTask::Run() {
   while (ETrue) {
 //    dlog("Timer Device Wait\n");
     TUint64 sigs = Wait(port_mask | tick_mask);
+    dlog("WAKE\n");
     if (sigs & port_mask) {
       while (TimerMessage *m = (TimerMessage *)mMessagePort->GetMessage()) {
         switch (m->mCommand) {

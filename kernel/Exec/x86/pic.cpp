@@ -61,7 +61,7 @@ PIC::~PIC() {
 }
 
 void PIC::EnableIRQ(TUint16 aIRQ) {
-  dlog("    enable_interrupt %d\n", aIRQ);
+//  dlog("    enable_interrupt %d\n", aIRQ);
   aIRQ -= IRQ_OFFSET;
   if (aIRQ < 8) {
     mMasterMask &= ~(1 << aIRQ);
@@ -74,7 +74,7 @@ void PIC::EnableIRQ(TUint16 aIRQ) {
 }
 
 void PIC::DisableIRQ(TUint16 aIRQ) {
-  dlog("    disable_interrupt %d\n", aIRQ);
+//  dlog("    disable_interrupt %d\n", aIRQ);
   aIRQ -= IRQ_OFFSET;
   if (aIRQ < 8) {
     mMasterMask |= (1 << aIRQ);

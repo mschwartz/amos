@@ -578,3 +578,9 @@ MOUSE_TRAP          equ 0x20 + 12
 mouse_trap:
                     int MOUSE_TRAP
                     ret
+
+                    global rdrand
+rdrand:             
+                    rdrand rax     ;generate a 32 bit random number and store it in EAX
+                    ret
+

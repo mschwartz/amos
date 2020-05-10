@@ -1,4 +1,4 @@
-#include <Exec/Types.h>
+#include <Exec/ExecBase.h>
 #include <Exec/Random.h>
 
 /*
@@ -17,11 +17,18 @@ void SeedRandom(TUint32 aSeed) {
   sRandomSeed = aSeed;
 }
 
+extern "C" TUint64 rdrand();
+
 TUint32 Random() {
+  return rdrand();
+#if 0
   static const TUint32 a = 16807,
           m = 2147483647;
+  DISABLE;
   sRandomSeed = (a * sRandomSeed) % m;
+  ENABLE;
   return sRandomSeed % m;
+#endif
 }
 
 TInt32 Random(TInt32 aMin, TInt32 aMax) {

@@ -2,10 +2,9 @@
 #define EXEC_DEVICES_SCREEN_SCREENVESA_H
 
 #include <Exec/Types.h>
-#include <Devices/Screen.h>
 #include <Graphics/bitmap/BBitmap32.h>
 
-class ScreenVesa : public BScreen {
+class ScreenVesa : public BNode {
 public:
   ScreenVesa();
 
@@ -14,14 +13,22 @@ public:
   }
   void attr(TUint8 fg, TUint8 bg) {
     attribute = 0x0f;
-//    attribute = ((bg << 4) & 0xf0) | (fg & 0x0f);
+    //    attribute = ((bg << 4) & 0xf0) | (fg & 0x0f);
   }
 
 public:
   // mouse curor methods
   void MoveCursor(TInt aX, TInt aY);
-  void ShowCursor();
-  void HideCursor();
+  TBool ShowCursor(); // returns previous state
+  TBool HideCursor(); // returns previous state
+  TBool SetCursor(TBool aShowIt) {
+    if (aShowIt) {
+      return ShowCursor();
+    }
+    else {
+      return HideCursor();
+    }
+  }
 
 public:
   void MoveTo(int x, int y);
@@ -36,15 +43,20 @@ public:
 
   void NewLine();
   void WriteChar(char c);
-  void ClearScreen(TUint8 ch = ' ');
+  void Clear(TUint32 aColor);
   void WriteString(const char *s);
   void WriteString(TInt aX, TInt aY, const char *s);
 
   BBitmap32 *GetBitmap() { return mBitmap; }
 
+  // copy aOther bitmap to screen at aDestX,aDestY (as in a window)
+  void BltBitmap(BBitmap32 *aOther, TInt32 aDestX, TInt32 aDestY) {
+    mBitmap->BltBitmap(aOther, aDestX, aDestY);
+  }
+
 protected:
   BBitmap32 *mBitmap;
-//  TUint8 *screen;
+  //  TUint8 *screen;
   TInt mX, mY;
   TInt mMouseX, mMouseY;
   char buf[256];

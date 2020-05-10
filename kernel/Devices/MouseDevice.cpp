@@ -71,7 +71,7 @@ public:
     gExecBase.GetSystemInfo(&info);
     mMaxX = info.mScreenWidth - 1;
     mMaxY = info.mScreenHeight - 1;
-    dlog("Mouse Max X,Y = %d,%d\n", mMaxX, mMaxY);
+//    dlog("Mouse Max X,Y = %d,%d\n", mMaxX, mMaxY);
   }
 
 public:
@@ -115,7 +115,7 @@ TBool MouseInterrupt::Run(TAny *aData) {
 
       if (in_byte & MOUSE_LEFT_BUTTON) {
         mButtons |= MOUSE_LEFT_BUTTON;
-        dlog("===== LEFT\n");
+//        dlog("===== LEFT\n");
       }
       else {
         mButtons &= ~MOUSE_LEFT_BUTTON;
@@ -123,7 +123,7 @@ TBool MouseInterrupt::Run(TAny *aData) {
 
       if (in_byte & MOUSE_MIDDLE_BUTTON) {
         mButtons |= MOUSE_MIDDLE_BUTTON;
-        dlog("===== MIDDLE\n");
+//        dlog("===== MIDDLE\n");
       }
       else {
         mButtons &= ~MOUSE_MIDDLE_BUTTON;
@@ -131,7 +131,7 @@ TBool MouseInterrupt::Run(TAny *aData) {
 
       if (in_byte & MOUSE_RIGHT_BUTTON) {
         mButtons |= MOUSE_RIGHT_BUTTON;
-        dlog("===== RIGHT\n");
+//        dlog("===== RIGHT\n");
       }
       else {
         mButtons &= ~MOUSE_RIGHT_BUTTON;
@@ -192,7 +192,7 @@ void MouseTask::Run() {
   mMessagePort = CreateMessagePort("mouse.device");
   gExecBase.AddMessagePort(*mMessagePort);
 
-  dlog("Initialize Mouse Interrupt... ");
+//  dlog("Initialize Mouse Interrupt... ");
 
   // enable the auxilliary mouse device
   mouse_wait(1);
@@ -216,7 +216,7 @@ void MouseTask::Run() {
   mouse_write(0xf4);
   mouse_read();
 
-  dprint("   Enable PIC (%d) and Vector(%d)\n", IRQ_MOUSE, EMouseIRQ);
+//  dprint("   Enable PIC (%d) and Vector(%d)\n", IRQ_MOUSE, EMouseIRQ);
   gExecBase.SetIntVector(EMouseIRQ, new MouseInterrupt(this));
   gExecBase.EnableIRQ(IRQ_MOUSE);
   gExecBase.AckIRQ(IRQ_MOUSE);

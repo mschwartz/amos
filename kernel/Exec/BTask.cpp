@@ -7,7 +7,7 @@
 
 extern "C" TUint32 GetCS(), GetDS(), GetES(), GetFS(), GetGS(), GetSS(), GetRFLAGS();
 
-BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aName, aPri) {
+BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aName, aPri), mInspirationBase(*gExecBase.GetInspirationBase()) {
   // initialize Forbid/Permit
   mForbidNestCount = 0;
   mDisableNestCount = 0;
@@ -54,7 +54,7 @@ void BTask::RunWrapper(BTask *aTask) {
 }
 
 static void print_flag(TUint64 flags, TInt bit, const char *m) {
-  if (flags & (1<<bit)) {
+  if (flags & (1 << bit)) {
     dprint("%s ", m);
   }
 }
@@ -62,7 +62,7 @@ static void print_flag(TUint64 flags, TInt bit, const char *m) {
 void BTask::DumpRegisters(TTaskRegisters *regs) {
   TUint64 flags = GetFlags();
   cli();
-  dprint("===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
+  dlog("===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
   // print flags
   TUint64 f = regs->rflags;
   dprint("   flags: %016x ", f);
@@ -73,10 +73,10 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   print_flag(f, 17, "VM ");
   print_flag(f, 16, "RF ");
   print_flag(f, 14, "NT ");
-  dprint("IOPL(%d) ", (f>>12) & 3);
+  dprint("IOPL(%d) ", (f >> 12) & 3);
   print_flag(f, 11, "OF ");
   print_flag(f, 10, "DF ");
-  dprint("IF(%s) ", (f & (1<<9)) ? "STI" : "CLI");
+  dprint("IF(%s) ", (f & (1 << 9)) ? "STI" : "CLI");
   print_flag(f, 8, "TF ");
   print_flag(f, 7, "SF ");
   print_flag(f, 6, "ZF ");
@@ -85,15 +85,15 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   print_flag(f, 0, "CF ");
   dprint("\n");
 
-  dprint("   rax: %016x\n", regs->rax);
-  dprint("   rbx: %016x\n", regs->rbx);
-  dprint("   rcx: %016x\n", regs->rcx);
-  dprint("   rdx: %016x\n", regs->rdx);
-  dprint("   rsi: %016x\n", regs->rsi);
-  dprint("   rdi: %016x\n", regs->rdi);
-  dprint("    ds: %08x es: %08x fs: %08x gs: %08x\n", regs->ds, regs->es, regs->fs, regs->gs);
-  dprint("    ss %08x rsp %016x rbp %016x\n", regs->ss, regs->rsp, regs->rbp);
-  dprint("    cs: %08x rip: %016x\n", regs->cs, regs->cs);
+  dlog("   rax: %016x\n", regs->rax);
+  dlog("   rbx: %016x\n", regs->rbx);
+  dlog("   rcx: %016x\n", regs->rcx);
+  dlog("   rdx: %016x\n", regs->rdx);
+  dlog("   rsi: %016x\n", regs->rsi);
+  dlog("   rdi: %016x\n", regs->rdi);
+  dlog("    ds: %08x es: %08x fs: %08x gs: %08x\n", regs->ds, regs->es, regs->fs, regs->gs);
+  dlog("    ss %08x rsp %016x rbp %016x\n", regs->ss, regs->rsp, regs->rbp);
+  dlog("    cs: %08x rip: %016x\n", regs->cs, regs->cs);
 #if 0
   dlog("rax 0x%x rbx 0x%x rcx 0x%x rdx 0x%x\n", regs->rax, regs->rbx, regs->rcx, regs->rdx);
   dlog("rsi %0x%x rdi %0x%x\n", regs->rsi, regs->rdi);
@@ -108,15 +108,15 @@ void BTask::Dump() {
   TUint64 flags = GetFlags();
   cli();
   TTaskRegisters *regs = &mRegisters;
-  dprint("\nTask Dump %016x --- %s ---\n", this, mNodeName);
+  dlog("\nTask Dump %016x --- %s ---\n", this, mNodeName);
   DumpRegisters(regs);
-  dprint("  STACK:\n");
+  dlog("  STACK:\n");
   TUint64 *addr = (TUint64 *)regs->rsp;
   for (TInt i = 0; i < 10; i++) {
     if (addr > mUpperSP) {
       break;
     }
-    dprint("  %016x: %016x\n", addr, *addr);
+    dlog("  %016x: %016x\n", addr, *addr);
     addr++;
   }
   dprint("\n\n");
@@ -174,6 +174,10 @@ void BTask::Signal(TInt64 aSignalSet) {
 }
 
 TUint64 BTask::Wait(TUint64 aSignalSet) {
+  if (aSignalSet == 0) {
+    gExecBase.Wake(this);
+    return 0;
+  }
   TUint64 flags = GetFlags();
   cli();
 
@@ -215,16 +219,16 @@ TUint64 BTask::WaitPort(MessagePort *aMessagePort) {
 
 void BTask::Sleep(TUint64 aSeconds) {
   MessagePort *timer = gExecBase.FindMessagePort("timer.device");
-  if (!timer) {
-    dprint("***** can't find timer.device port\n");
-    return;
+  while (!timer) {
+    dlog("***** can't find timer.device port\n");
+    timer = gExecBase.FindMessagePort("timer.device");
   }
   MessagePort *replyPort = CreateMessagePort();
   TimerMessage *m = new TimerMessage(replyPort, ETimerSleep);
   m->mArg1 = aSeconds;
   m->SendMessage(timer);
   WaitPort(replyPort);
-  while (m = (TimerMessage *)replyPort->GetMessage()) {
+  while ((m = (TimerMessage *)replyPort->GetMessage())) {
     delete m;
   }
   FreeMessagePort(replyPort);

@@ -109,6 +109,7 @@ protected:
 TBool MouseInterrupt::Run(TAny *aData) {
   TInt8 in_byte = mouse_read();
 
+//  dlog("Mouse Interrupt\n");
   switch (mState) {
     case 0:
       mPacket[0] = in_byte;
@@ -230,6 +231,7 @@ void MouseTask::Run() {
   BMessageList messages("mouselist");
 
   while (WaitPort(mMessagePort)) {
+//    dlog("Wake\n");
     while (MouseMessage *m = (MouseMessage *)mMessagePort->GetMessage()) {
       switch (m->mCommand) {
         case EMouseUpdate: {
@@ -246,12 +248,12 @@ void MouseTask::Run() {
             m->mMouseX = x;
             m->mMouseY = y;
             m->mButtons = buttons;
-            dlog(" Reply message %x to port %x\n", m, m->mReplyPort);
+//            dlog(" Reply message %x to port %x\n", m, m->mReplyPort);
             m->ReplyMessage();
           }
         } break;
         case EMouseMove:
-          dlog("mouse.device queued %x\n", m);
+//          dlog("mouse.device queued %x\n", m);
           messages.AddTail(*m);
           break;
         default:

@@ -23,13 +23,13 @@ public:
   void RandomBox() {
     TRect rect;
     TRGB color(Random(0, 255), Random(0, 255), Random(0, 255));
-
     rect.x1 = Random(mClientRect.x1, mClientRect.x2);
     rect.x2 = Random(rect.x1, mClientRect.x2);
     rect.y1 = Random(mClientRect.y1, mClientRect.y2);
     rect.y2 = Random(rect.y1, mClientRect.y2);
 //    dlog("RandomBox %x %x\n", color.rgb888(), Random());
 //    rect.Dump();
+return;
     mViewPort->FillRect(color, rect);
   }
 };
@@ -39,19 +39,24 @@ void TestTask::Run() {
   Sleep(1);
 
   ScreenVesa &screen = mInspirationBase.GetScreen();
+  DISABLE;
   screen.Clear(0x4f4fff);
+  ENABLE;
 
+//  while (1) { Sleep(1); }
   TestWindow *win = new TestWindow();
   mInspirationBase.AddWindow(win);
 
+  dlog("LOOP %x\n", GetFlags());
+//  while(1);
+//  while (1) Sleep(1);
   TInt count = 0;
   while (1) {
     win->BeginPaint();
     for (TInt i=0; i<10; i++) {
       win->RandomBox();
     }
-    win->EndPaint();
-//    Wait(0);
+//    win->EndPaint();
 //    Sleep(1);
   }
 #if 0

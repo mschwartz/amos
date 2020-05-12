@@ -74,7 +74,7 @@ void TimerTask::Run() {
   while (ETrue) {
 //    dlog("Timer Device Wait\n");
     TUint64 sigs = Wait(port_mask | tick_mask);
-    dlog("WAKE\n");
+//    dlog("WAKE\n");
     if (sigs & port_mask) {
       while (TimerMessage *m = (TimerMessage *)mMessagePort->GetMessage()) {
         switch (m->mCommand) {
@@ -118,10 +118,11 @@ void TimerTask::Run() {
 }
 
 TBool TimerInterrupt::Run(TAny *aData) {
+  cli();
   mTask->Signal(1 << mTask->mSignalBit);
   gExecBase.AckIRQ(IRQ_TIMER);
-  // maybe wake up new task
   gExecBase.RescheduleIRQ();
+  // maybe wake up new task
   return ETrue;
 }
 

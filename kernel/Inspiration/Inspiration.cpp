@@ -31,7 +31,7 @@ public:
       WaitPort(replyPort);
       while (MouseMessage *m = (MouseMessage *)replyPort->GetMessage()) {
         if (m == message) {
-          dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
+//          dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
           mScreen.MoveCursor(m->mMouseX, m->mMouseY);
           message->mReplyPort = replyPort;
           message->SendMessage(mousePort);

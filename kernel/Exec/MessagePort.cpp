@@ -54,13 +54,13 @@ BMessage *MessagePort::GetMessage() {
 }
 
 void MessagePort::ReceiveMessage(BMessage *aMessage) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
 
   mList->AddTail(*aMessage);
+  ENABLE;
+//  dlog("Signal %s\n", mOwner->TaskName());
   mOwner->Signal(1<<mSignalBit);
 
-  SetFlags(flags);
 }
 
 void MessagePort::Dump() {

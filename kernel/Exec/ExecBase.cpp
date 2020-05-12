@@ -79,7 +79,6 @@ typedef struct {
 // ExecBase constructor
 ExecBase::ExecBase() {
   dlog("ExecBase constructor called\n");
-  //  cli(); halt();
   TModes *modes = (TModes *)0xa000;
   TModeInfo &i = modes->mDisplayMode;
 
@@ -203,12 +202,11 @@ void ExecBase::DumpTasks() {
 }
 
 void ExecBase::WaitSignal(BTask *aTask) {
-  cli();
+  DISABLE;
   aTask->Remove();
   // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
   // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
   if (aTask->mSigWait & aTask->mSigReceived) {
-    dputs("\n");
     mActiveTasks.Add(*aTask);
     aTask->mTaskState = ETaskRunning;
   }
@@ -216,6 +214,7 @@ void ExecBase::WaitSignal(BTask *aTask) {
     mWaitingTasks.Add(*aTask);
     aTask->mTaskState = ETaskWaiting;
   }
+  ENABLE;
   Schedule();
 }
 
@@ -226,9 +225,11 @@ void ExecBase::WaitSignal(BTask *aTask) {
 void ExecBase::Wake(BTask *aTask) {
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
+  DISABLE;
   aTask->Remove();
   mActiveTasks.Add(*aTask);
   aTask->mTaskState = ETaskRunning;
+  ENABLE;
 //  DumpTasks();
 }
 
@@ -244,7 +245,8 @@ void ExecBase::Kickstart() {
  * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
  */
 void ExecBase::RescheduleIRQ() {
-  cli();
+//  cli();
+#if 1
   if (mCurrentTask) {
     if (mCurrentTask->mForbidNestCount == 0) {
       mCurrentTask->Remove();
@@ -256,6 +258,7 @@ void ExecBase::RescheduleIRQ() {
       }
     }
   }
+#endif
   mCurrentTask = mActiveTasks.First();
   current_task = &mCurrentTask->mRegisters;
 }
@@ -376,33 +379,29 @@ TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
 }
 
 void ExecBase::SetException(EInterruptNumber aIndex, const char *aName) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
   SetIntVector(aIndex, new DefaultException(aName));
-  SetFlags(flags);
+  ENABLE;
 }
 
 void ExecBase::SetInterrupt(EInterruptNumber aIndex, const char *aName) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
   SetIntVector(aIndex, new DefaultIRQ(aName));
-  SetFlags(flags);
+  ENABLE;
 }
 
 void ExecBase::SetTrap(EInterruptNumber aIndex, const char *aName) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   //  dlog("Add Trap %d %s\n", aIndex, aName);
   IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
   SetIntVector(aIndex, new NextTaskTrap(aName));
-  SetFlags(flags);
+  ENABLE;
 }
 
 void ExecBase::InitInterrupts() {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   // install default exception handlers
   SetException(EDivideError, "Divide Error");
   SetException(EDebug, "Debug");
@@ -445,5 +444,5 @@ void ExecBase::InitInterrupts() {
   //  SetInterrupt(EReserved4IRQ, "Reserved4");
   SetTrap(ETrap0, "Trap0");
 
-  SetFlags(flags);
+  ENABLE;
 }

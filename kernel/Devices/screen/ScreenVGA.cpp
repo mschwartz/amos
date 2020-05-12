@@ -13,10 +13,10 @@ ScreenVGA::ScreenVGA() {
 
 void ScreenVGA::MoveTo(int aX, int aY) {
   TUint16 pos = aY * VGA_WIDTH + aX;
-  outb(0x0f, 0x3d4);
-  outb((TUint8)(pos & 0xff), 0x3d5);
-  outb(0x0e, 0x3d4);
-  outb((TUint8)((pos >> 8) & 0xff), 0x3d5);
+  outb(0x3d4, 0x0f);
+  outb(0x3d5, (TUint8)(pos & 0xff));
+  outb(0x3d4, 0x0e);
+  outb(0x3d5, (TUint8)((pos >> 8) & 0xff));
 }
 
 void ScreenVGA::GetXY(int &aX, int &aY) {

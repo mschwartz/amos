@@ -46,9 +46,9 @@ public:
 
   void SetFrequency(TInt hz) {
     TUint16 divisor = 1193180 / hz;
-    outb(0x36, I8253_CMD);
-    outb(divisor & 0xff, I8253_CH0);
-    outb((divisor >> 8) & 0xff, I8253_CH0);
+    outb(I8253_CMD, 0x36);
+    outb(I8253_CH0, divisor & 0xff);
+    outb(I8253_CH0, (divisor >> 8) & 0xff);
   }
 
   void Run();
@@ -97,7 +97,6 @@ void TimerTask::Run() {
       TUint64 current = mTimerDevice->IncrementTicks();
       while (ETrue) {
         TUint64 flags = GetFlags();
-        cli();
         TimerMessage *m = (TimerMessage *)timerQueue.First();
         if (timerQueue.End(m)) {
           break;
@@ -118,10 +117,17 @@ void TimerTask::Run() {
 }
 
 TBool TimerInterrupt::Run(TAny *aData) {
-  cli();
+//  cli();
+  dlog("TIMER\n");
   mTask->Signal(1 << mTask->mSignalBit);
   gExecBase.AckIRQ(IRQ_TIMER);
+//  BTask *t = gExecBase.GetCurrentTask();
   gExecBase.RescheduleIRQ();
+//  if (gExecBase.GetCurrentTask() != t) {
+//    t->Dump();
+//    bochs;
+//  }
+
   // maybe wake up new task
   return ETrue;
 }

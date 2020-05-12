@@ -137,6 +137,7 @@ protected:
 public:
   void AddTask(BTask *aTask);
   void DumpTasks();
+  void DumpCurrentTask() { mCurrentTask->Dump(); }
   BTask *GetCurrentTask() { return mCurrentTask; }
   const char *CurrentTaskName() { return mCurrentTask ? mCurrentTask->mNodeName : "NO TASK"; }
   /**

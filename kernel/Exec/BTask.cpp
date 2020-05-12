@@ -40,6 +40,8 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aNam
   regs->fs = GetFS();
   regs->gs = GetGS();
   regs->rflags = 0x202; // GetRFLAGS();
+//  dlog("Create Task %s, sp=%016x\n", this->TaskName(), regs->rsp);
+//  bochs
 }
 
 BTask::~BTask() {
@@ -51,6 +53,7 @@ void BTask::RunWrapper(BTask *aTask) {
   t->Run();
   t->Remove();
   delete t;
+  gExecBase.Schedule();
 }
 
 static void print_flag(TUint64 flags, TInt bit, const char *m) {
@@ -62,10 +65,12 @@ static void print_flag(TUint64 flags, TInt bit, const char *m) {
 void BTask::DumpRegisters(TTaskRegisters *regs) {
   TUint64 flags = GetFlags();
   cli();
-  dprint("===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
+  dprint("   ===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
+  dprint("   rip: %016x cs: %08x\n", regs->rip, regs->cs);
+
   // print flags
   TUint64 f = regs->rflags;
-  dprint("   flags: %016x ", f);
+  dprint(" flags: %016x ", f);
   print_flag(f, 21, "ID ");
   print_flag(f, 20, "VIP ");
   print_flag(f, 19, "VIF ");
@@ -85,6 +90,7 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   print_flag(f, 0, "CF ");
   dprint("\n");
 
+  // general purpose registeers
   dprint("   rax: %016x\n", regs->rax);
   dprint("   rbx: %016x\n", regs->rbx);
   dprint("   rcx: %016x\n", regs->rcx);
@@ -93,7 +99,6 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   dprint("   rdi: %016x\n", regs->rdi);
   dprint("    ds: %08x es: %08x fs: %08x gs: %08x\n", regs->ds, regs->es, regs->fs, regs->gs);
   dprint("    ss %08x rsp %016x rbp %016x\n", regs->ss, regs->rsp, regs->rbp);
-  dprint("    cs: %08x rip: %016x\n", regs->cs, regs->cs);
 #if 0
   dlog("rax 0x%x rbx 0x%x rcx 0x%x rdx 0x%x\n", regs->rax, regs->rbx, regs->rcx, regs->rdx);
   dlog("rsi %0x%x rdi %0x%x\n", regs->rsi, regs->rdi);
@@ -108,7 +113,7 @@ void BTask::Dump() {
   TUint64 flags = GetFlags();
   cli();
   TTaskRegisters *regs = &mRegisters;
-  dprint("\nTask Dump %016x --- %s ---\n", this, mNodeName);
+  dprint("\nTask Dump %016x regs(%x)--- %s ---\n", this, &this->mRegisters, mNodeName);
   DumpRegisters(regs);
   dprint("  STACK:\n");
   TUint64 *addr = (TUint64 *)regs->rsp;
@@ -170,7 +175,7 @@ void BTask::Signal(TInt64 aSignalSet) {
   // assure this task is in active list and potentially perform a task switch
   if (mSigReceived & mSigWait) {
 //    if (CompareStrings(this->TaskName(), "Timer Task")) {
-//      dlog("Wake(%s)\n", this->TaskName());
+      dlog("Wake(%s)\n", this->TaskName());
 //    }
     gExecBase.Wake(this);
   }
@@ -239,6 +244,7 @@ void BTask::Sleep(TUint64 aSeconds) {
   while ((m = (TimerMessage *)replyPort->GetMessage())) {
     delete m;
   }
+  dlog("%s slept\n", TaskName());
   FreeMessagePort(replyPort);
 }
 

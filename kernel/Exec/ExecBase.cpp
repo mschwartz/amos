@@ -23,7 +23,7 @@ ExecBase gExecBase;
 extern "C" void schedule_trap();
 extern "C" void eputs(const char *s);
 
-extern "C" void enter_next_task();
+extern "C" void enter_tasking();
 
 class IdleTask : public BTask {
 public:
@@ -33,6 +33,7 @@ public:
   void Run() {
     //    sti();
     dlog("IdleTask Running\n");
+//    gExecBase.Schedule();
     while (1) {
       dlog("IT Run\n");
       halt();
@@ -125,9 +126,9 @@ ExecBase::ExecBase() {
   IdleTask *task = new IdleTask();
   mActiveTasks.Add(*task);
   mCurrentTask = mActiveTasks.First();
-  current_task = ENull;
-  next_task = &mCurrentTask->mRegisters;
+  current_task = &mCurrentTask->mRegisters;
 
+  mCurrentTask->Dump();
   // initialize devices
   dlog("  initialize timer\n");
   AddDevice(new TimerDevice());
@@ -229,6 +230,7 @@ void ExecBase::Wake(BTask *aTask) {
   aTask->Remove();
   mActiveTasks.Add(*aTask);
   aTask->mTaskState = ETaskRunning;
+  dlog("Wake %s\n", aTask->TaskName());
   ENABLE;
 //  DumpTasks();
 }
@@ -238,13 +240,17 @@ void ExecBase::Schedule() {
 }
 
 void ExecBase::Kickstart() {
-  enter_next_task(); // just enter next task
+//  BTask *t = (BTask *)mActiveTasks.Find("Idle Task");
+//  t->Run();
+  bochs
+  enter_tasking(); // just enter next task
 }
 
 /**
  * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
  */
 void ExecBase::RescheduleIRQ() {
+//  BTask *t = mCurrentTask;
 //  cli();
 #if 1
   if (mCurrentTask) {
@@ -261,6 +267,13 @@ void ExecBase::RescheduleIRQ() {
 #endif
   mCurrentTask = mActiveTasks.First();
   current_task = &mCurrentTask->mRegisters;
+//  if (t != mCurrentTask) {
+//    dprint("Reschedule %s(%x) %016x %x\n", mCurrentTask->TaskName(), mCurrentTask, current_task->rip, current_task->rflags);
+//    mCurrentTask->Dump();
+//    dprint("Previous task\n");
+//    t->Dump();
+//    dprint("\n\n\n");
+//  }
 }
 
 void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
@@ -293,6 +306,7 @@ void ExecBase::GuruMeditation(const char *aFormat, ...) {
   mCurrentTask->Dump();
   va_end(args);
   dprint("***********************\n\n\nHalted.\n");
+
   while (1) {
     halt();
   }
@@ -342,7 +356,14 @@ public:
   TBool Run(TAny *aData) {
     // at this point current_task is saved
     cli();
+    dlog("NextTaskTrap\n");
+//    gExecBase.DumpCurrentTask();
     gExecBase.RescheduleIRQ();
+    if (CompareStrings(gExecBase.CurrentTaskName(), "Idle Task") == 0) {
+      gExecBase.DumpCurrentTask();
+      bochs;
+    }
+   
     return ETrue;
   }
 };

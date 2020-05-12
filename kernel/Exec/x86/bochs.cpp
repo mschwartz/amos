@@ -21,7 +21,7 @@ void dputc(char c) {
 //    outb((int)c, 0xe9);
 //  sputc(c);
   if (false || in_bochs) {
-    outb((int)c, 0xe9);
+    outb(0xe9, (int)c);
   }
   else {
     sputc(c);

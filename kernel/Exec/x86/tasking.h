@@ -33,7 +33,7 @@ typedef struct Task {
   volatile TUint64 err_code;
   volatile TUint64 isr_num; //48
 
-  TInt errno;
+//  TInt errno;
 
   // segment/selector registers
   volatile TUint16 cs;

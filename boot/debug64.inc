@@ -47,6 +47,7 @@ debug64_init:
 ;                    rep stosw
 ;                    ret
 
+                    global putc64
 putc64:
 %ifdef SERIAL
                     push rdx
@@ -61,14 +62,15 @@ putc64:
                     out dx, al
                     pop rdx
 %else
-                    call screen_putc
-;                    out 0xe9, al
+;                    call screen_putc
+                    out 0xe9, al
 ;                    xor bx,bx
 ;                    mov ah, 0eh
 ;                    int 10h			; Otherwise, print it
 %endif
 	ret
 
+                    global puts64
 puts64:			; Routine: output string in SI to screen
 	lodsb			; Get character from string
 	cmp al, 0
@@ -81,6 +83,7 @@ puts64:			; Routine: output string in SI to screen
 .done:
 	ret
 
+                    global newline64
 newline64:
 	push rax
 ;                    mov al, 13
@@ -90,6 +93,7 @@ newline64:
 	pop rax
 	ret
 
+                    global space64
 space64:
 	mov al, ' '
 	jmp putc64
@@ -107,6 +111,7 @@ hexnybble64:
 ;                    pop rbx
 	ret
 
+                    global hexbyte64
 hexbyte64:
 	push rax
 	push rcx
@@ -121,6 +126,7 @@ hexbyte64:
 	pop rax
 	ret
 
+                    global hexword64
 hexword64:
 	push rax
 	push rcx
@@ -135,6 +141,7 @@ hexword64:
 	pop rax
 	ret
 
+                    global  hexlong64
 hexlong64:
 	push rax
 	push rcx
@@ -149,6 +156,7 @@ hexlong64:
 	pop rax
 	ret
 
+                    global  hexquad64
 hexquad64:
                     push rax
                     push rcx
@@ -165,22 +173,39 @@ hexquad64:
                     pop rax
                     ret
 
+                    global hexbytes64
 hexbytes64:         call hexbyte64
                     jmp space64
+
+                    global hexwords64
 hexwords64:         call hexword64
                     jmp space64
+
+                    global hexlongs64
 hexlongs64:         call hexlong64
                     jmp space64
+
+                    global hexquads64
 hexquads64:         call hexquad64
                     jmp space64
+
+                    global hexbyten64
 hexbyten64:         call hexbyte64
                     jmp newline64
+
+                    global hexwordn64
 hexwordn64:         call hexword64
                     jmp newline64
+
+                    global hexlongn64
 hexlongn64:         call hexlong64
                     jmp newline64
+
+                    global hexquadn64
 hexquadn64:         call hexquad64
                     jmp newline64
+
+                    global hexdump64
 hexdump64:
                     mov rax, rsi
                     call hexquads64

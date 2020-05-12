@@ -3,9 +3,6 @@
 #include <Exec/x86/ps2.h>
 #include <Devices/MouseDevice.h>
 
-#define inportb inb
-#define outportb(a, b) outb(b, a)
-
 const TUint32 MOUSE_DR = 0x60;
 const TUint32 MOUSE_SR = 0x64;
 const TUint32 MOUSE_PORT = 0x60;
@@ -43,15 +40,15 @@ static void mouse_wait(TUint8 a_type) {
 static void mouse_write(TUint8 a_write) {
   //Tell the mouse we are sending a command
   mouse_wait(1);
-  outportb(MOUSE_STATUS, MOUSE_WRITE);
+  outb(MOUSE_STATUS, MOUSE_WRITE);
   mouse_wait(1);
   //Finally write
-  outportb(MOUSE_PORT, a_write);
+  outb(MOUSE_PORT, a_write);
 }
 
 static TUint8 mouse_read() {
   mouse_wait(0);
-  return inportb(MOUSE_PORT);
+  return inb(MOUSE_PORT);
 }
 
 /********************************************************************************
@@ -197,17 +194,17 @@ void MouseTask::Run() {
 
   // enable the auxilliary mouse device
   mouse_wait(1);
-  outb(0xa8, 0x64);
+  outb(0x64, 0xa8);
 
   // enable the interrupts
   mouse_wait(1);
-  outb(0x20, 0x64);
+  outb(0x64, 0x20);
   mouse_wait(0);
   TUint8 status = (inb(0x60) & ~0x20) | 2;
   mouse_wait(1);
-  outb(0x60, 0x64);
+  outb(0x64, 0x60);
   mouse_wait(1);
-  outb(status, 0x60);
+  outb(0x60, status);
 
   // tell the mouse to use the default settings
   mouse_write(0xf6);

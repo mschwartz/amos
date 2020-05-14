@@ -77,6 +77,7 @@ typedef struct {
   }
 } PACKED TModes;
 
+extern "C" TUint64 rdrand();
 // ExecBase constructor
 ExecBase::ExecBase() {
   dlog("ExecBase constructor called\n");
@@ -91,7 +92,8 @@ ExecBase::ExecBase() {
   mSystemInfo.mScreenFrameBuffer = (TAny *)fb;
   mSystemInfo.mMillis = 0;
 
-  SeedRandom(SystemTicks());
+//  SeedRandom(rdrand());
+  SeedRandom(1);
   dlog("\n\nDisplay Mode:\n");
   modes->mDisplayMode.Dump();
 
@@ -128,7 +130,7 @@ ExecBase::ExecBase() {
   mCurrentTask = mActiveTasks.First();
   current_task = &mCurrentTask->mRegisters;
 
-  mCurrentTask->Dump();
+//  mCurrentTask->Dump();
   // initialize devices
   dlog("  initialize timer\n");
   AddDevice(new TimerDevice());
@@ -230,7 +232,7 @@ void ExecBase::Wake(BTask *aTask) {
   aTask->Remove();
   mActiveTasks.Add(*aTask);
   aTask->mTaskState = ETaskRunning;
-  dlog("Wake %s\n", aTask->TaskName());
+//  dlog("Wake %s\n", aTask->TaskName());
   ENABLE;
 //  DumpTasks();
 }
@@ -242,7 +244,8 @@ void ExecBase::Schedule() {
 void ExecBase::Kickstart() {
 //  BTask *t = (BTask *)mActiveTasks.Find("Idle Task");
 //  t->Run();
-  bochs
+//  bochs;
+//  DumpCurrentTask();
   enter_tasking(); // just enter next task
 }
 
@@ -355,14 +358,14 @@ public:
 public:
   TBool Run(TAny *aData) {
     // at this point current_task is saved
-    cli();
-    dlog("NextTaskTrap\n");
+//    cli();
+//    dlog("NextTaskTrap\n");
 //    gExecBase.DumpCurrentTask();
     gExecBase.RescheduleIRQ();
-    if (CompareStrings(gExecBase.CurrentTaskName(), "Idle Task") == 0) {
-      gExecBase.DumpCurrentTask();
-      bochs;
-    }
+//    if (CompareStrings(gExecBase.CurrentTaskName(), "Idle Task") == 0) {
+//      gExecBase.DumpCurrentTask();
+//      bochs;
+//    }
    
     return ETrue;
   }

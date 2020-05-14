@@ -6,6 +6,7 @@
 #undef DEBUGME
 
 extern "C" TUint32 GetCS(), GetDS(), GetES(), GetFS(), GetGS(), GetSS(), GetRFLAGS();
+extern "C" void init_task_state(TTaskRegisters *t);
 
 BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aName, aPri), mInspirationBase(*gExecBase.GetInspirationBase()) {
   // initialize Forbid/Permit
@@ -25,10 +26,10 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aNam
 
   // initialize stack
   TUint8 *stack = (TUint8 *)AllocMem(aStackSize, MEMF_PUBLIC);
-  mUpperSP = &stack[aStackSize];
-  mLowerSP = &stack[0];
+  regs->upper_sp = (TUint64)&stack[aStackSize];
+  regs->lower_sp = (TUint64)&stack[0];
 
-  regs->rsp = (TUint64)mUpperSP;
+  regs->rsp = (TUint64)regs->upper_sp;
   regs->rbp = regs->rsp;
   regs->ss = GetSS();
   regs->rdi = (TUint64)this;
@@ -40,8 +41,9 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aNam
   regs->fs = GetFS();
   regs->gs = GetGS();
   regs->rflags = 0x202; // GetRFLAGS();
-//  dlog("Create Task %s, sp=%016x\n", this->TaskName(), regs->rsp);
-//  bochs
+  init_task_state(regs);
+  //  dlog("Create Task %s, sp=%016x\n", this->TaskName(), regs->rsp);
+  //  bochs
 }
 
 BTask::~BTask() {
@@ -66,6 +68,7 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   TUint64 flags = GetFlags();
   cli();
   dprint("   ===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
+#if 0
   dprint("   rip: %016x cs: %08x\n", regs->rip, regs->cs);
 
   // print flags
@@ -106,6 +109,7 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   dlog("ss 0x%x rsp 0x%x rbp 0x%x\n", regs->ss, regs->rsp, regs->rbp);
   dlog("rip 0x%x flags 0x%x\n", regs->rip, regs->rflags);
 #endif
+#endif
   SetFlags(flags);
 }
 
@@ -117,8 +121,8 @@ void BTask::Dump() {
   DumpRegisters(regs);
   dprint("  STACK:\n");
   TUint64 *addr = (TUint64 *)regs->rsp;
-  for (TInt i = 0; i < 10; i++) {
-    if (addr > mUpperSP) {
+  for (TInt i = 0; i < 8; i++) {
+    if ((TUint64)addr > mRegisters.upper_sp) {
       break;
     }
     dprint("  %016x: %016x\n", addr, *addr);
@@ -174,9 +178,9 @@ void BTask::Signal(TInt64 aSignalSet) {
   mSigReceived |= aSignalSet;
   // assure this task is in active list and potentially perform a task switch
   if (mSigReceived & mSigWait) {
-//    if (CompareStrings(this->TaskName(), "Timer Task")) {
-      dlog("Wake(%s)\n", this->TaskName());
-//    }
+    //    if (CompareStrings(this->TaskName(), "Timer Task")) {
+//    dlog("Wake(%s)\n", this->TaskName());
+    //    }
     gExecBase.Wake(this);
   }
 }
@@ -231,11 +235,11 @@ void BTask::Sleep(TUint64 aSeconds) {
     dlog("no timer port\n");
     return;
   }
-//  while (!timer) {
-//    dlog("***** can't find timer.device port\n");
-//    timer = gExecBase.FindMessagePort("timer.device");
-//  }
-//  return;
+  //  while (!timer) {
+  //    dlog("***** can't find timer.device port\n");
+  //    timer = gExecBase.FindMessagePort("timer.device");
+  //  }
+  //  return;
   MessagePort *replyPort = CreateMessagePort();
   TimerMessage *m = new TimerMessage(replyPort, ETimerSleep);
   m->mArg1 = aSeconds;

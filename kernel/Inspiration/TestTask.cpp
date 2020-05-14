@@ -23,14 +23,13 @@ public:
   void RandomBox() {
     TRect rect;
     TRGB color(Random(0, 255), Random(0, 255), Random(0, 255));
-    rect.x1 = Random(mClientRect.x1, mClientRect.x2);
-    rect.x2 = Random(rect.x1, mClientRect.x2);
-    rect.y1 = Random(mClientRect.y1, mClientRect.y2);
-    rect.y2 = Random(rect.y1, mClientRect.y2);
+    rect.x1 = Random64(mClientRect.x1, mClientRect.x2);
+    rect.x2 = Random64(rect.x1, mClientRect.x2);
+    rect.y1 = Random64(mClientRect.y1, mClientRect.y2);
+    rect.y2 = Random64(rect.y1, mClientRect.y2);
 //    dlog("RandomBox %x %x\n", color.rgb888(), Random());
 //    rect.Dump();
-return;
-    mViewPort->FillRect(color, rect);
+//    mViewPort->FillRect(color, rect);
   }
 };
 
@@ -38,7 +37,7 @@ void TestTask::Run() {
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
 
-  while (1) { Sleep(1); }
+//  while (1) { Sleep(1); }
   ScreenVesa &screen = mInspirationBase.GetScreen();
   DISABLE;
   screen.Clear(0x4f4fff);
@@ -52,7 +51,7 @@ void TestTask::Run() {
 //  while (1) Sleep(1);
   TInt count = 0;
   while (1) {
-    win->BeginPaint();
+//    win->BeginPaint();
     for (TInt i=0; i<10; i++) {
       win->RandomBox();
     }

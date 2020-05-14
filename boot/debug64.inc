@@ -8,7 +8,7 @@ nybbles             db "0123456789ABCDEF",0
 
                     global debug64_init
 debug64_init:
-                    %ifdef SERIAL
+               %ifdef SERIAL
                     mov al, 0x00
                     mov dx, COM1+1
                     out dx, al
@@ -37,7 +37,7 @@ debug64_init:
                     mov dx, COM1+4
                     out dx, al
                     
-                    %endif
+               %endif
                     ret
 ;cls64:
 ;                    mov rdi, 0xb8000
@@ -49,7 +49,7 @@ debug64_init:
 
                     global putc64
 putc64:
-%ifdef SERIAL
+   %ifdef SERIAL
                     push rdx
                     push rax
                     mov dx, COM1+5
@@ -61,13 +61,13 @@ putc64:
                     mov dx, COM1
                     out dx, al
                     pop rdx
-%else
+   %else
 ;                    call screen_putc
                     out 0xe9, al
 ;                    xor bx,bx
 ;                    mov ah, 0eh
 ;                    int 10h			; Otherwise, print it
-%endif
+   %endif
 	ret
 
                     global puts64
@@ -216,4 +216,48 @@ hexdump64:
 	ja .loop
                     call newline64
 	ret
+
+                    global stackdump64
+stackdump64:
+                    push rsi
+                    mov rsi, rsp
+                    add rsi, 16
+
+                    push rax
+                    push rbx
+                    push rcx
+
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+
+                    call newline64
+
+                    pop rcx
+                    pop rbx
+                    pop rax
+                    pop rsi
+                    ret
+
+dump1:
+                    push rsi
+                    mov rax, rsi
+                    call hexquad64
+                    mov al, ' '
+                    call putc64
+                    pop rsi
+                    lodsq
+                    call hexquad64
+                    call newline64
+                    ret
 

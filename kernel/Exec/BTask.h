@@ -29,7 +29,6 @@ public:
   TTaskRegisters mRegisters;
 
 protected:
-  volatile TAny *mUpperSP, *mLowerSP; 
   volatile ETaskState mTaskState;
 
 public:

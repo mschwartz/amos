@@ -26,7 +26,7 @@ public:
   }
 
 public:
-  TBool Run(TAny *aData);
+  TBool Run(TAny *g);
 
 protected:
   TimerTask *mTask;
@@ -116,15 +116,15 @@ void TimerTask::Run() {
   }
 }
 
-TBool TimerInterrupt::Run(TAny *aData) {
-//  cli();
-  dlog("TIMER\n");
+TBool TimerInterrupt::Run(TAny *g) {
+//  dlog("TIMER\n");
   mTask->Signal(1 << mTask->mSignalBit);
+  gExecBase.RescheduleIRQ();
   gExecBase.AckIRQ(IRQ_TIMER);
 //  BTask *t = gExecBase.GetCurrentTask();
-  gExecBase.RescheduleIRQ();
 //  if (gExecBase.GetCurrentTask() != t) {
 //    t->Dump();
+//    gExecBase.DumpCurrentTask();
 //    bochs;
 //  }
 

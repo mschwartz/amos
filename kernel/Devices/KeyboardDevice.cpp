@@ -199,7 +199,7 @@ const char kbdus[128] = {
 //Keyboard *gKeyboard;
 
 static inline TUint8 read_config_byte(TUint8 offset) {
-  outb(CMD_READ_BYTE_00 + offset, KEYB_SR);
+  outb(KEYB_SR, CMD_READ_BYTE_00 + offset);
   return inb(KEYB_DR);
 }
 
@@ -208,7 +208,7 @@ static inline TUint16 read_status() {
 }
 
 static inline void write_status(TUint8 value) {
-  outb(value, KEYB_SR);
+  outb(KEYB_SR, value);
 }
 
 // wait for bit(s) to be set in status register
@@ -228,7 +228,7 @@ static inline bool write_data(TUint8 value, TUint16 port = 1) {
     return false;
   }
 
-  outb(value, KEYB_DR);
+  outb(KEYB_DR, value);
   return true;
 }
 

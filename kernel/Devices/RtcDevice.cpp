@@ -13,11 +13,11 @@ const TUint8 MONTH = 8;
 const TUint8 YEAR = 9;
 
 static int busy() {
-  outb(0x0a, SELECT);
+  outb(SELECT, 0x0a);
   return inb(DATA) & 0x80;
 }
 static TUint8 read_cmos(TUint8 reg) {
-  outb(reg, SELECT);
+  outb(SELECT, reg);
   return inb(DATA);
 }
 
@@ -64,8 +64,8 @@ public:
 #if 0
     // enable RTC interrupt on the RTC controller
     // default rate is 1/1024 (1024 hz) or 0x06
-    outb(0x08, 0x70);
-    outb(inb(0x71) | 0x40, 0x71);
+    outb(0x70, 0x08);
+    outb(0x71, inb(0x71) | 0x40);
 #else
     enable_irq8();
 #endif

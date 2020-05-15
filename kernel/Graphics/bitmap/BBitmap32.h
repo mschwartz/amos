@@ -8,11 +8,14 @@ class BConsoleFont32;
 
 class BBitmap32 : public BBase {
 public:
-  BBitmap32(TInt32 aWidth, TInt32 aHeight, TInt32 aPitch, TAny *aMemory = nullptr);
+  BBitmap32(TInt32 aWidth, TInt32 aHeight, TInt32 aPitch = 0, TAny *aMemory = nullptr);
   ~BBitmap32();
 
 public:
-  inline void INLINE PlotPixel(TRGB& aColor, TInt32 aX, TInt32 aY) {
+  TBool PointInRect(TInt aX, TInt aY) { return mRect.PointInRect(aX, aY); }
+
+public:
+  inline void INLINE PlotPixel(TRGB &aColor, TInt32 aX, TInt32 aY) {
     mPixels[aY * mPitch + aX] = aColor.rgb888();
   }
 
@@ -20,7 +23,7 @@ public:
     mPixels[aY * mPitch + aX] = aColor;
   }
 
-  inline void INLINE SafePlotPixel(TRGB& aColor, TInt32 aX, TInt32 aY) {
+  inline void INLINE SafePlotPixel(TRGB &aColor, TInt32 aX, TInt32 aY) {
     if (mRect.PointInRect(aX, aY)) {
       mPixels[aY * mPitch + aX] = aColor.rgb888();
     }
@@ -41,6 +44,8 @@ public:
   void Clear(TRGB &aColor) { return Clear(aColor.rgb888()); }
   void CopyPixels(BBitmap32 *aOther);
 
+  // copy bitmap from aOther to screen at aDestX, aDesty
+  void BltBitmap(BBitmap32 *aOther, TInt aDestX, TInt aDestY);
 public:
   void FastLineHorizontal(TUint32 aColor, TInt aX, TInt aY, TUint aW);
 
@@ -80,20 +85,21 @@ public:
   void DrawText(TInt16 aX, TInt16 aY, const char *aString);
 
 public:
-  void GetRect(TRect &aRect) { 
-    aRect.x1 = mRect.x1; 
-    aRect.y1 = mRect.y1; 
-    aRect.x2 = mRect.x2; 
-    aRect.y2 = mRect.y2; 
+  void GetRect(TRect &aRect) {
+    aRect.x1 = mRect.x1;
+    aRect.y1 = mRect.y1;
+    aRect.x2 = mRect.x2;
+    aRect.y2 = mRect.y2;
   }
   TInt Width() { return mWidth; }
   TInt Height() { return mHeight; }
 
 public:
   void Dump() {
-    dprint("BBitmap32 at %x\n", this);
-    dprint("   width: %d, height: %d, depth: %d, pitch: %d\n", mWidth, mHeight, mDepth, mPitch);
-    dprint("   mFont: %x mPixels: %x\n", mFont, mPixels);
+    dlog("BBitmap32 at %x\n", this);
+    dlog("   width: %d, height: %d, depth: %d, pitch: %d\n", mWidth, mHeight, mDepth, mPitch);
+    dlog("   mFont: %x mPixels: %x\n", mFont, mPixels);
+    dlog("   mRect\n");
     mRect.Dump();
     dprint("\n\n");
   }

@@ -1,3 +1,4 @@
+#include <Exec/ExecBase.h>
 #include <Exec/x86/idt.h>
 #include <posix/string.h>
 #include <Exec/x86/tasking.h>
@@ -71,6 +72,8 @@ static TIsrHandler interrupt_handlers[INTERRUPTS];
   * This method is called from the assembly ISR handler(s) and Exception handlers.
   */
 extern "C" bool kernel_isr(TInt64 aIsrNumber) {
+  cli();
+//  dlog("kernel_isr %d\n", aIsrNumber);
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {
     const char *desc = IDT::InterruptDescription(current_task->isr_num);
@@ -136,7 +139,7 @@ static void set_entry(TInt aIndex, TUint64 aVec) {
 }
 
 IDT::IDT() {
-  DisableInterrupts();
+  DISABLE;
   // initialize C ISRs
   for (int i = 0; i < INTERRUPTS; i++) {
     interrupt_handlers[i].Set(i, nullptr, nullptr, "Not installed");
@@ -205,6 +208,7 @@ IDT::IDT() {
   idt_ptr.limit = sizeof(TIdtEntry) * IDT_SIZE - 1;
   idt_ptr.base = &idt_entries[0];
   load_idtr(&idt_ptr);
+  ENABLE;
   mAlive = ETrue;
 }
 

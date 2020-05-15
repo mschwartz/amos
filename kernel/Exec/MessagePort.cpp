@@ -24,7 +24,7 @@ void BMessage::ReplyMessage() {
 }
 
 void BMessage::Dump() {
-  dprint("BMessage: %x %s\n", mReplyPort, mReplyPort ? mReplyPort->NodeName() : "No Name");
+  dlog("BMessage: %x %s\n", mReplyPort, mReplyPort ? mReplyPort->NodeName() : "No Name");
 }
 
 /********************************************************************************
@@ -54,19 +54,19 @@ BMessage *MessagePort::GetMessage() {
 }
 
 void MessagePort::ReceiveMessage(BMessage *aMessage) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
 
   mList->AddTail(*aMessage);
+  ENABLE;
+//  dlog("Signal %s\n", mOwner->TaskName());
   mOwner->Signal(1<<mSignalBit);
 
-  SetFlags(flags);
 }
 
 void MessagePort::Dump() {
-  dprintf("MessagePort: %x %s\n", this, this->NodeName());
-  dprint("      mOwner: %s\n", mOwner->NodeName());
-  dprint("  mSignalBit: %d\n", mSignalBit);
+  dlog("MessagePort: %x %s\n", this, this->NodeName());
+  dlog("      mOwner: %s\n", mOwner->NodeName());
+  dlog("  mSignalBit: %d\n", mSignalBit);
 }
 
 /********************************************************************************

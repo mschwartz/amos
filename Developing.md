@@ -1,6 +1,6 @@
 # Developing
 
-AmigOS uses C++, but is not purely object oriented.  Rather it is "Object Based," so we use Objects in C style
+AMOS uses C++, but is not purely object oriented.  Rather it is "Object Based," so we use Objects in C style
 methods, and we use global variables.
 
 ## Naming Conventions
@@ -20,7 +20,7 @@ descendant of BBase.
 
 ## BList
 
-AmigOS relies heavily on doubly linked lists.  BList.h has two kinds of linked lists: BNode and BNodePri.  
+AMOS relies heavily on doubly linked lists.  BList.h has two kinds of linked lists: BNode and BNodePri.  
 
 If you inherit list items (nodes) from BNode and use BList, you end up with a simple unsorted linked list.  You can 
 add and remove nodes from the head and tail of the BList.
@@ -47,7 +47,7 @@ TODO: deal with gExecBase for user space.
 
 ## BTask
 
-BTask is the abstract base class for AmigOS tasking.  You implement a Run() method for your child class and you 
+BTask is the abstract base class for AMOS tasking.  You implement a Run() method for your child class and you 
 add your task to the global task list(s) via ExecBase.
 
 Tasking is priority based.  The mPri field of BNodePri (base class for BTask) determines the sort order for the
@@ -65,7 +65,7 @@ the waiting task list (if it is blocking) and added to the active task list.
 A task will call Wait(aSignalMask) to wait for any of the bits in the mask.  When the task is signaled and wakes up,
 the actual mask of received bits are returned.
 
-AmigOS relies heavily on message passing.  You can send messages to a MessagePort owned by a task.  The task 
+AMOS relies heavily on message passing.  You can send messages to a MessagePort owned by a task.  The task 
 should be programmed to wait on that MessagePort and then retrieve all messages in the MessagePort before
 waiting for more messages.
 
@@ -82,6 +82,6 @@ using gExecBase.FindMessagePort(aName).
 BDevice is the base class for all devices (keyboard, mouse, timers, disk, etc.).  Devices typically manipulate hardware
 configuration, install interrupt handlers, and process I/O requests via a MessagePort.
 
-Devices in AmigOS create MessagePorts with standard names like "timer.device" and "keyboard.device".
+Devices in AMOS create MessagePorts with standard names like "timer.device" and "keyboard.device".
 
 

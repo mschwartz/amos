@@ -25,7 +25,7 @@ public:
     while (!ReadyToSend()) {
       //      asm("pause");
     }
-    outb(aByte, mPort);
+    outb(mPort, aByte);
   }
 
   void Send(const char *s) {

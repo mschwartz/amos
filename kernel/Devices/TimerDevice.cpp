@@ -12,7 +12,8 @@
 #define I8253_CMD_LOAD 0x34
 #define I8253_CMD_LATCH 0x04
 
-#define QUANTUM 100
+//#define QUANTUM 100
+#define QUANTUM gExecBase.Quantum()
 
 class TimerTask;
 
@@ -25,7 +26,7 @@ public:
   }
 
 public:
-  TBool Run(TAny *aData);
+  TBool Run(TAny *g);
 
 protected:
   TimerTask *mTask;
@@ -38,9 +39,7 @@ public:
   TimerTask(TimerDevice *aTimerDevice) : BTask("Timer Task", LIST_PRI_MAX) {
     mTimerDevice = aTimerDevice;
 
-//    pic_100hz();
     SetFrequency(QUANTUM);
-//    SetFrequency(gExecBase.Quantum());
     gExecBase.SetIntVector(ETimerIRQ, new TimerInterrupt(this));
     gExecBase.EnableIRQ(IRQ_TIMER);
   }
@@ -75,6 +74,7 @@ void TimerTask::Run() {
   while (ETrue) {
 //    dlog("Timer Device Wait\n");
     TUint64 sigs = Wait(port_mask | tick_mask);
+//    dlog("WAKE\n");
     if (sigs & port_mask) {
       while (TimerMessage *m = (TimerMessage *)mMessagePort->GetMessage()) {
         switch (m->mCommand) {
@@ -97,7 +97,6 @@ void TimerTask::Run() {
       TUint64 current = mTimerDevice->IncrementTicks();
       while (ETrue) {
         TUint64 flags = GetFlags();
-        cli();
         TimerMessage *m = (TimerMessage *)timerQueue.First();
         if (timerQueue.End(m)) {
           break;
@@ -117,11 +116,19 @@ void TimerTask::Run() {
   }
 }
 
-TBool TimerInterrupt::Run(TAny *aData) {
+TBool TimerInterrupt::Run(TAny *g) {
+//  dlog("TIMER\n");
   mTask->Signal(1 << mTask->mSignalBit);
-  gExecBase.AckIRQ(IRQ_TIMER);
-  // maybe wake up new task
   gExecBase.RescheduleIRQ();
+  gExecBase.AckIRQ(IRQ_TIMER);
+//  BTask *t = gExecBase.GetCurrentTask();
+//  if (gExecBase.GetCurrentTask() != t) {
+//    t->Dump();
+//    gExecBase.DumpCurrentTask();
+//    bochs;
+//  }
+
+  // maybe wake up new task
   return ETrue;
 }
 

@@ -69,10 +69,10 @@ public:
     DrawLine(aColor.rgb888(), aRect.x1, aRect.y1, aRect.x2, aRect.y2);
   }
 
-  void DrawRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2);
-  void DrawRect(TRGB &aColor, TRect &aRect) {
+  void DrawRect(const TRGB &aColor, TRect &aRect) {
     DrawRect(aColor.rgb888(), aRect.x1, aRect.y1, aRect.x2, aRect.y2);
   }
+  void DrawRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2);
 
   void FillRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2);
   void FillRect(TRGB &aColor, TRect &aRect) {
@@ -97,6 +97,11 @@ public:
     mRect.y1 = aRect.y1;
     mRect.x2 = aRect.x2;
     mRect.y2 = aRect.y2;
+  }
+public:
+  void Dump() {
+    dlog("BViewPort32 at %x\n", this);
+    mRect.Dump();
   }
 protected:
   BBitmap32 *mBitmap32;

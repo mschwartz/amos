@@ -13,6 +13,7 @@ public:
   TInt32 Depth() { return mDepth; }
   TInt32 Pitch() { return mPitch; }
   void GetRect(TRect &aRect) { aRect = mRect; }
+  TBool PointInRect(TInt aX, TInt aY) { return mRect.PointInRect(aX, aY); }
 
 protected:
   BBitmap(TInt32 aWidth, TInt32 aHeight, TInt32 aDepth, TInt32 aPitch, TAny *aMemory);

@@ -23,6 +23,50 @@ static inline void enable_interrupts() {
   __asm__ __volatile__("sti");
 }
 
+// https://wiki.osdev.org/Inline_Assembly/Examples
+static inline void outb(TUint16 port, TUint8 val) {
+    asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
+    /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
+     * Wider immediate constants would be truncated at assemble-time (e.g. "i" constraint).
+     * The  outb  %al, %dx  encoding is the only option for all other cases.
+     * %1 expands to %dx because  port  is a uint16_t.  %w1 could be used if we had the port number a wider C type */
+}
+static inline void outw(TUint16 port, TUint16 val) {
+    asm volatile ( "outw %0, %1" : : "a"(val), "Nd"(port) );
+    /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
+     * Wider immediate constants would be truncated at assemble-time (e.g. "i" constraint).
+     * The  outb  %al, %dx  encoding is the only option for all other cases.
+     * %1 expands to %dx because  port  is a uint16_t.  %w1 could be used if we had the port number a wider C type */
+}
+static inline void outl(TUint16 port, TUint32 val) {
+    asm volatile ( "outl %0, %1" : : "a"(val), "Nd"(port) );
+    /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
+     * Wider immediate constants would be truncated at assemble-time (e.g. "i" constraint).
+     * The  outb  %al, %dx  encoding is the only option for all other cases.
+     * %1 expands to %dx because  port  is a uint16_t.  %w1 could be used if we had the port number a wider C type */
+}
+static inline TUint8 inb(TUint16 port) {
+    TUint8 ret;
+    asm volatile ( "inb %1, %0"
+                   : "=a"(ret)
+                   : "Nd"(port) );
+    return ret;
+}
+static inline TUint16 inw(TUint16 port) {
+    TUint16 ret;
+    asm volatile ( "inw %1, %0"
+                   : "=a"(ret)
+                   : "Nd"(port) );
+    return ret;
+}
+static inline TUint32 inl(TUint16 port) {
+    TUint32 ret;
+    asm volatile ( "inl %1, %0"
+                   : "=a"(ret)
+                   : "Nd"(port) );
+    return ret;
+}
+#if 0
 static __inline unsigned char inb(unsigned short int __port) {
   unsigned char _v;
   __asm__ __volatile__("inb %w1,%0"
@@ -145,6 +189,7 @@ static __inline void outsl(unsigned short int __port, const void *__addr, unsign
                        : "=S"(__addr), "=c"(__count)
                        : "d"(__port), "0"(__addr), "1"(__count));
 }
+#endif
 
 static __attribute__((noreturn)) inline void halt() {
 //  disable_interrupts();

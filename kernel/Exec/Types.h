@@ -173,10 +173,10 @@ extern TUint8 in_bochs;
 
 //stops simulation and breaks into the debug console
 inline void dbreak() {
-  //  outw(0x8A00, 0x8A00);
-  //  outw(0x8A00, 0x08AE0);
-  outw(0x8A00, 0x8a00);
-  outw(0x08AE0, 0x8a00);
+    outw(0x8A00, 0x8A00);
+    outw(0x8A00, 0x08AE0);
+//  outw(0x8A00, 0x8a00);
+//  outw(0x08AE0, 0x8a00);
 }
 
 extern void dputc(char c);

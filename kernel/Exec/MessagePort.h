@@ -1,7 +1,7 @@
 #ifndef BMESSAGEPORT_H
 #define BMESSAGEPORT_H
 
-#include <BTask.h>
+#include <Exec/BTask.h>
 
 /********************************************************************************
  ********************************************************************************
@@ -25,7 +25,6 @@ public:
 public:
   void Dump();
 
-protected:
   MessagePort *mReplyPort;
 };
 

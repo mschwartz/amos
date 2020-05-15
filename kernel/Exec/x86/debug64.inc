@@ -14,7 +14,6 @@ putc:
                     pop dx
                     ret
 
-                   
 newline64:
                     mov al, 13
                     call putc

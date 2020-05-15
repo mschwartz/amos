@@ -44,6 +44,7 @@ void SeedRandom(TUint32 aSeed) {
 }
 
 void SeedRandom64(TUint64 aSeed) {
+  dlog("Set Seed %d\n", aSeed);
   lehmer64_seed(aSeed);
 }
 
@@ -69,7 +70,9 @@ TInt32 Random(TInt32 aMin, TInt32 aMax) {
 }
 
 TInt64 Random64(TInt64 aMin, TInt64 aMax) {
-  return TInt64(Random64()) % (aMax - aMin) + aMin;
+  TUint64 r = Random64();
+//  dlog("r64 %d %d %d\n", r, TUint64(aMax - aMin), r % TUint64(aMax - aMin));
+  return r % TUint64(aMax - aMin) + aMin;
 }
 
 TFloat RandomFloat() {

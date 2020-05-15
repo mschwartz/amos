@@ -18,18 +18,20 @@ public:
 public:
   void Paint() {
     dlog("PAINT\n");
-    Clear(0xff0000);
+    Clear(0x000000);
   }
   void RandomBox() {
     TRect rect;
-    TRGB color(Random(0, 255), Random(0, 255), Random(0, 255));
+    TRGB color(Random64(0, 255), Random64(0, 255), Random64(0, 255));
     rect.x1 = Random64(mClientRect.x1, mClientRect.x2);
     rect.x2 = Random64(rect.x1, mClientRect.x2);
     rect.y1 = Random64(mClientRect.y1, mClientRect.y2);
     rect.y2 = Random64(rect.y1, mClientRect.y2);
 //    dlog("RandomBox %x %x\n", color.rgb888(), Random());
 //    rect.Dump();
-//    mViewPort->FillRect(color, rect);
+    DISABLE;
+    mViewPort->FillRect(color, rect);
+    ENABLE;
   }
 };
 
@@ -51,11 +53,11 @@ void TestTask::Run() {
 //  while (1) Sleep(1);
   TInt count = 0;
   while (1) {
-//    win->BeginPaint();
+    win->BeginPaint();
     for (TInt i=0; i<10; i++) {
       win->RandomBox();
     }
-//    win->EndPaint();
+    win->EndPaint();
 //    Sleep(1);
   }
 #if 0

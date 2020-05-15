@@ -93,7 +93,7 @@ ExecBase::ExecBase() {
   mSystemInfo.mMillis = 0;
 
 //  SeedRandom(rdrand());
-  SeedRandom(1);
+  SeedRandom64(1);
   dlog("\n\nDisplay Mode:\n");
   modes->mDisplayMode.Dump();
 

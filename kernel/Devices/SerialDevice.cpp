@@ -57,13 +57,13 @@ SerialDevice::SerialDevice() : BDevice("serial.device") {
 #if 0
   mPort = ECOM1;
 
-  outb(0x00, mPort + 1);
-  outb(0x80, mPort + 3);
-  outb(0x03, mPort + 0);
-  outb(0x00, mPort + 1);
-  outb(0x03, mPort + 3);
-  outb(0xc7, mPort + 2);
-  outb(0x0b, mPort + 4);
+  outb(mPort + 1, 0x00);
+  outb(mPort + 3, 0x80, mPort + 3);
+  outb(mPort + 0, 0x03);
+  outb(mPort + 1, 0x00);
+  outb(mPort + 3, 0x03);
+  outb(mPort + 2, 0xc7);
+  outb(mPort + 4, 0x0b);
 
   Send("Serial Port Initialized\n");
 

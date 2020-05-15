@@ -4,6 +4,24 @@
 ;VIRT_BASE           equ 0
 ;CODE_SEL_64         equ 1
 
+                    extern putc64
+                    extern puts64
+                    extern newline64
+                    extern space64
+                    extern hexbyte64
+                    extern hexword64
+                    extern hexbytes64
+                    extern hexwords64
+                    extern hexlongs64
+                    extern hexquads64
+                    extern hexbyten64
+                    extern hexwordn64
+                    extern hexlongn64
+                    extern hexquadn64
+                    extern hexdump64
+                    extern stackdump64
+
+                    
 IDT_ENTRIES         equ 256
                     section .text
 
@@ -11,76 +29,39 @@ IDT_ENTRIES         equ 256
                     extern kernel_isr
 
 ; task_t structure MUST match the one in idt.h
-task_t              equ 0
-task_flags          equ task_t
-task_rax            equ task_flags + 8
-task_rbx            equ task_rax + 8
-task_rcx            equ task_rbx + 8
-task_rdx            equ task_rcx + 8
-task_rsi            equ task_rdx + 8
-task_rdi            equ task_rsi + 8
-
-task_r8             equ task_rdi +8
-task_r9             equ task_r8 + 8
-task_r10            equ task_r9 + 8
-task_r11            equ task_r10 + 8
-task_r12            equ task_r11 + 8
-task_r13            equ task_r12 + 8
-task_r14            equ task_r13 + 8
-task_r15            equ task_r14 + 8
-
-task_rip            equ task_r15 + 8
-task_rsp            equ task_rip + 8
-task_rbp            equ task_rsp + 8
-task_errcode        equ task_rbp + 8
-task_isrnum         equ task_errcode + 8
-task_errno          equ task_isrnum + 8
-task_cs             equ task_errno + 4
-task_ds             equ task_cs + 2
-task_es             equ task_ds + 2
-task_fs             equ task_es + 2
-task_gs             equ task_fs + 2
-task_ss             equ task_gs + 2
-task_sizeof         equ task_ss + 2
-
-
-%if 0
-STRUC task_t
-                                        ; flags
-                    task_flags         resq 0
-                    ; general purpose registers
-                    task_rax           resq 0
-                    task_rbx           resq 0
-                    task_rcx           resq 0
-                    task_rdx           resq 0
-                    task_rsi           resq 0
-                    task_rdi           resq 0
-                                        ; instruction pointer
-                    task_rip           resq 0
-                                        ; stack
-                    task_rsp           resq 0
-                    task_rbp           resq 0
-
-                    task_errcode       resq 0
-                    task_isrnum        resq 0
-                    task_errno         resd 0
-
-                                        ; segment registers
-                    task_cs            resw 0
-                    task_ds            resw 0
-                    task_es            resw 0
-                    task_fs            resw 0
-                    task_gs            resw 0
-                    task_ss            resw 0
-ENDSTRUC
-%endif
-
-;task0               resb task_sizeof
+struc TASK 
+.rflags             resq 1
+.rax                resq 1
+.rbx                resq 1
+.rcx                resq 1
+.rdx                resq 1
+.rsi                resq 1
+.rdi                resq 1
+.r8                 resq 1
+.r9                 resq 1
+.r10                resq 1
+.r11                resq 1
+.r12                resq 1
+.r13                resq 1
+.r14                resq 1
+.r15                resq 1
+.rip                resq 1
+.rsp                resq 1
+.rbp                resq 1
+.upper_sp           resq 1
+.lower_sp           resq 1              ; used to save caller's stack in init_task_state
+.error_code         resq 1
+.isrnum             resq 1
+.cs                 resw 1
+.ds                 resw 1
+.es                 resw 1
+.fs                 resw 1
+.gs                 resw 1
+.ss                 resw 1
+endstruc
 
                     global current_task
 current_task        dq 0
-                    global next_task
-next_task           dq 0
 
                     %macro bochs 0
                     xchg bx, bx
@@ -104,40 +85,41 @@ isr%1:              dq xisr%1
 ; the C IRQ handler expects this specific order of items on the stack!  See the ISR_REGISTERS struct.
                     global isr_common
 isr_common:
-
                     push rdi            ; save rdi so we don't clobber it
-;                    xchg bx, bx
 
                     mov rdi, [current_task]
-                    mov [rdi + task_isrnum], rax
+                    mov [rdi + TASK.isrnum], rax            ; isrnum was pushed on stack by xisr
+
+
                     ; set default value for task_error_code
                     xor rax, rax
-                    mov [rdi + task_errcode], rax
-                    pop rax             ; restore saved rax from the macro 
+                    mov [rdi + TASK.error_code], rax
 
-                    mov [rdi + task_rbp], rbp
+                    ; stack is rdi, rax
 
-                    ; store general purpose registers
-                    mov [rdi + task_rax], rax
-                    mov [rdi + task_rbx], rbx
-                    mov [rdi + task_rcx], rcx
-                    mov [rdi + task_rdx], rdx
+                    ; rdi is on the stack
+;                    pop rax                                 ; restore saved rdi from the macro 
+;                    mov [rdi + TASK.rdi], rax
 
-                    mov [rdi + task_rsi], rsi
-                    pop rax             ; this is the rdi we pushed at isr_common
-                    mov [rdi + task_rdi], rax
+;                    mov rax, [rdi + TASK.rdi]
+;                    push rax
 
-                    mov [rdi + task_r8], r8
-                    mov [rdi + task_r9], r9
-                    mov [rdi + task_r10], r10
-                    mov [rdi + task_r11], r11
-                    mov [rdi + task_r12], r12
-                    mov [rdi + task_r13], r13
-                    mov [rdi + task_r14], r14
-                    mov [rdi + task_r15], r15
+                    push rbx
+                    push rcx
+                    push rdx
+                    push rsi
+                    push r8
+                    push r9
+                    push r10
+                    push r11
+                    push r12
+                    push r13
+                    push r14
+                    push r15
+                    push rbp
 
                     ; the CPU pushes an extra error code for certain interrupts
-                    mov rax, [rdi + task_isrnum]
+                    mov rax, [rdi + TASK.isrnum]
                     cmp rax, 8
                     je .error_code
                     cmp rax, 9
@@ -151,139 +133,136 @@ isr_common:
                     cmp rax, 15 
                     je .error_code
                     jmp .frame
+
 .error_code:
                     pop rax ; get error_code
-                    mov [rdi + task_errcode], rax
+                    mov [rdi + TASK.error_code], rax
 
-                    ;
-.frame              pop rax             ; task's RIP
-                    mov [rdi + task_rip], rax
-                    pop rax             ; task's CS
-                    mov [rdi + task_cs], eax
-                    pop rax             ; task's flags
-                    mov [rdi + task_flags], rax
-                    pop rax             ; task's RSP
-                    mov [rdi + task_rsp], eax
-                    pop rax             ; task's SS
-                    mov [rdi + task_ss], eax
+.frame:
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-                    mov [rdi + task_ds], ds
-                    mov [rdi + task_es], es
-                    mov [rdi + task_fs], fs
-                    mov [rdi + task_gs], gs
-
-                    ; TODO check return value to see if task switch should be done
-                    mov rdi, [rdi + task_isrnum]
+                    mov [rdi + TASK.rsp], rsp
+                    ; pass isrnum to C method as argument
+                    mov rdi, [rdi + TASK.isrnum]
                     call kernel_isr
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
                     ; restore task state
                     mov rdi, [current_task]
+                    mov rsp, [edi + TASK.rsp]
 
-                    ; set up the return stack using the task's stack memory
-                    mov ss, [rdi + task_ss]
-                    mov rsp, [rdi + task_rsp]
-
-                    ; we save/restore the return stack in case we switch stacks on a task switch
-                    xor rax, rax
-                    mov eax, [rdi + task_ss]
-                    push rax
-
-                    mov rax, [rdi + task_rsp]
-                    push rax
-
-                    mov rax, [rdi + task_flags]
-                    push rax
-
-                    mov eax, [rdi + task_cs]
-                    push rax
-
-                    mov rax, [rdi + task_rip]
-                    push rax
-
-                    ; stack is now ready for iretq
-
-                    mov rax, [rdi + task_rax]
-                    mov rbx, [rdi + task_rbx]
-                    mov rcx, [rdi + task_rcx]
-                    mov rdx, [rdi + task_rdx]
-
-                    mov r8, [rdi + task_r8]
-                    mov r9, [rdi + task_r9]
-                    mov r10, [rdi + task_r10]
-                    mov r11, [rdi + task_r11]
-                    mov r12, [rdi + task_r12]
-                    mov r13, [rdi + task_r13]
-                    mov r14, [rdi + task_r14]
-                    mov r15, [rdi + task_r15]
-
-                    mov rsi, [rdi + task_rsi]
-
-                    mov gs, [rdi + task_gs]
-                    mov fs, [rdi + task_fs]
-                    mov es, [rdi + task_es]
-                    mov ds, [rdi + task_ds]
-                   
-                    mov rbp, [rdi + task_rbp]
+                    pop rbp
+                    pop r15
+                    pop r14
+                    pop r13
+                    pop r12
+                    pop r11
+                    pop r10
+                    pop r9
+                    pop r8
+                    pop rsi
+                    pop rdx
+                    pop rcx
+                    pop rbx
+                    pop rax
                     ; finally restore rdi (we don't need it anymore)
-                    mov rdi, [rdi + task_rdi]
+                    pop rdi
 
                     iretq
 
 
-                    global enter_next_task
-enter_next_task:
+                    global init_task_state
+                    ; rdi = struct to init
+init_task_state:
+                    ; save flags on stack, we want to do this with interrupts disabled, since we are mucking with rsp
+                    pushf
+                    cli
+
+                    ; push registers we use/modify onto caller's stack
+                    push rcx
+
+                    mov rcx, rsp                            ; save caller rsp
+
+                    ; set up task's stack
+                    mov rsp, [rdi + TASK.upper_sp]
+
+                    ; set up stack for iretq
+                    mov rax, 10h                             ; ss
+                    push rax
+
+                    mov rax, [rdi + TASK.upper_sp]          ; rsp
+                    push rax
+
+                    mov rax, [rdi + TASK.rflags]            ; rflags
+                    push rax
+
+                    mov rax, 8                              ; cs
+                    push rax
+
+                    mov rax, [rdi + TASK.rip]
+                    push rax
+
+                    ; push registers as if an IRQ/exception
+
+                    xor rax, rax
+                    push rax            ; rdi
+                    push rax            ; rax
+                    push rax            ; rbx
+                    push rax            ; rcx
+                    push rax            ; rdx
+                    push rax            ; rsi
+                    push rax            ; r8
+                    push rax            ; r9
+                    push rax            ; r10
+                    push rax            ; r11
+                    push rax            ; r12
+                    push rax            ; r13
+                    push rax            ; r14
+                    push rax            ; r15
+                    push rax            ; rbp
+
+                    mov [rdi + TASK.rsp], rsp
+                    ; restore caller rsp
+                    mov rsp, rcx
+
+                    pop rcx
+
+                    popf
+                    ret
+
+                    global enter_tasking
+enter_tasking:
+                    jmp $
+                    cli
                     ; restore task state
-                    mov rdi, [next_task]
-                    mov [current_task], rdi
+                    mov rdi, [current_task]
 
                     ; set up the return stack using the task's stack memory
-                    mov ss, [rdi + task_ss]
-                    mov rsp, [rdi + task_rsp]
+;                    mov ss, [rdi + TASK.ss]
+                    mov rsp, [rdi + TASK.rsp]
 
-                    ; we save/restore the return stack in case we switch stacks on a task switch
-                    xor rax, rax
-                    mov eax, [rdi + task_ss]
-                    push rax
-
-                    mov rax, [rdi + task_rsp]
-                    push rax
-
-                    mov rax, [rdi + task_flags]
-                    push rax
-
-                    mov eax, [rdi + task_cs]
-                    push rax
-
-                    mov rax, [rdi + task_rip]
-                    push rax
-
-                    ; stack is now ready for iretq
-
-                    mov rax, [rdi + task_rax]
-                    mov rbx, [rdi + task_rbx]
-                    mov rcx, [rdi + task_rcx]
-                    mov rdx, [rdi + task_rdx]
-
-                    mov r8, [rdi + task_r8]
-                    mov r9, [rdi + task_r9]
-                    mov r10, [rdi + task_r10]
-                    mov r11, [rdi + task_r11]
-                    mov r12, [rdi + task_r12]
-                    mov r13, [rdi + task_r13]
-                    mov r14, [rdi + task_r14]
-                    mov r15, [rdi + task_r15]
-
-                    mov rsi, [rdi + task_rsi]
-
-                    mov gs, [rdi + task_gs]
-                    mov fs, [rdi + task_fs]
-                    mov es, [rdi + task_es]
-                    mov ds, [rdi + task_ds]
-                   
-                    mov rbp, [rdi + task_rbp]
-                    mov rdi, [rdi + task_rdi]
-
+                    pop rbp
+                    pop r15
+                    pop r14
+                    pop r13
+                    pop r12
+                    pop r11
+                    pop r10
+                    pop r9
+                    pop r8
+                    pop rsi
+                    pop rdx
+                    pop rcx
+                    pop rbx
+                    pop rax
+                    ; finally restore rdi (we don't need it anymore)
+                    pop rdi
                     iretq
 
                     global save_rsp
@@ -302,7 +281,7 @@ save_rsp:
                     push rax
                     mov rax, rsp
                     add rax, 8 + 8 + 8
-                    mov [rdi + task_rsp], rax
+                    mov [rdi + TASK.rsp], rax
                     pop rax
                     pop rdi
                     popf
@@ -577,4 +556,14 @@ pic_100hz:
 MOUSE_TRAP          equ 0x20 + 12
 mouse_trap:
                     int MOUSE_TRAP
+                    ret
+
+                    global rdrand
+rdrand:             
+                    rdrand rax     ;generate a 32 bit random number and store it in EAX
+                    jc rdrand
+                    ret
+
+                    global task_switch
+task_switch:
                     ret

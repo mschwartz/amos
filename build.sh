@@ -79,6 +79,10 @@ echo "  BUILDING EXEC"
 cd Exec
 make
 cd ..
+echo "  BUILDING INSPIRATION"
+cd Inspiration
+make
+cd ..
 #echo ""
 #echo ""
 #echo "  BUILDING X86"

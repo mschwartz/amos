@@ -8,7 +8,7 @@ nybbles             db "0123456789ABCDEF",0
 
                     global debug64_init
 debug64_init:
-                    %ifdef SERIAL
+               %ifdef SERIAL
                     mov al, 0x00
                     mov dx, COM1+1
                     out dx, al
@@ -37,7 +37,7 @@ debug64_init:
                     mov dx, COM1+4
                     out dx, al
                     
-                    %endif
+               %endif
                     ret
 ;cls64:
 ;                    mov rdi, 0xb8000
@@ -47,8 +47,9 @@ debug64_init:
 ;                    rep stosw
 ;                    ret
 
+                    global putc64
 putc64:
-%ifdef SERIAL
+   %ifdef SERIAL
                     push rdx
                     push rax
                     mov dx, COM1+5
@@ -60,15 +61,16 @@ putc64:
                     mov dx, COM1
                     out dx, al
                     pop rdx
-%else
-                    call screen_putc
-;                    out 0xe9, al
+   %else
+;                    call screen_putc
+                    out 0xe9, al
 ;                    xor bx,bx
 ;                    mov ah, 0eh
 ;                    int 10h			; Otherwise, print it
-%endif
+   %endif
 	ret
 
+                    global puts64
 puts64:			; Routine: output string in SI to screen
 	lodsb			; Get character from string
 	cmp al, 0
@@ -81,6 +83,7 @@ puts64:			; Routine: output string in SI to screen
 .done:
 	ret
 
+                    global newline64
 newline64:
 	push rax
 ;                    mov al, 13
@@ -90,6 +93,7 @@ newline64:
 	pop rax
 	ret
 
+                    global space64
 space64:
 	mov al, ' '
 	jmp putc64
@@ -107,6 +111,7 @@ hexnybble64:
 ;                    pop rbx
 	ret
 
+                    global hexbyte64
 hexbyte64:
 	push rax
 	push rcx
@@ -121,6 +126,7 @@ hexbyte64:
 	pop rax
 	ret
 
+                    global hexword64
 hexword64:
 	push rax
 	push rcx
@@ -135,6 +141,7 @@ hexword64:
 	pop rax
 	ret
 
+                    global  hexlong64
 hexlong64:
 	push rax
 	push rcx
@@ -149,6 +156,7 @@ hexlong64:
 	pop rax
 	ret
 
+                    global  hexquad64
 hexquad64:
                     push rax
                     push rcx
@@ -165,22 +173,39 @@ hexquad64:
                     pop rax
                     ret
 
+                    global hexbytes64
 hexbytes64:         call hexbyte64
                     jmp space64
+
+                    global hexwords64
 hexwords64:         call hexword64
                     jmp space64
+
+                    global hexlongs64
 hexlongs64:         call hexlong64
                     jmp space64
+
+                    global hexquads64
 hexquads64:         call hexquad64
                     jmp space64
+
+                    global hexbyten64
 hexbyten64:         call hexbyte64
                     jmp newline64
+
+                    global hexwordn64
 hexwordn64:         call hexword64
                     jmp newline64
+
+                    global hexlongn64
 hexlongn64:         call hexlong64
                     jmp newline64
+
+                    global hexquadn64
 hexquadn64:         call hexquad64
                     jmp newline64
+
+                    global hexdump64
 hexdump64:
                     mov rax, rsi
                     call hexquads64
@@ -191,4 +216,48 @@ hexdump64:
 	ja .loop
                     call newline64
 	ret
+
+                    global stackdump64
+stackdump64:
+                    push rsi
+                    mov rsi, rsp
+                    add rsi, 16
+
+                    push rax
+                    push rbx
+                    push rcx
+
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+                    call dump1
+
+                    call newline64
+
+                    pop rcx
+                    pop rbx
+                    pop rax
+                    pop rsi
+                    ret
+
+dump1:
+                    push rsi
+                    mov rax, rsi
+                    call hexquad64
+                    mov al, ' '
+                    call putc64
+                    pop rsi
+                    lodsq
+                    call hexquad64
+                    call newline64
+                    ret
 

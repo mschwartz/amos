@@ -214,7 +214,7 @@ PS2::PS2() {
      */
 TBool PS2::Write(TUint32 port, TUint8 b) {
   if (ps2_wait_write()) {
-    outb(b, port);
+    outb(port, b);
     return ETrue;
   }
 

@@ -9,8 +9,8 @@
 
 TUint8 in_bochs; //  = *((TUint8 *)0x7c10);
 
-extern "C" TUint64 GetFlags();
-extern "C" void SetFlags(TUint64 aFlags);
+//extern "C" TUint64 GetFlags();
+//extern "C" void SetFlags(TUint64 aFlags);
 
 extern "C" void eputs(const char *s);
 
@@ -21,7 +21,7 @@ void dputc(char c) {
 //    outb((int)c, 0xe9);
 //  sputc(c);
   if (false || in_bochs) {
-    outb((int)c, 0xe9);
+    outb(0xe9, (int)c);
   }
   else {
     sputc(c);
@@ -29,33 +29,29 @@ void dputc(char c) {
 }
 
 void dputs(const char *s) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   while (*s) { 
     dputc(*s++); 
   }
-  SetFlags(flags);
+  ENABLE;
 }
 
 void dlog(const char *fmt, ...) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
 
   va_list args;
   va_start(args, fmt);
 
   char buf[512];
-  dprint("%020d ", gExecBase.SystemTicks());
+  dprint("%020d %-16s ", gExecBase.SystemTicks(), gExecBase.CurrentTaskName());
   vsprintf(buf, fmt, args);
   dputs(buf);
   va_end(args);
-  SetFlags(flags);
+
+  ENABLE;
 }
 
 void dprintf(const char *fmt, ...) {
-  TUint64 flags = GetFlags();
-  cli();
-
   char buf[512];
   va_list args;
   va_start(args, fmt);
@@ -63,14 +59,9 @@ void dprintf(const char *fmt, ...) {
   vsprintf(buf, fmt, args);
   dputs(buf);
   va_end(args);
-
-  SetFlags(flags);
 }
 
 void dprint(const char *fmt, ...) {
-  TUint64 flags = GetFlags();
-  cli();
-
   char buf[512];
   va_list args;
   va_start(args, fmt);
@@ -78,7 +69,6 @@ void dprint(const char *fmt, ...) {
   vsprintf(buf, fmt, args);
   dputs(buf);
   va_end(args);
-  SetFlags(flags);
 }
 
 void dhex4(const TUint8 n) {

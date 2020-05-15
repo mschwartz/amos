@@ -25,7 +25,6 @@ export KFONT="$KFONTNAME.psf"
 export INCLUDE_PATH="\
 	-I$TOP_DIR/kernel/include/ \
 	-I$TOP_DIR/kernel/ \
-	-I$TOP_DIR/kernel/Exec/ \
   	-I. \
 	"
 
@@ -47,6 +46,7 @@ export CFLAGS="\
 
 export LIBS="\
 	-L$TOP_DIR/kernel/Exec -lexec \
+	-L$TOP_DIR/kernel/Inspiration -linspiration \
 	-L$TOP_DIR/kernel/posix -lposix \
 	"
 

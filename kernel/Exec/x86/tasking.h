@@ -30,10 +30,12 @@ typedef struct Task {
   volatile TUint64 rbp;
   // flags
 
+  volatile TUint64 upper_sp;
+  volatile TUint64 lower_sp;
   volatile TUint64 err_code;
   volatile TUint64 isr_num; //48
 
-  TInt errno;
+//  TInt errno;
 
   // segment/selector registers
   volatile TUint16 cs;
@@ -52,7 +54,7 @@ typedef struct Task {
 //    dlog(" isr_num: (%s) %x\n", isr_names[isr_num], isr_num);
     dlog("isr_num: (%s) %x\n", "ISR", isr_num);
     dlog("err_code: %x\n", err_code);
-
+#if 0
     dlog("    rax: %016x ", rax);
     dlog("    rbx: %016x ", rbx);
     dlog("    rcx: %016x ", rcx);
@@ -68,7 +70,7 @@ typedef struct Task {
     dlog("     gs: %016x\n", gs);
 
     dlog("    rip: %016x\n", rip);
-
+#endif
     dlog("  stack:\n");
     TUint64 *stack = (TUint64 *)rsp;
     for (int i=0; i<10; i++) {

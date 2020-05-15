@@ -3,9 +3,6 @@
 #include <Exec/x86/ps2.h>
 #include <Devices/MouseDevice.h>
 
-#define inportb inb
-#define outportb(a, b) outb(b, a)
-
 const TUint32 MOUSE_DR = 0x60;
 const TUint32 MOUSE_SR = 0x64;
 const TUint32 MOUSE_PORT = 0x60;
@@ -43,15 +40,15 @@ static void mouse_wait(TUint8 a_type) {
 static void mouse_write(TUint8 a_write) {
   //Tell the mouse we are sending a command
   mouse_wait(1);
-  outportb(MOUSE_STATUS, MOUSE_WRITE);
+  outb(MOUSE_STATUS, MOUSE_WRITE);
   mouse_wait(1);
   //Finally write
-  outportb(MOUSE_PORT, a_write);
+  outb(MOUSE_PORT, a_write);
 }
 
 static TUint8 mouse_read() {
   mouse_wait(0);
-  return inportb(MOUSE_PORT);
+  return inb(MOUSE_PORT);
 }
 
 /********************************************************************************
@@ -71,7 +68,7 @@ public:
     gExecBase.GetSystemInfo(&info);
     mMaxX = info.mScreenWidth - 1;
     mMaxY = info.mScreenHeight - 1;
-    dlog("Mouse Max X,Y = %d,%d\n", mMaxX, mMaxY);
+//    dlog("Mouse Max X,Y = %d,%d\n", mMaxX, mMaxY);
   }
 
 public:
@@ -109,13 +106,14 @@ protected:
 TBool MouseInterrupt::Run(TAny *aData) {
   TInt8 in_byte = mouse_read();
 
+//  dlog("Mouse Interrupt\n");
   switch (mState) {
     case 0:
       mPacket[0] = in_byte;
 
       if (in_byte & MOUSE_LEFT_BUTTON) {
         mButtons |= MOUSE_LEFT_BUTTON;
-        dlog("===== LEFT\n");
+//        dlog("===== LEFT\n");
       }
       else {
         mButtons &= ~MOUSE_LEFT_BUTTON;
@@ -123,7 +121,7 @@ TBool MouseInterrupt::Run(TAny *aData) {
 
       if (in_byte & MOUSE_MIDDLE_BUTTON) {
         mButtons |= MOUSE_MIDDLE_BUTTON;
-        dlog("===== MIDDLE\n");
+//        dlog("===== MIDDLE\n");
       }
       else {
         mButtons &= ~MOUSE_MIDDLE_BUTTON;
@@ -131,7 +129,7 @@ TBool MouseInterrupt::Run(TAny *aData) {
 
       if (in_byte & MOUSE_RIGHT_BUTTON) {
         mButtons |= MOUSE_RIGHT_BUTTON;
-        dlog("===== RIGHT\n");
+//        dlog("===== RIGHT\n");
       }
       else {
         mButtons &= ~MOUSE_RIGHT_BUTTON;
@@ -192,21 +190,21 @@ void MouseTask::Run() {
   mMessagePort = CreateMessagePort("mouse.device");
   gExecBase.AddMessagePort(*mMessagePort);
 
-  dlog("Initialize Mouse Interrupt... ");
+//  dlog("Initialize Mouse Interrupt... ");
 
   // enable the auxilliary mouse device
   mouse_wait(1);
-  outb(0xa8, 0x64);
+  outb(0x64, 0xa8);
 
   // enable the interrupts
   mouse_wait(1);
-  outb(0x20, 0x64);
+  outb(0x64, 0x20);
   mouse_wait(0);
   TUint8 status = (inb(0x60) & ~0x20) | 2;
   mouse_wait(1);
-  outb(0x60, 0x64);
+  outb(0x64, 0x60);
   mouse_wait(1);
-  outb(status, 0x60);
+  outb(0x60, status);
 
   // tell the mouse to use the default settings
   mouse_write(0xf6);
@@ -216,7 +214,7 @@ void MouseTask::Run() {
   mouse_write(0xf4);
   mouse_read();
 
-  dprint("   Enable PIC (%d) and Vector(%d)\n", IRQ_MOUSE, EMouseIRQ);
+//  dprint("   Enable PIC (%d) and Vector(%d)\n", IRQ_MOUSE, EMouseIRQ);
   gExecBase.SetIntVector(EMouseIRQ, new MouseInterrupt(this));
   gExecBase.EnableIRQ(IRQ_MOUSE);
   gExecBase.AckIRQ(IRQ_MOUSE);
@@ -227,19 +225,33 @@ void MouseTask::Run() {
 
   SetFlags(flags);
 
-  dlog("mouse waitport\n");
-  TBool mouse_rendered = EFalse;
+  BMessageList messages("mouselist");
+
   while (WaitPort(mMessagePort)) {
+//    dlog("Wake\n");
     while (MouseMessage *m = (MouseMessage *)mMessagePort->GetMessage()) {
       switch (m->mCommand) {
-        case EMouseUpdate:
-          mDevice->mX = m->mMouseX;
-          mDevice->mY = m->mMouseY;
-          mDevice->mButtons = m->mButtons;
+        case EMouseUpdate: {
+          TInt32 x = m->mMouseX,
+                 y = m->mMouseY;
+          TUint8 buttons = m->mButtons;
+
+          mDevice->mX = x;
+          mDevice->mY = y;
+          mDevice->mButtons = buttons;
           delete m;
-          dlog("mouse move %d,%d %x\n", mDevice->mX, mDevice->mY, mDevice->mButtons);
-          break;
-        case EMouseState:
+          while ((m = (MouseMessage *)messages.RemHead())) {
+//            dlog("mouse move %x %d,%d %x\n", m, mDevice->mX, mDevice->mY, mDevice->mButtons);
+            m->mMouseX = x;
+            m->mMouseY = y;
+            m->mButtons = buttons;
+//            dlog(" Reply message %x to port %x\n", m, m->mReplyPort);
+            m->ReplyMessage();
+          }
+        } break;
+        case EMouseMove:
+//          dlog("mouse.device queued %x\n", m);
+          messages.AddTail(*m);
           break;
         default:
           break;

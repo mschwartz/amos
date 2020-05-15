@@ -2,7 +2,7 @@
 #define EXEC_TASK_H
 
 #include <Exec/BList.h>
-#include <x86/tasking.h>
+#include <Exec/x86/tasking.h>
 
 const TUint64 default_task_stack_size = 2 * 1024 * 1024;
 //const TUint64 default_task_stack_size = 64 * 1024;
@@ -10,6 +10,8 @@ const TUint64 default_task_stack_size = 2 * 1024 * 1024;
 class MessagePort;
 
 class ExecBase;
+class InspirationBase;
+
 
 enum ETaskState {
   ETaskRunning,
@@ -27,11 +29,13 @@ public:
   TTaskRegisters mRegisters;
 
 protected:
-  volatile TAny *mUpperSP, *mLowerSP; 
   volatile ETaskState mTaskState;
 
 public:
   virtual void Run() = 0;
+
+public:
+  const char *TaskName() { return mNodeName; }
   void DumpRegisters(TTaskRegisters *regs);
   void Dump();
 
@@ -84,6 +88,8 @@ protected:
 
 protected:
   volatile TInt64 mForbidNestCount, mDisableNestCount;
+protected:
+  InspirationBase& mInspirationBase;
 };
 
 class BTaskList : public BListPri {

@@ -14,8 +14,9 @@
 
 	BITS 16
 
-%define SERIAL
+%ifdef SERIAL
 COM1                equ 0x3f8
+%endif
 
                     %include "memory.inc"
                     %include "cga.inc"

@@ -37,7 +37,7 @@ echo ""
 echo ""
 echo "BUILDING BOOT SECTOR"
 cd $TOP_DIR/boot
-nasm -f bin -l boot.lst $KGFX -o boot.img boot.asm
+nasm -f bin -l boot.lst $KGFX -o boot.img $(SERIAL) boot.asm
 ls -l boot.img
 cd ..
 
@@ -68,7 +68,7 @@ cd kernel
 
 echo "  COMPILING"
 echo "    nasm -f elf -o kernel_start.o kernel_start.asm"
-nasm -f elf64 -o kernel_start.o -l kernel_start.lst kernel_start.asm
+nasm -f elf64 -o kernel_start.o -l kernel_start.lst $(SERIAL) kernel_start.asm
 echo "    $GCC -c -o crti.o crti.s"
 $GCC -c -o crti.o crti.s
 echo "    $GCC -c -o crtn.o crtn.s"

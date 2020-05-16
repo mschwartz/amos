@@ -1,8 +1,9 @@
 ;                    org 0x9000
                     [bits 64]
 
-;%define SERIAL
+%ifdef SERIAL
 COM1                equ 0x3f8
+%endif
 
                     %macro BOCHS 0
                     xchg bx,bx

@@ -50,3 +50,8 @@ export LIBS="\
 	-L$TOP_DIR/kernel/posix -lposix \
 	"
 
+if [ -e "/usr/bin/bochs" ]; then
+  export SERIAL=""
+else
+  export SERIAL="-DSERIAL"
+fi

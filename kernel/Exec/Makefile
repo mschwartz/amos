@@ -8,7 +8,7 @@ FONTS=  $(G)/BFont.o $(G)/font/BVectorFont.o $(G)/font/BConsoleFont.o
 
 DEVICES= $(D)/KeyboardDevice.o $(D)/TimerDevice.o $(D)/RtcDevice.o $(D)/MouseDevice.o $(D)/SerialDevice.o
 
-X86=	x86/bochs.o x86/gdt.o x86/idt.o x86/kernel_isr.o x86/kernel_tasking.o x86/kernel_utils.o x86/mmu.o x86/pic.o 
+X86=	x86/bochs.o x86/gdt.o x86/idt.o x86/kernel_isr.o x86/kernel_tasking.o x86/kernel_utils.o x86/mmu.o x86/tss.o x86/pic.o 
 
 TYPES=	Types.o Types/TBCD.o 
 
@@ -37,6 +37,9 @@ x86/kernel_tasking.o: x86/kernel_tasking.asm
 	nasm -f elf64 -o $*.o $*.asm
 
 x86/kernel_utils.o: x86/kernel_utils.asm
+	nasm -f elf64 -o $*.o $*.asm
+
+x86/tss.o: x86/tss.asm
 	nasm -f elf64 -o $*.o $*.asm
 
 clean:

@@ -1,6 +1,6 @@
 #include <Exec/x86/gdt.h>
 
-typedef struct _GDT_t_ {
+typedef struct {
   TUint16 segm_limit0;    /* segment limit, bits: 15:00	(00-15) */
   TUint16 base_addr0;     /* starting address, bits: 15:00	(16-31) */
   TUint8 base_addr1;      /* starting address, bits: 23:16	(32-38) */
@@ -14,9 +14,9 @@ typedef struct _GDT_t_ {
   TUint8 DB : 1;          /* 1 - 32 bit system, 0 - 16 bit	(53-53) */
   TUint8 G : 1;           /* granularity 0-1B, 1-4kB 	(54-54) */
   TUint8 base_addr2;      /* starting address, bits: 23:16	(55-63) */
-} PACKED GDT_t;
+} PACKED TGdt;
 
-struct gdt_info {
+typedef struct {
   TUint16 limit_low;
   TUint16 base_low;
   TUint8 base_middle;
@@ -24,7 +24,7 @@ struct gdt_info {
   TUint8 granularity;
   TUint8 base_high;
   void Dump() {
-    dprint("gdt_info @ %x (%d bytes long)\n", this, sizeof(gdt_info));
+    dprint("TGdtInfo @ %x\n", this);
     dprint("limit low %x ", limit_low);
     dprint("base low %x ", base_low);
     dprint("base middle %x ", base_middle);
@@ -32,19 +32,19 @@ struct gdt_info {
     dprint("granularity %x ", granularity);
     dprint("base high %x\n", base_high);
   }
-} PACKED;
+} PACKED TGdtInfo;
 
-struct gdtr {
+typedef struct {
   TUint16 limit;
   TUint64 base;
   void Dump() {
-    dprint("gdtr @ %x (%d bytes long)\n", this, sizeof(gdtr));
+    dprint("TGdtr @ %x\n", this);
     dprint("limit  %x\n", limit);
     dprint("base  %x\n", base);
   }
-} PACKED;
+} PACKED TGdtr;
 
-struct tss_info {
+typedef struct {
   TUint32 rsvd0;
   TUint64 rsp0;
   TUint64 rsp1;
@@ -62,11 +62,31 @@ struct tss_info {
   TUint32 rsvd4;
   TUint16 rsvd5;
   TUint16 iopb;
-} PACKED;
+  void Dump() {
+    dprint("TSS at %x\n", this);
+    dprint(" rsvd0: %x\n", rsvd0);
+    dprint(" rsp0: %x\n", rsp0);
+    dprint(" rsp1: %x\n", rsp1);
+    dprint(" rsp2: %x\n", rsp2);
+    dprint(" rsvd1: %x\n", rsvd1);
+    dprint(" rsvd2: %x\n", rsvd2);
+    dprint(" ist1: %x\n", ist1);
+    dprint(" ist2: %x\n", ist2);
+    dprint(" ist3: %x\n", ist3);
+    dprint(" ist4: %x\n", ist4);
+    dprint(" ist5: %x\n", ist5);
+    dprint(" ist6: %x\n", ist6);
+    dprint(" ist7: %x\n", ist7);
+    dprint(" rsvd3: %x\n", rsvd3);
+    dprint(" rsvd4: %x\n", rsvd4);
+    dprint(" rsvd5: %x\n", rsvd5);
+    dprint(" iopb: %x\n", iopb);
+  }
+} PACKED TTss;
 
-static GDT_t gdtmem[6];
-static gdtr gp;
-static tss_info tss;
+//static TGdt gdtmem[6];
+//static TGdtr gp;
+//static tss_info tss;
 
 #define SEGNDX_CODE 1
 #define SEGNDX_DATA 2
@@ -75,12 +95,21 @@ static tss_info tss;
 #define PRIV_KERNEL 0
 #define PRIV_USER 3
 
-extern "C" void gdt_flush(gdtr *gp);         // ASM function
+extern "C" void gdt_flush(TGdtr *gp);       // ASM function
 extern "C" void tss_flush(TUint32 segment); // ASM funct
 
+extern "C" TGdt *install_gdt();
+extern "C" TTss *install_tss();
+
 GDT::GDT() {
+  TGdt *g = install_gdt();
+//  g->Dump();
+  TTss *t = install_tss();
+  t->Dump();
+
   return;
-  gp.limit = (sizeof(gdt_info) * 6) - 1;
+#if 0
+  gp.limit = (sizeof(TGdtInfo) * 6) - 1;
   gp.base = (TUint64)&gdtmem[0];
 //  gp.Dump();
   set_gate(0, 0, 0, 0, 0);                                   // first gate is ALWAYS null
@@ -93,12 +122,14 @@ GDT::GDT() {
 //  dprint("\n\nabout to flush %x\n", &gp);
   gdt_flush(&gp);
 //  tss_install();
+#endif
 }
 
 GDT::~GDT() {
   //
 }
 
+#if 0
 void GDT::set_gate(TInt id, void *start_addr, TUint32 size, TUint32 priv_level) {
   TUint64 addr = (TUint64)start_addr;
   TUint32 gsize = size;
@@ -129,7 +160,7 @@ void GDT::set_gate(TInt id, void *start_addr, TUint32 size, TUint32 priv_level) 
 }
 
 void GDT::set_gate(TInt id, TUint64 base, TUint64 limit, TUint8 access, TUint8 granularity) {
-  GDT_t *g = (GDT_t *)&gdtmem[id];
+  TGdt *g = (TGdt *)&gdtmem[id];
   TUint32 addr = (TUint32)base;
   TUint32 gsize = limit;
 
@@ -168,3 +199,4 @@ void GDT::tss_install() {
   tss.iopb = sizeof(tss_info);
   tss_flush(0x28);
 }
+#endif

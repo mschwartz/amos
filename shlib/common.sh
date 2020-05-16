@@ -39,7 +39,7 @@ export CFLAGS="\
 	-fno-use-cxa-atexit \
 	-fno-rtti \
 	-DKERNEL \
-  -DKFONTNAME=$KFONTNAME \
+  	-DKFONTNAME=$KFONTNAME \
 	$KGFX \
 	$INCLUDE_PATH \
 	"

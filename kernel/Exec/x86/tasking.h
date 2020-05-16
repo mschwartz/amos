@@ -45,6 +45,8 @@ typedef struct Task {
   volatile TUint16 gs;
   volatile TUint16 ss;
 
+  volatile TUint8 fxsave[512+16];
+
   void Dump() {
     extern char *isr_names[];
 

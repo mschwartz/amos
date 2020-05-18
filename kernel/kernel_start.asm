@@ -1,9 +1,7 @@
 ;                    org 0x9000
                     [bits 64]
 
-%ifdef SERIAL
 COM1                equ 0x3f8
-%endif
 
                     %macro BOCHS 0
                     xchg bx,bx
@@ -12,9 +10,21 @@ COM1                equ 0x3f8
                     section start
                     global _start
 _start:
+                    mov [system_info], rdi
+
+                    mov al, [edi + SYS_BOCHS]
+                    mov [bochs_present], al
                     jmp boot
 
-                    %include "../boot/debug64.inc"
+                    global system_info
+system_info         dq 0
+                    global bochs_present
+bochs_present       db 0
+
+                    align 16
+                    %include "../common/memory.inc"
+                    %include "../common/system.inc"
+                    %include "../common/debug64.inc"
 
                     extern kernel_main
 
@@ -24,23 +34,16 @@ start_msg:          db 13, 10, 'kernel_start', 13, 10, 0
 
                     extern init_start, rodata_start
 boot:
-%ifdef SERIAL
                     call debug64_init
-%endif
                     mov rsi, start_msg
                     call puts64
 
-;                    mov rsi, rodata_start
-;                    mov rcx, 64
-;                    call hexdump64
+                    mov rsi, kernel_main
+                    mov rcx, 32
+                    call hexdump64
 
-                    push rbp
-                    mov rbp, rsp
-                    mov rax, 0xdeadbeef
-                    push rax
+                    mov rdi, [system_info]
                     call kernel_main
-                    add esp, 8
-                    leave
                     ret
 
                     global sputc
@@ -60,7 +63,7 @@ sputs:
                     pop rsi
                     pop rax
                     ret
-                    
+
 ;; inputs:
 ;;   rdi = address of memory to zero
 ;;   rsi = number of bytes to zero
@@ -73,7 +76,6 @@ bzero:
                     xor rax, rax
                     mov rcx, rsi
                     rep stosb
-
 
                     pop rcx
                     pop rdi

@@ -14,11 +14,8 @@
 
 	BITS 16
 
-%ifdef SERIAL
-COM1                equ 0x3f8
-%endif
-
-                    %include "memory.inc"
+                    %include "../common/memory.inc"
+                    %include "../common/system.inc"
                     %include "cga.inc"
 
                     %macro BOCHS 0
@@ -1095,14 +1092,13 @@ enter_long_mode:
 	or eax, 0x80000000		; PG (Bit 31)
 	mov cr0, eax
 
-
                     lgdt [GDT64_Pointer]
                     jmp CODE_SEG:go64
 
 
                     [bits 64]
-                    %include "debug64.inc"
-                    %include 'screen.inc'
+                    %include "../common/debug64.inc"
+;                    %include 'screen.inc'
 
 boot64msg           db 'Entered long mode', 13, 10, 0
 go64:
@@ -1148,6 +1144,77 @@ call_main:
 ;                    call puts64
 ;                    mov rax, KERNEL_ORG
 ;                    call hexquadn64
+
+                    ; enable cache
+                    mov rax, cr0
+                    btr rax, 29         ; clear no write thru
+                    btr rax, 30         ; clear CD
+                    mov cr0, rax
+
+                    ; enable floating point
+                    mov rax, cr0
+                    bts rax, 1          ; monitor co-processor
+                    btr rax, 2          ; emulation
+                    mov cr0, rax
+
+                    ; enable SSE
+                    mov rax, cr4
+                    bts rax, 9          ; OS support for FXSAVE and FXSTOR
+                    bts rax, 10         ; OS support for unmasked SIMD FP exceptions
+                    mov cr4, rax
+
+                    ; enable math coprocessor
+                    finit
+
+                    ; fill in SYSTEM struct
+                    mov rdi, SYSTEM
+
+                    mov al, [BOOT_DRIVE]
+                    mov [rdi + SYS_BOOTDRIVE], al
+
+                    mov al, [bochs_present]
+                    mov [rdi + SYS_BOCHS], al
+
+                    mov ax, [boot_sector]
+                    mov [rdi + SYS_BOOTSECTOR], ax
+                    mov ax, [boot_sectors]
+                    mov [rdi + SYS_BOOTSECTORS], ax
+
+                    mov ax, [kernel_sector]
+                    mov [rdi + SYS_KERNELSECTOR], ax
+                    mov ax, [kernel_sectors]
+                    mov [rdi + SYS_KERNELSECTORS], ax
+
+                    mov ax, [display_mode + VideoMode.mode]
+                    mov [rdi + SYS_VIDEOMODE], ax
+                    mov eax, [display_mode + VideoMode.fb]
+                    mov [rdi + SYS_FRAMEBUFFER], eax
+                    mov eax, [display_mode + VideoMode.width]
+                    mov [rdi + SYS_FBWIDTH], eax
+                    mov eax, [display_mode + VideoMode.height]
+                    mov [rdi + SYS_FBHEIGHT], eax
+                    mov eax, [display_mode + VideoMode.pitch]
+                    mov [rdi + SYS_FBPITCH], eax
+                    mov eax, [display_mode + VideoMode.depth]
+                    mov [rdi + SYS_FBDEPTH], eax
+
+                    ; paging info
+                    mov rax, 2 * 1024 * 1024
+                    mov [rdi + SYS_PAGESIZE], eax
+
+                    mov rax, PML4
+                    mov [rdi + SYS_PML4], rax
+                    mov rax, PDPLOW
+                    mov [rdi + SYS_PDPLOW], rax
+                    mov rax, PDPHIGH
+                    mov [rdi + SYS_PDPHIGH], rax
+                    mov rax, PDLOW
+                    mov [rdi + SYS_PDLOW], rax
+                    mov rax, PDHIGH
+                    mov [rdi + SYS_PDHIGH], rax
+                    mov rax, 0x60000
+                    mov [rdi + SYS_PAGETABLE_END], rax
+
 
                     call KERNEL_ORG
                     cli

@@ -3,16 +3,28 @@
 
 #include <Exec/Types.h>
 
+enum GdtEntries {
+  GdtNull,
+  GdtKCode,
+  GdtKData,
+  GdtUCode,
+  GdtUData,
+  GdtTss,
+  GdtSize
+};
+
+const TInt GDT_NUM_ENTRIES = 6;
+
 class GDT {
 public:
   GDT();
   ~GDT();
 
-public:
-  void set_gate(TInt id, TAny *start_addr, TUint32 size, TUint32 priv_level);
-  void set_gate(TInt num, TUint64 base, TUint64 limit, TUint8 access, TUint8 granularity);
-  void tss_install();
+//public:
+//  void set_gate(TInt aIndex, TAny *aBase, TUint32 aLimit, TUint8 aAccess, TUint8 aGranularity);
+
+protected:
+  TUint64 mGdt[GdtSize] ALIGN16;
 };
 
 #endif
-

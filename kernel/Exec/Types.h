@@ -3,6 +3,11 @@
 
 #define PACKED __attribute__ ((packed))
 #define INLINE __attribute__((always_inline))
+#define ALIGN2 __attribute__((aligned (2)))
+#define ALIGN4 __attribute__((aligned (4)))
+#define ALIGN8 __attribute__((aligned (8)))
+#define ALIGN16 __attribute__((aligned (16)))
+#define ALIGN32 __attribute__((aligned (32)))
 
 typedef unsigned char TUint8;
 typedef unsigned short TUint16;

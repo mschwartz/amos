@@ -1,21 +1,17 @@
+#include <Exec/ExecBase.h>
 #include <Exec/x86/gdt.h>
 
-typedef struct _GDT_t_ {
-  TUint16 segm_limit0;    /* segment limit, bits: 15:00	(00-15) */
-  TUint16 base_addr0;     /* starting address, bits: 15:00	(16-31) */
-  TUint8 base_addr1;      /* starting address, bits: 23:16	(32-38) */
-  TUint8 type : 4;        /* segment type			(39-42) */
-  TUint8 S : 1;           /* type: 0-system, 1-code or data	(43-43) */
-  TUint8 DPL : 2;         /* descriptor privilege level	(44-45) */
-  TUint8 P : 1;           /* present (in memory)		(46-46) */
-  TUint8 segm_limit1 : 4; /*segment limit, bits: 19:16	(47-50) */
-  TUint8 AVL : 1;         /* "Available for use"		(51-51) */
-  TUint8 L : 1;           /* 64-bit code?			(52-52) */
-  TUint8 DB : 1;          /* 1 - 32 bit system, 0 - 16 bit	(53-53) */
-  TUint8 G : 1;           /* granularity 0-1B, 1-4kB 	(54-54) */
-  TUint8 base_addr2;      /* starting address, bits: 23:16	(55-63) */
-} PACKED GDT_t;
+const TUint64 GDT_RDRW = (1L << 41);
+const TUint64 GDT_CONFORMING = (1L << 42);
+const TUint64 GDT_EXEC = (1L << 43);
+const TUint64 GDT_DESCRIPTOR_TYPE = (1L << 44); // should be 1 for code and data segments
+const TUint64 GDT_RING0(0L << 45);
+const TUint64 GDT_RING3(3L << 45);
+const TUint64 GDT_PRESENT = (1L << 47);
+const TUint64 GDT_64BIT = (1L << 53);
+const TUint64 GDT_32BIT = (1L << 54);
 
+#if 0
 struct gdt_info {
   TUint16 limit_low;
   TUint16 base_low;
@@ -33,18 +29,14 @@ struct gdt_info {
     dprint("base high %x\n", base_high);
   }
 } PACKED;
+#endif
 
-struct gdtr {
+typedef struct {
   TUint16 limit;
   TUint64 base;
-  void Dump() {
-    dprint("gdtr @ %x (%d bytes long)\n", this, sizeof(gdtr));
-    dprint("limit  %x\n", limit);
-    dprint("base  %x\n", base);
-  }
-} PACKED;
+} PACKED TGdtPointer;
 
-struct tss_info {
+typedef struct {
   TUint32 rsvd0;
   TUint64 rsp0;
   TUint64 rsp1;
@@ -62,8 +54,110 @@ struct tss_info {
   TUint32 rsvd4;
   TUint16 rsvd5;
   TUint16 iopb;
-} PACKED;
+  void Dump() {
+    dlog("TTss at %x\n", this);
+    dlog("rsvd0: %x\n", rsvd0);
+    dlog(" rsp0: %x\n", rsp0);
+    dlog(" rsp1: %x\n", rsp1);
+    dlog(" rsp2: %x\n", rsp2);
+    dlog("rsvd1: %x\n", rsvd1);
+    dlog("rsvd2: %x\n", rsvd2);
+    dlog(" ist1: %x\n", ist1);
+    dlog(" ist2: %x\n", ist2);
+    dlog(" ist3: %x\n", ist3);
+    dlog(" ist4: %x\n", ist4);
+    dlog(" ist5: %x\n", ist5);
+    dlog(" ist6: %x\n", ist6);
+    dlog(" ist7: %x\n", ist7);
+    dlog("rsvd3: %x\n", rsvd3);
+    dlog("rsvd4: %x\n", rsvd4);
+    dlog("rsvd5: %x\n", rsvd5);
+    dlog(" iopb: %x\n", iopb);
+  }
+} PACKED TTss;
 
+extern "C" TTss *install_tss();
+extern "C" void gdt_flush(TGdtPointer *ptr);
+
+static TUint64 tss_entry(TUint64 tss) {
+  unsigned long long tss_entry = 0x0080890000000067ULL;
+  tss_entry |= ((tss) << 16) & 0xffffff0000ULL;
+  tss_entry |= ((tss) << 32) & 0xff00000000000000ULL;
+  return tss_entry;
+}
+
+static TGdtPointer lGdtPointer;
+
+GDT::GDT() {
+  dlog("GDT constructor\n");
+  bochs;
+  return;
+  // The tss is defined in tss.asm, and only a pointer to it is used in this method.
+  TTss *tss = install_tss();
+  tss->Dump();
+  dhexdump(tss, 8);
+  TUint64 tss64 = (TUint64)tss;
+
+  mGdt[GdtNull] = 0;
+  mGdt[GdtKCode] = GDT_DESCRIPTOR_TYPE | GDT_PRESENT | GDT_RDRW | GDT_64BIT | GDT_RING0 | GDT_EXEC;
+  mGdt[GdtKData] = GDT_DESCRIPTOR_TYPE | GDT_PRESENT | GDT_RDRW | GDT_64BIT | GDT_RING0;
+  mGdt[GdtUCode] = GDT_DESCRIPTOR_TYPE | GDT_PRESENT | GDT_RDRW | GDT_64BIT | GDT_RING3 | GDT_EXEC;
+  mGdt[GdtUData] = GDT_DESCRIPTOR_TYPE | GDT_PRESENT | GDT_RDRW | GDT_64BIT | GDT_RING3;
+  mGdt[GdtTss] = 0; // tss_entry(tss64) | GDT_64BIT;
+  lGdtPointer.base = (TUint64)&mGdt[0];
+  lGdtPointer.limit = (TUint32)sizeof(mGdt);
+
+  dlog("About to lgdt\n");
+  gdt_flush(&lGdtPointer);
+  dlog("return from lgdt\n");
+  bochs
+}
+
+GDT::~GDT() {
+}
+
+#if 0
+void GDT::set_gate(TInt aIndex, TAny *aBase, TUint32 aLimit, TUint8 aAccess, TUint8 aGranularity) {
+#if 0
+	// Fill descriptor
+	mGdt[aIndex].BaseLow   = (TUint16)(aBase & 0xFFFF);
+	mGdt[aIndex].BaseMid   = (TUint8)((aBase >> 16) & 0xFF);
+	mGdt[aIndex].BaseHigh  = (TUint8)((aBase >> 24) & 0xFF);
+	mGdt[aIndex].BaseUpper = (TUint32)((aBase >> 32) & 0xFFFFFFFF);
+	mGdt[aIndex].LimitLow  = (TUint16)(aLimit & 0xFFFF);
+	mGdt[aIndex].Flags     = (TUint8)((aLimit >> 16) & 0x0F);
+	mGdt[aIndex].Flags     |= (aGrandularity & 0xF0);
+	mGdt[aIndex].Access    = aAccess;
+  mGdt[aIndex].Reserved  = 0
+#else
+  TUint64 addr = (TUint64)aBase;
+  ;
+  TUint32 gsize = aLimit;
+  mGdt[aIndex].limit0 = addr & 0x0000ffff;
+  mGdt[aIndex].base_middle = (addr & 0x00ff0000) >> 16;
+  mGdt[aIndex].base_high = (addr & 0xff000000) >> 24;
+
+  if (aLimit < (1 << 20)) { /* size < 1 MB? */
+    gsize = aLimit - 1;
+    mGdt[aIndex].granularity = 0; /* granularity set to 1 byte */
+  }
+  else {
+    gsize = aLimit >> 12;
+    if (aLimit & 0x0fff) {
+      gsize++;
+    }
+    gsize--;
+    mGdt[aIndex].granularity = 1; /* granularity set to 4 KB */
+  }
+  mGdt[aIndex].Dump();
+  //  gdt[aIndex].DPL = priv_level;
+
+  //  mGdt[aIndex].segm_limit0 = gsize & 0x0000ffff;
+  //  mGdt[id].segm_limit1 = (gsize & 0x000f0000) >> 16;
+#endif
+}
+#endif
+#if 0
 static GDT_t gdtmem[6];
 static gdtr gp;
 static tss_info tss;
@@ -168,3 +262,4 @@ void GDT::tss_install() {
   tss.iopb = sizeof(tss_info);
   tss_flush(0x28);
 }
+#endif

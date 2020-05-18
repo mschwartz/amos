@@ -3,8 +3,9 @@
                     global gdt_flush
 
 ; called as: gdt_flush(&gdt_ptr) in C
-gdt_flush:          mov rbx, [esp]              ; return address
-;                    bochs
+gdt_flush:          
+                    mov rbx, [esp]              ; return address
+                    bochs
                     mov rax,rdi 
                     lgdt [rax]                      ; load the gdt into the CPU
                     mov eax, 0x10                   ; 0x10 is the offset to the gdt data segment entry

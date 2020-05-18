@@ -103,6 +103,7 @@ ExecBase::ExecBase() {
 
   mMessagePortList = new MessagePortList("ExecBase MessagePort List");
 
+  dlog("Create GDT\n");
   mGDT = new GDT;
   dlog("  initialized GDT\n");
 

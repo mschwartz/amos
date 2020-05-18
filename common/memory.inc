@@ -3,9 +3,18 @@
 
 gigabyte            equ 0x40000000
 
+PML4                equ 0x2000
+PDPLOW              equ 0x3000
+PDPHIGH             equ 0x4000
+
+SYSTEM              equ 0x5000          ; see bootinfo.inc
+
 misc_buffer         equ 0x6000          ; 512 byte buffer for misc. use
 
 BOOTSTRAP_ORG       equ 0x7c00
+
+PDLOW               equ 0x10000
+PDHIGH              equ 0x20000
 
 ; kernel address (loaded here)
 KERNEL_ORG          equ 0x100000

@@ -17,7 +17,10 @@
 COM1                equ 0x3f8
                     global debug32_init
 debug32_init:
-                    %ifdef SERIAL
+                    mov al, [bochs_present]
+                    test al, al
+                    jne .done
+
                     mov al, 0x00
                     mov dx, COM1+1
                     out dx, al
@@ -46,7 +49,7 @@ debug32_init:
                     mov dx, COM1+4
                     out dx, al
                     
-                    %endif
+.done:
                     ret
 
 cls32:
@@ -59,7 +62,10 @@ cls32:
                     rep stosw
                     ret
 putc32:
-                    %ifdef SERIAL
+                    mov bl, [bochs_present]
+                    test bl, bl
+                    jne .bochs
+
                     push dx
                     push ax
                     mov dx, COM1+5
@@ -71,12 +77,13 @@ putc32:
                     mov dx, COM1
                     out dx, al
                     pop dx
-                    %else
+                    ret
+.bochs:
+
                     out 0xe9, al
 	xor bx,bx
 	mov ah, 0eh
 ;                    int 10h			; Otherwise, print it
-                    %endif
 	ret
 
 puts32:			; Routine: output string in SI to screen

@@ -16,8 +16,12 @@
 
                     global debug16_init
 debug16_init:
-                    %ifdef SERIAL
-                    mov al, 0x00
+                    mov al, [bochs_present]
+                    test al, al
+                    jne .go
+                    ret
+
+.go:                mov al, 0x00
                     mov dx, COM1+1
                     out dx, al
 
@@ -45,9 +49,9 @@ debug16_init:
                     mov dx, COM1+4
                     out dx, al
                     
-                    %endif
                     ret
 
+%if 0
 cls16:
                     mov di, 0
                     push VIDEO_MEMORY_SEG
@@ -57,9 +61,14 @@ cls16:
                     mov ecx, 25*80
                     rep stosw
                     ret
-putc16:
-%ifdef SERIAL
+%endif
 
+putc16:
+                    mov al, [bochs_present]
+                    test al, al
+                    jne .bochs
+
+.serial:
                     push dx
                     push ax
                     mov dx, COM1+5
@@ -75,13 +84,12 @@ putc16:
                     pop dx
 
 	ret
-%else
+.bochs:
                     out 0xe9, al
 	xor bx,bx
 	mov ah, 0eh
 	int 10h			; Otherwise, print it
 	ret
-%endif
 
 puts16:			; Routine: output string in SI to screen
                     pusha
@@ -97,8 +105,6 @@ puts16:			; Routine: output string in SI to screen
 
 newline16:
 	push eax
-;                    mov al, 13
-;                    call screen_putc
 	mov al, 10
 	call putc16
 	pop eax

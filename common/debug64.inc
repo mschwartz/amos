@@ -1,5 +1,7 @@
                     [bits 64]
 
+COM1                equ 0x3f8
+
                     align 8
 ;screen:             dq VIDEO_MEMORY
 nybbles             db "0123456789ABCDEF",0
@@ -8,7 +10,10 @@ nybbles             db "0123456789ABCDEF",0
 
                     global debug64_init
 debug64_init:
-               %ifdef SERIAL
+                    mov al, [bochs_present]
+                    test al, al
+                    jne .bochs
+
                     mov al, 0x00
                     mov dx, COM1+1
                     out dx, al
@@ -36,8 +41,8 @@ debug64_init:
                     mov al, 0x0b
                     mov dx, COM1+4
                     out dx, al
-                    
-               %endif
+                   
+.bochs:
                     ret
 ;cls64:
 ;                    mov rdi, 0xb8000
@@ -49,7 +54,10 @@ debug64_init:
 
                     global putc64
 putc64:
-   %ifdef SERIAL
+                    mov bl, [bochs_present]
+                    test bl, bl
+                    jne .bochs
+
                     push rdx
                     push rax
                     mov dx, COM1+5
@@ -61,13 +69,9 @@ putc64:
                     mov dx, COM1
                     out dx, al
                     pop rdx
-   %else
-;                    call screen_putc
+                    ret
+.bochs:
                     out 0xe9, al
-;                    xor bx,bx
-;                    mov ah, 0eh
-;                    int 10h			; Otherwise, print it
-   %endif
 	ret
 
                     global puts64

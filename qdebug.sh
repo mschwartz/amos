@@ -14,5 +14,5 @@ if [ "$WSL" != "" ]; then
     bare
 #  tail -f /mnt/c/dev/bare.log
 else
-  qemu-system-x86_64 -serial stdio  -m 8192  -enable-kvm -m 8192 -smp 4 -cpu host,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time c.img
+  qemu-system-x86_64 -serial stdio  -s -S  -m 8192  -enable-kvm -m 8192 -smp 4 -cpu host,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time c.img
 fi

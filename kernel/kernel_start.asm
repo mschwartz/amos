@@ -32,7 +32,7 @@ start_msg:          db 13, 10, 'kernel_start', 13, 10, 0
 
                     align 8
 
-                    extern init_start, rodata_start
+;                    extern init_start, rodata_start
 boot:
                     call debug64_init
                     mov rsi, start_msg
@@ -44,6 +44,32 @@ boot:
 
                     mov rdi, [system_info]
                     call kernel_main
+                    ret
+
+                    global fill_screen
+fill_screen:
+                    push rdi
+                    mov rdi, [system_info]
+                    xor rcx, rcx
+                    mov ecx, [rdi + SYS_FBHEIGHT]
+                    xor rbx, rbx
+                    mov ebx, [rdi + SYS_FBWIDTH]
+                    xor rdx, rdx
+                    mov edx, [rdi + SYS_FBPITCH]
+                    xor rax, rax
+                    mov eax, [rdi + SYS_FRAMEBUFFER]
+                    mov rdi, rax
+                    pop rax             ; color
+.height:
+                    push rcx
+                    push rdi
+                    mov rcx, rbx
+                    rep stosd
+                    pop rdi
+                    add rdi, rdx
+                    pop rcx
+                    dec rcx
+                    jne .height
                     ret
 
                     global sputc

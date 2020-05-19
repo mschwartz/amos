@@ -20,7 +20,7 @@ void dputc(char c) {
 //  sputc(c);
 //    outb((int)c, 0xe9);
 //  sputc(c);
-  if (false || in_bochs) {
+  if (in_bochs) {
     outb(0xe9, (int)c);
   }
   else {
@@ -101,7 +101,7 @@ void dhexdump(const TAny *aSource, int aLines) {
 
   TUint64 address = (TUint64)src;
   for (TInt i = 0; i < aLines; i++) {
-    dprint("%x: ", address);
+//    dprint("%x: ", address);
     for (TInt c = 0; c < 8; c++) {
       dhex8(*src++);
       dputc(' ');

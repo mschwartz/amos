@@ -32,6 +32,8 @@ typedef struct Task {
 
   volatile TUint64 upper_sp;
   volatile TUint64 lower_sp;
+  volatile TUint64 upper_sp_int;
+  volatile TUint64 lower_sp_int;
   volatile TUint64 err_code;
   volatile TUint64 isr_num; //48
 

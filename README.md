@@ -25,6 +25,10 @@
   A hobby operating system in Rust
   https://intermezzos.github.io
 
+* https://github.com/notYuriy/YayOS
+
+  One more hobby operating system
+
 # Boot Loaders
 
 * https://github.com/ReturnInfinity/Pure64

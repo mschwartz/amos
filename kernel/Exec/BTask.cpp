@@ -29,6 +29,9 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aNam
   regs->upper_sp = (TUint64)&stack[aStackSize];
   regs->lower_sp = (TUint64)&stack[0];
 
+  TUint8 *intstack = (TUint8 *)AllocMem(aStackSize, MEMF_PUBLIC);
+  regs->upper_sp_int = (TUint64)&intstack[aStackSize];
+  regs->lower_sp_int = (TUint64)&intstack[0];
   regs->rsp = (TUint64)regs->upper_sp;
   regs->rbp = regs->rsp;
   regs->ss = GetSS();

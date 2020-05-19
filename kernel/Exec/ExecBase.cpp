@@ -271,6 +271,7 @@ void ExecBase::RescheduleIRQ() {
 #endif
   mCurrentTask = mActiveTasks.First();
   current_task = &mCurrentTask->mRegisters;
+  mGDT->SetKernelStack(current_task->upper_sp_int);
 //  if (t != mCurrentTask) {
 //    dprint("Reschedule %s(%x) %016x %x\n", mCurrentTask->TaskName(), mCurrentTask, current_task->rip, current_task->rflags);
 //    mCurrentTask->Dump();

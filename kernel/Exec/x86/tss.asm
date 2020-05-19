@@ -66,6 +66,12 @@ install_tss:
                     ret
 
 
+                    global ltr
+ltr:
+                    mov ax, 0x28
+                    ltr ax
+                    ret
+
                     section .bss
 stack0              resb STACKSIZE
 stack1              resb STACKSIZE

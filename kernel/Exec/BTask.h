@@ -33,6 +33,8 @@ protected:
 
 public:
   virtual void Run() = 0;
+  virtual void GainCPU() {};
+  virtual void LoseCPU() {};
 
 public:
   const char *TaskName() { return mNodeName; }

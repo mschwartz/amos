@@ -1,5 +1,6 @@
 ;; kernel_tasking.asm
 
+                    %include "./x86/x86.inc"
                     %macro bochs 0
                     xchg bx, bx
                     %endm
@@ -32,7 +33,9 @@ struc TASK
 .rsp                resq 1
 .rbp                resq 1
 .upper_sp           resq 1
-.lower_sp           resq 1              ; used to save caller's stack in init_task_state
+.lower_sp           resq 1
+.upper_sp_int       resq 1              ;; interrupt stack
+.lower_sp_int       resq 1
 .error_code         resq 1
 .isrnum             resq 1
 .cs                 resw 1
@@ -52,11 +55,15 @@ current_task        dq 0
 ; the C IRQ handler expects this specific order of items on the stack!  See the ISR_REGISTERS struct.
                     global isr_common
 isr_common:
-push rdi            ; save rdi so we don't clobber it
+                    push rdi            ; save rdi so we don't clobber it
 
+;                    bochs
                     mov rdi, [current_task]
                     mov [rdi + TASK.isrnum], rax            ; isrnum was pushed on stack by xisr
 
+;                    xor rax, rax
+;                    mov rax, rsp
+;                    call hexquadn64
 
                     ; set default value for task_error_code
                     xor rax, rax

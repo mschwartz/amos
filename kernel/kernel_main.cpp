@@ -31,9 +31,24 @@ extern "C" int kernel_main(TAny *aSystemInfo) {
     *kernel_end;
 
   in_bochs = *((TUint8 *)0x7c10);
+  sputc('a');
 
-
+  dhexdump(&rodata_start, 20);
+  TUint32 *ptr = (TUint32 *)0xe000000;
+  for (TInt i=0; i<100000; i++) {
+   *ptr++ = 0xff00ff;
+  }
+  sputc('b');
+//  const char *s = "Cleared screen?\n";
+//  dhexdump(s, 3);
+//  dhex8(s[0]); dputc('\n');
+//  dhex8(s[1]); dputc('\n');
+//  dhex8(s[2]); dputc('\n');
+//  dhex8(s[3]); dputc('\n');
+  halt();
+  dputs("cleared screen?\n");
   dlog("Amos V1.0 %s\n",in_bochs ? "BOCHS ENABLED" : "NO BOCHS");
+  sputc('c');
   if (in_bochs) {
     dlog("Running in BOCHS\n");
   }

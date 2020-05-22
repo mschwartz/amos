@@ -60,8 +60,6 @@ typedef struct {
   void Dump() {
     dlog("Mode(%x) mode(%x) dimensions(%dx%d) depth(%d)  pitch(%d) lfb(0x%x)\n",
       this, mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
-    //    dlog("Mode(%x) mode(%x) dimensions(%xx%x) bpp(%x)  pitch(%x) lfb(0x%x)\n",
-    //        this, mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
   }
 } PACKED TModeInfo;
 
@@ -78,12 +76,14 @@ typedef struct {
 } PACKED TModes;
 
 extern "C" TUint64 rdrand();
+
 // ExecBase constructor
 ExecBase::ExecBase() {
   dlog("ExecBase constructor called\n");
   TModes *modes = (TModes *)0xa000;
   TModeInfo &i = modes->mDisplayMode;
 
+  // set up SystemInfo
   mSystemInfo.mScreenWidth = i.mWidth;
   mSystemInfo.mScreenHeight = i.mHeight;
   mSystemInfo.mScreenDepth = i.mDepth;
@@ -94,6 +94,7 @@ ExecBase::ExecBase() {
 
 //  SeedRandom(rdrand());
   SeedRandom64(1);
+
   dlog("\n\nDisplay Mode:\n");
   modes->mDisplayMode.Dump();
 

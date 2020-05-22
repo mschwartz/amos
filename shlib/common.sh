@@ -1,18 +1,36 @@
 #!/bin/sh
 
+. ./shlib/platform.sh
+
 TOP_DIR=`git rev-parse --show-toplevel`
-echo $TOP_DIR
 #export GCC=/usr/bin/i686-elf-gcc
 #export LD=/usr/bin/i686-elf-ld
 #export AR=/usr/bin/i686-elf-ar
 #export RANLIB=/usr/bin/i686-elf-ranlib
 #export OBJCOPY=/usr/bin/i686-elf-objcopy
 
-export GCC=gcc
-export LD=ld
-export AR=ar
-export RANLIB=ranlib
-export OBJCOPY=objcopy
+
+    export GCC=gcc
+    export GPP=g++
+    export LD=ld
+    export AR=ar
+    export RANLIB=ranlib
+    export OBJCOPY=objcopy
+# if [ $platform == 'macos' ]; then
+#     export GCC=gcc-9
+#     export GPP=g++-9
+#     export LD=ld
+#     export AR=gcc-ar-9
+#     export RANLIB=gcc-ranlib-9
+#     export OBJCOPY=objcopy
+# else
+#     export GCC=gcc
+#     export GPP=g++-9
+#     export LD=ld
+#     export AR=ar
+#     export RANLIB=ranlib
+#     export OBJCOPY=objcopy
+# fi
 
 # use this one to use graphics mode
 export KGFX='-DKGFX'

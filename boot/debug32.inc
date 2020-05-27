@@ -1,6 +1,6 @@
 ;; debug32.inc
 
-%define SERIAL
+; %define SERIAL
 %if 0
 	%macro puts32 1
 	push eax
@@ -74,9 +74,9 @@ putc32:
                     pop dx
                     %else
                     out 0xe9, al
-	xor bx,bx
-	mov ah, 0eh
-	int 10h			; Otherwise, print it
+	; xor bx,bx
+	; mov ah, 0eh
+	; int 10h			; Otherwise, print it
                     %endif
 	ret
 

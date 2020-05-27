@@ -117,7 +117,7 @@ void TimerTask::Run() {
 }
 
 TBool TimerInterrupt::Run(TAny *g) {
-//  dlog("TIMER\n");
+ dlog("TIMER\n");
   mTask->Signal(1 << mTask->mSignalBit);
   gExecBase.RescheduleIRQ();
   gExecBase.AckIRQ(IRQ_TIMER);

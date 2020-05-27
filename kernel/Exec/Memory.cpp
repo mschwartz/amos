@@ -1,6 +1,7 @@
 #include <Exec/Types.h>
 #include <Exec/Memory.h>
 #include <posix/malloc.h>
+#include <posix/unistd.h>
 
 #define LOCKMEM
 //#undef LOCKMEM
@@ -11,17 +12,19 @@
 #endif
 #endif
 
+// extern void *sbrk(intptr_t aIncrement);
+
 void *AllocMem(TInt64 aSize, TInt aFlags) {
 #ifdef KERNEL
 #ifdef LOCKMEM
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
 #endif
 #endif
   TUint8 *mem = (TUint8 *)malloc(aSize);
+  // TUint8 *mem = (TUint8 *)sbrk(aSize);
 #ifdef KERNEL
 #ifdef LOCKMEM
-  SetFlags(flags);
+  ENABLE;
 #endif
 #endif
   if (aFlags & MEMF_CLEAR) {
@@ -33,14 +36,13 @@ void *AllocMem(TInt64 aSize, TInt aFlags) {
 void FreeMem(TAny *memory) {
 #ifdef KERNEL
 #ifdef LOCKMEM
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
 #endif
 #endif
   free(memory);
 #ifdef KERNEL
 #ifdef LOCKMEM
-  SetFlags(flags);
+  ENABLE;
 #endif
 #endif
 }

@@ -73,7 +73,7 @@ static TIsrHandler interrupt_handlers[INTERRUPTS];
   */
 extern "C" bool kernel_isr(TInt64 aIsrNumber) {
   cli();
-//  dlog("kernel_isr %d\n", aIsrNumber);
+  // dlog("kernel_isr %d\n", aIsrNumber);
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {
     const char *desc = IDT::InterruptDescription(current_task->isr_num);
@@ -81,6 +81,7 @@ extern "C" bool kernel_isr(TInt64 aIsrNumber) {
     return false;
   }
   bool ret = info->mHandler(info->mInterruptNumber, info->mData);
+  // dlog("    exit kernel_isr %d\n", aIsrNumber);
   return ret;
 };
 
@@ -130,7 +131,7 @@ static void set_entry(TInt aIndex, TUint64 aVec) {
   e.mAddressHigh = (TUint32)(aVec >> 32);
   e.mZeroes1 = 0;
   e.mZeroes2 = 0;
-  e.mType = 0;
+  e.mType = 0; // disable IRQs when handler is called
   e.mIst = 0;
   e.mDpl = 0;
   e.mOnes1 = 0b111;

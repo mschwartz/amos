@@ -1,7 +1,5 @@
 ;; kernel_tasking.asm
 
-KSTACK_SIZE: equ 16384		;
-	
 %macro bochs 0
         xchg bx, bx
 %endm
@@ -54,16 +52,14 @@ global current_task
 	; the C IRQ handler expects this specific order of items on the stack!  See the ISR_REGISTERS struct.
 global isr_common
 isr_common:
-	push rdi		                ; save rdi so we don't clobber it
+	push rdi            ; save rdi so we don't clobber it
+
         mov rdi, [current_task]
         mov [rdi + TASK.isrnum], rax            ; isrnum was pushed on stack by xisr
 	pop rax					; get rdi off stack
 	mov [rdi + TASK.rdi], rax		; save it in task struct
-
-	pop rax					; rax was pushed in ISR handler
+	pop rax					; saved rax in ISR handler
 	mov [rdi + TASK.rax], rax		; store in task struct
-
-	; save rest of registers in task struct
 	mov [rdi + TASK.rbx], rbx
 	mov [rdi + TASK.rcx], rcx
 	mov [rdi + TASK.rdx], rdx
@@ -101,11 +97,28 @@ isr_common:
         jmp .frame
 
 .error_code:
-	BOCHS			;
         pop rax ; get error_code
         mov [rdi + TASK.error_code], rax
 
 .frame:
+        ; stack now has rip, cs, etc.
+	mov rax, [rdi + TASK.rax]
+	
+        push rbx
+        push rcx
+        push rdx
+	; push rdi ; RDI is store din task struct!
+        push rsi
+        push r8
+        push r9
+        push r10
+        push r11
+        push r12
+        push r13
+        push r14
+        push r15
+        push rbp
+
         mov rax, cr4
         bts rax, 9
         je .continue
@@ -124,8 +137,6 @@ isr_common:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
         mov [rdi + TASK.rsp], rsp
-	mov rsp, kstack_top
-
         ; pass isrnum to C method as argument
         mov rdi, [rdi + TASK.isrnum]
         call kernel_isr
@@ -134,17 +145,13 @@ isr_common:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-global resume_task
-resume_task:
-	cli			; just to be sure if the ISR handler enaled interrupts
-
         ; restore task state
         mov rdi, [current_task]
         mov rsp, [edi + TASK.rsp]
 
         mov rax, cr4
         bts rax, 9
-        je .continue
+        je .continue2
 
         finit
 
@@ -155,21 +162,21 @@ resume_task:
         and rax, ~0x0f
         fxrstor [rax]
 
-.continue:
-	mov r15, [rdi + TASK.r15]
-	mov r14, [rdi + TASK.r14]
-	mov r13, [rdi + TASK.r13]
-	mov r12, [rdi + TASK.r12]
-	mov r11, [rdi + TASK.r11]
-	mov r10, [rdi + TASK.r10]
-	mov r9, [rdi + TASK.r9]
-	mov r8, [rdi + TASK.r8]
-	mov rsi, [rdi + TASK.rsi]
-	mov rbp, [rdi + TASK.rbp]
-	mov rdx, [rdi + TASK.rdx]
-	mov rcx, [rdi + TASK.rcx]
-	mov rbx, [rdi + TASK.rbx]
-	mov rax, [rdi + TASK.rax]
+.continue2:
+        pop rbp
+        pop r15
+        pop r14
+        pop r13
+        pop r12
+        pop r11
+        pop r10
+        pop r9
+        pop r8
+        pop rsi
+        pop rdx
+        pop rcx
+        pop rbx
+        pop rax
 
         ; finally restore rdi (we don't need it anymore)
         mov rdi, [rdi + TASK.rdi]
@@ -185,11 +192,11 @@ init_task_state:
 
         ; push registers we use/modify onto caller's stack
         push rcx
+
         mov rcx, rsp                            ; save caller rsp
 
         ; set up task's stack
         mov rsp, [rdi + TASK.upper_sp]
-        mov [rdi + TASK.rsp], rsp
 
         ; set up stack for iretq
         mov rax, 10h                             ; ss
@@ -209,10 +216,27 @@ init_task_state:
 
         ; push registers as if an IRQ/exception
 
-        mov [rdi + TASK.rsp], rsp
+        xor rax, rax
+        push rax            ; rdi
+        push rax            ; rax
+        push rax            ; rbx
+        push rax            ; rcx
+        push rax            ; rdx
+        push rax            ; rsi
+        push rax            ; r8
+        push rax            ; r9
+        push rax            ; r10
+        push rax            ; r11
+        push rax            ; r12
+        push rax            ; r13
+        push rax            ; r14
+        push rax            ; r15
+        push rax            ; rbp
 
+        mov [rdi + TASK.rsp], rsp
         ; restore caller rsp
         mov rsp, rcx
+
         pop rcx
 
         popf
@@ -220,7 +244,6 @@ init_task_state:
 
 global enter_tasking
 enter_tasking:
-	jmp resume_task
 ;; jmp $
         cli
         ; restore task state
@@ -269,8 +292,3 @@ save_rsp:
         pop rdi
         popf
         ret
-
-section .bss
-kstack:
-	resb KSTACK_SIZE
-kstack_top:

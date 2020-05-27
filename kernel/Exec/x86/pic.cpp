@@ -34,11 +34,15 @@ PIC::PIC() {
   outb(PIC1_DATA, 0x1); /* 8086 mode */
   outb(PIC2_DATA, 0x1);
 
-
+#if 0
   //eenable all interrupts
   mMasterMask = mSlaveMask = 0x00;
-  outb(PIC1_DATA, 0);
-  outb(PIC2_DATA, 0);
+#else
+  // disable all interrupts
+  mMasterMask = mSlaveMask = 0xff;
+#endif
+  outb(PIC1_DATA, mMasterMask);
+  outb(PIC2_DATA, mSlaveMask);
   sti();
 }
 
@@ -46,7 +50,7 @@ PIC::~PIC() {
 }
 
 void PIC::EnableIRQ(TUint16 aIRQ) {
-//  dlog("    enable_interrupt %d\n", aIRQ);
+  //  dlog("    enable_interrupt %d\n", aIRQ);
   aIRQ -= IRQ_OFFSET;
   if (aIRQ < 8) {
     mMasterMask &= ~(1 << aIRQ);
@@ -59,7 +63,7 @@ void PIC::EnableIRQ(TUint16 aIRQ) {
 }
 
 void PIC::DisableIRQ(TUint16 aIRQ) {
-//  dlog("    disable_interrupt %d\n", aIRQ);
+  //  dlog("    disable_interrupt %d\n", aIRQ);
   aIRQ -= IRQ_OFFSET;
   if (aIRQ < 8) {
     mMasterMask |= (1 << aIRQ);

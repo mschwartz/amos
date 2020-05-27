@@ -16,6 +16,7 @@ static int busy() {
   outb(SELECT, 0x0a);
   return inb(DATA) & 0x80;
 }
+
 static TUint8 read_cmos(TUint8 reg) {
   outb(SELECT, reg);
   return inb(DATA);
@@ -54,8 +55,7 @@ public:
 
 public:
   void Run() {
-    TUint64 flags = GetFlags();
-    cli();
+    DISABLE;
 
     dlog("RTC Task running!\n");
     ReadRtc();
@@ -71,11 +71,13 @@ public:
 #endif
     gExecBase.SetIntVector(ERtcClockIRQ, new RtcInterrupt(this));
 
-    SetFlags(flags);
+
+    ENABLE;
 
     dlog("RTC Wait Signal\n");
     while (ETrue) {
       TUint64 sigs = Wait(1 << 10);
+      dlog("RTC Woke Up!\n");
     };
   }
 
@@ -159,7 +161,7 @@ protected:
 extern "C" void ack_irq8();
 
 TBool RtcInterrupt::Run(TAny *aData) {
-//  dlog("RTC\n");
+ dlog("RTC\n");
   //  cli();
   mTask->UpdateMillis();
   ack_irq8();

@@ -182,8 +182,7 @@ extern "C" void mouse_trap();
 
 void MouseTask::Run() {
   //  while (1) { Sleep(5); }
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
 
   dlog("MouseTask::Run()\n");
 
@@ -223,12 +222,12 @@ void MouseTask::Run() {
   //  mouse_trap();
   //  SetFlags(flags);
 
-  SetFlags(flags);
+  ENABLE;
 
   BMessageList messages("mouselist");
 
   while (WaitPort(mMessagePort)) {
-//    dlog("Wake\n");
+   dlog("Wake\n");
     while (MouseMessage *m = (MouseMessage *)mMessagePort->GetMessage()) {
       switch (m->mCommand) {
         case EMouseUpdate: {

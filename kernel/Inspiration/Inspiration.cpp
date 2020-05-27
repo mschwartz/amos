@@ -7,39 +7,44 @@
 class MousePointerTask : public BTask {
 public:
   MousePointerTask() : BTask("MousePointer", LIST_PRI_MAX), mScreen(mInspirationBase.GetScreen()) {
-//    dlog("** Construct MousePointerTask\n");
+    //    dlog("** Construct MousePointerTask\n");
     mX = mY = -1;
   }
 
 protected:
-  ScreenVesa& mScreen;
+  ScreenVesa &mScreen;
 
 public:
   void Run() {
     MessagePort *mousePort;
 
-    while ((mousePort = gExecBase.FindMessagePort("mouse.device")) == ENull) {
-      Sleep(1);
-    }
+    dlog("MouseTask Running\n");
+    while (ETrue) {
+      mousePort = gExecBase.FindMessagePort("mouse.device");
+      if (mousePort == ENull) {
+	continue;
+      }
 
-    MessagePort *replyPort = CreateMessagePort("replyPort");
-    MouseMessage *message = new MouseMessage(replyPort, EMouseMove);
+      dlog("MouseTask got mouse.device port\n");
+      MessagePort *replyPort = CreateMessagePort("replyPort");
+      MouseMessage *message = new MouseMessage(replyPort, EMouseMove);
 
-    message->mReplyPort = replyPort;
-    message->SendMessage(mousePort);
-    while (1) {
-      WaitPort(replyPort);
-      while (MouseMessage *m = (MouseMessage *)replyPort->GetMessage()) {
-        if (m == message) {
-//          dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
-          mScreen.MoveCursor(m->mMouseX, m->mMouseY);
-          message->mReplyPort = replyPort;
-          message->SendMessage(mousePort);
-        }
-        else {
-          dprint("\n\n");
-          dlog("MouseTask: %x != %x\n\n\n", m, message);
-          // shouldn't happen!
+      message->mReplyPort = replyPort;
+      message->SendMessage(mousePort);
+      while (1) {
+        WaitPort(replyPort);
+        while (MouseMessage *m = (MouseMessage *)replyPort->GetMessage()) {
+          if (m == message) {
+            //          dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
+            mScreen.MoveCursor(m->mMouseX, m->mMouseY);
+            message->mReplyPort = replyPort;
+            message->SendMessage(mousePort);
+          }
+          else {
+            dprint("\n\n");
+            dlog("MouseTask: %x != %x\n\n\n", m, message);
+            // shouldn't happen!
+          }
         }
       }
     }
@@ -70,7 +75,7 @@ void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
 }
 
 void InspirationBase::AddWindow(BWindow *aWindow) {
-  mWindowList.AddHead(*aWindow); 
+  mWindowList.AddHead(*aWindow);
   aWindow->PaintDecorations();
   aWindow->Paint();
 }

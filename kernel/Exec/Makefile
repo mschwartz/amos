@@ -23,7 +23,7 @@ LIB=	libexec.a
 
 .asm.o:
 	@echo ""
-	nasm -f elf64 -o $*.o $*.asm
+	nasm -f elf64 $(INC_PATH) -o $*.o $*.asm
 	@echo ""
 
 $(LIB):	$(OBJ)
@@ -31,13 +31,13 @@ $(LIB):	$(OBJ)
 	$(RANLIB) $(LIB)
 
 x86/kernel_isr.o: x86/kernel_isr.asm
-	nasm -f elf64 -o $*.o $*.asm
+	nasm -f elf64 $(INC_PATH) -o $*.o $*.asm
 
 x86/kernel_tasking.o: x86/kernel_tasking.asm
-	nasm -f elf64 -o $*.o $*.asm
+	nasm -f elf64 $(INC_PATH) -o $*.o $*.asm
 
 x86/kernel_utils.o: x86/kernel_utils.asm
-	nasm -f elf64 -o $*.o $*.asm
+	nasm -f elf64 $(INC_PATH) -o $*.o $*.asm
 
 clean:
 	rm -rf *.o *.a $(D)/*.o $(D)/*.a $(G)/*.o $(G)/*.a

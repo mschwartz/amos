@@ -77,9 +77,9 @@ putc16:
 	ret
 %else
                     out 0xe9, al
-	xor bx,bx
-	mov ah, 0eh
-	int 10h			; Otherwise, print it
+	; xor bx,bx
+	; mov ah, 0eh
+	; int 10h			; Otherwise, print it
 	ret
 %endif
 

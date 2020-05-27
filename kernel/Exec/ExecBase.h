@@ -8,14 +8,8 @@
 #include <Exec/BDevice.h>
 #include <Exec/Random.h>
 
-extern "C" TUint64 GetFlags();
-extern "C" void SetFlags(TUint64 aFlags);
-
-#define DISABLE TUint64 ___flags = GetFlags(); cli();
-#define ENABLE SetFlags(___flags);
-
 //#include <Devices/Screen.h>
-//#include <Exec/x86/cpu.h>
+#include <Exec/x86/cpu.h>
 
 class RtcDevice;
 class GDT;

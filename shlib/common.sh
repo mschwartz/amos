@@ -40,6 +40,10 @@ export KGFX='-DKGFX'
 export KFONTNAME="cp866-8x16"
 export KFONT="$KFONTNAME.psf"
 
+export INC_PATH=" \
+       -I$TOP_DIR/common/ \
+       "
+
 export INCLUDE_PATH="\
 	-I$TOP_DIR/kernel/include/ \
 	-I$TOP_DIR/kernel/ \

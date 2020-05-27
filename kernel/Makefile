@@ -9,7 +9,7 @@ all:	kernel.img
 
 kernel_start.o: kernel_start.asm
 	@echo "     >>> Assembling kernel_start"
-	nasm -f elf64 -o kernel_start.o kernel_start.asm
+	nasm -f elf64 $(INC_PATH) -o kernel_start.o kernel_start.asm
 
 ./posix/libposix:
 	+cd cclib && make

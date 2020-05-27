@@ -11,7 +11,7 @@ OBJ=	Inspiration.o ScreenVesa.o BWindow.o TestTask.o
 
 .asm.o:
 	@echo ""
-	nasm -f elf64 -o $*.o $*.asm
+	nasm -f elf64 $(INC_PATH) -o $*.o $*.asm
 	@echo ""
 
 $(LIB):	$(OBJ)

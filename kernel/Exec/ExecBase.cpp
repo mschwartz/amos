@@ -33,14 +33,13 @@ public:
   void Run() {
     //    sti();
     dlog("IdleTask Running\n");
-//    gExecBase.Schedule();
+    //    gExecBase.Schedule();
     while (1) {
       dlog("IT Run\n");
       halt();
     }
   }
 };
-
 
 typedef struct {
   //  TUint16 mPad0;
@@ -92,7 +91,7 @@ ExecBase::ExecBase() {
   mSystemInfo.mScreenFrameBuffer = (TAny *)fb;
   mSystemInfo.mMillis = 0;
 
-//  SeedRandom(rdrand());
+  //  SeedRandom(rdrand());
   SeedRandom64(1);
 
   dlog("\n\nDisplay Mode:\n");
@@ -125,13 +124,17 @@ ExecBase::ExecBase() {
   mPS2 = ENull;
 #endif
 
+  // disable NMIs
+  // outb(0x70, inb(0x70) | 0x80);
+
   // Before enabling interrupts, we need to have the idle task set up
   IdleTask *task = new IdleTask();
   mActiveTasks.Add(*task);
   mCurrentTask = mActiveTasks.First();
+
   current_task = &mCurrentTask->mRegisters;
 
-//  mCurrentTask->Dump();
+  //  mCurrentTask->Dump();
   // initialize devices
   dlog("  initialize timer\n");
   AddDevice(new TimerDevice());
@@ -147,7 +150,6 @@ ExecBase::ExecBase() {
 
   dlog("  initialize mouse \n");
   AddDevice(new MouseDevice());
-
 
   dlog("  initialize Inspiration\n");
   mInspirationBase = new InspirationBase();
@@ -218,8 +220,10 @@ void ExecBase::WaitSignal(BTask *aTask) {
     mWaitingTasks.Add(*aTask);
     aTask->mTaskState = ETaskWaiting;
   }
+  mCurrentTask = mActiveTasks.First();
+  current_task = &mCurrentTask->mRegisters;
   ENABLE;
-  Schedule();
+  // Schedule();
 }
 
 /**
@@ -233,9 +237,9 @@ void ExecBase::Wake(BTask *aTask) {
   aTask->Remove();
   mActiveTasks.Add(*aTask);
   aTask->mTaskState = ETaskRunning;
-//  dlog("Wake %s\n", aTask->TaskName());
+  //  dlog("Wake %s\n", aTask->TaskName());
   ENABLE;
-//  DumpTasks();
+  //  DumpTasks();
 }
 
 void ExecBase::Schedule() {
@@ -243,19 +247,22 @@ void ExecBase::Schedule() {
 }
 
 void ExecBase::Kickstart() {
-//  BTask *t = (BTask *)mActiveTasks.Find("Idle Task");
-//  t->Run();
-//  bochs;
-//  DumpCurrentTask();
+  //  BTask *t = (BTask *)mActiveTasks.Find("Idle Task");
+  //  t->Run();
+   bochs;
+  //  DumpCurrentTask();
+  dlog("Kickstart tasking\n");
   enter_tasking(); // just enter next task
+  dlog("kickstart returning\n");
 }
 
 /**
  * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
  */
 void ExecBase::RescheduleIRQ() {
-//  BTask *t = mCurrentTask;
-//  cli();
+  //  cli();
+  DISABLE;
+  BTask *t = mCurrentTask;
 #if 1
   if (mCurrentTask) {
     if (mCurrentTask->mForbidNestCount == 0) {
@@ -271,13 +278,14 @@ void ExecBase::RescheduleIRQ() {
 #endif
   mCurrentTask = mActiveTasks.First();
   current_task = &mCurrentTask->mRegisters;
-//  if (t != mCurrentTask) {
-//    dprint("Reschedule %s(%x) %016x %x\n", mCurrentTask->TaskName(), mCurrentTask, current_task->rip, current_task->rflags);
-//    mCurrentTask->Dump();
-//    dprint("Previous task\n");
-//    t->Dump();
-//    dprint("\n\n\n");
-//  }
+  // if (t != mCurrentTask) {
+  //   dlog("Reschedule %s(%x) rsp:%016x %x\n", mCurrentTask->TaskName(), mCurrentTask, current_task->rsp, current_task->rflags);
+  //   mCurrentTask->Dump();
+  //   dprint("Previous task\n");
+  //   t->Dump();
+  //   dprint("\n\n\n");
+  // }
+  ENABLE;
 }
 
 void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
@@ -293,11 +301,15 @@ TBool ExecBase::RemoveMessagePort(MessagePort &aMessagePort) {
 }
 
 MessagePort *ExecBase::FindMessagePort(const char *aName) {
-  return (MessagePort *)mMessagePortList->Find(aName);
+  DISABLE;
+  MessagePort *m = (MessagePort *)mMessagePortList->Find(aName);
+  ENABLE;
+  return m;
 }
 
 void ExecBase::GuruMeditation(const char *aFormat, ...) {
   cli();
+  bochs;
   char buf[512];
   dprint("\n\n***********************\n");
   dprint("GURU MEDITATION at %dms\n", SystemTicks());
@@ -359,15 +371,15 @@ public:
 public:
   TBool Run(TAny *aData) {
     // at this point current_task is saved
-//    cli();
-//    dlog("NextTaskTrap\n");
-//    gExecBase.DumpCurrentTask();
+    //    cli();
+    //    dlog("NextTaskTrap\n");
+    //    gExecBase.DumpCurrentTask();
     gExecBase.RescheduleIRQ();
-//    if (CompareStrings(gExecBase.CurrentTaskName(), "Idle Task") == 0) {
-//      gExecBase.DumpCurrentTask();
-//      bochs;
-//    }
-   
+    //    if (CompareStrings(gExecBase.CurrentTaskName(), "Idle Task") == 0) {
+    //      gExecBase.DumpCurrentTask();
+    //      bochs;
+    //    }
+
     return ETrue;
   }
 };

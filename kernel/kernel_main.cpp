@@ -22,6 +22,31 @@ static void call_global_constructors(void) {
   }
 }
 
+#if 1
+static void DumpCR4(TUint64 cr4) {
+  dprint("CR4: %016x ", cr4);
+  dprint("%s ", cr4 & CR4_CME ? "CME" : "");
+  dprint("%s ", cr4 & CR4_PVI ? "PVI" : "");
+  dprint("%s ", cr4 & CR4_TSD ? "TSD" : "");
+  dprint("%s ", cr4 & CR4_DE ? "DE" : "");
+  dprint("%s ", cr4 & CR4_PSE ? "PSE" : "");
+  dprint("%s ", cr4 & CR4_PAE ? "PAE" : "");
+  dprint("%s ", cr4 & CR4_MCE ? "MCE" : "");
+  dprint("%s ", cr4 & CR4_PGE ? "PGE" : "");
+  dprint("%s ", cr4 & CR4_PCE ? "PCE" : "");
+  dprint("%s ", cr4 & CR4_OSFXSR ? "OSFXSR" : "");
+  dprint("%s ", cr4 & CR4_OSXMMEXCPT ? "OSXMMEXCPT" : "");
+  dprint("%s ", cr4 & CR4_UMIP ? "UMIP" : "");
+  dprint("%s ", cr4 & CR4_VMXE ? "VMXE" : "");
+  dprint("%s ", cr4 & CR4_SMXE ? "SMXE" : "");
+  dprint("%s ", cr4 & CR4_PCIDE ? "PCIDE" : "");
+  dprint("%s ", cr4 & CR4_OSXSAVE ? "OSXSAVE" : "");
+  dprint("%s ", cr4 & CR4_SMEP ? "SMEP" : "");
+  dprint("%s ", cr4 & CR4_SMAP ? "SMAP" : "");
+  dprint("\n");
+}
+#endif
+
 extern "C" int kernel_main(TUint64 ax) {
   extern void *init_start, *init_end,
     *text_start, *text_end,
@@ -39,6 +64,13 @@ extern "C" int kernel_main(TUint64 ax) {
   dlog("         data: %016x - %016x\n", &data_start, &data_end);
   dlog("          bss: %016x - %016x\n", &bss_start, &bss_end);
   dlog("   kernel_end: %016x\n", &kernel_end);
+
+  TCpuFeatures features = GetCpuFeatures();
+  dlog(" CPU Features: %08x-%08x\n", features.regs.edx, features.regs.ecx);
+  features.Dump();
+  TUint64 cr4 = GetCR4();
+  dlog("          CR4: %016x\n", GetCR4());
+  // DumpCR4(cr4);
 //  dlog("system memory: %d (%d pages)\n", mMMU->total_memory(), mMMU->total_pages());
 
   //  dlog("bochs %x\n", in_bochs);

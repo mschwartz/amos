@@ -22,7 +22,7 @@ case $platform in
 	;;
 esac
 echo $platform
-rm *.lock
+rm -f *.lock
 bochs -q
 
 # if [ "$WSL" != "" ]; then

@@ -3,13 +3,9 @@
 platform_type=`uname -m`
 unamestr=`uname`
 platform='unknown'
-<<<<<<< HEAD
 if [[ "$WSL" != "" ]]; then
     platform='wsl'
 elif [[ "$unamestr" == 'Linux' ]]; then
-=======
-if [[ "$unamestr" == 'Linux' ]]; then
->>>>>>> 6f94adc9bc1f43b4e4211ffbce9c3c1ff6706341
     platform='linux'
     if [[ -e "/etc/arch-release" ]]; then
 	platform='arch'

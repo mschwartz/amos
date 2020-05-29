@@ -39,7 +39,6 @@ void TestTask::Run() {
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
 
-//  while (1) { Sleep(1); }
   ScreenVesa &screen = mInspirationBase.GetScreen();
   DISABLE;
   screen.Clear(0x4f4fff);
@@ -50,7 +49,6 @@ void TestTask::Run() {
 
   dlog("LOOP %x\n", GetFlags());
 //  while(1);
-//  while (1) Sleep(1);
   TInt count = 0;
   while (1) {
     win->BeginPaint();
@@ -58,6 +56,7 @@ void TestTask::Run() {
       win->RandomBox();
     }
     win->EndPaint();
+ // while (1) { Sleep(1); }
 //    Sleep(1);
   }
 #if 0

@@ -314,7 +314,7 @@ init_task_state:
 
                     global enter_tasking
 enter_tasking:
-                    jmp $
+                    ; jmp $
                     cli
                     ; restore task state
                     mov rdi, [current_task]

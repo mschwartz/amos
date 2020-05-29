@@ -153,13 +153,6 @@ ExecBase::ExecBase() {
   mInspirationBase = new InspirationBase();
   mInspirationBase->Init();
 
-#if 0
-  dlog("  initialize Test Task \n");
-  TestTask *test_task = new TestTask();
-  gExecBase.AddTask(test_task);
-  dlog("  initialized Test Task \n");
-#endif
-
   Enable();
 }
 

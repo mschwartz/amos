@@ -16,15 +16,17 @@ gdt_flush:
 	;                    bochs
         mov rax,rdi 
         lgdt [rax]                      ; load the gdt into the CPU
+%if 0
         mov eax, 0x10                   ; 0x10 is the offset to the gdt data segment entry
-	                   mov ds, ax                      ; setup all segment registers to 0x10, we do not need them!
-	                   mov es, ax                      ; segmentation is NOT used anymore
+	mov ds, ax                      ; setup all segment registers to 0x10, we do not need them!
+	mov es, ax                      ; segmentation is NOT used anymore
 	;                    mov fs, ax
 	;                    mov gs, ax
         mov ss, ax
 	xor eax, eax
 	mov fs, ax
 	mov gs, ax
+%endif
         ; mov rax, rbx
         ; jmp rax
 	;                    push .flush
@@ -36,7 +38,7 @@ gdt_flush:
 
 global tss_flush
 tss_flush:
-        mov eax, 0x28
+        mov rax, rdi
         ltr ax                       ; "load task register"
 .flush:
         ret

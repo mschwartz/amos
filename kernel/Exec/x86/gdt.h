@@ -3,8 +3,11 @@
 
 #include <Exec/Types.h>
 
+class TSS;
+
 class GDT {
 public:
+  // GDT(TSS *aTSS);
   GDT();
   ~GDT();
 

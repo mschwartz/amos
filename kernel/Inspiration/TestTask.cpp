@@ -39,6 +39,7 @@ void TestTask::Run() {
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
 
+  bochs
   ScreenVesa &screen = mInspirationBase.GetScreen();
   DISABLE;
   screen.Clear(0x4f4fff);

@@ -120,8 +120,8 @@ typedef struct {
 
 const TInt IDT_SIZE = 256;
 
-static TIdtEntry idt_entries[IDT_SIZE];
-static TIdtPtr idt_ptr;
+static TIdtEntry idt_entries[IDT_SIZE] ALIGN16;
+static TIdtPtr idt_ptr ALIGN16;
 
 static void set_entry(TInt aIndex, TUint64 aVec) {
   TIdtEntry &e = idt_entries[aIndex];

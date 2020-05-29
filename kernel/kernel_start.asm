@@ -1,7 +1,7 @@
 	;                    org 0x9000
 [bits 64]
 
-%define SERIAL
+	;%define SERIAL
 	COM1                equ 0x3f8
 
 %macro BOCHS 0
@@ -17,17 +17,16 @@ _start:
 
 extern kernel_main
 
-bochs_present:      db 0
 start_msg:          db 13, 10, 'kernel_start', 13, 10, 0
 
 align 8
 
 extern init_start, rodata_start
 boot:
-        mov [bochs_present], al
-        call debug64_init
 	fninit			;
-
+%ifdef SERIAL
+        call debug64_init
+%endif
         mov rsi, start_msg
         call puts64
 

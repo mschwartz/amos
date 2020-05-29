@@ -69,7 +69,6 @@ main:
 
                     mov [BOOT_DRIVE], dl
 
-                    call debug16_init
 
                     ; detect running in bochs
 detect_bochs:
@@ -81,6 +80,7 @@ detect_bochs:
                     mov [bochs_present], al
 .done:
 
+                    call debug16_init
 ; enable A20
 set_a20:
                     in al, 0x64
@@ -1101,7 +1101,7 @@ enter_long_mode:
 
                     [bits 64]
                     %include "debug64.inc"
-                    %include 'screen.inc'
+;                    %include 'screen.inc'
 
 boot64msg           db 'Entered long mode', 13, 10, 0
 go64:

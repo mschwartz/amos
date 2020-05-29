@@ -109,7 +109,7 @@ public:
 
   void Run() {
     dprint("\n============ ScreenDevice ScreenTask running\n\n");
-    gExecBase.DumpTasks();
+//    gExecBase.DumpTasks();
     MessagePort *port = CreateMessagePort("screen.device");
     DISABLE;
     gExecBase.AddMessagePort(*port);
@@ -133,6 +133,6 @@ ScreenDevice::ScreenDevice() : BDevice("screen.device") {
   DISABLE;
   gExecBase.AddTask(new MouseTask(this));
 //  gExecBase.AddTask(new ScreenTask(this));
-  gExecBase.DumpTasks();
+//  gExecBase.DumpTasks();
   ENABLE;
 }

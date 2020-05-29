@@ -17,7 +17,8 @@ extern "C" void eputs(const char *s);
 extern "C" void sputc(char c);
 
 void dputc(char c) {
-//  sputc(c);
+  sputc(c);
+  return;
 //    outb((int)c, 0xe9);
 //  sputc(c);
   if (false || in_bochs) {

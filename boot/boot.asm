@@ -1101,7 +1101,7 @@ enter_long_mode:
 
                     [bits 64]
                     %include "debug64.inc"
-                    %include 'screen.inc'
+                    ; %include 'screen.inc'
 
 boot64msg           db 'Entered long mode', 13, 10, 0
 go64:

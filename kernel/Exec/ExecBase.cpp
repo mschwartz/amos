@@ -4,6 +4,7 @@
 
 #include <Exec/x86/mmu.h>
 #include <Exec/x86/idt.h>
+// #include <Exec/x86/tss.h>
 #include <Exec/x86/gdt.h>
 #include <Exec/x86/cpu.h>
 #include <Exec/x86/pic.h>
@@ -104,7 +105,10 @@ ExecBase::ExecBase() {
 
   mMessagePortList = new MessagePortList("ExecBase MessagePort List");
 
-  mGDT = new GDT;
+  // mTSS = new TSS;
+  
+  // mGDT = new GDT(mTSS);
+  mGDT = new GDT();
   dlog("  initialized GDT\n");
 
   mIDT = new IDT;
@@ -291,6 +295,7 @@ MessagePort *ExecBase::FindMessagePort(const char *aName) {
 
 void ExecBase::GuruMeditation(const char *aFormat, ...) {
   cli();
+  bochs;
   char buf[512];
   dprint("\n\n***********************\n");
   dprint("GURU MEDITATION at %dms\n", SystemTicks());

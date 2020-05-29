@@ -124,3 +124,31 @@ void dhexdump16(const TAny *aSource, int aLines) {
     dputc('\n');
   }
 }
+
+void dhexdump32(const TAny *aSource, int aLines) {
+  TUint32 *src = (TUint32 *)aSource;
+  TUint64 address = (TUint64)src;
+  for (TInt i = 0; i < aLines; i++) {
+    dprint("%x: ", address);
+    for (TInt c = 0; c < 8; c++) {
+      dhex32(*src++);
+      dputc(' ');
+      address += 2;
+    }
+    dputc('\n');
+  }
+}
+
+void dhexdump64(const TAny *aSource, int aLines) {
+  TUint64 *src = (TUint64 *)aSource;
+  TUint64 address = (TUint64)src;
+  for (TInt i = 0; i < aLines; i++) {
+    dprint("%x: ", address);
+    for (TInt c = 0; c < 8; c++) {
+      dhex64(*src++);
+      dputc(' ');
+      address += 2;
+    }
+    dputc('\n');
+  }
+}

@@ -138,3 +138,11 @@ void SetMemory64(TAny *aDestination, TUint64 aValue, TInt64 aCount) {
   }
 }
 
+void CopyMemory(TAny *aDestination, TAny *aSource, TInt64 aCount) {
+  TUint8 *src = (TUint8 *)aSource,
+    *dst = (TUint8 *)aDestination;
+  for (TInt64 i=0; i<aCount; i++) {
+    *dst++ = *src++;
+  }
+}
+

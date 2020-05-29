@@ -3,14 +3,26 @@
 
 #include <Exec/Types.h>
 
-#if 0
-class CPU {
-public:
-  CPU();
-  ~CPU();
-};
-#endif
+#define LOCALSIZE 0x1000
 
+struct CPU {
+  TUint8 mLocal[LOCALSIZE] ALIGN16;
+  TInt16 mDisableDepth;
+  TUint64 mTicks;
+  TUint16 mPreemptionDepth;
+  TUint32 mSpeed;
+  // BThread *mCurrentThread;
+public:
+  CPU() {
+    for (TInt i=0; i<LOCALSIZE; i++) {
+      mLocal[i] = 0;
+    }
+    mDisableDepth = 0;
+    mTicks = 0;
+    mPreemptionDepth = 0;
+    mSpeed = 0;
+  }
+} PACKED;
 
 // TODO: move I/O to a separate file
 extern "C" void cli();
@@ -25,46 +37,52 @@ static inline void enable_interrupts() {
 
 // https://wiki.osdev.org/Inline_Assembly/Examples
 static inline void outb(TUint16 port, TUint8 val) {
-    asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
-    /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
+  asm volatile("outb %0, %1"
+               :
+               : "a"(val), "Nd"(port));
+  /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
      * Wider immediate constants would be truncated at assemble-time (e.g. "i" constraint).
      * The  outb  %al, %dx  encoding is the only option for all other cases.
      * %1 expands to %dx because  port  is a uint16_t.  %w1 could be used if we had the port number a wider C type */
 }
 static inline void outw(TUint16 port, TUint16 val) {
-    asm volatile ( "outw %0, %1" : : "a"(val), "Nd"(port) );
-    /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
+  asm volatile("outw %0, %1"
+               :
+               : "a"(val), "Nd"(port));
+  /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
      * Wider immediate constants would be truncated at assemble-time (e.g. "i" constraint).
      * The  outb  %al, %dx  encoding is the only option for all other cases.
      * %1 expands to %dx because  port  is a uint16_t.  %w1 could be used if we had the port number a wider C type */
 }
 static inline void outl(TUint16 port, TUint32 val) {
-    asm volatile ( "outl %0, %1" : : "a"(val), "Nd"(port) );
-    /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
+  asm volatile("outl %0, %1"
+               :
+               : "a"(val), "Nd"(port));
+  /* There's an outb %al, $imm8  encoding, for compile-time constant port numbers that fit in 8b.  (N constraint).
      * Wider immediate constants would be truncated at assemble-time (e.g. "i" constraint).
      * The  outb  %al, %dx  encoding is the only option for all other cases.
      * %1 expands to %dx because  port  is a uint16_t.  %w1 could be used if we had the port number a wider C type */
 }
 static inline TUint8 inb(TUint16 port) {
-    TUint8 ret;
-    asm volatile ( "inb %1, %0"
-                   : "=a"(ret)
-                   : "Nd"(port) );
-    return ret;
+  TUint8 ret;
+  asm volatile("inb %1, %0"
+               : "=a"(ret)
+               : "Nd"(port));
+  return ret;
 }
 static inline TUint16 inw(TUint16 port) {
-    TUint16 ret;
-    asm volatile ( "inw %1, %0"
-                   : "=a"(ret)
-                   : "Nd"(port) );
-    return ret;
+  TUint16 ret;
+  asm volatile("inw %1, %0"
+               : "=a"(ret)
+               : "Nd"(port));
+  return ret;
 }
 static inline TUint32 inl(TUint16 port) {
-    TUint32 ret;
-    asm volatile ( "inl %1, %0"
-                   : "=a"(ret)
-                   : "Nd"(port) );
-    return ret;
+  TUint32 ret;
+  asm volatile("inl %1, %0"
+               : "=a"(ret)
+               : "Nd"(port));
+  return ret;
 }
 #if 0
 static __inline unsigned char inb(unsigned short int __port) {
@@ -192,7 +210,7 @@ static __inline void outsl(unsigned short int __port, const void *__addr, unsign
 #endif
 
 static __attribute__((noreturn)) inline void halt() {
-//  disable_interrupts();
+  //  disable_interrupts();
   while (true) {
     __asm__ __volatile__("hlt");
   }

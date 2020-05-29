@@ -13,6 +13,10 @@ case $platform in
 	echo bochsrc.macos
     	cp bochsrc.macos bochsrc
 	;;
+    "arch" )
+	echo bochsrc.linux
+    	cp bochsrc.linux bochsrc
+	;;
     "linux" )
 	echo bochsrc.linux
     	cp bochsrc.linux bochsrc
@@ -22,6 +26,7 @@ case $platform in
 	;;
 esac
 echo $platform
+sudo chmod 777 c.img
 rm *.lock
 bochs -q
 

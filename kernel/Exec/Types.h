@@ -2,6 +2,11 @@
 #define BTYPES_H
 
 #define PACKED __attribute__ ((packed))
+#define ALIGN2 __attribute__ ((aligned (2)))
+#define ALIGN4 __attribute__ ((aligned (4)))
+#define ALIGN8 __attribute__ ((aligned (8)))
+#define ALIGN16 __attribute__ ((aligned (16)))
+#define ALIGN32 __attribute__ ((aligned (32)))
 #define INLINE __attribute__((always_inline))
 
 typedef unsigned char TUint8;
@@ -173,10 +178,10 @@ extern TUint8 in_bochs;
 
 //stops simulation and breaks into the debug console
 inline void dbreak() {
-    outw(0x8A00, 0x8A00);
-    outw(0x8A00, 0x08AE0);
-//  outw(0x8A00, 0x8a00);
-//  outw(0x08AE0, 0x8a00);
+    /* outw(0x8A00, 0x8A00); */
+    /* outw(0x8A00, 0x08AE0); */
+ // /* outw(0x8A00, 0x8a00); */
+ // /* outw(0x08AE0, 0x8a00); */
 }
 
 extern void dputc(char c);
@@ -192,6 +197,8 @@ extern void dhex64(const TUint64 w);
 
 extern void dhexdump(const TAny *aSource, int aLines);
 extern void dhexdump16(const TAny *aSource, int aLines);
+extern void dhexdump32(const TAny *aSource, int aLines);
+extern void dhexdump64(const TAny *aSource, int aLines);
 #endif
 
 #endif // BTYPES_H

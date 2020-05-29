@@ -155,7 +155,7 @@ GDT::GDT() {
                      (((addr >> 24) & 0xFF) << 56);
   gdt[SEG_TSS + 1] = (addr >> 32);
 
-  dprint("TSS SELECTOR %x ", gdt[SEG_TSS]);
+  dprint("TSS SELECTOR %016x ", gdt[SEG_TSS]);
   dhex64(gdt[SEG_TSS]);
   dprint("\n");
   dprint("Access: %x\n", (gdt[SEG_TSS] >> 40) & 0xff);

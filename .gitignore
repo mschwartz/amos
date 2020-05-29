@@ -6,9 +6,6 @@
 *.txt
 *.sym
 test*
-tools/rcomp-src/rcomp
 rcomp
-tools/generate-gdt
-tools/build-img
 bochsrc
 *.psf

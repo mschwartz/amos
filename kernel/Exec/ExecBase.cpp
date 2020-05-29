@@ -58,7 +58,7 @@ typedef struct {
   TUint32 mFrameBufferSize;
   TUint32 mPad2;
   void Dump() {
-    dlog("Display Mode(%x) mode(%x) dimensions(%dx%d) depth(%d)  pitch(%d) lfb(0x%x)\n",
+    dlog("Mode(%x) mode(%x) dimensions(%dx%d) depth(%d)  pitch(%d) lfb(0x%x)\n",
       this, mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
   }
 } PACKED TModeInfo;
@@ -132,11 +132,12 @@ ExecBase::ExecBase() {
   current_task = &mCurrentTask->mRegisters;
 
 //  mCurrentTask->Dump();
+  // initialize devices
   dlog("  initialize timer\n");
   AddDevice(new TimerDevice());
 
-//  dlog("  initialize serial\n");
-//  AddDevice(new SerialDevice());
+  dlog("  initialize serial\n");
+  AddDevice(new SerialDevice());
 
   dlog("  initialize rtc \n");
   AddDevice(new RtcDevice());

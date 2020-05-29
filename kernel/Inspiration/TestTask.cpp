@@ -4,7 +4,7 @@
 #include <Exec/Random.h>
 
 TestTask::TestTask() : BTask("Test Task") {
-//  dprint("Construct TestTask\n");
+  dprint("Construct TestTask\n");
 }
 
 TestTask::~TestTask() {

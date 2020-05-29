@@ -60,7 +60,7 @@ InspirationBase::~InspirationBase() {
 void InspirationBase::Init() {
   gExecBase.AddTask(new MousePointerTask());
   gExecBase.AddTask(new TestTask());
-//  gExecBase.DumpTasks();
+  gExecBase.DumpTasks();
 }
 
 void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {

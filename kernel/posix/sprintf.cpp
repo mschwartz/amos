@@ -100,11 +100,11 @@ static int prints(char **out, const char *string, int width, int pad) {
 /* the following should be enough for 32 bit int */
 #define PRINT_BUF_LEN 12
 
-static int printi(char **out, int i, int b, int sg, int width, int pad, int letbase) {
+static int printi(char **out, TInt64 i, int b, int sg, int width, int pad, int letbase) {
   char print_buf[PRINT_BUF_LEN];
   register char *s;
-  register int t, neg = 0, pc = 0;
-  register unsigned int u = i;
+  register TInt64 t, neg = 0, pc = 0;
+  register TUint64 u = i;
 
   if (i == 0) {
     print_buf[0] = '0';
@@ -168,24 +168,24 @@ static int print(char **out, const char *format, va_list args) {
         width += *format - '0';
       }
       if (*format == 's') {
-        register char *s = (char *)va_arg(args, int);
+        register char *s = (char *)va_arg(args, TInt64);
         pc += prints(out, s ? s : "(null)", width, pad);
         continue;
       }
       if (*format == 'd') {
-        pc += printi(out, va_arg(args, int), 10, 1, width, pad, 'a');
+        pc += printi(out, va_arg(args, TInt64), 10, 1, width, pad, 'a');
         continue;
       }
       if (*format == 'x') {
-        pc += printi(out, va_arg(args, int), 16, 0, width, pad, 'a');
+        pc += printi(out, va_arg(args, TInt64), 16, 0, width, pad, 'a');
         continue;
       }
       if (*format == 'X') {
-        pc += printi(out, va_arg(args, int), 16, 0, width, pad, 'A');
+        pc += printi(out, va_arg(args, TInt64), 16, 0, width, pad, 'A');
         continue;
       }
       if (*format == 'u') {
-        pc += printi(out, va_arg(args, int), 10, 0, width, pad, 'a');
+        pc += printi(out, va_arg(args, TInt64), 10, 0, width, pad, 'a');
         continue;
       }
       if (*format == 'c') {

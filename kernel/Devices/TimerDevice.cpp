@@ -72,9 +72,7 @@ void TimerTask::Run() {
   TUint64 tick_mask = 1<<mSignalBit;
   
   while (ETrue) {
-//    dlog("Timer Device Wait\n");
     TUint64 sigs = Wait(port_mask | tick_mask);
-//    dlog("WAKE\n");
     if (sigs & port_mask) {
       while (TimerMessage *m = (TimerMessage *)mMessagePort->GetMessage()) {
         switch (m->mCommand) {
@@ -84,7 +82,6 @@ void TimerTask::Run() {
             break;
           case ETimerSleep:
             m->mPri = mTimerDevice->GetTicks() + m->mArg1 * QUANTUM;
-//            dlog("Queue %d %d\n", mTimerDevice->GetTicks(), m->mPri);
             timerQueue.Add(*m);
             break;
           default:
@@ -101,34 +98,24 @@ void TimerTask::Run() {
         if (timerQueue.End(m)) {
           break;
         }
-//        dlog("message %d %d\n", m->mPri, current);
         if (m->mPri > current) {
           SetFlags(flags);
           break;
         }
-//        dlog("Wake\n");
         m->Remove();
         SetFlags(flags);
         m->ReplyMessage();
-//        dlog("reply %d\n", current);
       }
     }
   }
 }
 
 TBool TimerInterrupt::Run(TAny *g) {
-//  dlog("TIMER\n");
   mTask->Signal(1 << mTask->mSignalBit);
-  gExecBase.RescheduleIRQ();
-  gExecBase.AckIRQ(IRQ_TIMER);
-//  BTask *t = gExecBase.GetCurrentTask();
-//  if (gExecBase.GetCurrentTask() != t) {
-//    t->Dump();
-//    gExecBase.DumpCurrentTask();
-//    bochs;
-//  }
 
-  // maybe wake up new task
+  gExecBase.RescheduleIRQ(); // maybe wake up new task
+  gExecBase.AckIRQ(IRQ_TIMER);
+
   return ETrue;
 }
 

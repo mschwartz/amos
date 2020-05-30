@@ -7,8 +7,8 @@ class TSS;
 
 class GDT {
 public:
-  // GDT(TSS *aTSS);
-  GDT();
+  GDT(TSS *aTSS);
+  // GDT();
   ~GDT();
 
 public:

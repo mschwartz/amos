@@ -18,7 +18,7 @@ extern "C" void SetFlags(TUint64 aFlags);
 //#include <Exec/x86/cpu.h>
 
 class RtcDevice;
-// class TSS;
+class TSS;
 class GDT;
 class MMU;
 class IDT;
@@ -92,7 +92,7 @@ protected:
   InspirationBase *mInspirationBase;
 
 protected:
-  // TSS *mTSS;
+  TSS *mTSS;
   GDT *mGDT;
   MMU *mMMU;
   IDT *mIDT;

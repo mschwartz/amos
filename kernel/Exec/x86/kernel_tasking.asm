@@ -8,10 +8,28 @@
         xchg bx, bx
 %endm
 
-        ; kernel_isr is the "C/C++" function to be called
+;; kernel_isr is the "C/C++" function to be called
 extern kernel_isr
 
-	; task_t structure MUST match the one in idt.h
+struc TSS
+.reserved1 resd 1
+.rsp0      resq 1
+.rsp1      resq 1
+.rsp2      resq 1
+.reserved2 resq 1
+.ist1      resq 1
+.ist2      resq 1
+.ist3      resq 1
+.ist4      resq 1
+.ist5      resq 1
+.ist6      resq 1
+.ist7      resq 1
+.reserved3 resq 1
+.reserved4 resw 1
+.io_mba    resw 1
+endstruc
+
+;; task_t structure MUST match the one in idt.h
 struc TASK 
 .rflags             resq 1
 .rax                resq 1
@@ -52,11 +70,24 @@ global current_task
 	; this code puashes all the registers on the stack, and calls our single C IRQ handler
 	; the C IRQ handler expects this specific order of items on the stack!  See the ISR_REGISTERS struct.
 global isr_common
+extern hexquadn64
+extern hexquads64
 isr_common:
 	push rdi            ; save rdi so we don't clobber it
 
         mov rdi, [current_task]
         mov [rdi + TASK.isrnum], rax            ; isrnum was pushed on stack by xisr
+
+%if 0
+	call hexquads64
+	mov rax, rsp
+	call hexquads64
+	push rdi
+	mov rdi, [rdi + TASK.tss]
+	mov rax, [rdi + TSS.ist1]
+	call hexquadn64
+	pop rdi
+%endif
 
 
         ; set default value for task_error_code

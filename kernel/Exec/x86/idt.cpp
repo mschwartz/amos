@@ -60,6 +60,18 @@ extern "C" TUint64 isr46; // ata 0,0 (14)
 extern "C" TUint64 isr47; // ata 0,1 (15)
 
 extern "C" TUint64 isr48; // unexpected
+extern "C" TUint64 isr49; // unexpected
+extern "C" TUint64 isr50; // unexpected
+extern "C" TUint64 isr51; // unexpected
+extern "C" TUint64 isr52; // unexpected
+extern "C" TUint64 isr53; // unexpected
+extern "C" TUint64 isr54; // unexpected
+extern "C" TUint64 isr55; // unexpected
+extern "C" TUint64 isr56; // unexpected
+extern "C" TUint64 isr57; // unexpected
+extern "C" TUint64 isr58; // unexpected
+extern "C" TUint64 isr59; // unexpected
+extern "C" TUint64 isr60; // unexpected
 
 extern "C" TUint64 isr128; // syscall (0x80, or 0x60 + 32)
 extern "C" TUint64 isr130; // interrupt scheduler
@@ -73,7 +85,7 @@ static TIsrHandler interrupt_handlers[INTERRUPTS];
   */
 extern "C" bool kernel_isr(TInt64 aIsrNumber) {
   cli();
-//  dlog("kernel_isr %d\n", aIsrNumber);
+  // dlog("kernel_isr %d\n", aIsrNumber);
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {
     const char *desc = IDT::InterruptDescription(current_task->isr_num);
@@ -81,6 +93,9 @@ extern "C" bool kernel_isr(TInt64 aIsrNumber) {
     return false;
   }
   bool ret = info->mHandler(info->mInterruptNumber, info->mData);
+  // if (aIsrNumber == 48) {
+  //   bochs
+  // }
   return ret;
 };
 
@@ -123,7 +138,7 @@ const TInt IDT_SIZE = 256;
 static TIdtEntry idt_entries[IDT_SIZE] ALIGN16;
 static TIdtPtr idt_ptr ALIGN16;
 
-static void set_entry(TInt aIndex, TUint64 aVec) {
+static void set_entry(TInt aIndex, TUint64 aVec, TInt aIst = 0) {
   TIdtEntry &e = idt_entries[aIndex];
   e.mAddressLow = (TUint16)aVec;
   e.mAddressMiddle = (TUint16)(aVec >> 16);
@@ -131,10 +146,10 @@ static void set_entry(TInt aIndex, TUint64 aVec) {
   e.mZeroes1 = 0;
   e.mZeroes2 = 0;
   e.mType = 0;
-  e.mIst = 0;
+  e.mIst = aIst;
   e.mDpl = 0;
   e.mOnes1 = 0b111;
-  e.mSelector = 8;
+  e.mSelector = 8; // SEG_KCODE
   e.mPresent = 1;
 }
 
@@ -180,27 +195,27 @@ IDT::IDT() {
   set_entry(31, isr31);
 
   // IRQs
-  set_entry(32, isr32);
-  set_entry(33, isr33);
-  set_entry(34, isr34);
-  set_entry(35, isr35);
-  set_entry(36, isr36);
-  set_entry(37, isr37);
-  set_entry(38, isr38);
-  set_entry(39, isr39);
-  set_entry(40, isr40);
-  set_entry(41, isr41);
-  set_entry(42, isr42);
-  set_entry(43, isr43);
-  set_entry(44, isr44);
-  set_entry(45, isr45);
-  set_entry(46, isr46);
-  set_entry(47, isr47);
+  set_entry(32, isr32, 0); // timer
+  set_entry(33, isr33, 1); // keyboard
+  set_entry(34, isr34, 1); // slave
+  set_entry(35, isr35, 1); // com2
+  set_entry(36, isr36, 1); // com1
+  set_entry(37, isr37, 1); // lpt2
+  set_entry(38, isr38, 1); // floppy
+  set_entry(39, isr39, 1); // lpt1
+  set_entry(40, isr40, 1); // RTC
+  set_entry(41, isr41, 1); // MASTER_PIC
+  set_entry(42, isr42, 1); // RESERVED
+  set_entry(43, isr43, 1); // RESERVED
+  set_entry(44, isr44, 1); // MOUSE
+  set_entry(45, isr45, 1); // COPROCESSOR
+  set_entry(46, isr46, 1); // HARD DISK
+  set_entry(47, isr47, 1); // RESERVED
 
-  // install handler for unexpected interrupts
-  for (int i = 48; i < IDT_SIZE; i++) {
-    // TODO: make a special handler
-    set_entry(i, isr48);
+  set_entry(48, isr48, 0); // Schedule TRAP
+
+  for (int i = 49; i < IDT_SIZE; i++) {
+    set_entry(i, isr49, 2);
   }
   set_entry(128, isr128);
   set_entry(130, isr130);

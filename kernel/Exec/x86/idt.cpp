@@ -195,7 +195,7 @@ IDT::IDT() {
   set_entry(31, isr31);
 
   // IRQs
-  set_entry(32, isr32, 0); // timer
+  set_entry(32, isr32, 2); // timer
   set_entry(33, isr33, 1); // keyboard
   set_entry(34, isr34, 1); // slave
   set_entry(35, isr35, 1); // com2

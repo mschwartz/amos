@@ -39,12 +39,12 @@ typedef struct Task {
 //  TInt errno;
 
   // segment/selector registers
-  volatile TUint16 cs;
-  volatile TUint16 ds;
-  volatile TUint16 es;
-  volatile TUint16 fs;
-  volatile TUint16 gs;
-  volatile TUint16 ss;
+  volatile TUint64 cs;
+  volatile TUint64 ds;
+  volatile TUint64 es;
+  volatile TUint64 fs;
+  volatile TUint64 gs;
+  volatile TUint64 ss;
 
   volatile TUint8 fxsave[512+16];
 

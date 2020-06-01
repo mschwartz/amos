@@ -54,12 +54,12 @@ struc TASK
 .tss                resq 1
 .error_code         resq 1
 .isrnum             resq 1
-.cs                 resw 1
-.ds                 resw 1
-.es                 resw 1
-.fs                 resw 1
-.gs                 resw 1
-.ss                 resw 1
+.cs                 resq 1
+.ds                 resq 1
+.es                 resq 1
+.fs                 resq 1
+.gs                 resq 1
+.ss                 resq 1
 .fxsave             resb 512 + 16
 endstruc
 
@@ -73,63 +73,73 @@ global isr_common
 extern hexquadn64
 extern hexquads64
 isr_common:
+	; stack at this point:
+	; +0x0000 RIP
+	; +0x0008 CS
+	; +0x0010 RFLAGS
+	; +0x0018 RSP
+	; +0x0020 SS
+	; NOTE: rax pushed by ISR is at the very top, we must pop it
+	; bochs
 	push rdi            ; save rdi so we don't clobber it
 
         mov rdi, [current_task]
         mov [rdi + TASK.isrnum], rax            ; isrnum was pushed on stack by xisr
 
-%if 0
-	call hexquads64
-	mov rax, rsp
-	call hexquads64
-	push rdi
-	mov rdi, [rdi + TASK.tss]
-	mov rax, [rdi + TSS.ist1]
-	call hexquadn64
-	pop rdi
-%endif
-
-
         ; set default value for task_error_code
         xor rax, rax
         mov [rdi + TASK.error_code], rax
 
-        ; stack is rdi, rax
 
-        ; rdi is on the stack
-	;                    pop rax                                 ; restore saved rdi from the macro 
-	;                    mov [rdi + TASK.rdi], rax
+	; we want to store the entire register set in the current task struct
+        ; stack is rdi, rax, then interrupt stack frame, per above
+	pop rax
+	mov [rdi + TASK.rdi], rax ; rdi
+	pop rax
+	mov [rdi + TASK.rax], rax ; rax
+	; now stack is interrupt stack frame
 
-	;                    mov rax, [rdi + TASK.rdi]
-	;                    push rax
+	mov [rdi + TASK.rbx], rbx
+	mov [rdi + TASK.rcx], rcx
+	mov [rdi + TASK.rdx], rdx
+	mov [rdi + TASK.rsi], rsi
+	mov [rdi + TASK.r8], r8
+	mov [rdi + TASK.r9], r9
+	mov [rdi + TASK.r10], r10
+	mov [rdi + TASK.r11], r11
+	mov [rdi + TASK.r12], r12
+	mov [rdi + TASK.r13], r13
+	mov [rdi + TASK.r14], r14
+	mov [rdi + TASK.r15], r15
+	mov [rdi + TASK.rbp], rbp
 
-        push rbx
-        push rcx
-        push rdx
-        push rsi
-        push r8
-        push r9
-        push r10
-        push r11
-        push r12
-        push r13
-        push r14
-        push r15
-        push rbp
+	; all general purpose registers are saved at this point
 
-%if 1
+	xor rax, rax
+	mov ax, ds
+	mov [rdi + TASK.ds], rax
+	mov ax, es
+	mov [rdi + TASK.es], rax
+	mov ax, fs
+	mov [rdi + TASK.fs], rax
+	mov ax, gs
+	mov [rdi + TASK.gs], rax
+
+	; save coprocessor registers, if CPU has them
         mov rax, cr4
         bts rax, 9
         je .continue
 
-        ; fxsave and fxrstor need to store/restore to/from 16 byte aligned addresses
+        ; fxsave and fxrstor need to store/restore to/from
+	; 16 byte aligned addresses
         mov rax, rdi
         add rax, TASK.fxsave
         add rax, 15
         and rax, ~0x0f
         fxsave [rax]
+
 .continue:
-%endif
+
         ; the CPU pushes an extra error code for certain interrupts
         mov rax, [rdi + TASK.isrnum]
         cmp rax, 8
@@ -151,12 +161,22 @@ isr_common:
         mov [rdi + TASK.error_code], rax
 
 .frame:
+	; now we unpack the stack frame
+	pop rax
+	mov [rdi + TASK.rip], rax
+	pop rax
+	mov [rdi + TASK.cs], ax
+	pop rax
+	mov [rdi + TASK.rflags], rax
+	pop rax
+	mov [rdi + TASK.rsp], rax
+	pop rax
+	mov [rdi + TASK.ss], ax
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-        mov [rdi + TASK.rsp], rsp
         ; pass isrnum to C method as argument
         mov rdi, [rdi + TASK.isrnum]
         call kernel_isr
@@ -165,14 +185,15 @@ isr_common:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+global restore_task_state
+restore_task_state:
         ; restore task state
         mov rdi, [current_task]
-        mov rsp, [edi + TASK.rsp]
 
-%if 1
         mov rax, cr4
         bts rax, 9
-        je .continue2
+        je .continue
+
         finit
         ; fxsave and fxrstor need to store/restore to/from 16 byte aligned addresses
         mov rax, rdi
@@ -180,109 +201,56 @@ isr_common:
         add rax, 15
         and rax, ~0x0f
         fxrstor [rax]
-.continue2:
-%endif
-        pop rbp
-        pop r15
-        pop r14
-        pop r13
-        pop r12
-        pop r11
-        pop r10
-        pop r9
-        pop r8
-        pop rsi
-        pop rdx
-        pop rcx
-        pop rbx
-        pop rax
-        ; finally restore rdi (we don't need it anymore)
-        pop rdi
 
-        iretq
-
-
-
-
-
-%if 0
-
-        push rdi            ; save rdi so we don't clobber it
-
-        mov rdi, [current_task]
-        mov [rdi + TASK.isrnum], rax            ; isrnum was pushed on stack by xisr
-
-        ; set default value for task_error_code
-        xor rax, rax
-        mov [rdi + TASK.error_code], rax
-
-        ; rax is already there
-        push rbx
-        push rcx
-        push rdx
-        push rsi
-        push r8
-        push r9
-        push r10
-        push r11
-        push r12
-        push r13
-        push r14
-        push r15
-        push rbp
-
-        ; the CPU pushes an extra error code for certain interrupts
 .continue:
-        mov rax, [rdi + TASK.isrnum]
-        cmp rax, 8
-        je .error_code
-        cmp rax, 9
-        je .error_code
-        cmp rax, 10
-        je .error_code
-        cmp rax, 11 
-        je .error_code
-        cmp rax, 12 
-        je .error_code
-        cmp rax, 15 
-        je .error_code
-        jmp .frame
+	; prepare stack for iretq
+	mov rax, [rdi + TASK.ss]
+	push rax
 
-.error_code:
-        pop rax ; get error_code
-        mov [rdi + TASK.error_code], rax
+	mov rax, [rdi + TASK.rsp]
+	push rax
 
-.frame:
-        mov [rdi + TASK.rsp], rsp
-        ; pass isrnum to C method as argument
-        mov rdi, [rdi + TASK.isrnum]
+	mov rax, [rdi + TASK.rflags]
+	push rax
 
-        call kernel_isr
+	mov rax, [rdi + TASK.cs]
+	push rax
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	mov rax, [rdi + TASK.rip]
+	push rax
 
-        mov rdi, [current_task]
-        mov rsp, [rdi + TASK.rsp]
+	; stack is prepared for iretq
 
-        pop rbp
-        pop r15
-        pop r14
-        pop r13
-        pop r12
-        pop r11
-        pop r10
-        pop r9
-        pop r8
-        pop rsi
-        pop rdx
-        pop rcx
-        pop rbx
-        pop rax
+	; now restore the segment registers
+	mov rax, [rdi + TASK.ds]
+	mov ds, ax
+	mov rax, [rdi + TASK.es]
+	mov es, ax
+	mov rax, [rdi + TASK.fs]
+	mov fs, ax
+	mov rax, [rdi + TASK.gs]
+	mov gs, ax
+
+	; restore general purpose registers
+	mov rbp, [rdi + TASK.rbp]
+	mov r15, [rdi + TASK.r15]
+	mov r14, [rdi + TASK.r14]
+	mov r13, [rdi + TASK.r13]
+	mov r12, [rdi + TASK.r12]
+	mov r11, [rdi + TASK.r11]
+	mov r10, [rdi + TASK.r10]
+	mov r9, [rdi + TASK.r9]
+	mov r8, [rdi + TASK.r8]
+	mov rsi, [rdi + TASK.rsi]
+	mov rdx, [rdi + TASK.rdx]
+	mov rcx, [rdi + TASK.rcx]
+	mov rbx, [rdi + TASK.rbx]
+	mov rax, [rdi + TASK.rax]
+
+        ; finally restore rdi (we don't need it anymore)
+        mov rdi, [rdi + TASK.rdi]
 
         iretq
-%endif
 
 
 global init_task_state
@@ -292,6 +260,7 @@ init_task_state:
         pushf
         cli
 
+	%if 0
         ; push registers we use/modify onto caller's stack
         push rcx
 
@@ -340,13 +309,14 @@ init_task_state:
         mov rsp, rcx
 
         pop rcx
-
+%endif
         popf
         ret
 
 global enter_tasking
 enter_tasking:
         ; jmp $
+	jmp restore_task_state
         cli
         ; restore task state
         mov rdi, [current_task]

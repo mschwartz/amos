@@ -100,5 +100,4 @@ GDT::GDT(TSS *aTss) {
 
   gdt_flush(&gGdtp, SEG_KDATA << 3); //0x10);
   tss_flush(SEG_TSS << 3);
-  // tss_flush(0x28);
 }

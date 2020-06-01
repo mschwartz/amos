@@ -27,11 +27,7 @@ public:
     rect.x2 = Random64(rect.x1, mClientRect.x2);
     rect.y1 = Random64(mClientRect.y1, mClientRect.y2);
     rect.y2 = Random64(rect.y1, mClientRect.y2);
-//    dlog("RandomBox %x %x\n", color.rgb888(), Random());
-//    rect.Dump();
-    DISABLE;
     mViewPort->FillRect(color, rect);
-    ENABLE;
   }
 };
 
@@ -40,15 +36,12 @@ void TestTask::Run() {
   Sleep(1);
 
   ScreenVesa &screen = mInspirationBase.GetScreen();
-  DISABLE;
   screen.Clear(0x4f4fff);
-  ENABLE;
 
   TestWindow *win = new TestWindow();
   mInspirationBase.AddWindow(win);
 
   dlog("LOOP %x\n", GetFlags());
-//  while(1);
   TInt count = 0;
   while (1) {
     win->BeginPaint();
@@ -56,8 +49,6 @@ void TestTask::Run() {
       win->RandomBox();
     }
     win->EndPaint();
- // while (1) { Sleep(1); }
-//    Sleep(1);
   }
 #if 0
 #ifdef KGFX

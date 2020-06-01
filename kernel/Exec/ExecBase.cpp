@@ -244,10 +244,6 @@ void ExecBase::Schedule() {
 }
 
 void ExecBase::Kickstart() {
-  //  BTask *t = (BTask *)mActiveTasks.Find("Idle Task");
-  //  t->Run();
-  //  bochs;
-  //  DumpCurrentTask();
   enter_tasking(); // just enter next task
 }
 
@@ -360,16 +356,7 @@ public:
 
 public:
   TBool Run(TAny *aData) {
-    // at this point current_task is saved
-    //    cli();
-    //    dlog("NextTaskTrap\n");
-    //    gExecBase.DumpCurrentTask();
     gExecBase.RescheduleIRQ();
-    //    if (CompareStrings(gExecBase.CurrentTaskName(), "Idle Task") == 0) {
-    //      gExecBase.DumpCurrentTask();
-    //      bochs;
-    //    }
-
     return ETrue;
   }
 };

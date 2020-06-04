@@ -145,7 +145,7 @@ void BBitmap32::DrawText(TInt16 aX, TInt16 aY, const char *aString) {
     return;
   }
   mFont->SetColors(mForegroundColor, mBackgroundColor);
-  mFont->Write(aX, aY, aString);
+  mFont->Write(this, aX, aY, aString);
 }
 
 #if 0

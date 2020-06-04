@@ -22,7 +22,12 @@ public:
 
 protected:
   void Repaint();
+
+  /**
+   * Paint window title bar, borders, etc.
+   */
   void PaintDecorations();
+
 public:
   void BeginPaint() { mPainting = ETrue; }
   void EndPaint() {
@@ -46,7 +51,7 @@ protected:
   BViewPort32 *mWindowViewPort, // entire window
     *mViewPort;                 // client area
   TBool mPainting;
-  InspirationBase& mInspirationBase;
+  InspirationBase &mInspirationBase;
 };
 
 class BWindowList : public BList {

@@ -88,8 +88,11 @@ public:
     aForegroundColor.Set(mForegroundColor);
     aBackgroundColor.Set(mBackgroundColor);
   }
+
+public:
   void SetFont(BConsoleFont32 *aFont) { mFont = aFont; }
   void DrawText(TInt16 aX, TInt16 aY, const char *aString);
+  void DrawTextTransparent(TInt16 aX, TInt16 aY, const char *aString);
 
 public:
   void SetRect(TRect &aRect) {
@@ -98,11 +101,13 @@ public:
     mRect.x2 = aRect.x2;
     mRect.y2 = aRect.y2;
   }
+
 public:
   void Dump() {
     dlog("BViewPort32 at %x\n", this);
     mRect.Dump();
   }
+
 protected:
   BBitmap32 *mBitmap32;
   TRGB mForegroundColor, mBackgroundColor;

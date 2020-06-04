@@ -27,7 +27,7 @@ case $platform in
 esac
 echo $platform
 sudo chmod 777 c.img
-rm *.lock
+rm -f *.lock
 bochs -q
 
 # if [ "$WSL" != "" ]; then

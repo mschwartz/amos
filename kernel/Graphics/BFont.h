@@ -16,10 +16,10 @@ public:
   ~BFont();
 
 public:
-  virtual TInt Write(TInt x, TInt y, TInt16 c) = 0;
-  virtual TInt Write(TPoint &aPoint, TInt16 c) = 0;
-  virtual TInt Write(TInt x, TInt y, const char *aString) = 0;
-  virtual TInt Write(TPoint &aPoint, const char *aString) = 0;
+  virtual TInt Write(BBitmap32 *aBitmap, TInt x, TInt y, TInt16 c) = 0;
+  virtual TInt Write(BBitmap32 *aBitmap, TPoint &aPoint, TInt16 c) = 0;
+  virtual TInt Write(BBitmap32 *aBitmap, TInt x, TInt y, const char *aString) = 0;
+  virtual TInt Write(BBitmap32 *aBitmap, TPoint &aPoint, const char *aString) = 0;
   //  virtual TInt printf(TInt x, TInt y, const char *aFormat, ...) = 0;
   //  virtual TInt printf(TPoint &aPoint, const char *aFormat, ...) = 0;
 };

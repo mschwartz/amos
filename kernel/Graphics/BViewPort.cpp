@@ -111,5 +111,13 @@ void BViewPort32::DrawText(TInt16 aX, TInt16 aY, const char *aString) {
     return;
   }
   mFont->SetColors(mForegroundColor, mBackgroundColor);
-  mFont->Write(mRect.x1 + aX, mRect.y1 + aY, aString);
+  mFont->Write(mBitmap32, mRect.x1 + aX, mRect.y1 + aY, aString);
+}
+
+void BViewPort32::DrawTextTransparent(TInt16 aX, TInt16 aY, const char *aString) {
+  if (!mFont) {
+    return;
+  }
+  mFont->SetColors(mForegroundColor, mBackgroundColor);
+  mFont->WriteTransparent(mBitmap32, mRect.x1 + aX, mRect.y1 + aY, aString);
 }

@@ -26,23 +26,23 @@ typedef struct {
   TUint8 *mEnd;
 } TConsoleFont;
 
-class BConsoleFont : public BFont {
-public:
-  // factory
-  //    BConsoleFont *CreateConsoleFont(BBitmap32 *aBitmap, const TInt16 **aCharset);
+// class BConsoleFont : public BFont {
+// public:
+//   // factory
+//   //    BConsoleFont *CreateConsoleFont(BBitmap32 *aBitmap, const TInt16 **aCharset);
 
-public:
-  BConsoleFont(BBitmap *aBitmap, const TConsoleFont *aFont);
-  ~BConsoleFont(){};
+// public:
+//   BConsoleFont(BBitmap *aBitmap, const TConsoleFont *aFont);
+//   ~BConsoleFont(){};
 
-public:
-  TInt CharacterWidth() { return mFont.mHeader->mWidth; }
-  TInt CharacterHeight() { return mFont.mHeader->mHeight; }
+// public:
+//   TInt CharacterWidth() { return mFont.mHeader->mWidth; }
+//   TInt CharacterHeight() { return mFont.mHeader->mHeight; }
 
-protected:
-  BBitmap *mBitmap;
-  TConsoleFont mFont;
-} PACKED;
+// protected:
+//   BBitmap *mBitmap;
+//   TConsoleFont mFont;
+// } PACKED;
 
 /********************************************************************************
  ********************************************************************************
@@ -50,7 +50,7 @@ protected:
 
 class BConsoleFont32 : public BBase {
 public:
-  BConsoleFont32(BBitmap32 *aBitmap, const TConsoleFont *aFont = ENull);
+  BConsoleFont32(const TConsoleFont *aFont = ENull);
   ~BConsoleFont32();
 
 public:
@@ -68,23 +68,23 @@ public:
   }
 
 public:
-  TInt Write(TInt aX, TInt y, TInt16 aChar);
-  TInt Write(TPoint &aPoint, TInt16 aChar);
-  TInt Write(TInt aX, TInt y, const char *aString);
-  TInt Write(TPoint &aPoint, const char *aString);
-
-public:
   TInt Write(BBitmap32 *aBitmap, TInt aX, TInt aY, TInt16 aChar);
   TInt Write(BBitmap32 *aBitmap, TPoint &aPoint, TInt16 aChar) { return Write(aBitmap, aPoint.x, aPoint.y, aChar); }
   TInt Write(BBitmap32 *aBitmap, TInt aX, TInt aY, const char *aString);
   TInt Write(BBitmap32 *aBitmap, TPoint &aPoint, const char *aString) { return Write(aBitmap, aPoint.x, aPoint.y, aString); }
 
+  TInt WriteTransparent(BBitmap32 *aBitmap, TInt aX, TInt aY, TInt16 aChar);
+  TInt WriteTransparent(BBitmap32 *aBitmap, TInt aX, TInt aY, const char *aString);
 public:
   TInt Write(BViewPort32 *aViewPort, TInt aX, TInt aY, TInt16 aChar);
-  TInt Write(BViewPort32 *aViewPort, TPoint &aPoint, TInt16 aChar) { return Write(aPoint.x, aPoint.y, aChar); }
+  TInt Write(BViewPort32 *aViewPort, TPoint &aPoint, TInt16 aChar) { return Write(aViewPort, aPoint.x, aPoint.y, aChar); }
   TInt Write(BViewPort32 *aViewPort, TInt aX, TInt aY, const char *aString);
-  TInt Write(BViewPort32 *aViewPort, TPoint &aPoint, const char *aString) { return Write(aPoint.x, aPoint.y, aString); }
+  TInt Write(BViewPort32 *aViewPort, TPoint &aPoint, const char *aString) {
+    return Write(aViewPort, aPoint.x, aPoint.y, aString);
+  }
 
+  TInt WriteTransparent(BViewPort32 *aViewPort, TInt aX, TInt aY, TInt16 aChar);
+  TInt WriteTransparent(BViewPort32 *aViewPort, TInt aX, TInt aY, const char *aString);
 protected:
   BBitmap32 *mBitmap32;
   TRGB mForegroundColor, mBackgroundColor;

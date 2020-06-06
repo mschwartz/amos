@@ -53,8 +53,11 @@ BTask::~BTask() {
 void BTask::RunWrapper(BTask *aTask) {
   BTask *t = gExecBase.GetCurrentTask();
   t->Run();
+  dlog("*** Task %s exited\n", t->TaskName());
+  // if task returns it is removed from the active list and deleted.
   t->Remove();
   delete t;
+  // since active task was deleted and removed, we need to set a new active task.
   gExecBase.Schedule();
 }
 
@@ -225,8 +228,8 @@ void BTask::FreeMessagePort(MessagePort *aMessagePort) {
   delete aMessagePort;
 }
 
-TUint64 BTask::WaitPort(MessagePort *aMessagePort) {
-  return Wait(1 << aMessagePort->SignalNumber());
+TUint64 BTask::WaitPort(MessagePort *aMessagePort, TUint64 aSignalMask) {
+  return Wait(aSignalMask | (1 << aMessagePort->SignalNumber()));
 }
 
 void BTask::Sleep(TUint64 aSeconds) {

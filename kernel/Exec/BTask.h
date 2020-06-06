@@ -72,7 +72,11 @@ public:
 protected:
   MessagePort *CreateMessagePort(const char *aName = ENull, TInt64 aPri = LIST_PRI_DEFAULT);
   void FreeMessagePort(MessagePort *aMessagePort);
-  TUint64 WaitPort(MessagePort *aMessagePort);
+  /**
+   * Wait for message port signal bit as well as any optional other signal bits.
+   * returns mask of signals received.
+   */
+  TUint64 WaitPort(MessagePort *aMessagePort, TUint64 aSignalMask = 0);
 
   /**
     * Wait for some number of seconds.

@@ -10,6 +10,7 @@
 #include <Exec/x86/pic.h>
 #include <Exec/x86/ps2.h>
 
+#include <Devices/AtaDevice.h>
 #include <Devices/SerialDevice.h>
 #include <Devices/KeyboardDevice.h>
 #include <Devices/TimerDevice.h>
@@ -151,6 +152,9 @@ ExecBase::ExecBase() {
 
   dlog("  initialize mouse \n");
   AddDevice(new MouseDevice());
+
+  dlog("  initialize ata disk \n");
+  AddDevice(new AtaDevice());
 
   dlog("  initialize Inspiration\n");
   mInspirationBase = new InspirationBase();
@@ -379,11 +383,23 @@ void ExecBase::AckIRQ(TUint16 aIRQ) {
 
 extern "C" TUint64 GetRFLAGS();
 
+/**
+ * RootHandler
+ *
+ * This is installed for all hardware trap, exception, and interrupt vectors.
+ * 
+ * For each of the above, there maty be a priority sorted linked list of handlers to be 
+ * called to handle the trap/exception/interrupt.  If any of the handlers return ETrue,
+ * no more handlers are called.  This allows the handler that handles the 
+ * trap/exception/interrupt prevent other handlers from even running.
+ *
+ * Note that there may be multiple interrupts that fire a vector.
+ */
 TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
   cli();
   BInterruptList *list = &gExecBase.mInterrupts[aInterruptNumber];
   for (BInterrupt *i = (BInterrupt *)list->First(); !list->End(i); i = (BInterrupt *)i->mNext) {
-    if (i->Run(aData)) {
+    if (i->Run(i->mData)) {
       return ETrue;
     }
   }
@@ -454,8 +470,8 @@ void ExecBase::InitInterrupts() {
   SetInterrupt(EReserved2IRQ, "Reserved2");
   SetInterrupt(EMouseIRQ, "Mouse");
   SetInterrupt(ECoprocessorIRQ, "Coprocessor");
-  SetInterrupt(EHardDiskIRQ, "HardDisk");
-  //  SetInterrupt(EReserved4IRQ, "Reserved4");
+  SetInterrupt(EAta1IRQ, "Ata 1");
+  SetInterrupt(EAta2IRQ, "Ata 2");
   SetTrap(ETrap0, "Trap0");
 
   ENABLE;

@@ -85,30 +85,19 @@ static TIsrHandler interrupt_handlers[INTERRUPTS];
   */
 extern "C" bool kernel_isr(TInt64 aIsrNumber) {
   cli();
+
   // dlog("kernel_isr %d\n", aIsrNumber);
+
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {
     const char *desc = IDT::InterruptDescription(current_task->isr_num);
-    dlog("no handler: %s\n", desc);
+    dlog("no handler: %d(%d) %s\n", aIsrNumber, current_task->isr_num, desc);
     return false;
   }
+
   bool ret = info->mHandler(info->mInterruptNumber, info->mData);
-  // if (aIsrNumber == 48) {
-  //   bochs
-  // }
   return ret;
 };
-
-#if 0
-#define IDT_PRESENT ((TUint64)1 << 47)
-#define IDT_64INT ((TUint64)14 << 40)
-#define IDT_64TRAP ((TUint64)15 << 40)
-#define IDT_USER ((TUint64)3 << 45)
-#define IDT_SYSCALL 0x80
-#define IDT_SIZE (IDT_SYSCALL + 1)
-#define IDT_IRQS 16
-#define IDT_EXCEPTIONS 32
-#endif
 
 #pragma pack(1)
 typedef struct {
@@ -130,7 +119,6 @@ typedef struct {
   TUint16 limit;
   TIdtEntry *base;
 } PACKED TIdtPtr;
-
 #pragma pack(0)
 
 const TInt IDT_SIZE = 256;
@@ -195,22 +183,22 @@ IDT::IDT() {
   set_entry(31, isr31);
 
   // IRQs
-  set_entry(32, isr32, 2); // timer
-  set_entry(33, isr33, 1); // keyboard
-  set_entry(34, isr34, 1); // slave
-  set_entry(35, isr35, 1); // com2
-  set_entry(36, isr36, 1); // com1
-  set_entry(37, isr37, 1); // lpt2
-  set_entry(38, isr38, 1); // floppy
-  set_entry(39, isr39, 1); // lpt1
-  set_entry(40, isr40, 1); // RTC
-  set_entry(41, isr41, 1); // MASTER_PIC
-  set_entry(42, isr42, 1); // RESERVED
-  set_entry(43, isr43, 1); // RESERVED
-  set_entry(44, isr44, 1); // MOUSE
-  set_entry(45, isr45, 1); // COPROCESSOR
-  set_entry(46, isr46, 1); // HARD DISK
-  set_entry(47, isr47, 1); // RESERVED
+  set_entry(32, isr32, 2); // 00 timer
+  set_entry(33, isr33, 1); // 01 keyboard
+  set_entry(34, isr34, 1); // 02 slave
+  set_entry(35, isr35, 1); // 03 com2
+  set_entry(36, isr36, 1); // 04 com1
+  set_entry(37, isr37, 1); // 05 lpt2
+  set_entry(38, isr38, 1); // 06 floppy
+  set_entry(39, isr39, 1); // 07 lpt1
+  set_entry(40, isr40, 1); // 08 RTC
+  set_entry(41, isr41, 1); // 09 MASTER_PIC
+  set_entry(42, isr42, 1); // 10 RESERVED
+  set_entry(43, isr43, 1); // 11 RESERVED
+  set_entry(44, isr44, 1); // 12 MOUSE
+  set_entry(45, isr45, 1); // 13 COPROCESSOR
+  set_entry(46, isr46, 1); // 14 HARD DISK
+  set_entry(47, isr47, 1); // 15 RESERVED
 
   set_entry(48, isr48, 0); // Schedule TRAP
 

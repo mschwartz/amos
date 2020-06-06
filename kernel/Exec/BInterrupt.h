@@ -42,8 +42,8 @@ enum EInterruptNumber {
   EReserved2IRQ,
   EMouseIRQ,
   ECoprocessorIRQ,
-  EHardDiskIRQ,
-  EReserved4IRQ,
+  EAta1IRQ,
+  EAta2IRQ,
   //
   ETrap0,
   EMaxInterrupts,
@@ -54,9 +54,12 @@ enum EInterruptNumber {
  * To install an interrupt handler, inherit from BInterrupt, create an instance of your class, and call
  * gExecBase.SetIntVector() with it.
  */
+class ExecBase;
+
 class BInterrupt : public BNodePri {
+  friend ExecBase;
 public:
-  BInterrupt(const char *aNodeName, TInt64 aPri);
+  BInterrupt(const char *aNodeName, TInt64 aPri, TAny *aData = ENull);
   ~BInterrupt();
 
 public:
@@ -65,6 +68,8 @@ public:
       * and no more interrupt handlers in the chain are to be executed.
       */
   virtual TBool Run(TAny *aData) = 0;
+protected:
+  TAny *mData;
 };
 
 class BInterruptList : public BListPri {

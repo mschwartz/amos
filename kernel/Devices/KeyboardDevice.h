@@ -29,7 +29,7 @@ enum EKeyboardDeviceCommand {
 
 class KeyboardMessage : public BMessage {
 public:
-  KeyboardMessage(MessagePort *aReplyPort, EKeyboardDeviceCommand aCommand) : BMessage(mReplyPort) {
+  KeyboardMessage(MessagePort *aReplyPort, EKeyboardDeviceCommand aCommand) : BMessage(aReplyPort) {
     mCommand = aCommand;
   }
   ~KeyboardMessage() {}

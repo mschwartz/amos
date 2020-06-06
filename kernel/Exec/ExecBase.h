@@ -11,7 +11,9 @@
 extern "C" TUint64 GetFlags();
 extern "C" void SetFlags(TUint64 aFlags);
 
-#define DISABLE TUint64 ___flags = GetFlags(); cli();
+#define DISABLE                  \
+  TUint64 ___flags = GetFlags(); \
+  cli();
 #define ENABLE SetFlags(___flags);
 
 //#include <Devices/Screen.h>
@@ -43,8 +45,8 @@ enum {
   IRQ_RESERVED2,          // 11
   IRQ_MOUSE,              // 12
   IRQ_COPROCESSOR,        // 13
-  IRQ_HARD_DISK,          // 14
-  IRQ_RESERVED4,          // 15
+  IRQ_ATA1,               // 14
+  IRQ_ATA2,               // 15
 
   HW_INTERRUPTS
 };
@@ -71,7 +73,10 @@ class ExecBase : public BBase {
   friend RtcDevice;
 
 protected:
-  void Tick() { mSystemInfo.mMillis++; Random(); }
+  void Tick() {
+    mSystemInfo.mMillis++;
+    Random();
+  }
 
 public:
   ExecBase();

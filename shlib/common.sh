@@ -10,12 +10,12 @@ TOP_DIR=`git rev-parse --show-toplevel`
 #export OBJCOPY=/usr/bin/i686-elf-objcopy
 
 
-    export GCC=gcc
-    export GPP=g++
-    export LD=ld
-    export AR=ar
-    export RANLIB=ranlib
-    export OBJCOPY=objcopy
+export GCC=gcc
+export GPP=g++
+export LD=ld
+export AR=ar
+export RANLIB=ranlib
+export OBJCOPY=objcopy
 # if [ $platform == 'macos' ]; then
 #     export GCC=gcc-9
 #     export GPP=g++-9

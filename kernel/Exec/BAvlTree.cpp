@@ -38,6 +38,7 @@ static void printGraphviz(BAvlNode *root, int size) {
   }
 }
 
+#if 0  
 TBool searchNode(int key, BAvlNode *root) {
   if (root == ENull) {
     return EFalse;
@@ -46,13 +47,17 @@ TBool searchNode(int key, BAvlNode *root) {
     return ETrue;
   }
   else {
-    if (key < root->mData)
+    if (key < root->mData) {
       return searchNode(key, root->left);
-    else
+    }
+    else {
       return searchNode(key, root->right);
+    }
   }
+
   return EFalse;
 }
+#endif  
 
 BAvlNode *BAvlTree::Find(TInt64 aValue, BAvlNode *aRoot) {
   if (aRoot == ENull) {
@@ -124,17 +129,20 @@ BAvlNode *BAvlNode::leftRotate() {
 
 BAvlTree::BAvlTree() {
   this->root = ENull;
-  size = 0;
+  mSize = 0;
 }
 
 BAvlNode *BAvlTree::Insert(BAvlNode *newNode, BAvlNode *root) {
-  if (root == ENull)
+  if (root == ENull) {
     return newNode;
+  }
 
-  if (newNode->mData < root->mData)
+  if (newNode->mData < root->mData) {
     root->left = Insert(newNode, root->left);
-  else if (newNode->mData > root->mData)
+  }
+  else if (newNode->mData > root->mData) {
     root->right = Insert(newNode, root->right);
+  }
   else {
     dlog("Duplicate value, cannot insert %d\n", newNode->mData);
     return root;
@@ -143,23 +151,24 @@ BAvlNode *BAvlTree::Insert(BAvlNode *newNode, BAvlNode *root) {
 
   int bFactor = balanceFactor(root);
 
-  if (bFactor <= 1 && bFactor >= -1)
+  if (bFactor <= 1 && bFactor >= -1) {
     return root;
+  }
   else {
     if (bFactor < -1) {
-      if (newNode->mData > root->right->mData) //right - right inserting
+      if (newNode->mData > root->right->mData) { //right - right inserting
         return root->leftRotate();
-      else {
-        //right - left inserting
+      }
+      else {//right - left inserting
         root->right = root->right->rightRotate();
         return root->leftRotate();
       }
     }
     else if (bFactor > 1) {
-      if (newNode->mData < root->left->mData) //left - left inserting
+      if (newNode->mData < root->left->mData) { //left - left inserting
         return root->rightRotate();
-      else //left - right inserting
-      {
+      }
+      else {//left - right inserting
         root->left = root->left->leftRotate();
         return root->rightRotate();
       }

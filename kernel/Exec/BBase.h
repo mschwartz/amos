@@ -18,12 +18,12 @@ public:
   BBase();
   ~BBase();
 public:
-// #ifdef KERNEL
-//   void *operator new(unsigned long aSize);
-//   void *operator new[](unsigned long aSize);
-//   void operator delete(void *aMemory, unsigned long aSize);
-//   void operator delete[](void *aMemory, unsigned long aSize);
-// #endif
+#ifdef KERNEL
+  void *operator new(unsigned long aSize);
+  void *operator new[](unsigned long aSize);
+  void operator delete(void *aMemory, unsigned long aSize);
+  void operator delete[](void *aMemory, unsigned long aSize);
+#endif
 };
 
 extern TUint32 Milliseconds();

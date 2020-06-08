@@ -101,23 +101,39 @@ $GCC -g -c $CFLAGS $INCLUDE_PATH -o kernel_main.o kernel_main.cpp
 
 #############################
 
+echo ""
+echo ""
 echo "  LINKING"
 echo "    ld -m64 -Tconfig.ld -o kernel.elf $KERNEL ${LIBS}"
 ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS -lexec
 echo "    objcopy -O binary kernel.elf kernel.img"
 objcopy -O binary kernel.elf kernel.img
 cd ..
+
+echo ""
+echo ""
+echo "  Building build-img tools"
 cd tools 
-make 
+make
+
+
+echo ""
+echo ""
+echo "Building disk image"
 cd ..
 ./tools/build-img boot/boot.img kernel/kernel.img
 rm -f c.img
+
+echo ""
+echo ""
 bximage -q -mode=create -hd=10M -imgmode=flat c.img c.img
 echo "cat < bare.img 1<>c.img"
 cat < bare.img 1<>c.img
 
 #cat boot.img kernel.img > drive.img
 
+echo ""
+echo ""
 #############################
 
 if [ "$WSL" != "" ]; then

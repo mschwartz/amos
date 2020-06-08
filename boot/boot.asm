@@ -1,25 +1,28 @@
-	; /*
-	;  * Boot sector is 512 bytes long.  The first 510 bytes are code.  The final 2 bytes (word) must be 0xaa55
-	;  *
-	;  * Boot sector is written to the first 512 byte sector of floppy disk or USB drive or hard drive.  Typically,
-	;  * the boot sector will then load additional sectors (the OS) from disk using the BIOS calls.
-	;  *
-	;  * Boot sector is loaded into memory at physical address 0x7c00 in 16 bit (real) mode.  It is up to the OS to then
-	;  * set up interrupt vectors, interrupt routines, etc.,  and then put the CPU into 32 or 64 bit mode and then 
-	;  * start up the additional CPU cores.
-	;  *
-	;  * BIOS int 0x10 is used to perform console output
-	;  * BIOS int 0x13 is used to perform disk I/O
-	;  */
+;; /*
+;;  * Boot sector is 512 bytes long.  The first 510 bytes are code.  The final 2 bytes (word) must be 0xaa55
+;;  *
+;;  * Boot sector is written to the first 512 byte sector of floppy disk or USB drive or hard drive.  Typically,
+;;  * the boot sector will then load additional sectors (the OS) from disk using the BIOS calls.
+;;  *
+;;  * Boot sector is loaded into memory at physical address 0x7c00 in 16 bit (real) mode.  It is up to the OS to then
+;;  * set up interrupt vectors, interrupt routines, etc.,  and then put the CPU into 32 or 64 bit mode and then 
+;;  * start up the additional CPU cores.
+;;  *
+;;  * BIOS int 0x10 is used to perform console output
+;;  * BIOS int 0x13 is used to perform disk I/O
+;;  */
 
 BITS 16
 
 	; %define SERIAL
-	COM1                equ 0x3f8
+COM1:   equ 0x3f8
 
 %include "memory.inc"
 %include "cga.inc"
 
+;; when running in the bochs emulator, the xchg bx,bx command causes the emulator to stop
+;; as if at a breakpoint.  When not in the emulator, xchg bx,bx is a noop, so
+;; no harm is done.  Provide a BOCHS/bochs macro we can use to insert breakpoints in the source code.
 %macro BOCHS 0
         xchg bx,bx
 %endmacro
@@ -28,32 +31,40 @@ BITS 16
         xchg bx,bx
 %endmacro
 
-%macro debugger 0
-        xchg bx,bx
-%endmacro
-	; ---------------------------------------------------------------------------------------------
-	; ---------------------------------------------------------------------------------------------
-	; ---------------------------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------------------------
 
+;; THis is the first instruction in the boot sector.  THe very first sector on the boot drive is
+;; loaded at 0x7c00.  Since a sector is only 512 bytes, we're very limited to how much
+;; code we can fit in and run.  Not a problem because we're going to use the BIOS
+;; call to read in additional sectors.  So this file starts with the boot sector and
+;; then is followed by as much code as we need.  This additional code is loaded immediately
+;; after the boot sector (at 0x7c00 + 512 bytes).
 org BOOTSTRAP_ORG
 
 start:
-        jmp  0:main
+        jmp  0:main		; this jmp instruction causes CS register to be 0
 
-;; these filled in by build-img tool
+;; these filled in by build-img tool - do not MOVE or add variables before these.  The fixed offset
+;; in the boot sector binary image matters.
 align 4
-boot_sector:        dw 0
-boot_sectors:       dw 0
-kernel_sector:      dw 0
-kernel_sectors:     dw 0
-bochs_present:      db 0
-	; Variables
-BOOT_DRIVE:         db 0
-	loading_msg         db 'Loading... ', 0
+boot_sector:        dw 0 	; sector number of the rest of the boot program
+boot_sectors:       dw 0	; number of sectors of the rest of the boot program
+kernel_sector:      dw 0	; sector number of the start of the kernel image on disk
+kernel_sectors:     dw 0	; number of sectors that comprise the kernel image
+root_sector:        dw 0	; root of file system
 
-	; ---------------------------------------------------------------------------------------------
-	; ---------------------------------------------------------------------------------------------
-	; ---------------------------------------------------------------------------------------------
+;; Anything past here doesn't matter to our build-img tool.
+bochs_present:      db 0	; true if bochs is detected
+;; Variables
+BOOT_DRIVE:         db 0	; boot sector is entered with the drive number of the boot device in dl
+
+loading_msg:        db 'Loading... ', 0
+
+;; ---------------------------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------------------------
 
 align 4
 global main
@@ -69,8 +80,6 @@ main:
 
         mov [BOOT_DRIVE], dl
 
-        call debug16_init
-
         ; detect running in bochs
 detect_bochs:
         mov dx, 0e9h
@@ -80,6 +89,7 @@ detect_bochs:
         mov al, -1
         mov [bochs_present], al
 .done:
+        call debug16_init
 
 	; enable A20
 set_a20:
@@ -117,6 +127,7 @@ load_error:
         call newline16
         jmp $
 
+;; load rest of boot program
 global load
 load:
         mov si, loading_msg
@@ -143,25 +154,22 @@ load:
 [bits 16]
 %include "debug16.inc"
 
+;; Bytes 510 and 511 in the boot sector must be 0xaa55
 	times 510-($-$$) db 0	; Pad remainder of boot sector with 0s
 	dw 0xAA55		; The standard PC boot signature
 
 
 
 
-
-
-
-	; ---------------------------------------------------------------------------------------------
-	; ---------------------------------------------------------------------------------------------
-	; ---------------------------------------------------------------------------------------------
-	;
-	; start of second sector
-	;
-	; ---------------------------------------------------------------------------------------------
-	; ---------------------------------------------------------------------------------------------
-	; ---------------------------------------------------------------------------------------------
-
+;; ---------------------------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------------------------
+;;
+;; start of second sector
+;;
+;; ---------------------------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------------------------
 
 
 
@@ -221,29 +229,29 @@ align 2
 
 align 2
 
-	; https://stackoverflow.com/questions/45434899/why-isnt-my-root-directory-being-loaded-fat12/45495410#45495410
-	;
-	;    Function: lba_to_chs
-	; Description: Translate Logical block address to CHS (Cylinder, Head, Sector).
-	;              Works for all valid FAT12 compatible disk geometries.
-	;
-	;   Resources: http://www.ctyme.com/intr/rb-0607.htm
-	;              https://en.wikipedia.org/wiki/Logical_block_addressing#CHS_conversion
-	;              https://stackoverflow.com/q/45434899/3857942
-	;              Sector    = (LBA mod SPT) + 1
-	;              Head      = (LBA / SPT) mod HEADS
-	;              Cylinder  = (LBA / SPT) / HEADS
-	;
-	;      Inputs: SI = LBA
-	;     Outputs: DL = Boot Drive Number
-	;              DH = Head
-	;              CH = Cylinder (lower 8 bits of 10-bit cylinder)
-	;              CL = Sector/Cylinder
-	;                   Upper 2 bits of 10-bit Cylinders in upper 2 bits of CL
-	;                   Sector in lower 6 bits of CL
-	;
-	;       Notes: Output registers match expectation of Int 13h/AH=2 inputs
-	;
+;; https://stackoverflow.com/questions/45434899/why-isnt-my-root-directory-being-loaded-fat12/45495410#45495410
+;;
+;;    Function: lba_to_chs
+;; Description: Translate Logical block address to CHS (Cylinder, Head, Sector).
+;;              Works for all valid FAT12 compatible disk geometries.
+;;
+;;   Resources: http://www.ctyme.com/intr/rb-0607.htm
+;;              https://en.wikipedia.org/wiki/Logical_block_addressing#CHS_conversion
+;;              https://stackoverflow.com/q/45434899/3857942
+;;              Sector    = (LBA mod SPT) + 1
+;;              Head      = (LBA / SPT) mod HEADS
+;;              Cylinder  = (LBA / SPT) / HEADS
+;;
+;;      Inputs: SI = LBA
+;;     Outputs: DL = Boot Drive Number
+;;              DH = Head
+;;              CH = Cylinder (lower 8 bits of 10-bit cylinder)
+;;              CL = Sector/Cylinder
+;;                   Upper 2 bits of 10-bit Cylinders in upper 2 bits of CL
+;;                   Sector in lower 6 bits of CL
+;;
+;;       Notes: Output registers match expectation of Int 13h/AH=2 inputs
+;;
 SectorsPerTrack:    dw 18
 NumberOfHeads:      dw 2
 
@@ -267,11 +275,9 @@ lba_to_chs:
 ;;
 ;; start of code to execute in second+ boot sector
 ;;
-	loading_kernel_msg  db 'xkernel... ', 0
+loading_kernel_msg:  db 'Loading kernel... ', 0
+
 align 4
-
-	ret
-
 boot2:
         mov si, loading_kernel_msg
         call puts16
@@ -468,12 +474,6 @@ endstruc
 	vesa_mode_ptr       equ vesa_capabilities + 4
 	vesa_total_memory   equ vesa_mode_ptr + 4
 
-struc foo
-.foo                resw 1
-.bar                resq 1
-.baz                resb 1
-.end                resb 1
-endstruc
 global init_graphics
 init_graphics:
         cli

@@ -17,6 +17,7 @@ extern "C" void __cxa_pure_virtual() {}
 #endif
 
 
+#if 0
 #ifdef KERNEL
 void *BBase::operator new(unsigned long aSize) {
   return AllocMem(aSize, MEMF_PUBLIC);
@@ -39,6 +40,7 @@ void BBase::operator delete(TAny *aMemory, unsigned long aSize) {
 void BBase::operator delete[](TAny *aMemory, unsigned long aSize) {
   FreeMem(aMemory);
 }
+#endif
 #endif
 
 TUint32 Milliseconds() {

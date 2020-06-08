@@ -4,3 +4,7 @@
 
 ## useful pragmas
 #pragma GCC target("no-sse2")
+
+## Small gunzip library (5 small files)
+https://github.com/jibsen/tinf
+

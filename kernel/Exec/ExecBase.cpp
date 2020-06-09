@@ -83,16 +83,18 @@ ExecBase::ExecBase() {
   dlog("ExecBase constructor called\n");
 
   TModes *modes = (TModes *)0xa000;
-  TModeInfo &i = modes->mDisplayMode;
+  // TModeInfo &i = modes->mDisplayMode;
 
-  // set up SystemInfo
-  mSystemInfo.mScreenWidth = i.mWidth;
-  mSystemInfo.mScreenHeight = i.mHeight;
-  mSystemInfo.mScreenDepth = i.mDepth;
-  mSystemInfo.mScreenPitch = i.mPitch;
-  TUint64 fb = (TUint64)i.mFrameBuffer;
-  mSystemInfo.mScreenFrameBuffer = (TAny *)fb;
-  mSystemInfo.mMillis = 0;
+  // TSystemInfo *bootInfo = (TSystemInfo *)0x5000;
+
+  // // set up SystemInfo
+  // mSystemInfo.mScreenWidth = i.mWidth;
+  // mSystemInfo.mScreenHeight = i.mHeight;
+  // mSystemInfo.mScreenDepth = i.mDepth;
+  // mSystemInfo.mScreenPitch = i.mPitch;
+  // TUint64 fb = (TUint64)i.mFrameBuffer;
+  // mSystemInfo.mScreenFrameBuffer = (TAny *)fb;
+  // mSystemInfo.mMillis = 0;
 
   //  SeedRandom(rdrand());
   SeedRandom64(1);

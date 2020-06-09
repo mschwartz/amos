@@ -14,6 +14,7 @@ _start:
         jmp boot
 
 %include "../boot/debug64.inc"
+%include "../boot/memory.inc"
 
 extern kernel_main
 
@@ -21,7 +22,18 @@ start_msg:          db 13, 10, 'kernel_start', 13, 10, 0
 
 align 8
 
-extern init_start, rodata_start
+extern init_start
+extern init_end
+extern text_start
+extern text_end
+extern rodata_start
+extern rodata_end
+extern data_start
+extern data_end
+extern bss_start
+extern bss_end
+extern kernel_end
+	
 boot:
 	; SSE code copied from OSDEV SSE page
 	mov eax, 0x1
@@ -50,13 +62,31 @@ boot:
 	;                    mov rcx, 64
 	;                    call hexdump64
 
-        push rbp
-        mov rbp, rsp
-        mov rax, 0xdeadbeef
-        push rax
+	mov rdi, sys_info
+	mov rax, init_start
+	mov [rdi + SYSINFO.init_start], rax
+	mov rax, init_end
+	mov [rdi + SYSINFO.init_end], rax
+	mov rax, text_start
+	mov [rdi + SYSINFO.text_start], rax
+	mov rax, text_end
+	mov [rdi + SYSINFO.text_end], rax
+	mov rax, rodata_start
+	mov [rdi + SYSINFO.rodata_start], rax
+	mov rax, rodata_end
+	mov [rdi + SYSINFO.rodata_end], rax
+	mov rax, data_start
+	mov [rdi + SYSINFO.data_start], rax
+	mov rax, data_end
+	mov [rdi + SYSINFO.data_end], rax
+	mov rax, bss_start
+	mov [rdi + SYSINFO.bss_start], rax
+	mov rax, bss_end
+	mov [rdi + SYSINFO.bss_end], rax
+	mov rax, kernel_end
+	mov [rdi + SYSINFO.kernel_end], rax
+
         call kernel_main
-        add esp, 8
-        leave
         ret
 
 global sputc

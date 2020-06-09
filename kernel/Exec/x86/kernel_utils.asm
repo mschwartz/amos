@@ -273,6 +273,15 @@ rdrand:
         jc rdrand
         ret
 
+global rdtsc
+rdtsc:
+	push rdx
+	rdtsc
+	shl rdx, 32
+	or rax, rdx
+	pop rdx
+	ret
+	
 global task_switch
 task_switch:
         ret

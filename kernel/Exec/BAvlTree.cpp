@@ -1,35 +1,35 @@
 #include <Exec/BAvlTree.h>
 
-static int getHeight(BAvlNode *root) {
-  if (root == ENull) { //height of leaf = 0
+static int getHeight(BAvlNode *aRoot) {
+  if (aRoot == ENull) { //height of leaf = 0
     return 0;
   }
-  return root->height;
+  return aRoot->mHeight;
 }
 
-static int balanceFactor(BAvlNode *root) {
-  if (root == ENull) { //balanceFactor of leaf = 0
+static int balanceFactor(BAvlNode *aRoot) {
+  if (aRoot == ENull) { //balanceFactor of leaf = 0
     return 0;
   }
-  return (getHeight(root->left) - getHeight(root->right));
+  return (getHeight(aRoot->mLeft) - getHeight(aRoot->mRight));
 }
 
-static void printGraphviz(BAvlNode *root, int size) {
-  if (size > 1) {
-    if (root) {
-      if (root->left) {
+static void printGraphviz(BAvlNode *aRoot, int aSize) {
+  if (aSize > 1) {
+    if (aRoot) {
+      if (aRoot->mLeft) {
         // cout << '"' << root->data << '"';
         // cout << " -> ";
         // cout << '"' << root->left->data << '"';
         // cout << endl;
-        printGraphviz(root->left, size);
+        printGraphviz(aRoot->mLeft, aSize);
       }
-      if (root->right) {
+      if (aRoot->mRight) {
         // cout << '"' << root->data << '"';
         // cout << " -> ";
         // cout << '"' << root->right->data << '"';
         // cout << endl;
-        printGraphviz(root->right, size);
+        printGraphviz(aRoot->mRight, aSize);
       }
     }
   }
@@ -39,19 +39,19 @@ static void printGraphviz(BAvlNode *root, int size) {
 }
 
 #if 0  
-TBool searchNode(int key, BAvlNode *root) {
-  if (root == ENull) {
+TBool searchNode(int key, BAvlNode *aRoot) {
+  if (aRoot == ENull) {
     return EFalse;
   }
-  if (root->mData == key) {
+  if (aRoot->mKey == key) {
     return ETrue;
   }
   else {
-    if (key < root->mData) {
-      return searchNode(key, root->left);
+    if (key < aRoot->mKey) {
+      return searchNode(key, aRoot->mLeft);
     }
     else {
-      return searchNode(key, root->right);
+      return searchNode(key, aRoot->right);
     }
   }
 
@@ -59,33 +59,33 @@ TBool searchNode(int key, BAvlNode *root) {
 }
 #endif  
 
-BAvlNode *BAvlTree::Find(TInt64 aValue, BAvlNode *aRoot) {
+BAvlNode *BAvlTree::Find(TInt64 aKey, BAvlNode *aRoot) {
   if (aRoot == ENull) {
     return ENull;
   }
-  if (aRoot->mData == aValue) {
+  if (aRoot->mKey == aKey) {
     return aRoot;
   }
   else {
-    if (aValue < aRoot->mData) {
-      return Find(aValue, aRoot->left);
+    if (aKey < aRoot->mKey) {
+      return Find(aKey, aRoot->mLeft);
     }
     else {
-      return Find(aValue, aRoot->right);
+      return Find(aKey, aRoot->mRight);
     }
   }
   return ENull;
 
 }  
 
-BAvlNode::BAvlNode(TInt64 aData) {
-  this->mData = aData;
-  this->left = ENull;
-  this->right = ENull;
-  this->height = 1;
+BAvlNode::BAvlNode(TInt64 aKey) {
+  this->mKey = aKey;
+  this->mLeft = ENull;
+  this->mRight = ENull;
+  this->mHeight = 1;
 }
 
-BAvlNode *BAvlNode::rightRotate() {
+BAvlNode *BAvlNode::RightRotate() {
 
   /*
            this                         x
@@ -95,169 +95,169 @@ BAvlNode *BAvlNode::rightRotate() {
       (T1) (T2)                        (T2) (T3)
 */
 
-  BAvlNode *x = this->left;
-  BAvlNode *T2 = x->right;
-  x->right = this;
-  this->left = T2;
+  BAvlNode *x = this->mLeft;
+  BAvlNode *T2 = x->mRight;
+  x->mRight = this;
+  this->mLeft = T2;
 
-  this->height = MAX(getHeight(this->left), getHeight(this->right)) + 1;
-  x->height = MAX(getHeight(x->left), getHeight(x->right)) + 1;
+  this->mHeight = MAX(getHeight(this->mLeft), getHeight(this->mRight)) + 1;
+  x->mHeight = MAX(getHeight(x->mLeft), getHeight(x->mRight)) + 1;
 
   return x;
 }
 
-BAvlNode *BAvlNode::leftRotate() {
+BAvlNode *BAvlNode::LeftRotate() {
 
   /*
           this                          x
-           / \       left-rotate       / \
+           / \       mLeft-rotate       / \
         (T1)  x      ---------->    this (T3)
              / \                     / \
           (T2) (T3)               (T1) (T2)
 */
 
-  BAvlNode *x = this->right;
-  BAvlNode *T2 = x->left;
-  this->right = T2;
-  x->left = this;
+  BAvlNode *x = this->mRight;
+  BAvlNode *T2 = x->mLeft;
+  this->mRight = T2;
+  x->mLeft = this;
 
-  this->height = MAX(getHeight(this->left), getHeight(this->right)) + 1;
-  x->height = MAX(getHeight(x->left), getHeight(x->right)) + 1;
+  this->mHeight = MAX(getHeight(this->mLeft), getHeight(this->mRight)) + 1;
+  x->mHeight = MAX(getHeight(x->mLeft), getHeight(x->mRight)) + 1;
 
   return x;
 }
 
 BAvlTree::BAvlTree() {
-  this->root = ENull;
+  this->mRoot = ENull;
   mSize = 0;
 }
 
-BAvlNode *BAvlTree::Insert(BAvlNode *newNode, BAvlNode *root) {
-  if (root == ENull) {
-    return newNode;
+BAvlNode *BAvlTree::Insert(BAvlNode *aNewNode, BAvlNode *aRoot) {
+  if (aRoot == ENull) {
+    return aNewNode;
   }
 
-  if (newNode->mData < root->mData) {
-    root->left = Insert(newNode, root->left);
+  if (aNewNode->mKey < aRoot->mKey) {
+    aRoot->mLeft = Insert(aNewNode, aRoot->mLeft);
   }
-  else if (newNode->mData > root->mData) {
-    root->right = Insert(newNode, root->right);
+  else if (aNewNode->mKey > aRoot->mKey) {
+    aRoot->mRight = Insert(aNewNode, aRoot->mRight);
   }
   else {
-    dlog("Duplicate value, cannot insert %d\n", newNode->mData);
-    return root;
+    dlog("Duplicate value, cannot insert %d\n", aNewNode->mKey);
+    return aRoot;
   }
-  root->height = MAX(getHeight(root->left), getHeight(root->right)) + 1;
+  aRoot->mHeight = MAX(getHeight(aRoot->mLeft), getHeight(aRoot->mRight)) + 1;
 
-  int bFactor = balanceFactor(root);
+  int bFactor = balanceFactor(aRoot);
 
   if (bFactor <= 1 && bFactor >= -1) {
-    return root;
+    return aRoot;
   }
   else {
     if (bFactor < -1) {
-      if (newNode->mData > root->right->mData) { //right - right inserting
-        return root->leftRotate();
+      if (aNewNode->mKey > aRoot->mRight->mKey) { //mRight - mRight inserting
+        return aRoot->LeftRotate();
       }
-      else {//right - left inserting
-        root->right = root->right->rightRotate();
-        return root->leftRotate();
+      else {//mRight - mLeft inserting
+        aRoot->mRight = aRoot->mRight->RightRotate();
+        return aRoot->LeftRotate();
       }
     }
     else if (bFactor > 1) {
-      if (newNode->mData < root->left->mData) { //left - left inserting
-        return root->rightRotate();
+      if (aNewNode->mKey < aRoot->mLeft->mKey) { //left - left inserting
+        return aRoot->RightRotate();
       }
-      else {//left - right inserting
-        root->left = root->left->leftRotate();
-        return root->rightRotate();
+      else {//mLeft - mRight inserting
+        aRoot->mLeft = aRoot->mLeft->LeftRotate();
+        return aRoot->RightRotate();
       }
     }
   }
-  return root;
+  return aRoot;
 }
 
-BAvlNode *BAvlTree::getMinNode(BAvlNode *root) {
-  BAvlNode *temp = root;
+BAvlNode *BAvlTree::getMinNode(BAvlNode *aRoot) {
+  BAvlNode *temp = aRoot;
 
-  while (temp->left != ENull) {
-    temp = temp->left;
+  while (temp->mLeft != ENull) {
+    temp = temp->mLeft;
   }
   return temp;
 }
 
-BAvlNode *BAvlTree::Remove(TInt64 key, BAvlNode *root) {
-  if (root == ENull) {
-    dlog("The value %d not found\n", key);
-    return root;
+BAvlNode *BAvlTree::Remove(TInt64 aKey, BAvlNode *aRoot) {
+  if (aRoot == ENull) {
+    dlog("The value %d not found\n", aKey);
+    return aRoot;
   }
 
-  if (key < root->mData) {
-    root->left = Remove(key, root->left);
+  if (aKey < aRoot->mKey) {
+    aRoot->mLeft = Remove(aKey, aRoot->mLeft);
   }
-  else if (key > root->mData) {
-    root->right = Remove(key, root->right);
+  else if (aKey > aRoot->mKey) {
+    aRoot->mRight = Remove(aKey, aRoot->mRight);
   }
   else {
-    if (root->left == ENull || root->right == ENull) { // 0 or 1 child case
-      if (root->left == ENull) {
-	// left child not present
-        root = root->right;
+    if (aRoot->mLeft == ENull || aRoot->mRight == ENull) { // 0 or 1 child case
+      if (aRoot->mLeft == ENull) {
+	// mLeft child not present
+        aRoot = aRoot->mRight;
       }
       else {
-	// right child not present
-        root = root->left;
+	// mRight child not present
+        aRoot = aRoot->mLeft;
       }
     }
     else {
       // 2 children case
-      BAvlNode *minRight = getMinNode(root->right);
-      root->mData = minRight->mData;
-      root->right = Remove(minRight->mData, root->right);
+      BAvlNode *minMRight = getMinNode(aRoot->mRight);
+      aRoot->mKey = minMRight->mKey;
+      aRoot->mRight = Remove(minMRight->mKey, aRoot->mRight);
     }
 
-    int bFactor = balanceFactor(root);
+    int bFactor = balanceFactor(aRoot);
 
     if (bFactor <= 1 && bFactor >= -1) {
-      return root;
+      return aRoot;
     }
     else {
       if (bFactor < -1) {
-        if (balanceFactor(root->right) > 0) {
-          root->right = root->right->rightRotate();
-          return root->leftRotate();
+        if (balanceFactor(aRoot->mRight) > 0) {
+          aRoot->mRight = aRoot->mRight->RightRotate();
+          return aRoot->LeftRotate();
         }
         else {
-          return root->leftRotate();
+          return aRoot->LeftRotate();
 	}
       }
       else if (bFactor > 1) {
-        if (balanceFactor(root->left) > 0) {
-          return root->rightRotate();
+        if (balanceFactor(aRoot->mLeft) > 0) {
+          return aRoot->RightRotate();
 	}
         else {
-          root->left = root->left->leftRotate();
-          return root->rightRotate();
+          aRoot->mLeft = aRoot->mLeft->LeftRotate();
+          return aRoot->RightRotate();
         }
       }
     }
   }
-  return root;
+  return aRoot;
 }
 
-BAvlNode *BAvlTree::Update(TInt64 keyOld, TInt64 keyNew, BAvlNode *root) {
+BAvlNode *BAvlTree::Update(TInt64 keyOld, TInt64 keyNew, BAvlNode *aRoot) {
   BAvlNode *node = Find(keyOld);
   if (!node) {
     dlog("No node with value %d\b", keyOld);
-    return root;
+    return aRoot;
   }
   else {
     //cannot just change the value of given node to new value as BST property
     //may be violated
-    root = Remove(keyOld, root);
-    node->mData = keyNew;
-    root = Insert(node, root);
+    aRoot = Remove(keyOld, aRoot);
+    node->mKey = keyNew;
+    aRoot = Insert(node, aRoot);
   }
-  return root;
+  return aRoot;
 }
 

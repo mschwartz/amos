@@ -1,21 +1,26 @@
-G=	../Graphics
-D=	../Devices
+G=		../Graphics
+D=		../Devices
+F=		../FileSystems
 
-#GFX=	$(G)/TRect.o Font.o $(G)/BBitmap.o
-GFX=	$(G)/TRect.o $(G)/BBitmap.o $(G)/bitmap/BBitmap32.o $(G)/BViewPort.o 
+GFX=		$(G)/TRect.o $(G)/BBitmap.o $(G)/bitmap/BBitmap32.o $(G)/BViewPort.o 
 
-FONTS=  $(G)/BFont.o $(G)/font/BVectorFont.o $(G)/font/BConsoleFont.o
+FONTS=  	$(G)/BFont.o $(G)/font/BVectorFont.o $(G)/font/BConsoleFont.o $(G)/kfont.o
 
-DEVICES= $(D)/KeyboardDevice.o $(D)/TimerDevice.o $(D)/RtcDevice.o $(D)/MouseDevice.o $(D)/SerialDevice.o $(D)/AtaDevice.o
+DEVICES= 	$(D)/KeyboardDevice.o $(D)/TimerDevice.o $(D)/RtcDevice.o $(D)/MouseDevice.o $(D)/SerialDevice.o $(D)/AtaDevice.o
 
-X86=	x86/bochs.o x86/tss.o x86/gdt.o x86/idt.o x86/kernel_isr.o x86/kernel_tasking.o x86/kernel_utils.o x86/mmu.o x86/pic.o 
-# X86=	x86/bochs.o x86/gdt.o x86/idt.o x86/kernel_isr.o x86/kernel_tasking.o x86/kernel_utils.o x86/mmu.o x86/pic.o 
+X86=		x86/bochs.o x86/tss.o x86/gdt.o x86/idt.o x86/kernel_isr.o x86/kernel_tasking.o x86/kernel_utils.o x86/mmu.o x86/pic.o 
 
-TYPES=	Types.o Types/TBCD.o 
+TYPES=		Types.o Types/TBCD.o 
 
-OBJ= 	 $(TYPES) $(X86) $(G)/kfont.o Memory.o BBase.o Random.o BList.o MessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o $(DEVICES) $(GFX) $(FONTS) BAvlTree.o
+CONTAINERS= 	BList.o BAvlTree.o BHashTable.o
 
-LIB=	libexec.a
+FS=		$(F)/BFileSystem.o
+
+EXEC=		Memory.o BBase.o Random.o MessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o 
+
+OBJ= 	 	$(FS) $(TYPES) $(X86) $(DEVICES)  $(GFX) $(FONTS) $(CONTAINERS) $(EXEC)
+
+LIB=		libexec.a
 
 .cpp.o:
 	@echo $*.cpp

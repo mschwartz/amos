@@ -5,7 +5,7 @@
 #include <Exec/Memory.h>
 #include <stdint.h>
 
-const TInt64 LIST_PRI_MIN =  32767;
+const TInt64 LIST_PRI_MIN = 32767;
 const TInt64 LIST_PRI_DEFAULT = 0;
 const TInt64 LIST_PRI_MAX = -32768;
 
@@ -101,6 +101,7 @@ public:
 class BList : public BNode {
 public:
   BList(const char *aNodeName);
+  BList();
   ~BList();
 
   /**
@@ -160,8 +161,7 @@ public:
     * Find a node in this list with the specified address.
     * returns ENull if not found.
     */
-  BNode *Find(BNode& aNode);
-
+  BNode *Find(BNode &aNode);
 };
 
 /**
@@ -232,7 +232,7 @@ public:
     * Find a node in this list with the specified address.
     * returns ENull if not found.
     */
-  BNodePri *Find(BNodePri& aNode);
+  BNodePri *Find(BNodePri &aNode);
 
 public:
   void AddHead(BNodePri &node);

@@ -204,29 +204,6 @@ gdtr:
 	CODE_SEG            equ gdt_code - gdt_start
 	DATA_SEG            equ gdt_data - gdt_start
 
-align 16
-DAPACK:
-        db 0x10             ; size of DAPACK
-        db 0
-blkcnt:
-        dw 16               ; int 13 resets this to # of blocks actually read/written
-db_add:
-        dw 0x0000           ; memory buffer destination address (0:7c00)
-        dw 0x1000           ; in memory page zero
-d_lba:
-        dd 1                ; put the lba to read in this spot
-        dd 0                ; more storage bytes only for big lba's ( > 4 bytes )
-
-;;
-;; load # of sectors starting at sector al for cx sectors to es:di
-;;
-align 2
-	ls_count            dw 0
-	ls_message          db 'Loading sectors ', 0
-	ls_sect             db 0
-	ls_cyl              db 0
-	ls_head             db 0
-
 align 2
 
 ;; https://stackoverflow.com/questions/45434899/why-isnt-my-root-directory-being-loaded-fat12/45495410#45495410
@@ -252,6 +229,8 @@ align 2
 ;;
 ;;       Notes: Output registers match expectation of Int 13h/AH=2 inputs
 ;;
+
+;; these values consistent with 1.44MB floppy	
 SectorsPerTrack:    dw 18
 NumberOfHeads:      dw 2
 
@@ -275,8 +254,11 @@ lba_to_chs:
 ;;
 ;; start of code to execute in second+ boot sector
 ;;
+num_cylinders: dw 0
+disk_cx: dw 0
+num_drives: db 0
+drive_type: db 0
 loading_kernel_msg:  db 'Loading kernel... ', 0
-
 align 4
 boot2:
         mov si, loading_kernel_msg
@@ -293,14 +275,24 @@ boot2:
 	mov dl, [BOOT_DRIVE]
 	int 13h
 
+	mov [num_drives], dl
+	mov [drive_type], bl
+	mov [disk_cx], cx
 	xor ah, ah
 	mov al, dh
 	inc ax
 	mov [NumberOfHeads], ax
-	mov al, cl
-	and al, 3fh
+
+	mov ax, cx
+	and ax, 3fh
 	mov [SectorsPerTrack], ax
-	
+
+; 10011 00 111111	
+	mov al, ch
+	shr cl, 6
+	mov ah, cl
+	mov [num_cylinders], ax
+
 global load_kernel
 load_kernel:
 	push es
@@ -312,9 +304,9 @@ load_kernel:
 	mov es, bx
 	mov si, ax
 .loop:
-        pusha
-        call .print_loading
-        popa
+        ; pusha
+        ; call .print_loading
+        ; popa
 	xor bx, bx
 	push cx
 	push si
@@ -449,8 +441,8 @@ endstruc
 
 ;;;;;;;;;
 
-	video_mode_count    equ video_info
-	display_mode        equ video_info + 4
+video_mode_count:    equ video_info
+display_mode:        equ video_info + 4
 
 struc VideoMode
 .mode               resd 1
@@ -461,18 +453,18 @@ struc VideoMode
 .depth              resd 1
 endstruc
 
-	vesa_mode_msg1      db 'Getting VESA modes', 13, 10, 0
-	vesa_mode_msg2      db '  got mode list', 13, 10, 0
-	vesa_got_mode_msg   db '  got mode ', 0
-	vesa_mode_msgx      db 'Got VESA modes', 13, 10, 0
+vesa_mode_msg1:      db 'Getting VESA modes', 13, 10, 0
+vesa_mode_msg2:      db '  got mode list', 13, 10, 0
+vesa_got_mode_msg:   db '  got mode ', 0
+vesa_mode_msgx:      db 'Got VESA modes', 13, 10, 0
 
-	vesa_info_block     equ misc_buffer
-	vesa_signature      equ vesa_info_block
-	vesa_version        equ vesa_signature + 4
-	vesa_oem_string     equ vesa_version + 2
-	vesa_capabilities   equ vesa_oem_string + 4
-	vesa_mode_ptr       equ vesa_capabilities + 4
-	vesa_total_memory   equ vesa_mode_ptr + 4
+vesa_info_block:     equ misc_buffer
+vesa_signature:      equ vesa_info_block
+vesa_version:        equ vesa_signature + 4
+vesa_oem_string:     equ vesa_version + 2
+vesa_capabilities:   equ vesa_oem_string + 4
+vesa_mode_ptr:       equ vesa_capabilities + 4
+vesa_total_memory:   equ vesa_mode_ptr + 4
 
 global init_graphics
 init_graphics:
@@ -594,25 +586,6 @@ align 4
 
         mov eax, [edi + VideoMode.fb]
         mov [display_mode + VideoMode.fb], eax
-
-	;                    mov eax, [edi + VideoMode.planes]
-	;                    mov [display_mode + VideoMode.planes], eax
-
-	;                    mov eax, [edi + VideoMode.banks]
-	;                    mov [display_mode + VideoMode.banks], eax
-
-	;                    mov eax, [edi + VideoMode.banksize]
-	;                    mov [display_mode + VideoMode.banksize], eax
-
-	;                    mov eax, [edi + VideoMode.model]
-	;                    mov [display_mode + VideoMode.model], eax
-
-	;                    mov eax, [edi + VideoMode.fboff]
-	;                    mov [display_mode + VideoMode.fboff], eax
-
-	;                    mov eax, [edi + VideoMode.fbsize]
-	;                    mov [display_mode + VideoMode.fbsize], eax
-
 
 .next:
         add edi, VideoMode_size
@@ -1094,18 +1067,10 @@ go64:
         mov rsi, boot64msg
         call puts64
 
+
 global call_main
 call_main:
-	;                    mov eax, [display_mode + video_width]
-	;                    call hexwords64
-	;                    mov eax, [display_mode + video_height]
-	;                    call hexwords64
-	;                    mov eax, [display_mode + video_depth]
-	;                    call hexwords64
-	;                    mov eax, [display_mode + video_fb]
-	;                    call hexlongn64
-
-;; copy kernel to final destination
+	; copy kernel to final destination
         mov rsi, KERNEL_LOAD
         mov rdi, KERNEL_ORG
         xor rax, rax
@@ -1115,15 +1080,73 @@ call_main:
         mov rcx, rax
         rep movsb
 
-	;                    mov rsi, KERNEL_ORG
-	;                    mov rcx, 16
-	;                    call hexdump64 
+	; set up SYSINFO at sys_info
+	mov rdi, sys_info
 
-	;                    mov rsi, .call_message
-	;                    call puts64
-	;                    mov rax, KERNEL_ORG
-	;                    call hexquadn64
+	xor rax, rax
 
+	mov [rdi + SYSINFO.milliseconds], rax
+
+	mov al, [bochs_present]
+	mov [rdi + SYSINFO.bochs], rax
+
+	mov al, [num_drives]
+	mov [rdi + SYSINFO.num_drives],rax
+
+	xor rax, rax
+	mov ax, [disk_cx]
+	mov [rdi + SYSINFO.disk_cx], ax
+	
+	xor rax, rax
+	mov al, [BOOT_DRIVE]
+	mov [rdi + SYSINFO.boot_drive], rax
+	
+	xor rax, rax
+	mov ax, [SectorsPerTrack]
+	inc ax
+	mov [rdi + SYSINFO.sectors_per_track], ax
+
+	xor rax, rax
+	mov ax, [NumberOfHeads]
+	mov [rdi + SYSINFO.num_heads], rax
+
+	xor rax, rax
+	mov ax, [num_cylinders]
+	inc ax
+	mov [rdi + SYSINFO.num_cylinders], rax
+
+	mov ax, [boot_sector]
+	mov [rdi + SYSINFO.boot_sector], rax
+	mov ax, [boot_sectors]
+	mov [rdi + SYSINFO.boot_sectors], rax
+
+	mov ax, [kernel_sector]
+	mov [rdi + SYSINFO.kernel_sector], rax
+	mov ax, [kernel_sectors]
+	mov [rdi + SYSINFO.kernel_sectors], rax
+
+	mov ax, [root_sector]
+	mov [rdi + SYSINFO.root_sector], rax
+
+	mov eax, [display_mode + VideoMode.mode]
+	mov [rdi + SYSINFO.video_mode], rax
+
+	mov eax, [display_mode + VideoMode.width]
+	mov [rdi + SYSINFO.screen_width], rax
+
+	mov eax, [display_mode + VideoMode.height]
+	mov [rdi + SYSINFO.screen_height], rax
+
+	mov eax, [display_mode + VideoMode.depth]
+	mov [rdi + SYSINFO.screen_depth], rax
+
+	mov eax, [display_mode + VideoMode.pitch]
+	mov [rdi + SYSINFO.screen_pitch], rax
+
+        mov eax, [display_mode + VideoMode.fb]
+        mov [rdi + SYSINFO.framebuffer], eax
+
+	; call kernel with SYSINFO as argument
         call KERNEL_ORG
         cli
         jmp $

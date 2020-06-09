@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. ./shlib/platform.sh
+# . ./shlib/platform.sh
 
 TOP_DIR=`git rev-parse --show-toplevel`
 #export GCC=/usr/bin/i686-elf-gcc

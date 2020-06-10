@@ -170,10 +170,6 @@ DirectorySector *RawDisk::MakeDirectory(const char *aName, DirectorySector *aPar
     stat->mAccessTime = stat->mModifiedTime = stat->mChangeTime = timestamp;
   }
 
-  // insert at head of directory sector list of parent
-  n->mLbaNext = aParent->mLbaNext;
-  aParent->mLbaNext = n->mLba;
-
   // set up the new directory
   {
     strcpy(n->mFilename, aName);
@@ -212,12 +208,15 @@ TBool RawDisk::MakeDirectory(const char *aPath, TBool aFlag) {
 
         // create the directory
         DirectorySector *n = MakeDirectory(token, cwd);
-	if (!n) {
-	  printf("Failed to make directory %s\n", aPath);
+        if (!n) {
+          printf("Failed to make directory %s\n", aPath);
           // failed to MakeDirectory
           return EFalse;
-	}
-	return ETrue;
+        }
+        // insert at head of directory sector list of parent
+        n->mLbaNext = cwd->mLbaNext;
+        cwd->mLbaNext = n->mLba;
+        return ETrue;
       }
       else {
         // could not create the directory, invalid path

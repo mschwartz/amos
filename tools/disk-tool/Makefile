@@ -8,3 +8,5 @@ disk-tool: $(BUILDOBJ)
 
 all: 	disk-tool
 
+clean:
+	rm -f *.o disk-tool

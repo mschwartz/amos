@@ -1,4 +1,4 @@
-BUILDOBJ=	main.o
+BUILDOBJ=	main.o RawDisk.o
 
 .cpp.o:
 	$(GCC) -c -O2 -g $(INCLUDE_PATH) -o $*.o $*.cpp

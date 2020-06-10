@@ -18,7 +18,7 @@
 #include <Exec/BList.h>
 #include <Exec/BAvlTree.h>
 
-
+const TInt FILESYSTEM_SECTOR_SIZE = 512;
 const TInt FILESYSTEM_NAME_MAXLEN = 255;
 
 const TUint64 S_IFMT = 0170000;   // bit mask for the file type bit field
@@ -29,21 +29,21 @@ const TUint64 S_IFBLK = 0060000;  // block device
 const TUint64 S_IFDIR = 0040000;  // directory
 const TUint64 S_IFCHR = 0020000;  // character device
 const TUint64 S_IFIFO = 0010000;  // FIFO
-
+//
 const TUint64 S_ISUID = 04000; // set user id bit
 const TUint64 S_ISGID = 04000; // set user group id bit
 const TUint64 S_ISVTX = 01000; // sticky bit
-
+//
 const TUint64 S_IRUSR = 0400;
 const TUint64 S_IWUSR = 0200;
 const TUint64 S_IXUSR = 0100;
 const TUint64 S_IRWXU = (S_IRUSR | S_IWUSR | S_IXUSR);
-
+//
 const TUint64 S_IRGRP = 0040;
 const TUint64 S_IWGRP = 0020;
 const TUint64 S_IXGRP = 0010;
 const TUint64 S_IRWXG = (S_IRGRP | S_IWGRP | S_IXGRP);
-
+//
 const TUint64 S_IROTH = 0004;
 const TUint64 S_IWOTH = 0002;
 const TUint64 S_IXOTH = 0001;
@@ -71,7 +71,8 @@ struct DirectoryStat {
 
 struct DirectorySector {
   TUint64 mLba, // LBA of this record on disk
-    mLbaFirst,  // LBA of file data on disk
+    mLbaOwner,  // LBA of parent/owner directory (this entry within owner dir)
+    mLbaFirst,  // LBA of file data on disk or first DirectorySector in subdir
     mLbaNext;   // LBA of next record on disk
   char mFilename[FILESYSTEM_NAME_MAXLEN + 1];
   DirectoryStat mStat;
@@ -79,9 +80,14 @@ struct DirectorySector {
 
 struct DataSector {
   TUint64 mLba,
-    mLbaOwner,
+    mLbaOwner, // LBA of DirectorySector
     mLbaNext;
-  TUint8 mData[512 - sizeof(TUint64) - sizeof(TUint64)];
+  TUint8 mData[FILESYSTEM_SECTOR_SIZE - sizeof(TUint64) - sizeof(TUint64)];
+} PACKED;
+
+struct FreeSector {
+  TUint64 mLbaNext;
+  TUint8 mData[FILESYSTEM_SECTOR_SIZE - sizeof(TUint64)];
 } PACKED;
 
 struct CachedRootSector : public BAvlNode {
@@ -140,6 +146,7 @@ protected:
 class SimpleFileSystem : public BNode {
 public:
   SimpleFileSystem(const char *aName);
+
 protected:
   RootSector *mRootSector;
   BAvlTree mDiskCache;

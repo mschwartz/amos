@@ -213,6 +213,7 @@ TBool RawDisk::MakeDirectory(const char *aPath, TBool aFlag) {
           // failed to MakeDirectory
           return EFalse;
         }
+
         // insert at head of directory sector list of parent
         n->mLbaNext = cwd->mLbaNext;
         cwd->mLbaNext = n->mLba;

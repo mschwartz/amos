@@ -1,3 +1,4 @@
+.ccls-cache
 *.lst
 *.o
 *.elf

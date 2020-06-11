@@ -173,25 +173,28 @@ static int ata_read_block(TAtaDrive *drive, TUint64 lba, TAny *buffer) {
       .command = ATA_CMD_READ_SECTORS,
     };
 
-    dlog("read-block send_command\n");
+    // dlog("read-block send_command\n");
     int status = ata_send_command(&command);
-    dlog("read-block send_command status %x\n", status);
+    // dlog("read-block send_command status %x\n", status);
     if (status & (ATA_DF | ATA_ERR) || !(status & ATA_DRQ)) {
-      dlog(" read-block send_command status %x fail\n", status);
+      // dlog(" read-block send_command status %x fail\n", status);
       retries--;
       continue;
     }
 
-    dlog("read_block read sector data\n");
+    // dlog("read_block read sector data\n");
     TUint16 *buf = (TUint16 *)buffer;
+    // TODO may need to DISABLE around reading of the sector bytes?
+    // DISABLE;
     for (int i = 0; i < 256; i++) {
       buf[i] = inw(ATA_DATA(drive->bus));
     }
-    dlog("read_block success!\n");
+    // ENABLE;
+    // dlog("read_block success!\n");
     return 0;
   }
 
-  dlog("Reading disk timeout\n");
+  dlog("*** Reading disk timeout\n");
   return -1;
 }
 
@@ -291,7 +294,7 @@ class AtaTask;
 class AtaInterrupt : public BInterrupt {
 public:
   AtaInterrupt(AtaTask *aTask, TUint8 aSignalBit, TInt64 aDevice)
-      : BInterrupt("keyboard.device", LIST_PRI_MAX, (TAny *)aDevice) {
+      : BInterrupt("ata.device", LIST_PRI_MAX, (TAny *)aDevice) {
     mTask = aTask;
     mSignalBit = aSignalBit;
     mDevice = aDevice;
@@ -348,7 +351,7 @@ public:
     mActiveDevice = 3;
     init_drive(&drives[3], 3);
     mActiveDevice = -1;
-    dlog("  Initialized drives\n");
+    // dlog("  Initialized drives\n");
 
     MessagePort *port = CreateMessagePort("ata.device");
     gExecBase.AddMessagePort(*port);
@@ -361,15 +364,16 @@ public:
     // dhexdump(sector, 16);
     while (1) {
       TUint64 sigs = WaitPort(port, mSigMask);
-      dlog("Woke %x\n", sigs);
+      // dlog("Woke %x\n", sigs);
       if (sigs & mSigMask) {
         dlog("  IRQ SIGNAL\n");
       }
       else {
-        dlog("Got Message\n");
         while (AtaMessage *m = (AtaMessage *)port->GetMessage()) {
-          switch (m->mCommand) {
+	  // dlog("Got Message %d\n", m->mCommand);
+	  switch (m->mCommand) {
             case EAtaReadBlocks: {
+	      dlog("ata read blocks(%x, %d, %d)\n", m->mBuffer, m->mLba, m->mCount);
               TUint8 *buf = (TUint8 *)m->mBuffer;
               TUint64 lba = m->mLba;
               for (TInt i = 0; i < m->mCount; i++) {
@@ -381,6 +385,7 @@ public:
           }
           m->ReplyMessage();
         }
+	dlog("end of messages\n");
       }
     }
   }

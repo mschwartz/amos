@@ -48,6 +48,7 @@ BMessage *MessagePort::GetMessage() {
   cli();
 
   BMessage *m = (BMessage *)mList->RemHead();
+  m->mNext = m->mPrev = ENull;
 
   SetFlags(flags);
   return m;

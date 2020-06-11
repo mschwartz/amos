@@ -58,27 +58,32 @@ const TUint64 S_IWOTH = 0002;
 const TUint64 S_IXOTH = 0001;
 const TUint64 S_IRWXO = (S_IROTH | S_IWOTH | S_IXOTH);
 
-struct BaseSector {
+typedef struct {
   TUint64 mLba,
-    mLbaNext,
-    mLbaOwner;
+    mLbaNext,  // next sector in chain (file data, directory, etc.)
+    mLbaOwner; // parent / sector "owning" this one
+  //
   void Dump() {
     dlog("     mLba: %d\n", mLba);
     dlog(" mLbaNext: %d\n", mLbaNext);
     dlog("mLbaOwner: %d\n", mLbaOwner);
   }
-};
+} PACKED BaseSector;
 
 typedef struct {
   TUint64 mLbaRoot, // LBA of / (root of filesystem)
     mLbaHeap,       // LBA of first free sector on disk
     mLbaFree,       // LBA of first free sector in free list
     mLbaMax;        // LBA of last sector on disk
-  TUint64 mUsed,    // count of used bytes
-    mFree;          // count of free bytes
+  TUint64 mUsed;    // count of used bytes
+  TUint64 mFree;    // count of free bytes
   TUint64 mBlocksUsed, mBlocksFree;
   TUint64 mType; // file system type (Ext2, Ext3, Ext4, FAT, AMOS, ...)
   char mVolumeName[FILESYSTEM_NAME_MAXLEN + 1];
+  TUint8 mPad[512 - (sizeof(TUint64) * 9) - FILESYSTEM_NAME_MAXLEN - 1];
+  //
+  // this is basically the output of our custom "df" command
+  //
   void Dump() {
     dlog("RootSector %s\n", mVolumeName);
     dlog("%d bytes used (%d) / %d bytes free (%d)\n", mUsed, mBlocksUsed, mFree, mBlocksFree);
@@ -107,15 +112,12 @@ struct DirectorySector : public BaseSector {
 
   char mFilename[FILESYSTEM_NAME_MAXLEN + 1];
   DirectoryStat mStat;
+  TUint8 mPad[512 - sizeof(BaseSector) - sizeof(TUint64) - FILESYSTEM_NAME_MAXLEN - 1];
   // void Stat();
   void Dump() {
     dlog("Directory Sector %s\n", mFilename);
     BaseSector::Dump();
-    // dlog("  mLba: %d\n", s->mLba);
-    // printf("  mLbaRoot: %d\n", s->mLbaRoot);
-    // printf("  mLbaHeap: %d\n", s->mLbaHeap);
-    // printf("  mLbaFree: %d\n", s->mLbaFree);
-    // printf("  mLbaMax: %d\n", s->mLbaMax);
+    dlog(" mLbaFirst: %d\n", mLbaFirst);
     dlog("\n");
   }
 } PACKED;
@@ -135,7 +137,9 @@ struct FreeSector : public BaseSector {
 // BAvlNode.mKey is the LBA of the sector
 // cast the sector member to the appropriate *Sector above
 struct CachedSector : public BAvlNode {
-  CachedSector(TUint64 aLba) : BAvlNode(aLba) { mLru = 0; }
+  CachedSector(TUint64 aLba) : BAvlNode(aLba) {
+    mLru = 0;
+  }
   TUint64 mLru; // least recently used timestamp
   TUint8 mSector[512];
 };
@@ -144,46 +148,51 @@ struct CachedSector : public BAvlNode {
  ********************************************************************************
  *******************************************************************************/
 
-struct FileDescriptor : public BNode {
+struct FileSystemDescriptor : public BBase {
 public:
-  FileDescriptor() : BNode("FileDescriptor") {}
-public:
-  TBool Truncate();
-  TBool Open();
-  TInt64 Read(TAny *aBuffer, TUint64 aSize);
-  TInt64 Write(TAny *aBuffer, TUint64 aSize);
-  TUint64 Seek(TUint64 aFilePosition);
-  TBool Close();
-  TBool Delete();
-  TBool Stat(DirectoryStat &aStatBuf);
+  FileSystemDescriptor() { Reuse(); }
 
 public:
-  TUint64 Size() {
-    return mDirectorySector->mStat.mSize;
-  }
+  TBool IsFile() { return mDirectorySector->mStat.mMode & S_IFREG; }
+  TBool IsDirectory() { return mDirectorySector->mStat.mMode & S_IFDIR; }
 
 public:
   DirectorySector *mDirectorySector;
   DataSector *mDataSector;
   TUint64 mDataIndex; // index into current data sector
   TUint64 mFilePosition;
+
+public:
+  void Reuse() {
+    mDirectorySector = ENull;
+    mDataSector = ENull;
+    mDataIndex = 0;
+    mFilePosition = 0;
+  }
+
+public:
+  void Dump() {
+    dlog("FileSystemDescriptor %x\n", this);
+    dlog("  mDirectorySector: %x\n", mDirectorySector);
+    dlog("  mDataSector: %x\n", mDataSector);
+    dlog("  mDataIndex: %d\n", mDataIndex);
+    dlog("  mFilePosition: %d\n", mFilePosition);
+  }
 };
 
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
+#if 0
 class DirectoryDescriptor : public BNode {
 public:
   DirectoryDescriptor(const char *aPath);
 
-public:
-  TBool Stat(DirectoryStat &aStatBuf);
-
 protected:
-  DirectorySector *mFirstDirectoryEntry;
   DirectorySector *mDirectoryEntry;
 };
+#endif
 
 /********************************************************************************
  ********************************************************************************
@@ -213,6 +222,7 @@ enum EFileSystemError {
 };
 
 enum EFileSystemCommand {
+  EFileSystemInvalidCommand,
   EFileSystemOpenDirectory,
   EFileSystemReadDirectory,
   EFileSystemCloseDirectory,
@@ -228,17 +238,41 @@ enum EFileSystemCommand {
 class FileSystemMessage : public BMessage {
 public:
   FileSystemMessage(MessagePort *aReplyPort, EFileSystemCommand aCommand) : BMessage(aReplyPort) {
+    mBuffer = ENull;
+    Reuse(aCommand);
+  }
+  FileSystemMessage() : BMessage(ENull) {
+    mBuffer = ENull;
+    Reuse(EFileSystemOpen);
+  }
+
+public:
+  void Reuse(EFileSystemCommand aCommand) {
+    mCommand = aCommand;
     mError = EFileSystemErrorNone;
     mFlags = 0;
+    mCount = 0;
+    mDescriptor.Reuse();
   }
 
 public:
   EFileSystemCommand mCommand;
   EFileSystemError mError;
-  FileDescriptor mFileDescriptor;
+  FileSystemDescriptor mDescriptor;
   TAny *mBuffer; // filename, read buffer, write buffer
   TInt64 mCount; // bytes to read/write, returned number of bytes actually read/written
   TInt64 mFlags;
+
+public:
+  void Dump() {
+    dlog("FileSystemMessage %x\n", this);
+    dlog("  mCommand: %d\n", mCommand);
+    dlog("  mError: %d\n", mError);
+    dlog("  mCount: %d\n", mCount);
+    dlog("  mFlags: %d\n", mFlags);
+    dlog("  mBuffer: %x\n", mBuffer);
+    mDescriptor.Dump();
+  }
 };
 
 #endif

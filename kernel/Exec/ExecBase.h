@@ -3,10 +3,11 @@
 
 #include <Exec/BBase.h>
 #include <Exec/BInterrupt.h>
-#include <Exec/BTask.h>
 #include <Exec/MessagePort.h>
 #include <Exec/BDevice.h>
 #include <Exec/BFileSystem.h>
+#include <Exec/BTask.h>
+#include <Exec/BProcess.h>
 #include <Exec/Random.h>
 
 extern "C" TUint64 GetFlags();

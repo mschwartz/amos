@@ -27,6 +27,7 @@ public:
    * This saves us from having to new/delete over and over.
    */
   void Reuse(TUint64 aLba, TAny *aBuffer, TInt32 aCount) {
+    mError = EAtaErrorNone;
     mLba = aLba;
     mBuffer = aBuffer;
     mCount = aCount;

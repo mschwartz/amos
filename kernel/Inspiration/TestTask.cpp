@@ -3,7 +3,7 @@
 #include <Graphics/font/BConsoleFont.h>
 #include <Exec/Random.h>
 
-TestTask::TestTask() : BTask("Test Task") {
+TestTask::TestTask() : BProcess("Test Process") {
   dprint("Construct TestTask\n");
 }
 
@@ -31,9 +31,61 @@ public:
   }
 };
 
+// TODO these need to be in some library?
+static void format_mode(char *buf, TUint64 aMode) {
+  buf[0] = (aMode & S_IFDIR ? 'd' : '-');
+  buf[1] = (aMode & S_IRUSR ? 'r' : '-');
+  buf[2] = (aMode & S_IWUSR ? 'w' : '-');
+  buf[3] = (aMode & S_IXUSR ? 'x' : '-');
+  buf[4] = (aMode & S_IRGRP ? 'r' : '-');
+  buf[5] = (aMode & S_IWGRP ? 'w' : '-');
+  buf[6] = (aMode & S_IXGRP ? 'x' : '-');
+  buf[7] = (aMode & S_IROTH ? 'r' : '-');
+  buf[8] = (aMode & S_IWOTH ? 'w' : '-');
+  buf[9] = (aMode & S_IXOTH ? 'x' : '-');
+  buf[10] = '\0';
+}
+
+static char *format_user(char *buf, TUint64 uid) {
+  strcpy(buf, "root");
+  return buf;
+}
+
+static char *format_group(char *buf, TUint64 gid) {
+  strcpy(buf, "root");
+  return buf;
+}
+
+static void print_one(TUint64 aMode, TUint64 aUser, TUint64 aGroup, TUint64 aSize, const char *aFilename) {
+  char mode[16], user[16], group[16], *path = DuplicateString("/");
+  format_mode(mode, aMode);
+  format_user(user, aUser);
+  format_group(group, aGroup);
+  dlog("%s %s %s %8d %s\n", mode, user, group, aSize, aFilename);
+}
 void TestTask::Run() {
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
+
+  dlog("about to open directory\n");
+  FileDescriptor *fd = OpenDirectory("/");
+  dlog("open directory %x\n", fd);
+  if (!fd) {
+    dlog("Could not open directory /\n");
+  }
+  else {
+    // dlog("opened directory /\n");
+    // fd->Dump();
+    const DirectoryStat *s = fd->Stat();
+    print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, fd->Filename());
+    // dlog("about to read directory /\n");
+    while (ReadDirectory(fd)) {
+    // dlog("read directory /\n");
+      print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, fd->Filename());
+    break;
+    }
+  }
+  CloseDirectory(fd);
 
   ScreenVesa &screen = mInspirationBase.GetScreen();
   screen.Clear(0x4f4fff);
@@ -45,7 +97,7 @@ void TestTask::Run() {
   TInt count = 0;
   while (1) {
     win->BeginPaint();
-    for (TInt i=0; i<10; i++) {
+    for (TInt i = 0; i < 10; i++) {
       win->RandomBox();
     }
     win->EndPaint();

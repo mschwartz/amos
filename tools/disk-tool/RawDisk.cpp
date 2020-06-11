@@ -445,9 +445,9 @@ void RawDisk::DumpRootSector() {
   printf("  sizeof(DataSector) = %d\n", sizeof(DataSector));
   printf("  sizeof(DataSector.mData) = %d\n", sizeof(DataSector::mData));
   printf("  sizeof(FreeSector) = %d\n", sizeof(FreeSector));
-  printf("\n");
-  printf("  sizeof(FileDescriptor) = %d\n", sizeof(FileDescriptor));
-  printf("  sizeof(DirectoryDescriptor) = %d\n", sizeof(DirectoryDescriptor));
+  // printf("\n");
+  // printf("  sizeof(FileDescriptor) = %d\n", sizeof(FileDescriptor));
+  // printf("  sizeof(DirectoryDescriptor) = %d\n", sizeof(DirectoryDescriptor));
 }
 
 void RawDisk::ListDirectory(const char *aPath) {

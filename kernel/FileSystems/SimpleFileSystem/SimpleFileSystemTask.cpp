@@ -3,14 +3,35 @@
 
 void *SimpleFileSystemTask::Sector(TUint64 aLba) {
   // first look in sector cache
+  dlog("Sector(%d) %x %x\n", aLba, mAtaPort, mAtaMessage);
   CachedSector *fs = (CachedSector *)mDiskCache.Find(aLba + mRootLba);
   if (fs == ENull) {
-    fs = new CachedSector(aLba);
-    mAtaMessage->Reuse(aLba, &fs->mSector, 1);
+    dlog("cache miss\n");
+    fs = new CachedSector(aLba + mRootLba);
+    mAtaMessage->mCommand = EAtaReadBlocks;
+    mAtaMessage->mLba = aLba + mRootLba;
+    mAtaMessage->mBuffer = &fs->mSector[0];
+    mAtaMessage->mCount = 1;
+    mAtaMessage->mError = EAtaErrorNone;
+    mAtaMessage->mReplyPort = mAtaReplyPort;
+
+    dlog("ata message command(%d), lba(%d), buffer(%x), count(%d)\n",
+      mAtaMessage->mCommand, mAtaMessage->mLba, mAtaMessage->mBuffer, mAtaMessage->mCount);
+
+    dlog("Send message(%x) to port(%x)\n", mAtaMessage, mAtaPort);
     mAtaMessage->SendMessage(mAtaPort);
+
+    dlog("WaitPort(%x)\n", mAtaReplyPort);
     WaitPort(mAtaReplyPort);
+    dlog("insert(%x) %d\n", fs, fs->mKey);
     mDiskCache.Insert(fs);
+    dlog("inserted %d %x %x\n", aLba, mAtaPort, mAtaMessage);
+    dlog("c\n");
   }
+  else {
+    dlog("cache hit %x\n", fs);
+  }
+
   fs->mLru++;
   return &fs->mSector;
 }
@@ -33,19 +54,26 @@ DirectorySector *SimpleFileSystemTask::Find(const char *aFilename, DirectorySect
 
 DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
   char *path = DuplicateString(aPath);
-
   dlog("FindPath(%s)\n", path);
 
-  DirectorySector *cwd;
-  Sector(mRootSector.mLbaRoot);
+  DirectorySector *cwd = (DirectorySector *)Sector(mRootSector.mLbaRoot);
+  dlog("cwd %x\n", cwd);
   if (path[0] == '/') {
     path++;
+  }
+  dlog("FindPath(%s)\n", path);
+
+  if (*path == '\0') {
+    dlog("Return /\n");
+    delete[] path;
+    return cwd;
   }
 
   char token[256];
   path = GetToken(path, token, '/');
 
   if (path == ENull) {
+    dlog("return /\n");
     delete[] path;
     return cwd;
   }
@@ -93,18 +121,25 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
 }
 
 void SimpleFileSystemTask::OpenDirectory(FileSystemMessage *f) {
-  DirectorySector *d = FindPath((char *)&f->mBuffer);
+  dlog("OpenDirectory(%s)\n", f->mBuffer);
+  DirectorySector *d = FindPath((char *)f->mBuffer);
+  dlog("found %x\n", d);
   if (d) {
-    CopyMemory(&f->mBuffer, d, sizeof(DirectorySector));
+    f->mDescriptor.mDirectorySector = d;
   }
   f->mError = mError;
 }
 
 void SimpleFileSystemTask::ReadDirectory(FileSystemMessage *f) {
   DirectorySector *d = (DirectorySector *)&f->mBuffer;
-  if (d->mLbaNext) {
+  if (f->mDescriptor.mDataSector == ENull && d->mLbaFirst) {
+    DirectorySector *dd = (DirectorySector *)Sector(d->mLbaFirst);
+    f->mDescriptor.mDirectorySector = dd;
+    f->mDescriptor.mDataSector = (DataSector *)dd;
+  }
+  else if (d->mLbaNext) {
     d = (DirectorySector *)Sector(d->mLbaNext);
-    CopyMemory(&f->mBuffer, d, sizeof(DirectorySector));
+    f->mDescriptor.mDirectorySector = d;
   }
   else {
     f->mError = EFileSystemErrorEndOfFile;
@@ -119,7 +154,7 @@ void SimpleFileSystemTask::MakeDirectory(FileSystemMessage *f) {}
 void SimpleFileSystemTask::RemoveDirectory(FileSystemMessage *f) {}
 
 void SimpleFileSystemTask::OpenFile(FileSystemMessage *f) {
-  FileDescriptor *file = (FileDescriptor *)&f->mFileDescriptor;
+  FileSystemDescriptor *file = (FileSystemDescriptor *)&f->mDescriptor;
   file->mDirectorySector = ENull;
   file->mDataSector = ENull;
   file->mDataIndex = 0;
@@ -138,7 +173,7 @@ void SimpleFileSystemTask::OpenFile(FileSystemMessage *f) {
 }
 
 void SimpleFileSystemTask::ReadFile(FileSystemMessage *f) {
-  FileDescriptor *file = (FileDescriptor *)&f->mFileDescriptor;
+  FileSystemDescriptor *file = (FileSystemDescriptor *)&f->mDescriptor;
   if (file->mDirectorySector == ENull) {
     f->mError = EFileSystemErrorFileNotOpen;
   }
@@ -154,7 +189,7 @@ void SimpleFileSystemTask::ReadFile(FileSystemMessage *f) {
     TInt64 count;
     for (count = 0; count < f->mCount; count++) {
       if (file->mFilePosition > file->mDirectorySector->mStat.mSize) {
-	break;
+        break;
       }
 
       if (file->mDataIndex > sizeof(f->mBuffer)) {
@@ -173,7 +208,7 @@ void SimpleFileSystemTask::ReadFile(FileSystemMessage *f) {
 void SimpleFileSystemTask::WriteFile(FileSystemMessage *f) {}
 
 void SimpleFileSystemTask::CloseFile(FileSystemMessage *f) {
-  FileDescriptor *file = (FileDescriptor *)&f->mFileDescriptor;
+  FileSystemDescriptor *file = (FileSystemDescriptor *)&f->mDescriptor;
   file->mDirectorySector = ENull;
 }
 
@@ -187,22 +222,36 @@ void SimpleFileSystemTask::Run() {
   gExecBase.AddMessagePort(*msgPort);
 
   // we send read/write requests messages to mDiskDevice(ada.device) message port
-  mAtaPort = gExecBase.FindMessagePort(mDiskDevice);
+  mAtaPort = ENull;
+  while (!mAtaPort) {
+    dlog("Finding port(%s)\n", mDiskDevice);
+    Forbid();
+    mAtaPort = gExecBase.FindMessagePort(mDiskDevice);
+    Permit();
+    if (!mAtaPort) {
+      dlog("Port(%s) not found, sleeping\n", mDiskDevice);
+      Sleep(1);
+    }
+  }
+  dlog("found ata port %x\n", mAtaPort);
 
   // we get replies to our messages at our private replyPort
   mAtaReplyPort = CreateMessagePort();
 
   // we need to read the root sector
-  dlog("SimpleFileSystemTask read sector %d from unit %d\n", mUnit, mRootLba);
-  mAtaMessage = AtaMessage::CreateReadMessaage(mAtaReplyPort, mUnit, mRootLba, &this->mRootSector, 1);
-  CopyMemory(Sector(mRootLba), &this->mRootSector, sizeof(mRootSector));
-  // mRootSector has been read in!
-  dlog("  Volume(%s)\n", mRootSector.mVolumeName);
-  dlog("  used/free: %d/%d\n", mRootSector.mUsed, mRootSector.mFree);
-  dlog("  mLbaRoot: %d\n", mRootSector.mLbaRoot);
-  dlog("  mLbaHeap: %d\n", mRootSector.mLbaHeap);
-  dlog("  mLbaFree: %d\n", mRootSector.mLbaFree);
-  dlog("   mLbaMax: %d\n", mRootSector.mLbaMax);
+  dlog("SimpleFileSystemTask read sector %d from unit %d\n", 0, mUnit);
+  mAtaMessage = AtaMessage::CreateReadMessaage(mAtaReplyPort, mUnit, 0, &this->mRootSector, 1);
+  dlog("mAtaMessage created %x\n", mAtaMessage);
+  CopyMemory(&this->mRootSector, Sector(0), 512);
+
+  this->mRootSector.Dump();
+
+  // dlog("  Volume(%s)\n", mRootSector.mVolumeName);
+  // dlog("  used/free: %d/%d\n", mRootSector.mUsed, mRootSector.mFree);
+  // dlog("  mLbaRoot: %d\n", mRootSector.mLbaRoot);
+  // dlog("  mLbaHeap: %d\n", mRootSector.mLbaHeap);
+  // dlog("  mLbaFree: %d\n", mRootSector.mLbaFree);
+  // dlog("   mLbaMax: %d\n", mRootSector.mLbaMax);
 
   while (ETrue) {
     WaitPort(msgPort);

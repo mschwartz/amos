@@ -16,7 +16,7 @@ CONTAINERS= 	BList.o BAvlTree.o BHashTable.o
 
 FS=		$(SF)/SimpleFileSystem.o  $(SF)/SimpleFileSystemTask.o
 
-EXEC=		Memory.o BBase.o Random.o MessagePort.o BInterrupt.o BTask.o BDevice.o BFileSystem.o ExecBase.o 
+EXEC=		Memory.o BBase.o Random.o MessagePort.o BInterrupt.o BTask.o BProcess.o BDevice.o BFileSystem.o ExecBase.o 
 
 OBJ= 	 	$(FS) $(TYPES) $(X86) $(DEVICES)  $(GFX) $(FONTS) $(CONTAINERS) $(EXEC)
 

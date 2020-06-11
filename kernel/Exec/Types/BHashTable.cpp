@@ -1,4 +1,4 @@
-#include <Exec/BHashTable.h>
+#include <Exec/Types/BHashTable.h>
 
 TInt64 BHashNode::Hash(const char *aKey) {
   TInt64 sum = 0;
@@ -21,8 +21,10 @@ TBool BHashNode::Equals(TInt64 aHash, const char *aString) {
   return aHash == mHash && (CompareStrings(aString, mNodeName) == 0);
 }
 
-BHashTable::BHashTable() {
+BHashTable::BHashTable(const TInt aHashBuckets) {
   mCount = 0;
+  mHashBuckets = aHashBuckets;
+  mHashArray = new BList[aHashBuckets];
   //
 }
 

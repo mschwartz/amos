@@ -15,8 +15,8 @@
  */
 
 #include <Exec/Types.h>
-#include <Exec/BList.h>
-#include <Exec/BAvlTree.h>
+#include <Exec/Types/BList.h>
+#include <Exec/Types/BAvlTree.h>
 #include <Exec/MessagePort.h>
 
 #ifdef KERNEL
@@ -112,7 +112,7 @@ struct DirectorySector : public BaseSector {
 
   char mFilename[FILESYSTEM_NAME_MAXLEN + 1];
   DirectoryStat mStat;
-  TUint8 mPad[512 - sizeof(BaseSector) - sizeof(TUint64) - FILESYSTEM_NAME_MAXLEN - 1];
+  TUint8 mPad[512 - sizeof(BaseSector) - sizeof(TUint64) - sizeof(DirectoryStat) - FILESYSTEM_NAME_MAXLEN - 1];
   // void Stat();
   void Dump() {
     dlog("Directory Sector %s\n", mFilename);

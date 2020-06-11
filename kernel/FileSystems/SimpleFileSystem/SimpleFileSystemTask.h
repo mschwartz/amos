@@ -4,6 +4,7 @@
 #include <Devices/AtaDevice.h>
 #include <Exec/BTask.h>
 #include <Exec/ExecBase.h>
+#include <Exec/Types/BSparseArray.h>
 
 class SimpleFileSystem;
 
@@ -57,7 +58,8 @@ protected:
   TUint64 mUnit;
   TUint64 mRootLba;
   RootSector mRootSector;
-  BAvlTree mDiskCache;
+  BSparseArray *mDiskCache;
+  // BAvlTree mDiskCache;
   MessagePort *mAtaReplyPort, *mAtaPort;
   AtaMessage *mAtaMessage;
   EFileSystemError mError;

@@ -4,7 +4,7 @@
 void *SimpleFileSystemTask::Sector(TUint64 aLba) {
   // first look in sector cache
   dlog("Sector(%d) %x %x\n", aLba, mAtaPort, mAtaMessage);
-  CachedSector *fs = (CachedSector *)mDiskCache.Find(aLba + mRootLba);
+  CachedSector *fs = (CachedSector *)mDiskCache->Find(aLba + mRootLba);
   if (fs == ENull) {
     dlog("cache miss\n");
     fs = new CachedSector(aLba + mRootLba);
@@ -24,7 +24,7 @@ void *SimpleFileSystemTask::Sector(TUint64 aLba) {
     dlog("WaitPort(%x)\n", mAtaReplyPort);
     WaitPort(mAtaReplyPort);
     dlog("insert(%x) %d\n", fs, fs->mKey);
-    mDiskCache.Insert(fs);
+    mDiskCache->Add((BSparseArrayNode&)*fs);
     dlog("inserted %d %x %x\n", aLba, mAtaPort, mAtaMessage);
     dlog("c\n");
   }
@@ -57,12 +57,12 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
   dlog("FindPath(%s)\n", path);
 
   DirectorySector *cwd = (DirectorySector *)Sector(mRootSector.mLbaRoot);
-  dlog("cwd %x\n", cwd);
+  dlog("cwd %x(%s)\n", cwd, cwd->mFilename);
   if (path[0] == '/') {
     path++;
   }
-  dlog("FindPath(%s)\n", path);
 
+  cwd->Dump();
   if (*path == '\0') {
     dlog("Return /\n");
     delete[] path;
@@ -123,7 +123,7 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
 void SimpleFileSystemTask::OpenDirectory(FileSystemMessage *f) {
   dlog("OpenDirectory(%s)\n", f->mBuffer);
   DirectorySector *d = FindPath((char *)f->mBuffer);
-  dlog("found %x\n", d);
+  // dlog("found %x\n", f);
   if (d) {
     f->mDescriptor.mDirectorySector = d;
   }

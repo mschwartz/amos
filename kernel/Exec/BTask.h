@@ -1,7 +1,7 @@
 #ifndef EXEC_TASK_H
 #define EXEC_TASK_H
 
-#include <Exec/BList.h>
+#include <Exec/Types/BList.h>
 #include <Exec/x86/tasking.h>
 
 const TUint64 default_task_stack_size = 2 * 1024 * 1024;

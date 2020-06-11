@@ -1,9 +1,10 @@
 #ifndef EXEC_BHASHTABLE_H
 #define EXEC_BHASHTABLE_H
 
-#include <Exec/BList.h>
+#include <Exec/Types/BList.h>
 #include <Exec/Memory.h>
 
+const TInt MAX_HASH_BUCKETS = 4096;
 const TInt HASH_BUCKETS = 256;
 
 /********************************************************************************
@@ -35,7 +36,7 @@ protected:
 
 class BHashTable : public BBase {
 public:
-  BHashTable();
+  BHashTable(TInt aHashBuckets = HASH_BUCKETS);
   ~BHashTable();
 
 public:
@@ -47,7 +48,8 @@ public:
 
 protected:
   TInt64 mCount;
-  BList mHashArray[HASH_BUCKETS];
+  TInt64 mHashBuckets; // number of buckets
+  BList *mHashArray;
 };
 
 #endif

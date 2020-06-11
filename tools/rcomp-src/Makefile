@@ -4,7 +4,10 @@ TMX=    tmx/TMXMap.o tmx/TMXTileSet.o tmx/TMXLayer.o
 
 LIB=    lib/utils.o lib/RawBitmap.o
 
-CE=     ../../kernel/Exec/Memory.o ../../kernel/Exec/BBase.o ../../kernel/Exec/BList.o ../../kernel/Exec/BSymbolTable.o
+CE=     ../../kernel/Exec/Memory.o \
+	../../kernel/Exec/BBase.o \
+	../../kernel/Exec/Types/BList.o \
+	../../kernel/Exec/Types/BSymbolTable.o
 
 INC=	-I. -I../../ -I../../kernel -I../../kernel/Exec
 

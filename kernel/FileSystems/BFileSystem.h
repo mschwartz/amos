@@ -49,16 +49,25 @@ const TUint64 S_IWOTH = 0002;
 const TUint64 S_IXOTH = 0001;
 const TUint64 S_IRWXO = (S_IROTH | S_IWOTH | S_IXOTH);
 
-struct RootSector {
+typedef struct {
   TUint64 mLbaRoot, // LBA of / (root of filesystem)
     mLbaHeap,       // LBA of first free sector on disk
     mLbaFree,       // LBA of first free sector in free list
     mLbaMax;        // LBA of last sector on disk
   TUint64 mUsed,    // count of used bytes
     mFree;          // count of free bytes
-} PACKED;
+  TUint64 mBlocksUsed, mBlocksFree;
+  TUint64 mType;    // file system type (Ext2, Ext3, Ext4, FAT, AMOS, ...)
+  char mVolumeName[FILESYSTEM_NAME_MAXLEN + 1];
+} PACKED RootSector;
 
-struct DirectoryStat {
+struct BaseSector {
+  TUint64 mLba,
+    mLbaNext,
+    mLbaOwner;
+};
+
+typedef struct {
   TUint64 mMode;
   TUint64 mNumLinks;
   TUint64 mOwner;
@@ -67,28 +76,26 @@ struct DirectoryStat {
   TUint64 mAccessTime, // last time file data was accessed
     mModifiedTime,     // last time file data was modified
     mChangeTime;       // last time file status changed
-} PACKED;
+} PACKED DirectoryStat;
 
-struct DirectorySector {
-  TUint64 mLba, // LBA of this record on disk
-    mLbaOwner,  // LBA of parent/owner directory (this entry within owner dir)
-    mLbaFirst,  // LBA of file data on disk or first DirectorySector in subdir
-    mLbaNext;   // LBA of next record on disk
+struct DirectorySector : public BaseSector {
+  TUint64 mLbaFirst;  // LBA of file data on disk or first DirectorySector in subdir
+
   char mFilename[FILESYSTEM_NAME_MAXLEN + 1];
   DirectoryStat mStat;
 } PACKED;
 
-struct DataSector {
-  TUint64 mLba,
-    mLbaOwner, // LBA of DirectorySector
-    mLbaNext;
-  TUint8 mData[FILESYSTEM_SECTOR_SIZE - sizeof(TUint64) - sizeof(TUint64)];
+struct DataSector : public BaseSector {
+  TUint8 mData[FILESYSTEM_SECTOR_SIZE - sizeof(BaseSector)];
 } PACKED;
 
-struct FreeSector {
-  TUint64 mLbaNext;
-  TUint8 mData[FILESYSTEM_SECTOR_SIZE - sizeof(TUint64)];
+struct FreeSector : public BaseSector {
+  TUint8 mData[FILESYSTEM_SECTOR_SIZE - sizeof(BaseSector)];
 } PACKED;
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 struct CachedRootSector : public BAvlNode {
   TUint64 mLru; // least recently used timestamp

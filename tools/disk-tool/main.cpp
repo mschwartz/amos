@@ -1,6 +1,8 @@
 #include "disk-tool.h"
 #include "RawDisk.h"
 
+#include <libgen.h>
+
 const char *RAWFILE = "fs.raw";
 
 const int MAX_ARGS = 8192;
@@ -136,43 +138,47 @@ int main(int ac, char *av[]) {
     if (options.arg_count < 2) {
       return help(av[0]);
     }
-    
-    char dest_fn[8192], host_fn[8192];
-    TInt ndx_d = options.arg_count - 1;
-    const char *dst_pos = options.args[ndx_d--];
-    printf("dst_pos(%s)\n", dst_pos);
 
-    DirectorySector *d = raw.FindPath(dst_pos);
+    char dstfn[8192], srcfn[8192];
+    TInt ndx_d = options.arg_count - 1;
+
+    char *dstdir = options.args[ndx_d--],
+         *dstpath = strdup(dstdir);
+
+    DirectorySector *d = raw.FindPath(dstdir);
+    delete[] dstdir;
+
     if (!d) {
-      printf("*** Invalid path (%s)\n", dst_pos);
+      printf("*** Invalid path (%s)\n", dstpath);
       return -1;
     }
 
-    printf("dst_pos(%s) %o\n", dst_pos, d->mStat.mMode);
     if ((d->mStat.mMode & S_IFDIR) != 0) {
       // copy to directory
       for (TInt i = 0; i <= ndx_d; i++) {
-        char *src = strdup(options.args[i]),
-             *host_path = strdup(options.args[i]),
-             *dst_file = src,
-             *slash = strrchr(src, '/');
+        char *hostpath = strdup(options.args[i]),
+             *srcfile = strdup(basename(hostpath)),
+             *dstfile = strdup(basename(dstpath));
 
-        printf("src(%s) host_path(%s) dst_file(%s) slash(%s)\n", src, host_path, dst_file, slash);
-        if (slash) {
-          *slash = '\0';
-          dst_file = ++slash;
+        if (strcmp(d->mFilename, dstfile) != 0) {
+          sprintf(dstfn, "%s", dstpath);
         }
-        // printf("host_path(%s) src(%s) dst_file(%s)\n", host_path, src, dst_file);
+        else {
+          sprintf(dstfn, "%s/%s", dstpath, srcfile);
+        }
+        printf("cp %-64.64s => %s\n", hostpath, dstfn);
+        raw.CopyFile(dstfn, hostpath);
 
-        sprintf(dest_fn, "%s/%s", dst_pos, dst_file);
-        printf("cp %s %s\n", host_path, dest_fn);
-        raw.CopyFile(dest_fn, host_path);
+	delete[] dstfile;
+	delete[] srcfile;
+	delete[] hostpath;
       }
     }
     else {
-      printf("raw.CopyFile(%s, %s)\n", options.args[1], options.args[0]);
-      raw.CopyFile(options.args[1], options.args[0]);
+      printf("raw.CopyFile(%s, %s)\n", dstpath, options.args[0]);
+      raw.CopyFile(dstpath, options.args[0]);
     }
+    delete [] dstpath;
     raw.Write();
   }
 

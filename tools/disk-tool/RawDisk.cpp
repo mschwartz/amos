@@ -481,12 +481,14 @@ void RawDisk::ListDirectory(const char *aPath) {
     format_user(user, s->mOwner);
     format_group(group, s->mOwnerGroup);
 
+    const time_t t = s->mModifiedTime;
     // unix style ls -l
-    printf("%s %s %s %8d date %5d %s\n",
+    printf("%s %s %s %8d %s %5d %s\n",
       mode,
       user, group,
       s->mSize,
       d->mLba,
+      ctime(&t),
       d->mFilename);
   }
   else {
@@ -499,14 +501,21 @@ void RawDisk::ListDirectory(const char *aPath) {
       format_user(user, s->mOwner);
       format_group(group, s->mOwnerGroup);
 
+      const time_t t = (time_t)s->mModifiedTime;
+      char *tt = strdup(ctime(&t));
+
+      char *ttt = &tt[4];
+      ttt[15] = '\0';
       // unix style ls -l
-      printf("%s %s %s %8d date %5d %s\n",
+      printf("%s %s %s %8d %5d %s %s\n",
         mode,
         user, group,
         s->mSize,
         d->mLba,
+        ttt,
         d->mFilename);
 
+      delete[] tt;
       if (d->mLbaNext == 0) {
         break;
       }

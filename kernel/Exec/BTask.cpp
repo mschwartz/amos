@@ -251,7 +251,7 @@ void BTask::Sleep(TUint64 aSeconds) {
   while ((m = (TimerMessage *)replyPort->GetMessage())) {
     delete m;
   }
-  dlog("%s slept\n", TaskName());
+  // dlog("%s slept\n", TaskName());
   FreeMessagePort(replyPort);
 }
 

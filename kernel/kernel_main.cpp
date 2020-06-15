@@ -22,35 +22,32 @@ static void call_global_constructors(void) {
   }
 }
 
-extern "C" int kernel_main(TUint64 ax) {
-  extern void *init_start, *init_end,
-    *text_start, *text_end,
-    *rodata_start, *rodata_end,
-    *data_start, *data_end,
-    *bss_start, *bss_end,
-    *kernel_end;
+extern "C" TUint64 rdtsc();
 
+extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
+  CopyString(&gSystemInfo.mVersion[0], "AMOS v1.0");
   in_bochs = *((TUint8 *)0x7c10);
 
-  dlog("Amos V1.0 %s\n",in_bochs ? "BOCHS ENABLED" : "NO BOCHS");
-  dlog("         init: %016x - %016x\n", &init_start, &init_end);
-  dlog("         text: %016x - %016x\n", &text_start, &text_end);
-  dlog("       rodata: %016x - %016x\n", &rodata_start, &rodata_end);
-  dlog("         data: %016x - %016x\n", &data_start, &data_end);
-  dlog("          bss: %016x - %016x\n", &bss_start, &bss_end);
-  dlog("   kernel_end: %016x\n", &kernel_end);
-//  dlog("system memory: %d (%d pages)\n", mMMU->total_memory(), mMMU->total_pages());
+  // compute CPU speed
+  cli();
+  outb(0x43, 0x34);
+  outb(0x40, 0);
+  outb(0x40, 0);
+  TUint64 stsc = rdtsc();
+  for (int i=0x1000; i>0; i--);
+  TUint64 etsc = rdtsc();
+  outb(0x43, 0x04);
+  TInt64 lo = inb(0x40);
+  TInt64 hi = inb(0x40);
+  TInt64 ticks=(0x10000 - (hi*256+lo));
+  TInt64 hz = (etsc - stsc) * 1193180 / ticks;
+  gSystemInfo.mCpuMhz = hz / 1000000;
 
-  //  dlog("bochs %x\n", in_bochs);
+  gSystemInfo.mDiskSize = gSystemInfo.mNumHeads * gSystemInfo.mNumSectors * gSystemInfo.mNumCylinders * 512;
 
-//  dputc('B');
-
-
+  gSystemInfo.Dump();
   call_global_constructors();
 
-//  dputs("here\n");
-//  cli();
-//  halt();
   gExecBase.Kickstart();  // does not return
 
   // it should NEVER get here!

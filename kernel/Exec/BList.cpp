@@ -46,7 +46,11 @@ BNodePri::~BNodePri() {}
  * Create an empty list.
  */
 BList::BList(const char *aNodeName) : BNode(aNodeName) { 
-  Reset(); 
+  Reset();
+}
+
+BList::BList() : BNode("Unnamed") {
+  Reset();
 }
 
 /**

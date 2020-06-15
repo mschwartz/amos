@@ -8,7 +8,9 @@
 test*
 rcomp
 tools/rcomp-src/rcomp
+tools/disk-tool/disk-tool
 bochsrc
 *.psf
 \#*
 #*
+*.raw

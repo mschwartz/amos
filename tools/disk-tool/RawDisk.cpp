@@ -459,12 +459,13 @@ static char *format_group(char *buf, TUint64 gid) {
 
 void RawDisk::DumpRootSector() {
   RootSectorDump(mRootSector);
-  printf("sizeof(BaseSector) = %d\n", sizeof(BaseSector));
-  printf("sizeof(RootSector) = %d\n", sizeof(RootSector));
-  printf("sizeof(DirectorySector) = %d\n", sizeof(DirectorySector));
-  printf("sizeof(DataSector) = %d\n", sizeof(DataSector));
-  printf("sizeof(DataSector.mData) = %d\n", sizeof(DataSector::mData));
-  printf("sizeof(FreeSector) = %d\n", sizeof(FreeSector));
+  printf("  sizeof(BaseSector) = %d\n", sizeof(BaseSector));
+  printf("  sizeof(RootSector) = %d\n", sizeof(RootSector));
+  printf("  sizeof(DirectorySector) = %d\n", sizeof(DirectorySector));
+  printf("  sizeof(DataSector) = %d\n", sizeof(DataSector));
+  printf("  sizeof(DataSector.mData) = %d\n", sizeof(DataSector::mData));
+  printf("  sizeof(FreeSector) = %d\n", sizeof(FreeSector));
+  printf("\n");
 }
 
 void RawDisk::ListDirectory(const char *aPath) {

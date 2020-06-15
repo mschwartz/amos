@@ -3,7 +3,7 @@
 
 #include <libgen.h>
 
-const char *RAWFILE = "fs.raw";
+const char *RAWFILE = "fs.img";
 
 const int MAX_ARGS = 8192;
 
@@ -11,7 +11,8 @@ struct TOptions {
   char *filename;
   TUint64 size;
   TBool parent;
-  TBool recurse;
+  TBool recurse; // not implemented
+  TBool verbose;
   char *command;
   TInt arg_count;
   char *args[MAX_ARGS];
@@ -19,6 +20,8 @@ struct TOptions {
     filename = strdup(RAWFILE);
     size = 10 * 1024 * 1024;
     parent = EFalse;
+    recurse = EFalse;
+    verbose = EFalse;
     command = ENull;
     arg_count = 0;
     for (int i = 0; i < MAX_ARGS; i++) {
@@ -44,11 +47,12 @@ int help(const char *av0) {
   printf("  * -s image_size (in bytes)\n");
   printf("  * -p (create parent directories for mkdir and copy)\n");
   printf("  * -r recursive (TBD)\n");
+  printf("  * -v verbose\n");
   return -1;
 }
 
 int main(int ac, char *av[]) {
-  const char *opts = "f:s:pr";
+  const char *opts = "f:s:prv";
   TOptions options;
 
   int opt;
@@ -65,6 +69,9 @@ int main(int ac, char *av[]) {
         break;
       case 'r':
         options.recurse = ETrue;
+        break;
+      case 'v':
+        options.verbose = ETrue;
         break;
       default:
         return help(av[0]);
@@ -166,19 +173,21 @@ int main(int ac, char *av[]) {
         else {
           sprintf(dstfn, "%s/%s", dstpath, srcfile);
         }
-        printf("cp %-64.64s => %s\n", hostpath, dstfn);
+        if (options.verbose) {
+          printf("cp %-64.64s => %s\n", hostpath, dstfn);
+        }
         raw.CopyFile(dstfn, hostpath);
 
-	delete[] dstfile;
-	delete[] srcfile;
-	delete[] hostpath;
+        delete[] dstfile;
+        delete[] srcfile;
+        delete[] hostpath;
       }
     }
     else {
       printf("raw.CopyFile(%s, %s)\n", dstpath, options.args[0]);
       raw.CopyFile(dstpath, options.args[0]);
     }
-    delete [] dstpath;
+    delete[] dstpath;
     raw.Write();
   }
 

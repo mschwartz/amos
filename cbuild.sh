@@ -141,12 +141,16 @@ echo ""
 echo ""
 echo "Building disk image"
 cd ..
-./tools/build-img boot/boot.img kernel/kernel.img
-rm -f c.img
+cd iso
+./make-iso.sh
+cd ..
+./tools/build-img boot/boot.img kernel/kernel.img iso/fs.img
+
 
 echo ""
 echo ""
-bximage -q -mode=create -hd=10M -imgmode=flat c.img c.img
+rm -f c.img
+bximage -q -mode=create -hd=12M -imgmode=flat c.img c.img
 echo "cat < bare.img 1<>c.img"
 cat < bare.img 1<>c.img
 

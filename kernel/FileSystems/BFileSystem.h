@@ -49,6 +49,12 @@ const TUint64 S_IWOTH = 0002;
 const TUint64 S_IXOTH = 0001;
 const TUint64 S_IRWXO = (S_IROTH | S_IWOTH | S_IXOTH);
 
+struct BaseSector {
+  TUint64 mLba,
+    mLbaNext,
+    mLbaOwner;
+};
+
 typedef struct {
   TUint64 mLbaRoot, // LBA of / (root of filesystem)
     mLbaHeap,       // LBA of first free sector on disk
@@ -57,15 +63,9 @@ typedef struct {
   TUint64 mUsed,    // count of used bytes
     mFree;          // count of free bytes
   TUint64 mBlocksUsed, mBlocksFree;
-  TUint64 mType;    // file system type (Ext2, Ext3, Ext4, FAT, AMOS, ...)
+  TUint64 mType; // file system type (Ext2, Ext3, Ext4, FAT, AMOS, ...)
   char mVolumeName[FILESYSTEM_NAME_MAXLEN + 1];
 } PACKED RootSector;
-
-struct BaseSector {
-  TUint64 mLba,
-    mLbaNext,
-    mLbaOwner;
-};
 
 typedef struct {
   TUint64 mMode;
@@ -79,7 +79,7 @@ typedef struct {
 } PACKED DirectoryStat;
 
 struct DirectorySector : public BaseSector {
-  TUint64 mLbaFirst;  // LBA of file data on disk or first DirectorySector in subdir
+  TUint64 mLbaFirst; // LBA of file data on disk or first DirectorySector in subdir
 
   char mFilename[FILESYSTEM_NAME_MAXLEN + 1];
   DirectoryStat mStat;
@@ -118,6 +118,9 @@ public:
   ~FileDescriptor();
 
 public:
+  TBool Alive() { return mAlive; }
+
+public:
   TBool Truncate();
   TBool Open();
   TInt64 Read(TAny *aBuffer, TUint64 aSize);
@@ -133,8 +136,8 @@ public:
   }
 
 protected:
-  DirectorySector *mDirectoryEntry;
-  DataSector *mFirstDataSector;
+  TBool mAlive;
+  DirectorySector mDirectoryEntry;
   TUint64 mFilePosition;
 };
 
@@ -150,13 +153,52 @@ protected:
   DirectorySector *mDirectoryEntry;
 };
 
-class SimpleFileSystem : public BNode {
+class BFileSystem : public BNode {
 public:
-  SimpleFileSystem(const char *aName);
+  BFileSystem(const char *aName) : BNode(aName) {}
+};
+
+class BFileSystemList : public BList {
+};
+
+enum EFileSystemError {
+  EFileSystemErrorNone,
+};
+
+enum EFileSystemCommand {
+  EFileSystemOpenDirectory,
+  EFileSystemReadDirectory,
+  EFileSystemCloseDirector,
+  EFileSystemMakeDirectory,
+  EFileSystemRemoveDirectory,
+  EFileSystemOpen,
+  EFileSystemRead,
+  EFileSystemWrite,
+  EFileSystemClose,
+  EFileSystemRemoveFile,
+};
+
+class FileSystemMessage : public Message {
+public:
+  FileSystemMessage(MessagePort *aReplyPort, EFileSystemCommand aCommand) : BMessagwe(aReplyPort) {
+    mError = EFileSystemErrorNone;
+  }
+
+public:
+  EFileSystemCommand mCommand;
+  EFileSystemError mError;
+  TAny *mBuffer; // filename, read buffer, write buffer
+  TInt64 mCount; // bytes to read/write, returned number of bytes actually read/written
+};
+
+class SimpleFileSystem : public BFileSystem {
+public:
+  SimpleFileSystem(const char *aDiskDevice, TUint64 aUnit, TUint64 aRootLba);
 
 protected:
-  RootSector *mRootSector;
-  BAvlTree mDiskCache;
+  const char *mDiskDevice;
+  TUint64 mUnit;
+  TUint64 mRootLba;
 };
 
 #endif

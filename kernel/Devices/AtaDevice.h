@@ -18,7 +18,19 @@ public:
       : BMessage(aReplyPort), mCommand(aCommand) {
     mError = EAtaErrorNone;
   }
-  ~AtaMessage();
+  ~AtaMessage() {}
+
+public:
+  /**
+   * Reuse the message, by setting the argument members.
+   *
+   * This saves us from having to new/delete over and over.
+   */
+  void Reuse(TUint64 aLba, TAny *aBuffer, TInt32 aCount) {
+    mLba = aLba;
+    mBuffer = aBuffer;
+    mCount = aCount;
+  }
 
 public:
   static AtaMessage *CreateReadMessaage(MessagePort *aReplyPort,

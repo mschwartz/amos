@@ -111,7 +111,7 @@ int main(int ac, char *av[]) {
   ptr[2] = boot.blocks + 1; // kernel_sector
   printf("  kernel_sectors: %d\n", kernel.blocks + 1);
   ptr[3] = kernel.blocks;   // kernel_sectors
-  ptr[4] = fs.alive ? ptr[3] + ptr[2] : 0; // fs_sector
+  ptr[4] = fs.alive ? (ptr[3] + ptr[2] -1) : 0; // fs_sector
   printf("  root_sector: %d\n\n", ptr[4]);
 
   int fd = open(BARE_FILE, O_WRONLY | O_CREAT | O_TRUNC, 0644);

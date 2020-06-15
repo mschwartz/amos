@@ -17,6 +17,8 @@
 #include <Devices/RtcDevice.h>
 #include <Devices/MouseDevice.h>
 
+#include <FileSystems/BFileSystem.h>
+
 #include <posix/sprintf.h>
 #include <Exec/Random.h>
 
@@ -158,6 +160,9 @@ ExecBase::ExecBase() {
   dlog("  initialize ata disk \n");
   AddDevice(new AtaDevice());
 
+  dlog("  initialize file system\n");
+  AddFileSystem(new SimpleFileSystem("ata.device", 0, gSystemInfo.mRootSector));
+  
   dlog("  initialize Inspiration\n");
   mInspirationBase = new InspirationBase();
   mInspirationBase->Init();
@@ -326,6 +331,10 @@ void ExecBase::AddDevice(BDevice *aDevice) {
 
 BDevice *ExecBase::FindDevice(const char *aName) {
   return mDeviceList.FindDevice(aName);
+}
+
+void ExecBase::AddFileSystem(BFileSystem *aFileSystem) {
+  mFileSystemList.AddHead(*aFileSystem);
 }
 
 class DefaultException : public BInterrupt {

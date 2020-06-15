@@ -36,8 +36,7 @@ public:
   }
 
   void Clear(TUint32 aColor) {
-    dlog("Clear Window\n");
-    mViewPort->Dump();
+    // mViewPort->Dump();
     mViewPort->Clear(aColor);
   }
 

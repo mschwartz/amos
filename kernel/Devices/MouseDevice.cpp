@@ -265,7 +265,6 @@ void MouseTask::Run() {
  *******************************************************************************/
 
 MouseDevice::MouseDevice() : BDevice("mouse.device") {
-  dlog("MouseDevice Construcotr\n");
   TSystemInfo i;
   gExecBase.GetSystemInfo(&i);
   mScreenWidth = i.mScreenWidth;

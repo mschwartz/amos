@@ -45,8 +45,6 @@ BWindow::~BWindow() {
 }
 
 void BWindow::PaintDecorations() {
-  dlog("PaintDecorations\n");
-
   BViewPort32 *vp = mWindowViewPort;
   TInt x1 = 0,
        y1 = 0,

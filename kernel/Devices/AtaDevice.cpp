@@ -330,6 +330,7 @@ public:
 
     TUint8 sigbit = AllocSignal(-1); // this is for signal from IRQ handler(s)
     mSigMask = (1 << sigbit);
+    dlog("AtaTask signal bit %d(%x)\n", sigbit, mSigMask);
 
     // handlers for ATA1 and ATA2 IRQs
     gExecBase.SetIntVector(EAta1IRQ, new AtaInterrupt(this, sigbit, 1));
@@ -354,17 +355,17 @@ public:
 
     ENABLE;
     TAtaDrive *drive0 = &drives[0];
-    dlog("Reading sector 0\n");
-    ata_read_block(drive0, 0, sector);
-    dlog("Read sector 0 complete\n");
-    dhexdump(sector, 16);
+    // dlog("Reading sector 0\n");
+    // ata_read_block(drive0, 0, sector);
+    // dlog("Read sector 0 complete\n");
+    // dhexdump(sector, 16);
     while (1) {
       TUint64 sigs = WaitPort(port, mSigMask);
       dlog("Woke %x\n", sigs);
       if (sigs & mSigMask) {
         dlog("  IRQ SIGNAL\n");
       }
-      else if (sigs & mSigMask) {
+      else {
         dlog("Got Message\n");
         while (AtaMessage *m = (AtaMessage *)port->GetMessage()) {
           switch (m->mCommand) {

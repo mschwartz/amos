@@ -6,6 +6,7 @@
 #include <Exec/BTask.h>
 #include <Exec/MessagePort.h>
 #include <Exec/BDevice.h>
+#include <FileSystems/BFileSystem.h>
 #include <Exec/Random.h>
 
 extern "C" TUint64 GetFlags();
@@ -240,6 +241,15 @@ public:
 protected:
   BDeviceList mDeviceList;
 
+  //
+  // FILESYSTEMS
+  //
+  void AddFileSystem(BFileSystem *aFileSystem);
+  BFileSystem *FindFileSystem(const char *aName);
+
+protected:
+  BFileSystemList mFileSystemList;
+  
 public:
   TUint64 SystemTicks() { return gSystemInfo.mMillis; }
 

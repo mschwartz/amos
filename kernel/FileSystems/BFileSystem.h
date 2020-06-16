@@ -17,6 +17,7 @@
 #include <Exec/Types.h>
 #include <Exec/BList.h>
 #include <Exec/BAvlTree.h>
+#include <Exec/MessagePort.h>
 
 const TInt FILESYSTEM_SECTOR_SIZE = 512;
 const TInt FILESYSTEM_NAME_MAXLEN = 255;
@@ -132,12 +133,12 @@ public:
 
 public:
   TUint64 Size() {
-    return mDirectoryEntry->mStat.mSize;
+    return mDirectorySector.mStat.mSize;
   }
 
 protected:
   TBool mAlive;
-  DirectorySector mDirectoryEntry;
+  DirectorySector mDirectorySector;
   TUint64 mFilePosition;
 };
 
@@ -168,7 +169,7 @@ enum EFileSystemError {
 enum EFileSystemCommand {
   EFileSystemOpenDirectory,
   EFileSystemReadDirectory,
-  EFileSystemCloseDirector,
+  EFileSystemCloseDirectory,
   EFileSystemMakeDirectory,
   EFileSystemRemoveDirectory,
   EFileSystemOpen,
@@ -178,9 +179,9 @@ enum EFileSystemCommand {
   EFileSystemRemoveFile,
 };
 
-class FileSystemMessage : public Message {
+class FileSystemMessage : public BMessage {
 public:
-  FileSystemMessage(MessagePort *aReplyPort, EFileSystemCommand aCommand) : BMessagwe(aReplyPort) {
+  FileSystemMessage(MessagePort *aReplyPort, EFileSystemCommand aCommand) : BMessage(aReplyPort) {
     mError = EFileSystemErrorNone;
   }
 

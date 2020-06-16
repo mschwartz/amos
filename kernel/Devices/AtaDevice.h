@@ -35,12 +35,12 @@ public:
 public:
   static AtaMessage *CreateReadMessaage(MessagePort *aReplyPort,
     TUint8 aUnit,
-    TUint64 aLBA,
+    TUint64 aLba,
     TAny *aBuffer,
     TInt32 aCount) {
     AtaMessage *m = new AtaMessage(aReplyPort, EAtaReadBlocks);
     m->mUnit = aUnit;
-    m->mLBA = aLBA;
+    m->mLba = aLba;
     m->mBuffer = aBuffer;
     m->mCount = aCount;
     return m;
@@ -50,7 +50,7 @@ public:
   EAtaDeviceCommand mCommand;
   EAtaError mError;
   TUint8 mUnit;
-  TUint64 mLBA;
+  TUint64 mLba;
   TAny *mBuffer;
   TUint32 mCount;
 };

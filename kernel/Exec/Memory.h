@@ -23,8 +23,9 @@ extern void operator delete[](void *aMemory, unsigned long aSize);
 extern void operator delete[](void *aMemory);
 
 TInt StringLength(const char *aString);
-char *DuplicateString(const char *aString, EMemoryFlags aMemoryType = MEMF_PUBLIC);
 void CopyString(char *aDestination, const char *aSource);
+char *DuplicateString(const char *aString, EMemoryFlags aMemoryType = MEMF_PUBLIC);
+
 TInt CompareStrings(const char *aString1, const char *aString2);
 
 void SetMemory8(TAny *aDestination, TUint8 aValue, TInt64 aCount);
@@ -33,5 +34,13 @@ void SetMemory32(TAny *aDestination, TUint32 aValue, TInt64 aCount);
 void SetMemory64(TAny *aDestination, TUint64 aValue, TInt64 aCount);
 
 void CopyMemory(TAny *aDestination, TAny *aSource, TInt64 aCount);
+void CopyMemory64(TAny *aDestination, TAny *aSource, TInt64 aCount);
+
+/** 
+ * parse token, separated by aDelim,  from aString into aToken.
+ *
+ * Returns pointer to aString, just past aDelim.
+ */
+char *GetToken(char *aString, char *aToken, const char aDelim);
 
 #endif

@@ -24,17 +24,21 @@ BVectorFont32::~BVectorFont32() {
 }
 
 TInt BVectorFont::Write(TInt aX, TInt aY, TInt16 aChar) {
+  return 8;
 }
 
 TInt BVectorFont::Write(TPoint &aPoint, TInt16 aChar) {
   Write(aPoint.x, aPoint.y, aChar);
+  return 8;
 }
 
 TInt BVectorFont::Write(TInt aX, TInt aY, const char *aString) {
+  return 8;
 }
 
 TInt BVectorFont::Write(TPoint &aPoint, const char *aString) {
   Write(aPoint.x, aPoint.y, aString);
+  return 8;
 }
 
 #if 0

@@ -12,7 +12,7 @@
  * Inherit nodes from BAvlNode.  The mKey value must be unique and is the value you use to reference nodes in the tree.
  */
 
-class BAvlNode : BBase {
+class BAvlNode : public BBase {
 public:
   BAvlNode(TInt64 aKey = 0);
 

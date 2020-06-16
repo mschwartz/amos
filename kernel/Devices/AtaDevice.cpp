@@ -290,7 +290,7 @@ class AtaTask;
 
 class AtaInterrupt : public BInterrupt {
 public:
-  AtaInterrupt(AtaTask *aTask, TUint8 aSignalBit, TInt32 aDevice)
+  AtaInterrupt(AtaTask *aTask, TUint8 aSignalBit, TInt64 aDevice)
       : BInterrupt("keyboard.device", LIST_PRI_MAX, (TAny *)aDevice) {
     mTask = aTask;
     mSignalBit = aSignalBit;
@@ -371,7 +371,7 @@ public:
           switch (m->mCommand) {
             case EAtaReadBlocks: {
               TUint8 *buf = (TUint8 *)m->mBuffer;
-              TUint64 lba = m->mLBA;
+              TUint64 lba = m->mLba;
               for (TInt i = 0; i < m->mCount; i++) {
                 ata_read_block(&drives[m->mUnit], lba, buf);
                 buf += 512;

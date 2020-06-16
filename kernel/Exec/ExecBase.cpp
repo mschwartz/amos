@@ -17,7 +17,7 @@
 #include <Devices/RtcDevice.h>
 #include <Devices/MouseDevice.h>
 
-#include <FileSystems/BFileSystem.h>
+#include <FileSystems/SimpleFileSystem/SimpleFileSystem.h>
 
 #include <posix/sprintf.h>
 #include <Exec/Random.h>

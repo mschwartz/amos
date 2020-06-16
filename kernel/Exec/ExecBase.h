@@ -6,7 +6,7 @@
 #include <Exec/BTask.h>
 #include <Exec/MessagePort.h>
 #include <Exec/BDevice.h>
-#include <FileSystems/BFileSystem.h>
+#include <Exec/BFileSystem.h>
 #include <Exec/Random.h>
 
 extern "C" TUint64 GetFlags();

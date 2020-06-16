@@ -19,9 +19,17 @@
 #include <Exec/BAvlTree.h>
 #include <Exec/MessagePort.h>
 
+#ifdef KERNEL
+#include <Exec/x86/bochs.h>
+#else
+#include <stdio.h>
+#define dlog printf
+#endif
+
 const TInt FILESYSTEM_SECTOR_SIZE = 512;
 const TInt FILESYSTEM_NAME_MAXLEN = 255;
 
+// these are compatible with Linux/Unix
 const TUint64 S_IFMT = 0170000;   // bit mask for the file type bit field
 const TUint64 S_IFSOCK = 0140000; // socket
 const TUint64 S_IFLNK = 0120000;  // symbolic link
@@ -54,6 +62,11 @@ struct BaseSector {
   TUint64 mLba,
     mLbaNext,
     mLbaOwner;
+  void Dump() {
+    dlog("     mLba: %d\n", mLba);
+    dlog(" mLbaNext: %d\n", mLbaNext);
+    dlog("mLbaOwner: %d\n", mLbaOwner);
+  }
 };
 
 typedef struct {
@@ -66,6 +79,16 @@ typedef struct {
   TUint64 mBlocksUsed, mBlocksFree;
   TUint64 mType; // file system type (Ext2, Ext3, Ext4, FAT, AMOS, ...)
   char mVolumeName[FILESYSTEM_NAME_MAXLEN + 1];
+  void Dump() {
+    dlog("RootSector %s\n", mVolumeName);
+    dlog("%d bytes used (%d) / %d bytes free (%d)\n", mUsed, mBlocksUsed, mFree, mBlocksFree);
+    dlog("\n");
+    dlog("  mLbaRoot: %d\n", mLbaRoot);
+    dlog("  mLbaHeap: %d\n", mLbaHeap);
+    dlog("  mLbaFree: %d\n", mLbaFree);
+    dlog("  mLbaMax: %d\n", mLbaMax);
+    dlog("\n");
+  }
 } PACKED RootSector;
 
 typedef struct {
@@ -84,6 +107,17 @@ struct DirectorySector : public BaseSector {
 
   char mFilename[FILESYSTEM_NAME_MAXLEN + 1];
   DirectoryStat mStat;
+  // void Stat();
+  void Dump() {
+    dlog("Directory Sector %s\n", mFilename);
+    BaseSector::Dump();
+    // dlog("  mLba: %d\n", s->mLba);
+    // printf("  mLbaRoot: %d\n", s->mLbaRoot);
+    // printf("  mLbaHeap: %d\n", s->mLbaHeap);
+    // printf("  mLbaFree: %d\n", s->mLbaFree);
+    // printf("  mLbaMax: %d\n", s->mLbaMax);
+    dlog("\n");
+  }
 } PACKED;
 
 struct DataSector : public BaseSector {
@@ -98,29 +132,21 @@ struct FreeSector : public BaseSector {
  ********************************************************************************
  *******************************************************************************/
 
-struct CachedRootSector : public BAvlNode {
+// BAvlNode.mKey is the LBA of the sector
+// cast the sector member to the appropriate *Sector above
+struct CachedSector : public BAvlNode {
+  CachedSector(TUint64 aLba) : BAvlNode(aLba) { mLru = 0; }
   TUint64 mLru; // least recently used timestamp
-  RootSector sector;
+  TUint8 mSector[512];
 };
 
-struct CachedDirectorySector : public BAvlNode {
-  TUint64 mLru; // least recently used timestamp
-  DirectorySector sector;
-};
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
-struct CachedDataSector : public BAvlNode {
-  TUint64 mLru; // least recently used timestamp
-  DataSector sector;
-};
-
-class FileDescriptor : public BNode {
+struct FileDescriptor : public BNode {
 public:
-  FileDescriptor(const char *aFilename);
-  ~FileDescriptor();
-
-public:
-  TBool Alive() { return mAlive; }
-
+  FileDescriptor() : BNode("FileDescriptor") {}
 public:
   TBool Truncate();
   TBool Open();
@@ -133,14 +159,19 @@ public:
 
 public:
   TUint64 Size() {
-    return mDirectorySector.mStat.mSize;
+    return mDirectorySector->mStat.mSize;
   }
 
-protected:
-  TBool mAlive;
-  DirectorySector mDirectorySector;
+public:
+  DirectorySector *mDirectorySector;
+  DataSector *mDataSector;
+  TUint64 mDataIndex; // index into current data sector
   TUint64 mFilePosition;
 };
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 class DirectoryDescriptor : public BNode {
 public:
@@ -154,16 +185,31 @@ protected:
   DirectorySector *mDirectoryEntry;
 };
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 class BFileSystem : public BNode {
 public:
-  BFileSystem(const char *aName) : BNode(aName) {}
+  BFileSystem(const char *aName);
+  ~BFileSystem();
 };
 
 class BFileSystemList : public BList {
 };
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 enum EFileSystemError {
   EFileSystemErrorNone,
+  EFileSystemErrorNotFound,
+  EFileSystemErrorNotADirectory,
+  EFileSystemErrorNotAFile,
+  EFileSystemErrorInvalidPath,
+  EFileSystemErrorEndOfFile,
+  EFileSystemErrorFileNotOpen,
 };
 
 enum EFileSystemCommand {
@@ -183,23 +229,16 @@ class FileSystemMessage : public BMessage {
 public:
   FileSystemMessage(MessagePort *aReplyPort, EFileSystemCommand aCommand) : BMessage(aReplyPort) {
     mError = EFileSystemErrorNone;
+    mFlags = 0;
   }
 
 public:
   EFileSystemCommand mCommand;
   EFileSystemError mError;
+  FileDescriptor mFileDescriptor;
   TAny *mBuffer; // filename, read buffer, write buffer
   TInt64 mCount; // bytes to read/write, returned number of bytes actually read/written
-};
-
-class SimpleFileSystem : public BFileSystem {
-public:
-  SimpleFileSystem(const char *aDiskDevice, TUint64 aUnit, TUint64 aRootLba);
-
-protected:
-  const char *mDiskDevice;
-  TUint64 mUnit;
-  TUint64 mRootLba;
+  TInt64 mFlags;
 };
 
 #endif

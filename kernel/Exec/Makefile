@@ -1,6 +1,6 @@
 G=		../Graphics
 D=		../Devices
-F=		../FileSystems
+SF=		../FileSystems/SimpleFileSystem
 
 GFX=		$(G)/TRect.o $(G)/BBitmap.o $(G)/bitmap/BBitmap32.o $(G)/BViewPort.o 
 
@@ -14,9 +14,9 @@ TYPES=		Types.o Types/TBCD.o
 
 CONTAINERS= 	BList.o BAvlTree.o BHashTable.o
 
-FS=		$(F)/BFileSystem.o
+FS=		$(SF)/SimpleFileSystem.o  $(SF)/SimpleFileSystemTask.o
 
-EXEC=		Memory.o BBase.o Random.o MessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o 
+EXEC=		Memory.o BBase.o Random.o MessagePort.o BInterrupt.o BTask.o BDevice.o BFileSystem.o ExecBase.o 
 
 OBJ= 	 	$(FS) $(TYPES) $(X86) $(DEVICES)  $(GFX) $(FONTS) $(CONTAINERS) $(EXEC)
 

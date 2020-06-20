@@ -13,6 +13,7 @@ struct FileDescriptor : public BNode {
   FileDescriptor(const char *aName);
   ~FileDescriptor();
   FileSystemMessage mMessage;
+  EFileSystemError mError;
 
   TBool IsFile() { return mMessage.mDescriptor.IsFile(); }
   TBool IsDirectory() { return mMessage.mDescriptor.IsDirectory(); }

@@ -16,7 +16,7 @@
 
 #include <Exec/Types.h>
 #include <Exec/Types/BList.h>
-#include <Exec/Types/BAvlTree.h>
+#include <Exec/Types/BSparseArray.h>
 #include <Exec/MessagePort.h>
 
 #ifdef KERNEL
@@ -96,7 +96,7 @@ typedef struct {
   }
 } PACKED RootSector;
 
-typedef struct {
+typedef struct ds_tag {
   TUint64 mMode;
   TUint64 mNumLinks;
   TUint64 mOwner;
@@ -105,6 +105,43 @@ typedef struct {
   TUint64 mAccessTime, // last time file data was accessed
     mModifiedTime,     // last time file data was modified
     mChangeTime;       // last time file status changed
+
+protected:
+  static char *format_user(char *buf, TUint64 uid) {
+    CopyString(buf, "root");
+    return buf;
+  }
+
+  static char *format_group(char *buf, TUint64 gid) {
+    CopyString(buf, "root");
+    return buf;
+  }
+  static void format_mode(char *buf, TUint64 aMode) {
+    buf[0] = (aMode & S_IFDIR ? 'd' : '-');
+    buf[1] = (aMode & S_IRUSR ? 'r' : '-');
+    buf[2] = (aMode & S_IWUSR ? 'w' : '-');
+    buf[3] = (aMode & S_IXUSR ? 'x' : '-');
+    buf[4] = (aMode & S_IRGRP ? 'r' : '-');
+    buf[5] = (aMode & S_IWGRP ? 'w' : '-');
+    buf[6] = (aMode & S_IXGRP ? 'x' : '-');
+    buf[7] = (aMode & S_IROTH ? 'r' : '-');
+    buf[8] = (aMode & S_IWOTH ? 'w' : '-');
+    buf[9] = (aMode & S_IXOTH ? 'x' : '-');
+    buf[10] = '\0';
+  }
+
+  static void print_one(TUint64 aMode, TUint64 aUser, TUint64 aGroup, TUint64 aSize, const char *aFilename) {
+    char mode[16], user[16], group[16], *path = DuplicateString("/");
+    format_mode(mode, aMode);
+    format_user(user, aUser);
+    format_group(group, aGroup);
+    dlog("%s %s %s %8d %s\n", mode, user, group, aSize, aFilename);
+  }
+
+public:
+  static void Dump(const ds_tag *s, const char *aFilename) {
+    print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, aFilename);
+  }
 } PACKED DirectoryStat;
 
 struct DirectorySector : public BaseSector {
@@ -136,8 +173,8 @@ struct FreeSector : public BaseSector {
 
 // BAvlNode.mKey is the LBA of the sector
 // cast the sector member to the appropriate *Sector above
-struct CachedSector : public BAvlNode {
-  CachedSector(TUint64 aLba) : BAvlNode(aLba) {
+struct CachedSector : public BSparseArrayNode {
+  CachedSector(TUint64 aLba) : BSparseArrayNode("cached sector", aLba) {
     mLru = 0;
   }
   TUint64 mLru; // least recently used timestamp
@@ -150,7 +187,9 @@ struct CachedSector : public BAvlNode {
 
 struct FileSystemDescriptor : public BBase {
 public:
-  FileSystemDescriptor() { Reuse(); }
+  FileSystemDescriptor() {
+    Reuse();
+  }
 
 public:
   TBool IsFile() { return mDirectorySector->mStat.mMode & S_IFREG; }
@@ -159,14 +198,14 @@ public:
 public:
   DirectorySector *mDirectorySector;
   DataSector *mDataSector;
-  TUint64 mDataIndex; // index into current data sector
-  TUint64 mFilePosition;
+  TInt64 mDataIndex; // index into current data sector
+  TInt64 mFilePosition;
 
 public:
   void Reuse() {
     mDirectorySector = ENull;
-    mDataSector = ENull;
     mDataIndex = 0;
+    mDataSector = ENull;
     mFilePosition = 0;
   }
 
@@ -177,6 +216,7 @@ public:
     dlog("  mDataSector: %x\n", mDataSector);
     dlog("  mDataIndex: %d\n", mDataIndex);
     dlog("  mFilePosition: %d\n", mFilePosition);
+    mDirectorySector->Dump();
   }
 };
 
@@ -252,7 +292,7 @@ public:
     mError = EFileSystemErrorNone;
     mFlags = 0;
     mCount = 0;
-    mDescriptor.Reuse();
+    // mDescriptor.Reuse();
   }
 
 public:

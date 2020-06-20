@@ -2,6 +2,9 @@
 #include <Devices/AtaDevice.h>
 #include <Exec/BTask.h>
 
+#define DEBUGME
+#undef DEBUGME
+
 #define ATA_PRIMARY 0x1F0
 #define ATA_SECONDARY 0x170
 #define ATA_MASTER 0x00
@@ -203,11 +206,7 @@ static int ata_read_block(TAtaDrive *drive, TUint64 lba, TAny *buffer) {
  *******************************************************************************/
 
 static int ata_write_block(TAtaDrive *drive, TUint64 lba, TAny *buffer) {
-  bochs
-    bochs
-      bochs
-        bochs
-          TUint8 ms = TUint8(drive->mMasterSlave);
+  TUint8 ms = TUint8(drive->mMasterSlave);
   TUint8 lbal = ms | 0xe0 | ((lba >> 24) & 0x0f);
   TAtaCommand command = {
     .bus = drive->bus,
@@ -370,10 +369,12 @@ public:
       }
       else {
         while (AtaMessage *m = (AtaMessage *)port->GetMessage()) {
-	  // dlog("Got Message %d\n", m->mCommand);
-	  switch (m->mCommand) {
+          // dlog("Got Message %d\n", m->mCommand);
+          switch (m->mCommand) {
             case EAtaReadBlocks: {
-	      dlog("ata read blocks(%x, %d, %d)\n", m->mBuffer, m->mLba, m->mCount);
+#ifdef DEBUGME
+              dlog("ata read blocks(%x, %d, %d)\n", m->mBuffer, m->mLba, m->mCount);
+#endif
               TUint8 *buf = (TUint8 *)m->mBuffer;
               TUint64 lba = m->mLba;
               for (TInt i = 0; i < m->mCount; i++) {
@@ -385,7 +386,9 @@ public:
           }
           m->ReplyMessage();
         }
-	dlog("end of messages\n");
+#ifdef DEBUGME
+        dlog("end of messages\n");
+#endif
       }
     }
   }
@@ -410,7 +413,9 @@ AtaDevice::~AtaDevice() {
 
 TBool AtaInterrupt::Run(TAny *aData) {
   TUint64 num = (TUint64)aData;
+#ifdef DEBUGME
   dlog("----> Ata Interrupt %d\n", num);
+#endif
 
   gExecBase.AckIRQ(num == 1 ? IRQ_ATA1 : IRQ_ATA2);
   // mTask->Signal(1 << mSignalBit);

@@ -33,6 +33,7 @@ TBool BProcess::DoIO(FileDescriptor *aFileDescriptor) {
 
   if (!port) {
     dlog("no simple.filesystem port\n");
+    bochs;
     return EFalse;
   }
 
@@ -43,11 +44,13 @@ TBool BProcess::DoIO(FileDescriptor *aFileDescriptor) {
   aFileDescriptor->mMessage.SendMessage(port);
   WaitPort(mFsReplyPort);
   FileSystemMessage *m;
-  while (m = (FileSystemMessage *)mFsReplyPort->GetMessage()) {
+  while ((m = (FileSystemMessage *)mFsReplyPort->GetMessage())) {
     if (m != &aFileDescriptor->mMessage) {
       delete m;
     }
   }
+  // aFileDescriptor->Dump();
+  // dlog("DoIO success\n");
   return ETrue;
 }
 
@@ -67,16 +70,24 @@ FileDescriptor *BProcess::OpenDirectory(const char *aFilename) {
 
   fd->mMessage.Reuse(EFileSystemOpenDirectory);
   fd->mMessage.mBuffer = DuplicateString(fd->mNodeName);
+
   // dlog("new fd %x (%s)\n", fd, fd->mMessage.mBuffer);
   DoIO(fd);
+
   delete[](TUint8 *) fd->mMessage.mBuffer;
+  fd->mMessage.mBuffer = ENull;
+
   return fd;
 }
 
 TBool BProcess::ReadDirectory(FileDescriptor *aFileDescriptor) {
+  // dlog("BProcess:ReadDirectory\n");
   aFileDescriptor->mMessage.Reuse(EFileSystemReadDirectory);
-  aFileDescriptor->mMessage.mBuffer = DuplicateString(mNodeName);
+  // aFileDescriptor->mMessage.mBuffer = DuplicateString(mNodeName);
   DoIO(aFileDescriptor);
+  if (aFileDescriptor->mError != EFileSystemErrorNone) {
+    return EFalse;
+  }
   return ETrue;
 }
 

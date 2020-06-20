@@ -20,7 +20,7 @@ public:
   BSparseArrayNode(const char *aName, TInt64 mKey);
   ~BSparseArrayNode();
 
-protected:
+public:
   TInt64 mSparseKey;
 };
 
@@ -30,7 +30,7 @@ protected:
 
 class BSparseArray : public BBase {
 public:
-  BSparseArray(TInt aSparseArrayBuckets = SPARSEARRAY_BUCKETS);
+  BSparseArray(TInt aSparseArrayBuckets = MAX_SPARSEARRAY_BUCKETS);
   ~BSparseArray();
 
 public:
@@ -43,7 +43,7 @@ public:
 protected:
   TInt64 mCount;
   TInt64 mSparseArrayBuckets; // number of buckets
-  BList *mSparseArrayLists;
+  BList mSparseArrayLists[MAX_SPARSEARRAY_BUCKETS];
 };
 
 #endif

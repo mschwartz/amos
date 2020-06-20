@@ -10,12 +10,7 @@ class SimpleFileSystem;
 
 class SimpleFileSystemTask : public BTask {
 public:
-  SimpleFileSystemTask(SimpleFileSystem *aFileSystem, const char *aDiskDevice, TUint64 aUnit, TUint64 aRootLba)
-      : BTask("filesystem.task"), mDiskDevice(aDiskDevice) {
-    mFileSystem = aFileSystem;
-    mUnit = aUnit;
-    mRootLba = aRootLba;
-  }
+  SimpleFileSystemTask(SimpleFileSystem *aFileSystem, const char *aDiskDevice, TUint64 aUnit, TUint64 aRootLba);
   ~SimpleFileSystemTask() {
     // should only happen if filesystem is unmounted
     bochs;
@@ -59,7 +54,6 @@ protected:
   TUint64 mRootLba;
   RootSector mRootSector;
   BSparseArray *mDiskCache;
-  // BAvlTree mDiskCache;
   MessagePort *mAtaReplyPort, *mAtaPort;
   AtaMessage *mAtaMessage;
   EFileSystemError mError;

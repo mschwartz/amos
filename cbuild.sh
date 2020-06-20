@@ -8,13 +8,13 @@ set -e
 echo ""
 echo ""
 echo "RCOMP"
-rm -f ./kernel/Exec/Memory.o ./kernel/Exec/BBase.o ./kernel/Exec/BList.o ./kernel/Exec/BSymbolTable.o
+rm -f ./kernel/Exec/Memory.o ./kernel/Exec/BBase.o ./kernel/Exec/Types/BList.o ./kernel/Exec/Types/BSymbolTable.o
 cd tools/rcomp-src && make
 
 echo ""
 echo ""
 echo "DISK-TOOL"
-rm -f ./kernel/Exec/Memory.o ./kernel/Exec/BBase.o ./kernel/Exec/BList.o ./kernel/Exec/BSymbolTable.o
+rm -f ./kernel/Exec/Memory.o ./kernel/Exec/BBase.o ./kernel/Exec/BList.o ./kernel/Exec/Types/BSymbolTable.o
 cd $TOP_DIR/tools/disk-tool && make
 
 cd $TOP_DIR

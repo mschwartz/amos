@@ -46,13 +46,14 @@ static void format_mode(char *buf, TUint64 aMode) {
   buf[10] = '\0';
 }
 
+#if 0
 static char *format_user(char *buf, TUint64 uid) {
-  strcpy(buf, "root");
+  CopyString(buf, "root");
   return buf;
 }
 
 static char *format_group(char *buf, TUint64 gid) {
-  strcpy(buf, "root");
+  CopyString(buf, "root");
   return buf;
 }
 
@@ -63,26 +64,36 @@ static void print_one(TUint64 aMode, TUint64 aUser, TUint64 aGroup, TUint64 aSiz
   format_group(group, aGroup);
   dlog("%s %s %s %8d %s\n", mode, user, group, aSize, aFilename);
 }
+#endif
+
 void TestTask::Run() {
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
 
-  dlog("about to open directory\n");
-  FileDescriptor *fd = OpenDirectory("/");
-  dlog("open directory %x\n", fd);
+  FileDescriptor *fd = OpenDirectory("/fonts");
   if (!fd) {
-    dlog("Could not open directory /\n");
+    dlog("Could not open directory /fonts\n");
   }
   else {
     // dlog("opened directory /\n");
     // fd->Dump();
     const DirectoryStat *s = fd->Stat();
-    print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, fd->Filename());
+    const char *fn = fd->Filename();
+    DirectoryStat::Dump(s, fn);
+    // s->Dump(fn);
+
+    // print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, fd->Filename());
     // dlog("about to read directory /\n");
-    while (ReadDirectory(fd)) {
-    // dlog("read directory /\n");
-      print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, fd->Filename());
-    break;
+    int count = 0;
+    while (ReadDirectory(fd) && count++ < 150) {
+      const DirectoryStat *s = fd->Stat();
+      DirectoryStat::Dump(s, fd->Filename());
+      if (CompareStrings(fd->Filename(), "..") == 0) {
+	fd->Dump();
+	break;
+      }
+      // print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, fd->Filename());
+      // break;
     }
   }
   CloseDirectory(fd);

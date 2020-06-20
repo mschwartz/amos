@@ -35,7 +35,9 @@ void TestTask::Run() {
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
 
-  FileDescriptor *fd = OpenDirectory("/fonts");
+  FileDescriptor *fd;
+#if 1
+  fd = OpenDirectory("/fonts");
   if (!fd) {
     dlog("Could not open directory /fonts\n");
   }
@@ -51,15 +53,31 @@ void TestTask::Run() {
     }
   }
   CloseDirectory(fd);
+#endif
 
+#if 1
   fd = OpenFile("/fonts/README.psfu");
   if (!fd) {
     dlog("Could not open /fonts/README.psfu\n");
   }
   else {
-    dlog("Opened REAFME\n");
-    fd->Dump();
+    dprint("\n\n");
+    char buf[512];
+    while (ETrue) {
+      TUint64 actual = ReadFile(fd, buf, 512);
+      if (actual == 0) {
+	break;
+      }
+      // dhexdump(buf, 32);
+      for (TUint64 x = 0; x < actual; x++) {
+      	dputc(buf[x]);
+      }
+    }
+    dprint("\n\n");
+    CloseFile(fd);
   }
+#endif
+
   ScreenVesa &screen = mInspirationBase.GetScreen();
   screen.Clear(0x4f4fff);
 

@@ -39,7 +39,10 @@ public:
 
 public:
   FileDescriptor *OpenFile(const char *aName);
-  TBool ReadFile(FileDescriptor *aFileDescriptor, TAny *aBuffer, TUint64 aSize);
+  /**
+   * Read from file into buffer for aSize bytes.  Returns actual bytes read, or 0
+   */
+  TUint64 ReadFile(FileDescriptor *aFileDescriptor, TAny *aBuffer, TUint64 aSize);
   TBool WriteFile(FileDescriptor *aFileDescriptor, TAny *aBuffer, TUint64 aSize);
   TBool CloseFile(FileDescriptor *aFileDescriptor);
   TBool RemoveFile(FileDescriptor *aFileDescriptor);

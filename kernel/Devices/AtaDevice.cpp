@@ -233,7 +233,7 @@ static int ata_write_block(TAtaDrive *drive, TUint64 lba, TAny *buffer) {
  *******************************************************************************/
 
 static TBool init_drive(TAtaDrive *drive, TInt num) {
-  dprint("init_drive(%d)\n", num);
+  dlog("init_drive(%d)\n", num);
   TInt16 bus = drive->bus;
   // Check if the controller exists
   // by writing a value to it and check
@@ -242,7 +242,7 @@ static TBool init_drive(TAtaDrive *drive, TInt num) {
   outb(ATA_LBAL(bus), (~v1) & 0xFF);
   int v2 = inb(ATA_LBAL(bus));
   if (v2 != ((~v1) & 0xFF)) {
-    dprint("Controller does not exist drive %d bus %x\n", num, drive - drive->bus);
+    dlog("Controller does not exist drive %d bus %x\n", num, drive - drive->bus);
     return EFalse;
   }
 
@@ -250,7 +250,7 @@ static TBool init_drive(TAtaDrive *drive, TInt num) {
   // by selecting the drive
   outb(ATA_DEVICE(bus), 0xA0 | drive->mMasterSlave);
   if (!(ata_wait_status(bus) & ATA_RDY)) {
-    dprint("Drive %d does not exist bus %x\n", num, drive->mMasterSlave);
+    dlog("Drive %d does not exist bus %x\n", num, drive->mMasterSlave);
     return EFalse;
   }
 
@@ -270,7 +270,7 @@ static TBool init_drive(TAtaDrive *drive, TInt num) {
     command.command = ATA_CMD_IDENTIFY_PACKET;
   }
   if (!ata_send_command(&command)) {
-    dprint("init drive %d ata_send_command failed\n", num);
+    dlog("init drive %d ata_send_command failed\n", num);
     return EFalse;
   }
 

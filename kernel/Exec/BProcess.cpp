@@ -59,7 +59,7 @@ TBool BProcess::DoIO(FileDescriptor *aFileDescriptor) {
  ********************************************************************************
  *******************************************************************************/
 FileDescriptor::FileDescriptor(const char *aName) : BNode(aName) {
-  dlog("Construct FileDescriptor(%s)\n", mNodeName);
+  // dlog("Construct FileDescriptor(%s)\n", mNodeName);
 }
 
 FileDescriptor::~FileDescriptor() {
@@ -78,6 +78,11 @@ FileDescriptor *BProcess::OpenDirectory(const char *aFilename) {
   delete[](TUint8 *) fd->mMessage.mBuffer;
   fd->mMessage.mBuffer = ENull;
 
+  if (fd->mError != EFileSystemErrorNone) {
+    delete fd;
+    return ENull;
+  }
+
   return fd;
 }
 
@@ -92,6 +97,7 @@ TBool BProcess::CloseDirectory(FileDescriptor *aFileDescriptor) {
   aFileDescriptor->mMessage.Reuse(EFileSystemCloseDirectory);
   aFileDescriptor->mMessage.mBuffer = DuplicateString(mNodeName);
   DoIO(aFileDescriptor);
+  delete [] (char *)aFileDescriptor->mMessage.mBuffer;
   return ETrue;
 }
 
@@ -100,11 +106,35 @@ TBool BProcess::CloseDirectory(FileDescriptor *aFileDescriptor) {
  *******************************************************************************/
 
 FileDescriptor *BProcess::OpenFile(const char *aFilename) {
-  return ENull;
+  FileDescriptor *fd = new FileDescriptor(aFilename);
+
+  fd->mMessage.Reuse(EFileSystemOpen);
+  fd->mMessage.mBuffer = DuplicateString(fd->mNodeName);
+
+  // dlog("new fd %x (%s)\n", fd, fd->mMessage.mBuffer);
+  DoIO(fd);
+
+  delete[](TUint8 *) fd->mMessage.mBuffer;
+  fd->mMessage.mBuffer = ENull;
+
+  if (fd->mError != EFileSystemErrorNone) {
+    delete fd;
+    return ENull;
+  }
+
+  return fd;
 }
 
-TBool BProcess::ReadFile(FileDescriptor *aFileDescriptor, TAny *aBuffer, TUint64 aSize) {
-  return EFalse;
+TUint64 BProcess::ReadFile(FileDescriptor *aFileDescriptor, TAny *aBuffer, TUint64 aSize) {
+  aFileDescriptor->mMessage.Reuse(EFileSystemRead);
+  aFileDescriptor->mMessage.mBuffer = aBuffer;
+  aFileDescriptor->mMessage.mCount = aSize;
+
+  DoIO(aFileDescriptor);
+  if (aFileDescriptor->mError != EFileSystemErrorNone) {
+    return 0;
+  }
+  return aFileDescriptor->mMessage.mCount;
 }
 
 TBool BProcess::WriteFile(FileDescriptor *aFileDescriptor, TAny *aBuffer, TUint64 aSize) {
@@ -112,7 +142,11 @@ TBool BProcess::WriteFile(FileDescriptor *aFileDescriptor, TAny *aBuffer, TUint6
 }
 
 TBool BProcess::CloseFile(FileDescriptor *aFileDescriptor) {
-  return EFalse;
+  aFileDescriptor->mMessage.Reuse(EFileSystemClose);
+  aFileDescriptor->mMessage.mBuffer = DuplicateString(mNodeName);
+  DoIO(aFileDescriptor);
+  delete [] (char *)aFileDescriptor->mMessage.mBuffer;
+  return ETrue;
 }
 
 TBool BProcess::RemoveFile(FileDescriptor *aFileDescriptor) {

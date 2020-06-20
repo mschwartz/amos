@@ -97,6 +97,7 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
 
   while (ETrue) {
     char next_token[256];
+    next_token[0] = '\0';
     xpath = GetToken(xpath, next_token, '/');
     DirectorySector *d = Find(token, cwd);
 
@@ -108,17 +109,18 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
     }
 
     DirectoryStat *s = &d->mStat;
+    // DirectoryStat::Dump(s, d->mFilename);
     if (s->mMode & S_IFDIR) {
       if (next_token[0] != '\0') {
         cwd = (DirectorySector *)Sector(cwd->mLbaFirst);
+        // cwd->Dump();
       }
       else {
-        cwd = d;
-        break;
+        return d;
       }
     }
     else if (s->mMode & S_IFREG && next_token[0] == '\0') {
-      break;
+      return d;
     }
     else {
       // not a directory, so it cannot be .../file/more...
@@ -130,8 +132,6 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
     }
     CopyString(token, next_token);
   }
-
-  return cwd;
 }
 
 /********************************************************************************
@@ -179,55 +179,60 @@ void SimpleFileSystemTask::RemoveDirectory(FileSystemMessage *f) {}
  *******************************************************************************/
 
 void SimpleFileSystemTask::OpenFile(FileSystemMessage *f) {
-  FileSystemDescriptor *file = (FileSystemDescriptor *)&f->mDescriptor;
-  file->mDirectorySector = ENull;
-  file->mDataSector = ENull;
-  file->mDataIndex = 0;
-  file->mFilePosition = 0;
-
-  DirectorySector *d = FindPath((const char *)&f->mBuffer);
-  if (!d) {
-    f->mError = EFileSystemErrorNotFound;
-    return;
-  }
-  if (!(d->mStat.mMode & S_IFREG)) {
-    f->mError = EFileSystemErrorNotAFile;
-  }
-
-  file->mDirectorySector = d;
+  DirectorySector *d = FindPath((char *)f->mBuffer);
+  f->mDescriptor.mDirectorySector = d;
+  f->mError = mError;
+  f->mDescriptor.mDataSector = d->mLbaFirst ? (DataSector *)Sector(d->mLbaFirst) : ENull;
+  f->mDescriptor.mDataIndex = 0;
+  f->mDescriptor.mFilePosition = 0;
 }
 
 void SimpleFileSystemTask::ReadFile(FileSystemMessage *f) {
+  TUint64 actual = 0;
+
   FileSystemDescriptor *file = (FileSystemDescriptor *)&f->mDescriptor;
   if (file->mDirectorySector == ENull) {
+    dlog("*** file not open\n");
     f->mError = EFileSystemErrorFileNotOpen;
+    f->mCount = actual;
+    return;
   }
-  else if (file->mFilePosition > file->mDirectorySector->mStat.mSize || file->mDirectorySector->mLbaFirst == 0) {
+
+  if (file->mFilePosition > file->mDirectorySector->mStat.mSize ||
+      file->mDataSector == ENull) {
     f->mError = EFileSystemErrorEndOfFile;
+    f->mCount = actual;
+    return;
   }
-  else {
-    TUint8 *dst = (TUint8 *)&f->mBuffer;
-    if (!file->mDataSector) {
-      file->mDataSector = (DataSector *)Sector(file->mDirectorySector->mLbaFirst);
+
+  TUint8 *dst = (TUint8 *)f->mBuffer;
+
+  TUint64 size = file->mDirectorySector->mStat.mSize,
+    bufsize = f->mCount;;
+
+  TInt64 count;
+  for (count = 0; count < f->mCount; count++) {
+    if (file->mFilePosition >= size) {
+      break;
+    }
+
+    if (file->mDataIndex > bufsize) {
+      if (file->mDataSector->mLbaNext == 0) {
+        // end of file
+        file->mDataSector = ENull;
+        return;
+      }
+      // next sector
+      file->mDataSector = (DataSector *)Sector(file->mDataSector->mLbaNext);
       file->mDataIndex = 0;
     }
-    TInt64 count;
-    for (count = 0; count < f->mCount; count++) {
-      if (file->mFilePosition > file->mDirectorySector->mStat.mSize) {
-        break;
-      }
 
-      if (file->mDataIndex > sizeof(f->mBuffer)) {
-        file->mDataSector = (DataSector *)Sector(file->mDataSector->mLbaNext);
-        file->mDataIndex = 0;
-      }
-
-      *dst++ = file->mDataSector->mData[file->mDataIndex++];
-      file->mFilePosition++;
-    }
-    // set actual count read
-    f->mCount = count;
+    *dst++ = file->mDataSector->mData[file->mDataIndex++];
+    file->mFilePosition++;
+    actual++;
   }
+  // set actual count read
+  f->mCount = actual;
 }
 
 void SimpleFileSystemTask::WriteFile(FileSystemMessage *f) {}

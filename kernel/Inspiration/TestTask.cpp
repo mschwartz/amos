@@ -31,41 +31,6 @@ public:
   }
 };
 
-// TODO these need to be in some library?
-static void format_mode(char *buf, TUint64 aMode) {
-  buf[0] = (aMode & S_IFDIR ? 'd' : '-');
-  buf[1] = (aMode & S_IRUSR ? 'r' : '-');
-  buf[2] = (aMode & S_IWUSR ? 'w' : '-');
-  buf[3] = (aMode & S_IXUSR ? 'x' : '-');
-  buf[4] = (aMode & S_IRGRP ? 'r' : '-');
-  buf[5] = (aMode & S_IWGRP ? 'w' : '-');
-  buf[6] = (aMode & S_IXGRP ? 'x' : '-');
-  buf[7] = (aMode & S_IROTH ? 'r' : '-');
-  buf[8] = (aMode & S_IWOTH ? 'w' : '-');
-  buf[9] = (aMode & S_IXOTH ? 'x' : '-');
-  buf[10] = '\0';
-}
-
-#if 0
-static char *format_user(char *buf, TUint64 uid) {
-  CopyString(buf, "root");
-  return buf;
-}
-
-static char *format_group(char *buf, TUint64 gid) {
-  CopyString(buf, "root");
-  return buf;
-}
-
-static void print_one(TUint64 aMode, TUint64 aUser, TUint64 aGroup, TUint64 aSize, const char *aFilename) {
-  char mode[16], user[16], group[16], *path = DuplicateString("/");
-  format_mode(mode, aMode);
-  format_user(user, aUser);
-  format_group(group, aGroup);
-  dlog("%s %s %s %8d %s\n", mode, user, group, aSize, aFilename);
-}
-#endif
-
 void TestTask::Run() {
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
@@ -75,29 +40,26 @@ void TestTask::Run() {
     dlog("Could not open directory /fonts\n");
   }
   else {
-    // dlog("opened directory /\n");
-    // fd->Dump();
     const DirectoryStat *s = fd->Stat();
     const char *fn = fd->Filename();
-    DirectoryStat::Dump(s, fn);
-    // s->Dump(fn);
+    dlog("Dirctory of %s\n", fn);
 
-    // print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, fd->Filename());
-    // dlog("about to read directory /\n");
     int count = 0;
-    while (ReadDirectory(fd) && count++ < 150) {
+    while (ReadDirectory(fd) && count++ < 180) {
       const DirectoryStat *s = fd->Stat();
       DirectoryStat::Dump(s, fd->Filename());
-      if (CompareStrings(fd->Filename(), "..") == 0) {
-	fd->Dump();
-	break;
-      }
-      // print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, fd->Filename());
-      // break;
     }
   }
   CloseDirectory(fd);
 
+  fd = OpenFile("/fonts/README.psfu");
+  if (!fd) {
+    dlog("Could not open /fonts/README.psfu\n");
+  }
+  else {
+    dlog("Opened REAFME\n");
+    fd->Dump();
+  }
   ScreenVesa &screen = mInspirationBase.GetScreen();
   screen.Clear(0x4f4fff);
 

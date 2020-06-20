@@ -25,10 +25,8 @@ SimpleFileSystemTask::SimpleFileSystemTask(SimpleFileSystem *aFileSystem,
 
 void *SimpleFileSystemTask::Sector(TUint64 aLba) {
   // first look in sector cache
-  // dlog("Sector(%d) %x %x\n", aLba, mAtaPort, mAtaMessage);
 
   CachedSector *fs = (CachedSector *)mDiskCache->Find(aLba);
-  // dlog("fs = %x\n", fs);
   if (fs == ENull) {
 #ifdef DEBUGME
     dlog("cache miss\n");
@@ -41,17 +39,10 @@ void *SimpleFileSystemTask::Sector(TUint64 aLba) {
     mAtaMessage->mError = EAtaErrorNone;
     mAtaMessage->mReplyPort = mAtaReplyPort;
 
-    // dlog("ata message command(%d), lba(%d), buffer(%x), count(%d)\n",
-    //   mAtaMessage->mCommand, mAtaMessage->mLba, mAtaMessage->mBuffer, mAtaMessage->mCount);
-
-    // dlog("Send message(%x) to port(%x)\n", mAtaMessage, mAtaPort);
     mAtaMessage->SendMessage(mAtaPort);
 
-    // dlog("WaitPort(%x)\n", mAtaReplyPort);
     WaitPort(mAtaReplyPort);
-    // dlog("add(%x) %d\n", fs, fs->mSparseKey);
     mDiskCache->Add((BSparseArrayNode &)*fs);
-    // dlog("added %d %x\n", aLba, mDiskCache->Find(aLba));
   }
   else {
 #ifdef DEBUGME
@@ -87,17 +78,12 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
   char path[4096], *xpath = &path[0];
   CopyString(path, aPath);
 
-  dlog("FindPath(%s)\n", path);
-
   DirectorySector *cwd = (DirectorySector *)Sector(mRootSector.mLbaRoot);
-  dlog("cwd %x(%s)\n", cwd, cwd->mFilename);
   if (xpath[0] == '/') {
     xpath++;
   }
 
-  cwd->Dump();
   if (*xpath == '\0') {
-    dlog("Return /\n");
     return cwd;
   }
 
@@ -106,7 +92,6 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
   xpath = GetToken(xpath, token, '/');
 
   if (xpath == ENull) {
-    dlog("return /\n");
     return cwd;
   }
 
@@ -114,32 +99,26 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
     char next_token[256];
     xpath = GetToken(xpath, next_token, '/');
     DirectorySector *d = Find(token, cwd);
-    
+
     if (!d) {
       if (next_token[0] == '\0') {
         mError = EFileSystemErrorNotADirectory;
         return ENull;
       }
     }
-    dlog("Found DirectorySector %x(%s)\n", d, d->mFilename);
 
     DirectoryStat *s = &d->mStat;
     if (s->mMode & S_IFDIR) {
-      dlog("IS DIRECTORY)\b");
       if (next_token[0] != '\0') {
         cwd = (DirectorySector *)Sector(cwd->mLbaFirst);
-	cwd->Dump();
       }
       else {
-	cwd = d;
+        cwd = d;
         break;
-        // return d;
       }
     }
     else if (s->mMode & S_IFREG && next_token[0] == '\0') {
-      dlog("IS FILE)");
       break;
-      // return d;
     }
     else {
       // not a directory, so it cannot be .../file/more...
@@ -160,21 +139,14 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
  *******************************************************************************/
 
 void SimpleFileSystemTask::OpenDirectory(FileSystemMessage *f) {
-  dlog("OpenDirectory(%s)\n", f->mBuffer);
   DirectorySector *d = FindPath((char *)f->mBuffer);
   f->mDescriptor.mDirectorySector = d;
   f->mDescriptor.mDataIndex = -1;
   f->mError = mError;
-  // f->Dump();
 }
 
 void SimpleFileSystemTask::ReadDirectory(FileSystemMessage *f) {
   DirectorySector *d = (DirectorySector *)f->mDescriptor.mDirectorySector;
-  // f->Dump();
-  // dlog("ReadDirectory(%x) index(%d)\n", d, f->mDescriptor.mDataIndex);
-  // if (d) {
-  //   d->Dump();
-  // }
   if (!d) {
     f->mError = EFileSystemErrorNotADirectory;
   }
@@ -185,15 +157,13 @@ void SimpleFileSystemTask::ReadDirectory(FileSystemMessage *f) {
     f->mDescriptor.mDataIndex++;
   }
   else if (d->mLbaNext != 0) {
-    dlog("ReadDirectory(%s) next\n", d->mFilename);
-    d->Dump();
     d = (DirectorySector *)Sector(d->mLbaNext);
     f->mDescriptor.mDirectorySector = d;
     f->mDescriptor.mDataIndex++;
   }
   else {
-    bochs;
     f->mError = EFileSystemErrorEndOfFile;
+    // bochs;
   }
 }
 
@@ -350,6 +320,7 @@ void SimpleFileSystemTask::Run() {
           RemoveFile(f);
           break;
         default:
+          dlog("SimpleFileSystem: unknown command %d\n", f->mCommand);
           bochs;
       }
       f->ReplyMessage();

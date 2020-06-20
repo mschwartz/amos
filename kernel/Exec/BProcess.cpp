@@ -49,6 +49,7 @@ TBool BProcess::DoIO(FileDescriptor *aFileDescriptor) {
       delete m;
     }
   }
+  aFileDescriptor->mError = aFileDescriptor->mMessage.mError;
   // aFileDescriptor->Dump();
   // dlog("DoIO success\n");
   return ETrue;
@@ -81,14 +82,10 @@ FileDescriptor *BProcess::OpenDirectory(const char *aFilename) {
 }
 
 TBool BProcess::ReadDirectory(FileDescriptor *aFileDescriptor) {
-  // dlog("BProcess:ReadDirectory\n");
   aFileDescriptor->mMessage.Reuse(EFileSystemReadDirectory);
-  // aFileDescriptor->mMessage.mBuffer = DuplicateString(mNodeName);
   DoIO(aFileDescriptor);
-  if (aFileDescriptor->mError != EFileSystemErrorNone) {
-    return EFalse;
-  }
-  return ETrue;
+
+  return aFileDescriptor->mError == EFileSystemErrorNone;
 }
 
 TBool BProcess::CloseDirectory(FileDescriptor *aFileDescriptor) {

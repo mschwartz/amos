@@ -130,7 +130,11 @@ protected:
     buf[10] = '\0';
   }
 
-  static void print_one(TUint64 aMode, TUint64 aUser, TUint64 aGroup, TUint64 aSize, const char *aFilename) {
+  static void print_one(TUint64 aMode,
+    TUint64 aUser,
+    TUint64 aGroup,
+    TUint64 aSize, const char *aFilename) {
+
     char mode[16], user[16], group[16], *path = DuplicateString("/");
     format_mode(mode, aMode);
     format_user(user, aUser);

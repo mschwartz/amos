@@ -12,7 +12,7 @@ class BWindow : public BNode {
 
 public:
   BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH);
-  ~BWindow();
+  virtual ~BWindow();
 
 public:
   virtual void Paint() = 0;
@@ -21,7 +21,7 @@ public:
   const char *Title() { return mNodeName; }
 
 protected:
-  void Repaint();
+  virtual void Repaint();
 
   /**
    * Paint window title bar, borders, etc.

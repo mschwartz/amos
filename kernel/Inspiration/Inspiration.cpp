@@ -70,7 +70,8 @@ void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
 }
 
 void InspirationBase::AddWindow(BWindow *aWindow) {
-  mWindowList.AddHead(*aWindow); 
+  mWindowList.AddHead(*aWindow);
+  // dlog("Paint Decorations(%s)\n", aWindow->Title());
   aWindow->PaintDecorations();
   aWindow->Paint();
 }

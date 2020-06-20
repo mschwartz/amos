@@ -31,12 +31,35 @@ public:
   }
 };
 
+class ConWindow : public BConsoleWindow {
+public:
+  ConWindow() : BConsoleWindow("Test Console Window", 800, 40, 640, 480) {}
+};
+
 void TestTask::Run() {
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
 
+  ScreenVesa &screen = mInspirationBase.GetScreen();
+  screen.Clear(0x4f4fff);
+
+  ConWindow *con = new ConWindow();
+  mInspirationBase.AddWindow(con);
+
+  con->BeginPaint();
+  con->Clear();
+  con->Write(0, 0, "Helo, world\nGoodbye!\n");
+  con->EndPaint();
+
+  for (TInt i = 0; i < 100; i++) {
+    con->BeginPaint();
+    con->WriteFormatted("line %d\n", i+1);
+    con->EndPaint();
+    Sleep(10);
+  }
+
   FileDescriptor *fd;
-#if 1
+#if 0
   fd = OpenDirectory("/fonts");
   if (!fd) {
     dlog("Could not open directory /fonts\n");
@@ -55,7 +78,7 @@ void TestTask::Run() {
   CloseDirectory(fd);
 #endif
 
-#if 1
+#if 0
   fd = OpenFile("/fonts/README.psfu");
   if (!fd) {
     dlog("Could not open /fonts/README.psfu\n");
@@ -77,9 +100,6 @@ void TestTask::Run() {
     CloseFile(fd);
   }
 #endif
-
-  ScreenVesa &screen = mInspirationBase.GetScreen();
-  screen.Clear(0x4f4fff);
 
   TestWindow *win = new TestWindow();
   mInspirationBase.AddWindow(win);

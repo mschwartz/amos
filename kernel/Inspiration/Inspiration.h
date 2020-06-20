@@ -7,6 +7,7 @@
 
 #include <Inspiration/ScreenVesa.h>
 #include <Inspiration/BWindow.h>
+#include <Inspiration/BConsoleWindow.h>
 
 class InspirationBase : public BBase {
 public:

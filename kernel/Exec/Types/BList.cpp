@@ -1,4 +1,4 @@
-#include <Exec/BList.h>
+#include <Exec/Types/BList.h>
 #include <Exec/Memory.h>
 
 #ifdef KERNEL

@@ -1,8 +1,8 @@
 #ifndef RCOMP_BSYMBOLTABLE_H
 #define RCOMP_BSYMBOLTABLE_H
 
-#include "BList.h"
-#include <string.h>
+#include <Exec/Types/BList.h>
+// #include <string.h>
 
 const TInt HASH_SIZE = 256;
 

@@ -1,8 +1,7 @@
 #ifndef DISK_TOOL_H
 #define DISK_TOOL_H
 
-#include <FileSystems/BFileSystem.h>
-#include <Exec/Types.h>
+#include <Exec/BFileSystem.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>

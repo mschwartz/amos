@@ -1,6 +1,6 @@
 G=		../Graphics
 D=		../Devices
-F=		../FileSystems
+SF=		../FileSystems/SimpleFileSystem
 
 GFX=		$(G)/TRect.o $(G)/BBitmap.o $(G)/bitmap/BBitmap32.o $(G)/BViewPort.o 
 
@@ -10,15 +10,15 @@ DEVICES= 	$(D)/KeyboardDevice.o $(D)/TimerDevice.o $(D)/RtcDevice.o $(D)/MouseDe
 
 X86=		x86/bochs.o x86/tss.o x86/gdt.o x86/idt.o x86/kernel_isr.o x86/kernel_tasking.o x86/kernel_utils.o x86/mmu.o x86/pic.o 
 
-TYPES=		Types.o Types/TBCD.o 
+TYPES= 		Types.o Types/TBCD.o \
+		Types/BList.o \
+		Types/BAvlTree.o Types/BHashTable.o Types/BSparseArray.o Types/BSymbolTable.h
 
-CONTAINERS= 	BList.o BAvlTree.o BHashTable.o
+FS=		$(SF)/SimpleFileSystem.o  $(SF)/SimpleFileSystemTask.o
 
-FS=		$(F)/BFileSystem.o
+EXEC=		Memory.o BBase.o Random.o MessagePort.o BInterrupt.o BTask.o BProcess.o BDevice.o BFileSystem.o ExecBase.o 
 
-EXEC=		Memory.o BBase.o Random.o MessagePort.o BInterrupt.o BTask.o BDevice.o ExecBase.o 
-
-OBJ= 	 	$(FS) $(TYPES) $(X86) $(DEVICES)  $(GFX) $(FONTS) $(CONTAINERS) $(EXEC)
+OBJ= 	 	$(FS) $(TYPES) $(X86) $(DEVICES) $(GFX) $(FONTS) $(EXEC)
 
 LIB=		libexec.a
 

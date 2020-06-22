@@ -56,7 +56,7 @@ public:
 int main(int ac, char *av[]) {
   const char *bootfile = ac > 1 ? av[1] : "../boot.img";
   const char *kernelfile = ac > 2 ? av[2] : "../kernel.img";
-  const char *fsfile = ac > 3 ? av[3] : "../fs.img";
+  const char *fsfile = ac > 3 ? av[3] : "../iso/fs.img";
 
   IMG boot(bootfile);
   IMG kernel(kernelfile);
@@ -103,15 +103,19 @@ int main(int ac, char *av[]) {
 
   // patch boot.img with block # and num blocks for boot sector and kernel
   uint16_t *ptr = (uint16_t *)&raw[8];
-  printf("\n  boot_sector: %d\n", 2);
   ptr[0] = 2; // boot_sector
-  printf("  boot_sectors: %d\n", boot.blocks - 1);
+  printf("\n  boot_sector: %d\n", 2);
+
   ptr[1] = boot.blocks - 1; // boot_sectors
-  printf("  kernel_sector: %d\n", boot.blocks + 1);
+  printf("  boot_sectors: %d\n", ptr[1]);
+
   ptr[2] = boot.blocks + 1; // kernel_sector
-  printf("  kernel_sectors: %d\n", kernel.blocks + 1);
+  printf("  kernel_sector: %d\n", ptr[2]);
+
   ptr[3] = kernel.blocks;   // kernel_sectors
-  ptr[4] = fs.alive ? ptr[3] + ptr[2] : 0; // fs_sector
+  printf("  kernel_sectors: %d\n", ptr[3]);
+
+  ptr[4] = fs.alive ? (ptr[3] + ptr[2] - 1) : 0; // fs_sector
   printf("  root_sector: %d\n\n", ptr[4]);
 
   int fd = open(BARE_FILE, O_WRONLY | O_CREAT | O_TRUNC, 0644);

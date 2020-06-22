@@ -1,7 +1,7 @@
 #ifndef EXEC_BINTERRUPT_H
 #define EXEC_BINTERRUPT_H
 
-#include <Exec/BList.h>
+#include <Exec/Types/BList.h>
 
 enum EInterruptNumber {
   // Exceptions

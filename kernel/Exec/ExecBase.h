@@ -3,9 +3,11 @@
 
 #include <Exec/BBase.h>
 #include <Exec/BInterrupt.h>
-#include <Exec/BTask.h>
 #include <Exec/MessagePort.h>
 #include <Exec/BDevice.h>
+#include <Exec/BFileSystem.h>
+#include <Exec/BTask.h>
+#include <Exec/BProcess.h>
 #include <Exec/Random.h>
 
 extern "C" TUint64 GetFlags();
@@ -240,6 +242,15 @@ public:
 protected:
   BDeviceList mDeviceList;
 
+  //
+  // FILESYSTEMS
+  //
+  void AddFileSystem(BFileSystem *aFileSystem);
+  BFileSystem *FindFileSystem(const char *aName);
+
+protected:
+  BFileSystemList mFileSystemList;
+  
 public:
   TUint64 SystemTicks() { return gSystemInfo.mMillis; }
 

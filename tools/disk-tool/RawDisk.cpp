@@ -14,29 +14,6 @@ RawDisk::~RawDisk() {
   delete[] mFilename;
 }
 
-static void RootSectorDump(TAny *root) {
-  RootSector *s = (RootSector *)root;
-  printf("Root Sector %s\n", s->mVolumeName);
-  printf("%d bytes used (%d) / %d bytes free (%d)\n", s->mUsed, s->mBlocksUsed, s->mFree, s->mBlocksFree);
-  printf("\n");
-  printf("  mLbaRoot: %d\n", s->mLbaRoot);
-  printf("  mLbaHeap: %d\n", s->mLbaHeap);
-  printf("  mLbaFree: %d\n", s->mLbaFree);
-  printf("  mLbaMax: %d\n", s->mLbaMax);
-  printf("\n");
-}
-
-static void DirectorySectorDump(TAny *root) {
-  DirectorySector *s = (DirectorySector *)root;
-  printf("Directory Sector %s\n", s->mFilename);
-  printf("  mLba: %d\n", s->mLba);
-  // printf("  mLbaRoot: %d\n", s->mLbaRoot);
-  // printf("  mLbaHeap: %d\n", s->mLbaHeap);
-  // printf("  mLbaFree: %d\n", s->mLbaFree);
-  // printf("  mLbaMax: %d\n", s->mLbaMax);
-  printf("\n");
-}
-
 TBool RawDisk::Read() {
   // printf("Reading %d bytes from %s\n\n", mSize, mFilename);
   int fd = open(mFilename, O_RDONLY);
@@ -82,8 +59,8 @@ TBool RawDisk::Format(const char *aVolumeName) {
   DirectorySector *slash = AllocDirectory("/");
   mRootSector->mLbaRoot = slash->mLba;
 
-  RootSectorDump(mRootSector);
-  DirectorySectorDump(slash);
+  mRootSector->Dump();
+  slash->Dump();
 
   return ETrue;
 }
@@ -111,6 +88,7 @@ DirectorySector *RawDisk::FindPath(const char *aPath) {
   if (!token) {
     return cwd;
   }
+
   while (ETrue) {
     const char *next_token = strtok(NULL, "/");
     // printf("find %s %s\n", token, cwd->mFilename);
@@ -371,9 +349,10 @@ TBool RawDisk::CopyFile(const char *aDestination, const char *aSource) {
     d = FindPath(path);
     if (!d) {
       printf("*** path %s not found\n", base);
-      delete[] base;
+      delete [] base;
       return EFalse;
     }
+    delete [] base;
   }
   else {
     d = GetDirectorySector(mRootSector->mLbaRoot);
@@ -383,6 +362,7 @@ TBool RawDisk::CopyFile(const char *aDestination, const char *aSource) {
     printf("*** %s exists\n", fn);
     return EFalse;
   }
+
   DirectorySector *n = AllocFile(fn);
   n->mLbaOwner = d->mLba;
   n->mLbaNext = d->mLbaFirst;
@@ -458,14 +438,16 @@ static char *format_group(char *buf, TUint64 gid) {
 }
 
 void RawDisk::DumpRootSector() {
-  RootSectorDump(mRootSector);
+  mRootSector->Dump();
   printf("  sizeof(BaseSector) = %d\n", sizeof(BaseSector));
   printf("  sizeof(RootSector) = %d\n", sizeof(RootSector));
   printf("  sizeof(DirectorySector) = %d\n", sizeof(DirectorySector));
   printf("  sizeof(DataSector) = %d\n", sizeof(DataSector));
   printf("  sizeof(DataSector.mData) = %d\n", sizeof(DataSector::mData));
   printf("  sizeof(FreeSector) = %d\n", sizeof(FreeSector));
-  printf("\n");
+  // printf("\n");
+  // printf("  sizeof(FileDescriptor) = %d\n", sizeof(FileDescriptor));
+  // printf("  sizeof(DirectoryDescriptor) = %d\n", sizeof(DirectoryDescriptor));
 }
 
 void RawDisk::ListDirectory(const char *aPath) {

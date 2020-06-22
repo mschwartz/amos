@@ -3,7 +3,7 @@
 #include <Graphics/font/BConsoleFont.h>
 #include <Exec/Random.h>
 
-TestTask::TestTask() : BTask("Test Task") {
+TestTask::TestTask() : BProcess("Test Process") {
   dprint("Construct TestTask\n");
 }
 
@@ -35,6 +35,49 @@ void TestTask::Run() {
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
 
+  FileDescriptor *fd;
+#if 1
+  fd = OpenDirectory("/fonts");
+  if (!fd) {
+    dlog("Could not open directory /fonts\n");
+  }
+  else {
+    const DirectoryStat *s = fd->Stat();
+    const char *fn = fd->Filename();
+    dlog("Dirctory of %s\n", fn);
+
+    int count = 0;
+    while (ReadDirectory(fd) && count++ < 180) {
+      const DirectoryStat *s = fd->Stat();
+      DirectoryStat::Dump(s, fd->Filename());
+    }
+  }
+  CloseDirectory(fd);
+#endif
+
+#if 1
+  fd = OpenFile("/fonts/README.psfu");
+  if (!fd) {
+    dlog("Could not open /fonts/README.psfu\n");
+  }
+  else {
+    dprint("\n\n");
+    char buf[512];
+    while (ETrue) {
+      TUint64 actual = ReadFile(fd, buf, 512);
+      if (actual == 0) {
+	break;
+      }
+      // dhexdump(buf, 32);
+      for (TUint64 x = 0; x < actual; x++) {
+      	dputc(buf[x]);
+      }
+    }
+    dprint("\n\n");
+    CloseFile(fd);
+  }
+#endif
+
   ScreenVesa &screen = mInspirationBase.GetScreen();
   screen.Clear(0x4f4fff);
 
@@ -45,7 +88,7 @@ void TestTask::Run() {
   TInt count = 0;
   while (1) {
     win->BeginPaint();
-    for (TInt i=0; i<10; i++) {
+    for (TInt i = 0; i < 10; i++) {
       win->RandomBox();
     }
     win->EndPaint();

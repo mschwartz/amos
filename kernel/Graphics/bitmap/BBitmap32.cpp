@@ -62,7 +62,6 @@ void BBitmap32::BltBitmap(BBitmap32 *aOther, TInt aDestX, TInt aDestY) {
   TInt w = aOther->Width(),
        h = aOther->Height();
 
-//  dlog("BltBitmap(%d,%d w:%d h:%d\n", aDestX, aDestY, w, h);
   for (TInt y = 0; y < h; y++) {
     for (TInt x = 0; x < w; x++) {
       TUint32 color = aOther->ReadPixel(x, y);
@@ -84,7 +83,6 @@ void BBitmap32::FastLineVertical(TUint32 aColor, TInt aX, TInt aY, TUint aH) {
   //  TInt ymax = aY + aH - 1;
   dprintf("\n\n");
   for (TInt y = 0; y < aH; y++) {
-//    dlog("flv %d,%d\n", aX, y + aY);
     //    if (mRect.PointInRect(aX, y + aY)) {
     PlotPixel(aColor, aX, y + aY);
     //    }
@@ -127,7 +125,6 @@ void BBitmap32::FillRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2)
   const TInt width = ABS(aX2 - aX1),
              height = ABS(aY2 - aY1);
 
-  dlog("FillRect(%dx%d)\n", width, height);
   if (width > height) {
     for (TInt h = 0; h < height; h++) {
       FastLineHorizontal(aColor, aX1, aY1++, width);

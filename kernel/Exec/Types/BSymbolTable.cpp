@@ -1,4 +1,4 @@
-#include "BSymbolTable.h"
+#include <Exec/Types/BSymbolTable.h>
 
 // hash a string to a value between 0-255
 static TInt16 hash(const char *s) {
@@ -26,7 +26,7 @@ BSymbol *BSymbolTable::LookupSymbol(const char *name) {
   TInt h = hash(name);
   BSymbolList &bucket = mBuckets[h];
   for (BSymbol *sym = bucket.First(); !bucket.End(sym); sym=bucket.Next(sym)) {
-    if (strcmp(sym->mNodeName, name) == 0) {
+    if (CompareStrings(sym->mNodeName, name) == 0) {
       return sym;
     }
   }

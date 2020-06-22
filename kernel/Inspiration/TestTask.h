@@ -2,10 +2,9 @@
 #define TEST_TASK
 
 #include <Exec/ExecBase.h>
-//#include <Exec/BTask.h>
 #include <Inspiration/Inspiration.h>
 
-class TestTask : public BTask {
+class TestTask : public BProcess {
 public:
   TestTask();
   ~TestTask();

@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_BVIEWPORT_H
 #define GRAPHICS_BVIEWPORT_H
 
-#include <Exec/BList.h>
+#include <Exec/Types/BList.h>
 #include <Graphics/BBitmap.h>
 
 /********************************************************************************

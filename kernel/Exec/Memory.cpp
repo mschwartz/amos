@@ -109,7 +109,7 @@ TInt CompareStrings(const char *aString1, const char *aString2) {
 void SetMemory8(TAny *aDestination, TUint8 aValue, TInt64 aCount) {
   TUint8 *dst = (TUint8 *)aDestination;
 
-  for (TInt64 i=0; i<aCount; i++) {
+  for (TInt64 i = 0; i < aCount; i++) {
     *dst++ = aValue;
   }
 }
@@ -117,7 +117,7 @@ void SetMemory8(TAny *aDestination, TUint8 aValue, TInt64 aCount) {
 void SetMemory16(TAny *aDestination, TUint16 aValue, TInt64 aCount) {
   TUint16 *dst = (TUint16 *)aDestination;
 
-  for (TInt64 i=0; i<aCount; i++) {
+  for (TInt64 i = 0; i < aCount; i++) {
     *dst++ = aValue;
   }
 }
@@ -125,7 +125,7 @@ void SetMemory16(TAny *aDestination, TUint16 aValue, TInt64 aCount) {
 void SetMemory32(TAny *aDestination, TUint32 aValue, TInt64 aCount) {
   TUint32 *dst = (TUint32 *)aDestination;
 
-  for (TInt64 i=0; i<aCount; i++) {
+  for (TInt64 i = 0; i < aCount; i++) {
     *dst++ = aValue;
   }
 }
@@ -133,16 +133,37 @@ void SetMemory32(TAny *aDestination, TUint32 aValue, TInt64 aCount) {
 void SetMemory64(TAny *aDestination, TUint64 aValue, TInt64 aCount) {
   TUint64 *dst = (TUint64 *)aDestination;
 
-  for (TInt64 i=0; i<aCount; i++) {
+  for (TInt64 i = 0; i < aCount; i++) {
     *dst++ = aValue;
   }
 }
 
 void CopyMemory(TAny *aDestination, TAny *aSource, TInt64 aCount) {
   TUint8 *src = (TUint8 *)aSource,
-    *dst = (TUint8 *)aDestination;
-  for (TInt64 i=0; i<aCount; i++) {
+         *dst = (TUint8 *)aDestination;
+  for (TInt64 i = 0; i < aCount; i++) {
     *dst++ = *src++;
   }
 }
 
+void CopyMemory64(TAny *aDestination, TAny *aSource, TInt64 aCount) {
+  TUint64 *src = (TUint64 *)aSource,
+          *dst = (TUint64 *)aDestination;
+  for (TInt64 i = 0; i < aCount; i++) {
+    *dst++ = *src++;
+  }
+}
+
+char *GetToken(char *aString, char *aToken, const char aDelim) {
+  if (aString == ENull || *aString == '\0') {
+    return ENull;
+  }
+  while (*aString && *aString != aDelim) {
+    *aToken++ = *aString++;
+  }
+  *aToken = '\0';
+  if (*aString != '\0') {
+    aString++;
+  }
+  return aString;
+}

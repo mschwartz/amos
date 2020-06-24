@@ -65,12 +65,15 @@ void InspirationBase::Init() {
 
 void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
   TBool hidden = mScreen.HideCursor();
-  mScreen.BltBitmap(aWindow->mBitmap, aWindow->mWindowRect.x1, aWindow->mWindowRect.y1);
+  mScreen.BltBitmap(aWindow->mBitmap,
+		    aWindow->mWindowRect.x1,
+		    aWindow->mWindowRect.y1);
   mScreen.SetCursor(!hidden);
 }
 
 void InspirationBase::AddWindow(BWindow *aWindow) {
-  mWindowList.AddHead(*aWindow); 
+  mWindowList.AddHead(*aWindow);
+  // dlog("Paint Decorations(%s)\n", aWindow->Title());
   aWindow->PaintDecorations();
-  aWindow->Paint();
+  // aWindow->Paint();
 }

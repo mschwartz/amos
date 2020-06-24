@@ -47,10 +47,15 @@ void BViewPort32::FastLineVertical(TUint32 aColor, TInt aX, TInt aY, TUint aH) {
        y1 = mRect.y1 + aY,
        ymax = mRect.y1 + aY + aH - 1;
 
+  // mRect.Dump();
+  // dlog("x1(%d) y1(%d) ymax(%d)\n", x1, y1, ymax);
   for (TInt y = y1; y < ymax; y++) {
     if (mRect.PointInRect(x1, y)) {
       mBitmap32->PlotPixel(aColor, x1, y);
     }
+    // else {
+    //   dlog("CLIPPED\n");
+    // }
   }
 }
 
@@ -106,8 +111,19 @@ void BViewPort32::FillRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY
   }
 }
 
+void BViewPort32::DrawText(TInt16 aX, TInt16 aY, const char aChar) {
+  if (!mFont) {
+    dlog("*** DrawText, no font\n");
+    return;
+  }
+  mFont->SetColors(mForegroundColor, mBackgroundColor);
+  mFont->Write(mBitmap32, mRect.x1 + aX, mRect.y1 + aY, aChar);
+}
+
+
 void BViewPort32::DrawText(TInt16 aX, TInt16 aY, const char *aString) {
   if (!mFont) {
+    dlog("*** DrawText(%s), no font\n", aString);
     return;
   }
   mFont->SetColors(mForegroundColor, mBackgroundColor);
@@ -116,6 +132,7 @@ void BViewPort32::DrawText(TInt16 aX, TInt16 aY, const char *aString) {
 
 void BViewPort32::DrawTextTransparent(TInt16 aX, TInt16 aY, const char *aString) {
   if (!mFont) {
+    dlog("*** DrawText, no font\n");
     return;
   }
   mFont->SetColors(mForegroundColor, mBackgroundColor);

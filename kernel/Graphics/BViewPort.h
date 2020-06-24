@@ -91,6 +91,7 @@ public:
 
 public:
   void SetFont(BConsoleFont32 *aFont) { mFont = aFont; }
+  void DrawText(TInt16 aX, TInt16 aY, const char aString);
   void DrawText(TInt16 aX, TInt16 aY, const char *aString);
   void DrawTextTransparent(TInt16 aX, TInt16 aY, const char *aString);
 

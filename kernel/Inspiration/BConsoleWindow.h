@@ -18,6 +18,7 @@ public:
 
 public:
   void Paint();
+  void Dump(); // debugging
 
 protected:
   void Repaint();
@@ -31,7 +32,7 @@ public:
 public:
   void Resize(TInt32 aW, TInt32 aH);
   //
-  void Clear();
+  void ClearScreen();
   void ClearEol();
   //
   void ScrollUp(TInt aRow = 0);

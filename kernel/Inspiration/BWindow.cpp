@@ -5,7 +5,7 @@
 const TInt FONT_HEIGHT = 16;
 const TInt BORDER_WIDTH = 2;
 static TRGB BORDER_COLOR(255, 255, 255);
-static TRGB TITLE_COLOR(0,0,0);
+static TRGB TITLE_COLOR(0, 0, 0);
 
 BWindow::BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH)
     : BNode(aTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
@@ -54,14 +54,18 @@ void BWindow::PaintDecorations() {
   TUint32 color = 0xffffff;
 
   for (TInt w = 0; w < BORDER_WIDTH; w++) {
-    vp->FastLineVertical(color, x1 + w, y1, vp->Height());
+    // right side
     vp->FastLineVertical(color, x2 - w, y1, vp->Height());
+    // left side
+    vp->FastLineVertical(color, x1 + w, y1, vp->Height());
+    // bottom
     vp->FastLineHorizontal(color, x1, y2 - w, vp->Width());
   }
 
   // render title bar
   vp->FillRect(0xffffff, x1, y1, x2, y1 + FONT_HEIGHT + 2);
   vp->DrawTextTransparent(1, 1, Title());
+  Repaint();
 }
 
 void BWindow::Repaint() {

@@ -6,39 +6,69 @@ BConsoleWindow::BConsoleWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 
     : BWindow(aTitle, aX, aY, aW, aH) {
 
   mCharacterMap = ENull;
-  Resize(aW, aH);
-}
-
-void BConsoleWindow::Resize(TInt32 aW, TInt32 aH) {
-  // TODO we're using a 16x8 hard coded font.  This should be dynamic!
-  mRows = aH / 16;
-  mCols = aW / 8;
-
-  if (mCharacterMap) {
-    delete[] mCharacterMap;
-  }
-  mCharacterMapSize = mRows * mCols * sizeof(TUint16);
-  mCharacterMap = (TUint16 *)AllocMem(mCharacterMapSize);
-  mCharacterMapEnd = mCharacterMap + mCharacterMapSize;
-
-  mFont = new BConsoleFont32();
-  mViewPort->SetFont(mFont);
 
   // set palettes
   for (TInt i = 0; i < 16; i++) {
-    mForegroundPalette[i].Set(255,255,255);
-    mBackgroundPalette[i].Set(0,0,0);
+    mForegroundPalette[i].Set(255, 255, 255);
+    mBackgroundPalette[i].Set(0, 0, 0);
   }
 
   mCursorEnabled = ETrue;
 
-  dlog("About to paint %d x %d @ %d,%d\n", mRows, mCols, mWindowRect.x1, mWindowRect.y1);
-  BeginPaint();
-  Clear();
-  EndPaint();
+  mFont = new BConsoleFont32();
+  mViewPort->SetFont(mFont);
+
+  Resize(mClientRect.Width(), mClientRect.Height());
+}
+
+void BConsoleWindow::Resize(TInt32 aW, TInt32 aH) {
+  // TODO we're using a 16x8 hard coded font.  This should be dynamic!
+  TInt newRows = aH / 16,
+       newCols = aW / 8;
+
+  // set up new map
+  TUint16 *newMap = (TUint16 *)AllocMem(newRows * newCols * sizeof(TUint16));
+
+  // clear new map to blanks
+  for (TInt x = 0; x < newRows * newCols; x++) {
+    newMap[x] = ' ';
+  }
+
+  // if we have an old map, we want to copy existing values into the new map
+  if (mCharacterMap) {
+    TInt w = newCols >= mCols ? mCols : newCols,
+         h = newRows >= mRows ? mRows : newRows;
+    for (TInt row = 0; row < h; row++) {
+      for (TInt col = 0; col < w; col++) {
+        newMap[row * newCols + col] = mCharacterMap[row * mCols + col];
+      }
+    }
+  }
+
+  mRows = newRows;
+  mCols = newCols;
+
+  if (mCharacterMap) {
+    delete[] mCharacterMap;
+  }
+  mCharacterMap = newMap;
+
+  mCharacterMapSize = mRows * mCols * sizeof(TUint16);
+  mCharacterMapEnd = mCharacterMap + mCharacterMapSize;
+
+  // BeginPaint();
+  // ClearScreen();
+  // EndPaint();
 }
 
 BConsoleWindow::~BConsoleWindow() {
+}
+
+void BConsoleWindow::Dump() {
+  dlog("BConsoleWindow(%)\n", mNodeName);
+  mWindowRect.Dump();
+  mClientRect.Dump();
+  dlog("mRows(%d) mCols(%d) w(%d) h(%d)\n", mRows, mCols, mRows * 16, mCols * 8);
 }
 
 void BConsoleWindow::Repaint() {
@@ -47,7 +77,6 @@ void BConsoleWindow::Repaint() {
 }
 
 void BConsoleWindow::Paint() {
-  dlog("Paint!\n");
   BViewPort32 *vp = mViewPort; // client viewport
   TUint16 *ptr = &mCharacterMap[0];
 
@@ -67,12 +96,12 @@ void BConsoleWindow::Flush() {
   // flush any buffered characters
 }
 
-void BConsoleWindow::Clear() {
+void BConsoleWindow::ClearScreen() {
   for (TInt i = 0; i < mRows * mCols; i++) {
     mCharacterMap[i] = ' ';
   }
   mRow = mCol = 0;
-  Paint();
+  // Paint();
 }
 
 void BConsoleWindow::ClearEol() {
@@ -82,21 +111,25 @@ void BConsoleWindow::ClearEol() {
   }
 }
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 void BConsoleWindow::ScrollUp(TInt32 aRow) {
-  for (TInt row = aRow; row < mRows - 2; row++) {
+  for (TInt row = aRow; row < mRows - 1; row++) {
     TUint16 *dst = &mCharacterMap[row * mCols + 0],
             *src = &mCharacterMap[(row + 1) * mCols + 0];
 
+    // dlog("Scrollup row(%d) mRows(%d)\n", row, mRows);
     for (TInt col = 0; col < mCols; col++) {
       *dst++ = *src++;
     }
   }
 
-  TUint16 *dst = &mCharacterMap[(mRows - 2) * mCols];
+  TUint16 *dst = &mCharacterMap[(mRows - 1) * mCols];
   for (TInt col = 0; col < mCols; col++) {
     *dst++ = ' ';
   }
-  // Paint();
 }
 
 void BConsoleWindow::ScrollDown(TInt32 aRow) {
@@ -118,6 +151,10 @@ void BConsoleWindow::ScrollDown(TInt32 aRow) {
   }
 }
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 //
 // Cursor
 //
@@ -138,7 +175,7 @@ void BConsoleWindow::Down() {
   mRow++;
   if (mRow >= mRows) {
     ScrollUp();
-    mRow = mRows - 2;
+    mRow = mRows - 1;
   }
 }
 void BConsoleWindow::Left() {

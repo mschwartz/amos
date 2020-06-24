@@ -47,10 +47,15 @@ void BViewPort32::FastLineVertical(TUint32 aColor, TInt aX, TInt aY, TUint aH) {
        y1 = mRect.y1 + aY,
        ymax = mRect.y1 + aY + aH - 1;
 
+  // mRect.Dump();
+  // dlog("x1(%d) y1(%d) ymax(%d)\n", x1, y1, ymax);
   for (TInt y = y1; y < ymax; y++) {
     if (mRect.PointInRect(x1, y)) {
       mBitmap32->PlotPixel(aColor, x1, y);
     }
+    // else {
+    //   dlog("CLIPPED\n");
+    // }
   }
 }
 

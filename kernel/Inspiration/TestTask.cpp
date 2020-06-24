@@ -3,8 +3,115 @@
 #include <Graphics/font/BConsoleFont.h>
 #include <Exec/Random.h>
 
+class ConWindow : public BConsoleWindow {
+public:
+  ConWindow() : BConsoleWindow("Test Console Window", 800, 40, 640, 480) {}
+};
+
+class TestTask2 : public BProcess {
+public:
+  TestTask2() : BProcess("Test2 Process") {}
+  ~TestTask2() {}
+
+public:
+  void Run() {
+    dlog("TestTask2 Running\n");
+    ConWindow *con = new ConWindow();
+    mInspirationBase.AddWindow(con);
+    // con->Dump();
+    // bochs
+
+#if 0
+    con->BeginPaint();
+    con->EndPaint();
+    
+    con->BeginPaint();
+    con->ClearScreen();
+    con->Write(0, 0, "Helo, world\nGoodbye!\n");
+    con->EndPaint();
+#endif
+
+    // while (1) {
+    //   Sleep(1);
+    // }
+    FileDescriptor *fd;
+    while (ETrue) {
+
+#if 1
+      con->BeginPaint();
+      con->Write("\n\n> ");
+      con->EndPaint();
+
+      Sleep(4);
+      con->BeginPaint();
+      con->Write("ls /fonts\n");
+      con->EndPaint();
+      
+      fd = OpenDirectory("/fonts");
+      if (!fd) {
+        dlog("Could not open directory /fonts\n");
+      }
+      else {
+        const DirectoryStat *s = fd->Stat();
+        const char *fn = fd->Filename();
+        dlog("Dirctory of %s\n", fn);
+
+        int count = 0;
+        while (ReadDirectory(fd) && count++ < 180) {
+          char buf[512];
+          const DirectoryStat *s = fd->Stat();
+          DirectoryStat::Dump(s, fd->Filename(), buf);
+	  // dlog("buf(%s)\n", buf);
+          con->BeginPaint();
+          con->Write(buf);
+          con->EndPaint();
+        }
+      }
+      CloseDirectory(fd);
+#endif
+
+#if 1
+      con->BeginPaint();
+      con->Write("\n\n> ");
+      con->EndPaint();
+
+      Sleep(4);
+      con->BeginPaint();
+      con->Write("cat /fonts/README.psfu\n");
+      con->EndPaint();
+
+      fd = OpenFile("/fonts/README.psfu");
+      if (!fd) {
+        dlog("Could not open /fonts/README.psfu\n");
+      }
+      else {
+        char buf[512];
+        while (ETrue) {
+          TUint64 actual = ReadFile(fd, buf, 512);
+          if (actual == 0) {
+            break;
+          }
+          // dhexdump(buf, 32);
+          for (TUint64 x = 0; x < actual; x++) {
+            if (buf[x] == '\n') {
+              con->BeginPaint();
+              con->Write(buf[x]);
+              con->EndPaint();
+            }
+            else {
+              con->Write(buf[x]);
+            }
+          }
+        }
+        CloseFile(fd);
+      }
+#endif
+      // Sleep(50);
+    }
+  }
+};
+
 TestTask::TestTask() : BProcess("Test Process") {
-  dprint("Construct TestTask\n");
 }
 
 TestTask::~TestTask() {
@@ -31,175 +138,29 @@ public:
   }
 };
 
-class ConWindow : public BConsoleWindow {
-public:
-  ConWindow() : BConsoleWindow("Test Console Window", 800, 40, 640, 480) {}
-};
-
 void TestTask::Run() {
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
 
+  // while (1)
+  //   Sleep(1);
+
   ScreenVesa &screen = mInspirationBase.GetScreen();
   screen.Clear(0x4f4fff);
-
-  ConWindow *con = new ConWindow();
-  mInspirationBase.AddWindow(con);
-
-  con->BeginPaint();
-  con->Clear();
-  con->Write(0, 0, "Helo, world\nGoodbye!\n");
-  con->EndPaint();
-
-  for (TInt i = 0; i < 100; i++) {
-    con->BeginPaint();
-    con->WriteFormatted("line %d\n", i+1);
-    con->EndPaint();
-    Sleep(10);
-  }
-
-  FileDescriptor *fd;
-#if 0
-  fd = OpenDirectory("/fonts");
-  if (!fd) {
-    dlog("Could not open directory /fonts\n");
-  }
-  else {
-    const DirectoryStat *s = fd->Stat();
-    const char *fn = fd->Filename();
-    dlog("Dirctory of %s\n", fn);
-
-    int count = 0;
-    while (ReadDirectory(fd) && count++ < 180) {
-      const DirectoryStat *s = fd->Stat();
-      DirectoryStat::Dump(s, fd->Filename());
-    }
-  }
-  CloseDirectory(fd);
-#endif
-
-#if 0
-  fd = OpenFile("/fonts/README.psfu");
-  if (!fd) {
-    dlog("Could not open /fonts/README.psfu\n");
-  }
-  else {
-    dprint("\n\n");
-    char buf[512];
-    while (ETrue) {
-      TUint64 actual = ReadFile(fd, buf, 512);
-      if (actual == 0) {
-	break;
-      }
-      // dhexdump(buf, 32);
-      for (TUint64 x = 0; x < actual; x++) {
-      	dputc(buf[x]);
-      }
-    }
-    dprint("\n\n");
-    CloseFile(fd);
-  }
-#endif
 
   TestWindow *win = new TestWindow();
   mInspirationBase.AddWindow(win);
 
+  dprint("Construct TestTask2\n");
+  gExecBase.AddTask(new TestTask2());
+
   dlog("LOOP %x\n", GetFlags());
   TInt count = 0;
-  while (1) {
+  while (ETrue) {
     win->BeginPaint();
     for (TInt i = 0; i < 10; i++) {
       win->RandomBox();
     }
     win->EndPaint();
   }
-#if 0
-#ifdef KGFX
-  ScreenVesa &screen = *gExecBase.GetScreen();
-  BBitmap32 &bm = *screen.GetBitmap();
-  //    bm.Dump();
-  BViewPort32 *vp = new BViewPort32("test vp", &bm);
-  TRect rect, screenRect;
-  bm.GetRect(screenRect);
-
-  TRGB fg(255, 255, 255), bg(0, 0, 0);
-  BConsoleFont32 font(&bm);
-
-  bm.SetFont(&font);
-  font.SetColors(fg, bg);
-  vp->SetFont(&font);
-  vp->SetColors(fg, bg);
-  TRect vrect(50, 200, 500, 300);
-  vp->SetRect(vrect);
-
-  RtcDevice *rd = (RtcDevice *)gExecBase.FindDevice("rtc.device");
-  //    if (!rd) {
-  //      dprint("Can't find rct.device\n");
-  //      halt();
-  //    }
-  bm.Clear(0x0000ff);
-#if 0
-      TRGB color;
-
-      while (ETrue) {
-        dlog("START!\n");
-        for (TInt n=0; n<100000; n++) {
-          if ((n % 100) == 0) {
-            dlog("n = %d\n", n);
-          }
-          rect.x1 = Random(screenRect.x1, screenRect.x2);
-          rect.x2 = Random(rect.x1, screenRect.x2);
-          rect.y1 = Random(screenRect.y1, screenRect.y2);
-          rect.y2 = Random(rect.y1, screenRect.y2);
-          TRGB color(Random(0, 255), Random(0, 255), Random(0, 255));
-//          dlog("Fill %d,%d,%d,%d %x\n", rect.x1, rect.y1, rect.x2, rect.y2, color.rgb888());
-          bm.FillRect(color, rect);
-//          bm.DrawRect(color, rect);
-        }
-        dlog("END!\n");
-        Sleep(1);
-      }
-#else
-  bm.FillRect(0xffffff, 300, 300, 500, 500);
-  //    TInt count = 0;
-  while (true) {
-    //      dlog("test task loop %d\n", ++count);;
-    char buf[128];
-    sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
-    //      dlog("buf: %s\n", buf);
-    screen.HideCursor();
-    vp->DrawText(0, 0, buf);
-    screen.ShowCursor();
-    //      font.Write(vp, 100, 100, buf);
-    Sleep(1);
-  }
-#endif
-#else
-  RtcDevice *rd = ENull;
-  while (rd == ENull) {
-    rd = (RtcDevice *)gExecBase.FindDevice("rtc.device");
-    if (rd) {
-      break;
-    }
-    Sleep(1);
-  }
-  ScreenVGA &screen = *gExecBase.GetScreen();
-  screen.MoveTo(20, 20);
-  dprint("Test Task\n");
-  while (true) {
-    char buf[128];
-    sprintf(buf, "%02d/%02d/%02d %02d:%02d:%02d.%d", rd->mMonth, rd->mDay, rd->mYear, rd->mHours, rd->mMinutes, rd->mSeconds, rd->mFract);
-    screen.MoveTo(10, 10);
-    dprint(buf);
-    Sleep(1);
-  }
-
-#endif
-
-  //      TInt64 time = 0;
-  //      while (1) {
-  //        Sleep(1);
-  //        dlog("TestTask: Time %d\n", ++time);
-  //      }
-#endif
 }

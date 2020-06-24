@@ -21,6 +21,7 @@
 
 #ifdef KERNEL
 #include <Exec/x86/bochs.h>
+#include <posix/sprintf.h>
 #else
 #include <stdio.h>
 #define dlog printf
@@ -133,18 +134,24 @@ protected:
   static void print_one(TUint64 aMode,
     TUint64 aUser,
     TUint64 aGroup,
-    TUint64 aSize, const char *aFilename) {
+    TUint64 aSize, const char *aFilename,
+    char *aOutputBuffer) {
 
     char mode[16], user[16], group[16], *path = DuplicateString("/");
     format_mode(mode, aMode);
     format_user(user, aUser);
     format_group(group, aGroup);
-    dlog("%s %s %s %8d %s\n", mode, user, group, aSize, aFilename);
+    if (aOutputBuffer) {
+      sprintf(aOutputBuffer, "%s %s %s %8d %s\n", mode, user, group, aSize, aFilename);
+    }
+    else {
+      dlog("%s %s %s %8d %s\n", mode, user, group, aSize, aFilename);
+    }
   }
 
 public:
-  static void Dump(const ds_tag *s, const char *aFilename) {
-    print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, aFilename);
+  static void Dump(const ds_tag *s, const char *aFilename, char *aOutputBuffer = ENull) {
+    print_one(s->mMode, s->mOwner, s->mOwnerGroup, s->mSize, aFilename, aOutputBuffer);
   }
 } PACKED DirectoryStat;
 

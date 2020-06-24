@@ -58,16 +58,41 @@ void BBitmap32::CopyPixels(BBitmap32 *aOther) {
   }
 }
 
+static void CopyPixels32(TUint32 *dst, TUint32 *src, TUint32 len) {
+  // rsi = e000 0000 (dst)
+  // rdx = src
+  // rcx = len
+  dlog("dst(%x) src(%x) len(%d)\n", dst, src, len);
+}
+
+extern "C" void CopyRect(TUint32 *dst, TUint32 *src, TUint32 w, TUint32 h, TUint64 d1, TUint64 d2);
+
 void BBitmap32::BltBitmap(BBitmap32 *aOther, TInt aDestX, TInt aDestY) {
   TInt w = aOther->Width(),
        h = aOther->Height();
 
-  for (TInt y = 0; y < h; y++) {
-    for (TInt x = 0; x < w; x++) {
-      TUint32 color = aOther->ReadPixel(x, y);
-      SafePlotPixel(color, aDestX + x, aDestY + y);
-    }
+#if 0
+  if (aDestX + w > mWidth) {
+    w = mWidth - aDestX;
   }
+  if (aDestY + h > mHeight) {
+    h = mHeight - aDestY;
+  }
+#endif
+
+  TUint32 *src = &aOther->mPixels[0],
+          *dst = &mPixels[aDestY * mPitch + aDestX];
+  // dlog("BltBitmap dx(%d) dy(%d) w(%d) h(%d) maxh(%d)\n", aDestX, aDestY, w, h, mHeight);
+
+  CopyRect(dst, src, w, h, mPitch * 4, aOther->mPitch * 4);
+  // for (TInt y = 0; y < h; y++) {
+  //   src += aOther->mPitch;
+  //   dst += mPitch;
+  //   for (TInt x = 0; x < w; x++) {
+  //     TUint32 color = aOther->ReadPixel(x, y);
+  //     PlotPixel(color, aDestX + x, aDestY + y);
+  //   }
+  // }
 }
 
 void BBitmap32::FastLineHorizontal(TUint32 aColor, TInt aX, TInt aY, TUint aW) {

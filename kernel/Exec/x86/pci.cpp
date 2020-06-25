@@ -45,7 +45,7 @@ public:
 
   TUint16 GetDeviceId(TUint32 aAddress) {
     // upper 16 bits
-    TUint16 device_id =  (ReadField(aAddress, OFFSET_DEVICE_ID) >> 16) & 0xffff;
+    TUint16 device_id = (ReadField(aAddress, OFFSET_DEVICE_ID) >> 16) & 0xffff;
     dlog("      device id: %x\n:, device_id\n");
     return device_id;
   }
@@ -92,16 +92,6 @@ public:
   }
 };
 
-PCI::PCI() {
-  mIO = new PCI_IO();
-  dlog("CONSTRUCT PCI\n");
-  Scan();
-}
-
-PCI::~PCI() {
-  delete mIO;
-}
-
 void PCI::ScanBus(TUint8 aBusNumber) {
   TUint8 func = 0;
   for (TUint8 device = 0; device < 32; device++) {
@@ -109,6 +99,7 @@ void PCI::ScanBus(TUint8 aBusNumber) {
     TUint16 type = mIO->GetHeaderType(addr);
     dlog("    ScanBus(%d) addr(%x) type(%x)\n", aBusNumber, addr, type);
     if (type & MULTIFUNCTION_DEVICE) {
+      dlog(" MULTIFUNCTION\n");
       for (func = 0; func < 7; func++) {
         // check function
       }
@@ -123,8 +114,10 @@ void PCI::Scan() {
   TUint16 type = mIO->GetHeaderType(mIO->GetAddress(0, 0, 0));
   dlog("  SCAN(%x)\n", type);
   if ((type & MULTIFUNCTION_DEVICE)) {
-    bochs;
     for (TUint8 bus = 0; bus < 8; bus++) {
+      dlog("    bus(%d)\n", bus);
+      TUint16 vendorId = mIO->GetVendorId(mIO->GetAddress(0, 0, bus));
+      dlog("    bus(%d) vendorId(%x)\n", bus, vendorId);
       if (mIO->GetVendorId(mIO->GetAddress(0, 0, bus)) == INVALID_VENDOR_ID) {
         ScanBus(bus);
       }
@@ -134,3 +127,14 @@ void PCI::Scan() {
     ScanBus(0);
   }
 }
+
+PCI::PCI() {
+  mIO = new PCI_IO();
+  dlog("CONSTRUCT PCI\n");
+  Scan();
+}
+
+PCI::~PCI() {
+  delete mIO;
+}
+

@@ -1,5 +1,5 @@
 #include <Exec/ExecBase.h>
-#include <Inspiration/Inspiration.h>
+#include <Inspiration/InspirationBase.h>
 #include <stdint.h>
 
 #include <Exec/x86/mmu.h>
@@ -32,6 +32,7 @@ extern "C" void eputs(const char *s);
 extern "C" void enter_tasking();
 
 class IdleTask : public BTask {
+  friend ExecBase;
 public:
   IdleTask() : BTask("Idle Task", LIST_PRI_MIN) {}
 
@@ -39,6 +40,33 @@ public:
   void Run() {
     //    sti();
     dlog("IdleTask Running\n");
+    //  mCurrentTask->Dump();
+    // initialize devices
+    dlog("  initialize timer\n");
+    gExecBase.AddDevice(new TimerDevice());
+
+    // dlog("  initialize serial\n");
+    // AddDevice(new SerialDevice());
+
+    dlog("  initialize rtc \n");
+    gExecBase.AddDevice(new RtcDevice());
+
+    dlog("  initialize keyboard \n");
+    gExecBase.AddDevice(new KeyboardDevice);
+
+    dlog("  initialize mouse \n");
+    gExecBase.AddDevice(new MouseDevice());
+
+    dlog("  initialize ata disk \n");
+    gExecBase.AddDevice(new AtaDevice());
+
+    dlog("  initialize file system\n");
+    gExecBase.AddFileSystem(new SimpleFileSystem("ata.device", 0, gSystemInfo.mRootSector));
+
+    dlog("  initialize Inspiration\n");
+    gExecBase.mInspirationBase = new InspirationBase();
+    gExecBase.mInspirationBase->Init();
+
     //    gExecBase.Schedule();
     while (1) {
       dlog("IT Run\n");
@@ -132,6 +160,7 @@ ExecBase::ExecBase() {
   // set up 8259 PIC
   mPIC = new PIC;
   mDisableNestCount = 0;
+
   //  sti();
   Disable();
   dlog("  initialized 8259 PIC\n");
@@ -142,39 +171,11 @@ ExecBase::ExecBase() {
   mPS2 = ENull;
 #endif
 
-  
   // Before enabling interrupts, we need to have the idle task set up
   IdleTask *task = new IdleTask();
   mActiveTasks.Add(*task);
   mCurrentTask = mActiveTasks.First();
   current_task = &mCurrentTask->mRegisters;
-
-  //  mCurrentTask->Dump();
-  // initialize devices
-  dlog("  initialize timer\n");
-  AddDevice(new TimerDevice());
-
-  // dlog("  initialize serial\n");
-  // AddDevice(new SerialDevice());
-
-  dlog("  initialize rtc \n");
-  AddDevice(new RtcDevice());
-
-  dlog("  initialize keyboard \n");
-  AddDevice(new KeyboardDevice);
-
-  dlog("  initialize mouse \n");
-  AddDevice(new MouseDevice());
-
-  dlog("  initialize ata disk \n");
-  AddDevice(new AtaDevice());
-
-  dlog("  initialize file system\n");
-  AddFileSystem(new SimpleFileSystem("ata.device", 0, gSystemInfo.mRootSector));
-
-  dlog("  initialize Inspiration\n");
-  mInspirationBase = new InspirationBase();
-  mInspirationBase->Init();
 
   Enable();
 }

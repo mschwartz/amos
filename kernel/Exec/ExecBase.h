@@ -31,6 +31,7 @@ class PS2;
 class ACPI;
 class PCI;
 class InspirationBase;
+class IdleTask;
 
 /* External interrupts */
 #define IRQ_OFFSET 0x20 /* Interrupt offset for external interrupts */
@@ -93,7 +94,7 @@ typedef struct {
   char mVersion[64];
 
   void Dump() {
-    // dprintf("TSystemInfo(%x)\n", this);
+    // dlog("TSystemInfo(%x)\n", this);
     dlog("%s %s\n", mVersion, mBochs ? "BOCHS ENABLED" : "NO BOCHS");
     dlog("     CPU Speed: %0d Mhz\n", mCpuMhz);
     dlog("          init: %016x - %016x\n", mInitStart, mInitEnd);
@@ -132,6 +133,7 @@ static TSystemInfo &gSystemInfo = *(TSystemInfo *)0x5000; // see memory.inc
 
 class ExecBase : public BBase {
   friend RtcDevice;
+  friend IdleTask;
 
 protected:
   void Tick() {

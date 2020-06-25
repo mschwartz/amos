@@ -16,7 +16,7 @@ public:
 
 public:
   void Run() {
-    BScreen *screen = mInspirationBase.Find();
+    BScreen *screen = mInspirationBase.FindScreen();
     
     dlog("TestTask2 Running\n");
     ConWindow *con = new ConWindow();
@@ -136,6 +136,7 @@ void TestTask::Run() {
   // display.Clear(0x4f4fff);
 
   BScreen *screen = mInspirationBase.FindScreen();
+
   TestWindow *win = new TestWindow();
   screen->AddWindow(win);
 

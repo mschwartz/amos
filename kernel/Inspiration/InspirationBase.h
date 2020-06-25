@@ -23,15 +23,15 @@ public:
   BScreen *FindScreen(const char *aTitle = ENull);
   
 public:
-  void AddWindow(BWindow *aWindow);
   void UpdateWindow(BWindow *aWindow, TBool mDecorations = EFalse);
 
 public:
-  Display& GetDisplay() { return mDisplay; }
+  Display *GetDisplay() { return mDisplay; }
 
 protected:
-  Display& mDisplay;
+  Display *mDisplay;
   Desktop *mDesktop;
+  //
   BScreenList mScreenList;
 
   // TODO: windows belong to screens, not to InspirationBase.

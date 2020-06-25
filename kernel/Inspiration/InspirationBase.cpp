@@ -1,4 +1,4 @@
-#include <Inspiration/Inspiration.h>
+#include <Inspiration/InspirationBase.h>
 #include <Exec/ExecBase.h>
 #include <Exec/BTask.h>
 #include <Devices/MouseDevice.h>
@@ -12,7 +12,7 @@ public:
   }
 
 protected:
-  Display &mDisplay;
+  Display *mDisplay;
 
 public:
   void Run() {
@@ -32,7 +32,7 @@ public:
       while (MouseMessage *m = (MouseMessage *)replyPort->GetMessage()) {
         if (m == message) {
           //          dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
-          mDisplay.MoveCursor(m->mMouseX, m->mMouseY);
+          mDisplay->MoveCursor(m->mMouseX, m->mMouseY);
           message->mReplyPort = replyPort;
           message->SendMessage(mousePort);
         }
@@ -50,22 +50,27 @@ protected:
 };
 
 // constructor
-InspirationBase::InspirationBase() : mDisplay(*new Display) {
-  dlog("** Construct InspirationBase\n");
-  mDesktop = new Desktop();
+InspirationBase::InspirationBase() {
 }
 
 InspirationBase::~InspirationBase() {
 }
 
 void InspirationBase::Init() {
+  mDisplay = new Display();
+  dlog("** Init InspirationBase Display(%x)\n", mDisplay);
+
+  mDesktop = new Desktop();
+  AddScreen(mDesktop);
+  dlog("  Constructed Desktop(%x)\n", mDesktop);
+
   gExecBase.AddTask(new MousePointerTask());
   gExecBase.AddTask(new TestTask());
-  // gExecBase.DumpTasks();
 }
 
 void InspirationBase::AddScreen(BScreen *aScreen) {
   mScreenList.AddHead(*aScreen);
+  aScreen->Clear(0x4f4fff);
 }
 
 BScreen *InspirationBase::FindScreen(const char *aTitle) {
@@ -77,14 +82,9 @@ BScreen *InspirationBase::FindScreen(const char *aTitle) {
 }
 
 void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
-  TBool hidden = mDisplay.HideCursor();
-  mDisplay.BltBitmap(aWindow->mBitmap,
+  TBool hidden = mDisplay->HideCursor();
+  mDisplay->BltBitmap(aWindow->mBitmap,
     aWindow->mWindowRect.x1,
     aWindow->mWindowRect.y1);
-  mDisplay.SetCursor(!hidden);
-}
-
-void InspirationBase::AddWindow(BWindow *aWindow) {
-  mWindowList.AddHead(*aWindow);
-  aWindow->PaintDecorations();
+  mDisplay->SetCursor(!hidden);
 }

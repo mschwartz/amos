@@ -1,5 +1,5 @@
 #include <Exec/ExecBase.h>
-#include <Inspiration/Inspiration.h>
+#include <Inspiration/InspirationBase.h>
 #include <Inspiration/BWindow.h>
 
 const TInt FONT_HEIGHT = 16;
@@ -10,6 +10,7 @@ static TRGB TITLE_COLOR(0, 0, 0);
 BWindow::BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH)
     : BNode(aTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
 
+  mScreen = ENull;
   // mRect x1,y1 is the upper left position of the window in screen coordinates
 
   // bitmap encompasses window decorationsand client area
@@ -70,5 +71,5 @@ void BWindow::PaintDecorations() {
 }
 
 void BWindow::Repaint() {
-  mInspirationBase.UpdateWindow(this);
+  mScreen->UpdateWindow(this);
 }

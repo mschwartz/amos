@@ -8,8 +8,8 @@ Display::Display() : BNode("Display") {
 
   TUint64 fb = (TUint64)info.mDisplayFrameBuffer;
   mBitmap = new BBitmap32(info.mDisplayWidth, info.mDisplayHeight, info.mDisplayPitch, (TAny *)fb);
-  //  i.Dump();
-  //  mBitmap->Dump();
+  // mBitmap->Dump();
+
   mMouseX = mMouseY = -1;
   mMouseHidden = ETrue;
   MoveCursor(20, 20);

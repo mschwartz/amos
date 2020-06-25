@@ -376,7 +376,8 @@ extern "C" {
 */
 
 #ifndef CHUNK_SIZE_T
-#define CHUNK_SIZE_T unsigned long
+// #define CHUNK_SIZE_T unsigned long
+#define CHUNK_SIZE_T uint64_t
 #endif
 
 /* 
@@ -385,7 +386,8 @@ extern "C" {
   systems, intptr_t would suffice.
 */
 #ifndef PTR_UINT
-#define PTR_UINT unsigned long
+// #define PTR_UINT unsigned long
+#define PTR_UINT uint64_t
 #endif
 
 
@@ -421,7 +423,8 @@ extern "C" {
 */
 
 #ifndef INTERNAL_SIZE_T
-#define INTERNAL_SIZE_T size_t
+// #define INTERNAL_SIZE_T size_t
+#define INTERNAL_SIZE_T uint64_t
 #endif
 
 /* The corresponding word size */

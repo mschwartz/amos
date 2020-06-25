@@ -31,7 +31,7 @@ public:
   ~BScreen();
 
 public:
-  virtual void RenderTitlebar();
+  void RenderTitlebar();
   void Clear(TUint32 aColor);
 
 public:
@@ -44,7 +44,7 @@ public:
 
 protected:
   InspirationBase &mInspirationBase;
-  Display &mDisplay;
+  Display *mDisplay;
   BBitmap32 *mBitmap; // offscreen bitmap, size of screen
   BWindowList mWindowList;
   TInt32 mTopY;
@@ -52,6 +52,7 @@ protected:
 
 public:
   void AddDirtyRect(TInt32 aX1, TInt32 aT1, TInt32 aX2, TInt32 aY2);
+  void UpdateDirtyRects();
 
 protected:
   DirtyRectList mDirtyRects;

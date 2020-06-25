@@ -48,6 +48,7 @@ public:
   }
 
 protected:
+  BScreen *mScreen;
   BBitmap32 *mBitmap;
   TRect mWindowRect, mClientRect;
   BViewPort32 *mWindowViewPort, // entire window

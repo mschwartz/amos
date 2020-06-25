@@ -2,7 +2,7 @@
 #define TEST_TASK
 
 #include <Exec/ExecBase.h>
-#include <Inspiration/Inspiration.h>
+#include <Inspiration/InspirationBase.h>
 
 class TestTask : public BProcess {
 public:

@@ -43,6 +43,7 @@ public:
   void Clear(const TUint32 aColor);
   void Clear(TRGB &aColor) { return Clear(aColor.rgb888()); }
   void CopyPixels(BBitmap32 *aOther);
+  TUint32 *GetPixels() { return mPixels; }
 
   // copy bitmap from aOther to screen at aDestX, aDesty
   void BltBitmap(BBitmap32 *aOther, TInt aDestX, TInt aDestY);

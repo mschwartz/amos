@@ -22,6 +22,10 @@ public:
 
 public:
   void Add(TRect &aRect);
+public:
+  DirtyRect *First() { return (DirtyRect *)mNext; }
+  DirtyRect *Next(DirtyRect *r) { return (DirtyRect *)r->mNext; }
+  TBool End(DirtyRect *r) { return BList::End(r); }
 };
 
 #endif

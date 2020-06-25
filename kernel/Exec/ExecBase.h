@@ -55,14 +55,15 @@ enum {
 
 typedef struct {
   TUint64 mMillis;
+  TUint64 mEBDA; // Extended BIOS Data Area
+  TUint64 mRam;
+
   TUint64 mVideoMode;
   TAny *mScreenFrameBuffer;
   TInt64 mScreenWidth;
   TInt64 mScreenHeight;
   TInt64 mScreenDepth;
   TInt64 mScreenPitch;
-
-  TUint64 mRam;
 
   TUint64 mBootSector;
   TUint64 mBootSectors;
@@ -99,6 +100,7 @@ typedef struct {
     dlog("          data: %016x - %016x\n", mDataStart, mDataEnd);
     dlog("           bss: %016x - %016x\n", mBssStart, mBssEnd);
     dlog("    kernel_end: %016x\n", mKernelEnd);
+    dlog("          ebda: %016x\n", mEBDA);
     dlog("\n");
     dlog("  mScreenWidth: %d\n", mScreenWidth);
     dlog(" mScreenHeight: %d\n", mScreenHeight);
@@ -132,6 +134,7 @@ class ExecBase : public BBase {
 protected:
   void Tick() {
     gSystemInfo.mMillis++;
+    // randomize RNG as long as we're here
     Random();
   }
 

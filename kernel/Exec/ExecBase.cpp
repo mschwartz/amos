@@ -247,10 +247,6 @@ void ExecBase::Wake(BTask *aTask) {
 }
 
 void ExecBase::Schedule() {
-  // DISABLE;
-  // mCurrentTask = mActiveTasks.First();
-  // current_task = &mCurrentTask->mRegisters;
-  // ENABLE;
   schedule_trap();
 }
 
@@ -289,7 +285,9 @@ void ExecBase::RescheduleIRQ() {
 }
 
 void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
+  DISABLE;
   mMessagePortList->Add(aMessagePort);
+  ENABLE;
 }
 
 TBool ExecBase::RemoveMessagePort(MessagePort &aMessagePort) {

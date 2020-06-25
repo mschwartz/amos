@@ -27,6 +27,7 @@ void CopyString(char *aDestination, const char *aSource);
 char *DuplicateString(const char *aString, EMemoryFlags aMemoryType = MEMF_PUBLIC);
 
 TInt CompareStrings(const char *aString1, const char *aString2);
+TInt CompareMemory(const TAny *aMem1, const TAny *aMem2, TUint64 aCount);
 
 void SetMemory8(TAny *aDestination, TUint8 aValue, TInt64 aCount);
 void SetMemory16(TAny *aDestination, TUint16 aValue, TInt64 aCount);
@@ -35,6 +36,7 @@ void SetMemory64(TAny *aDestination, TUint64 aValue, TInt64 aCount);
 
 void CopyMemory(TAny *aDestination, TAny *aSource, TInt64 aCount);
 void CopyMemory64(TAny *aDestination, TAny *aSource, TInt64 aCount);
+
 
 /** 
  * parse token, separated by aDelim,  from aString into aToken.

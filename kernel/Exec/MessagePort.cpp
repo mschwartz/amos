@@ -59,7 +59,6 @@ void MessagePort::ReceiveMessage(BMessage *aMessage) {
 
   mList->AddTail(*aMessage);
   ENABLE;
-//  dlog("Signal %s\n", mOwner->TaskName());
   mOwner->Signal(1<<mSignalBit);
 
 }

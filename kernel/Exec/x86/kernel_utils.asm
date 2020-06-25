@@ -112,6 +112,11 @@ GetGS:
         mov ax, gs
         ret
 
+global GetRSP
+GetRSP:
+	mov rax, rsp
+	ret
+	
 global GetRFLAGS
 GetRFLAGS:
         pushf
@@ -130,9 +135,27 @@ SetFlags:
         popf
         ret
 
-global eputs
-	eputs               pushf
+global eputc
+eputc:
+        pushf
         cli
+
+	push rax
+        push dx
+	mov rax, rdi
+        mov dx, 0xe9
+        out dx, al
+        pop dx
+	pop rax
+
+        popf
+        ret
+	
+global eputs
+eputs:
+        pushf
+        cli
+
         push dx
         mov dx, 0xe9
 .loop:

@@ -6,13 +6,13 @@
 
 class MousePointerTask : public BTask {
 public:
-  MousePointerTask() : BTask("MousePointer", LIST_PRI_MAX), mScreen(mInspirationBase.GetScreen()) {
+  MousePointerTask() : BTask("MousePointer", LIST_PRI_MAX), mDisplay(mInspirationBase.GetDisplay()) {
 //    dlog("** Construct MousePointerTask\n");
     mX = mY = -1;
   }
 
 protected:
-  ScreenVesa& mScreen;
+  Display& mDisplay;
 
 public:
   void Run() {
@@ -32,7 +32,7 @@ public:
       while (MouseMessage *m = (MouseMessage *)replyPort->GetMessage()) {
         if (m == message) {
 //          dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
-          mScreen.MoveCursor(m->mMouseX, m->mMouseY);
+          mDisplay.MoveCursor(m->mMouseX, m->mMouseY);
           message->mReplyPort = replyPort;
           message->SendMessage(mousePort);
         }
@@ -50,7 +50,7 @@ protected:
 };
 
 // constructor
-InspirationBase::InspirationBase() : mScreen(*new ScreenVesa) {
+InspirationBase::InspirationBase() : mDisplay(*new Display) {
   dlog("** Construct InspirationBase\n");
 }
 
@@ -64,11 +64,11 @@ void InspirationBase::Init() {
 }
 
 void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
-  TBool hidden = mScreen.HideCursor();
-  mScreen.BltBitmap(aWindow->mBitmap,
+  TBool hidden = mDisplay.HideCursor();
+  mDisplay.BltBitmap(aWindow->mBitmap,
 		    aWindow->mWindowRect.x1,
 		    aWindow->mWindowRect.y1);
-  mScreen.SetCursor(!hidden);
+  mDisplay.SetCursor(!hidden);
 }
 
 void InspirationBase::AddWindow(BWindow *aWindow) {

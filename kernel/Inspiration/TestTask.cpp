@@ -145,8 +145,8 @@ void TestTask::Run() {
   // while (1)
   //   Sleep(1);
 
-  ScreenVesa &screen = mInspirationBase.GetScreen();
-  screen.Clear(0x4f4fff);
+  Display &display = mInspirationBase.GetDisplay();
+  display.Clear(0x4f4fff);
 
   TestWindow *win = new TestWindow();
   mInspirationBase.AddWindow(win);

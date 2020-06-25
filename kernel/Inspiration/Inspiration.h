@@ -5,7 +5,7 @@
 #include <Exec/BBase.h>
 #include <Graphics/Graphics.h>
 
-#include <Inspiration/ScreenVesa.h>
+#include <Inspiration/Display.h>
 #include <Inspiration/BWindow.h>
 #include <Inspiration/BConsoleWindow.h>
 
@@ -21,10 +21,11 @@ public:
   void UpdateWindow(BWindow *aWindow, TBool mDecorations = EFalse);
 
 public:
-  ScreenVesa& GetScreen() { return mScreen; }
+  Display& GetDisplay() { return mDisplay; }
 
 protected:
-  ScreenVesa& mScreen;
+  Display& mDisplay;
+  // TODO: windows belong to screens, not to InspirationBase.
   BWindowList mWindowList;
 };
 

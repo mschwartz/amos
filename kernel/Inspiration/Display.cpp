@@ -1,13 +1,13 @@
 #include <Exec/ExecBase.h>
-#include <Inspiration/ScreenVesa.h>
+#include <Inspiration/Display.h>
 
-ScreenVesa::ScreenVesa() : BNode("ScreenVesa") {
-  dlog("Construct ScreenVesa\n");
+Display::Display() : BNode("Display") {
+  dlog("Construct Display\n");
   TSystemInfo info;
   gExecBase.GetSystemInfo(&info);
 
-  TUint64 fb = (TUint64)info.mScreenFrameBuffer;
-  mBitmap = new BBitmap32(info.mScreenWidth, info.mScreenHeight, info.mScreenPitch, (TAny *)fb);
+  TUint64 fb = (TUint64)info.mDisplayFrameBuffer;
+  mBitmap = new BBitmap32(info.mDisplayWidth, info.mDisplayHeight, info.mDisplayPitch, (TAny *)fb);
   //  i.Dump();
   //  mBitmap->Dump();
   mMouseX = mMouseY = -1;
@@ -52,7 +52,7 @@ static void render_cursor(BBitmap32 *aBitmap, TInt aX, TInt aY) {
   //  }
 }
 
-void ScreenVesa::MoveCursor(TInt aX, TInt aY) {
+void Display::MoveCursor(TInt aX, TInt aY) {
   if (mMouseX == aX && mMouseY == aY) {
     return;
   }
@@ -70,7 +70,7 @@ void ScreenVesa::MoveCursor(TInt aX, TInt aY) {
   }
 }
 
-TBool ScreenVesa::ShowCursor() {
+TBool Display::ShowCursor() {
   TBool ret = mMouseHidden;
   if (!mMouseHidden) {
     return ret;
@@ -80,7 +80,7 @@ TBool ScreenVesa::ShowCursor() {
   return ret;
 }
 
-TBool ScreenVesa::HideCursor() {
+TBool Display::HideCursor() {
   TBool ret = mMouseHidden;
   if (mMouseHidden) {
     return ret;
@@ -90,48 +90,48 @@ TBool ScreenVesa::HideCursor() {
   return ret;
 }
 
-void ScreenVesa::MoveTo(int aX, int aY) {
+void Display::MoveTo(int aX, int aY) {
   mX = aX;
   mY = aY;
 }
 
-void ScreenVesa::GetXY(TInt &aX, TInt &aY) {
+void Display::GetXY(TInt &aX, TInt &aY) {
   aX = mX;
   aY = mY;
 }
 
-void ScreenVesa::ClearEOL(TUint8 aCharacter) {
+void Display::ClearEOL(TUint8 aCharacter) {
   //
 }
 
-void ScreenVesa::Down() {
+void Display::Down() {
   //
 }
 
-void ScreenVesa::ScrollUp() {
+void Display::ScrollUp() {
   //
 }
 
-void ScreenVesa::NewLine() {
+void Display::NewLine() {
   //
 }
 
-void ScreenVesa::WriteChar(char c) {
+void Display::WriteChar(char c) {
   //
 }
 
-void ScreenVesa::Clear(TUint32 aColor) {
+void Display::Clear(TUint32 aColor) {
   mBitmap->Clear(aColor);
   //
 }
 
-void ScreenVesa::WriteString(TInt aX, TInt aY, const char *s) {
+void Display::WriteString(TInt aX, TInt aY, const char *s) {
   TBool hidden = HideCursor();
   mBitmap->DrawText(aX, aY, s);
   SetCursor(!hidden);
 }
 
-void ScreenVesa::WriteString(const char *s) {
+void Display::WriteString(const char *s) {
   if (!mMouseHidden) {
     HideCursor();
     mBitmap->DrawText(mX, mY, s);

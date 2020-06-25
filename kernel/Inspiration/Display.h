@@ -4,9 +4,9 @@
 #include <Exec/Types.h>
 #include <Graphics/bitmap/BBitmap32.h>
 
-class ScreenVesa : public BNode {
+class Display : public BNode {
 public:
-  ScreenVesa();
+  Display();
 
   TBool IsCharacterDevice() {
     return EFalse;

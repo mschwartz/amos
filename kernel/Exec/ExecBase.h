@@ -61,11 +61,11 @@ typedef struct {
   TUint64 mRam;
 
   TUint64 mVideoMode;
-  TAny *mScreenFrameBuffer;
-  TInt64 mScreenWidth;
-  TInt64 mScreenHeight;
-  TInt64 mScreenDepth;
-  TInt64 mScreenPitch;
+  TAny *mDisplayFrameBuffer;
+  TInt64 mDisplayWidth;
+  TInt64 mDisplayHeight;
+  TInt64 mDisplayDepth;
+  TInt64 mDisplayPitch;
 
   TUint64 mBootSector;
   TUint64 mBootSectors;
@@ -104,11 +104,11 @@ typedef struct {
     dlog("    kernel_end: %016x\n", mKernelEnd);
     dlog("          ebda: %016x\n", mEBDA);
     dlog("\n");
-    dlog("  mScreenWidth: %d\n", mScreenWidth);
-    dlog(" mScreenHeight: %d\n", mScreenHeight);
-    dlog("  mScreenDepth: %d\n", mScreenDepth);
-    dlog("  mScreenPitch: %d\n", mScreenPitch);
-    dlog("  mFrameBuffer: %x\n", mScreenFrameBuffer);
+    dlog("  mDisplayWidth: %d\n", mDisplayWidth);
+    dlog(" mDisplayHeight: %d\n", mDisplayHeight);
+    dlog("  mDisplayDepth: %d\n", mDisplayDepth);
+    dlog("  mDisplayPitch: %d\n", mDisplayPitch);
+    dlog("  mFrameBuffer: %x\n", mDisplayFrameBuffer);
     dlog("\n");
     dlog("    mNumDrives: %d\n", mNumDrives);
     dlog("    mBootDrive: %02x\n", mBootDrive);

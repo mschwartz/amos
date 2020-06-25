@@ -1,7 +1,7 @@
 #ifndef KERNEL_MEMORY_H
 #define KERNEL_MEMORY_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 #include <x86/mmu.h>
 
 const TUint64 KILOBYTE = 1024;

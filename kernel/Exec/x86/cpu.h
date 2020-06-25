@@ -1,7 +1,9 @@
 #ifndef KERNEL_X86_CPU_H
 #define KERNEL_X86_CPU_H
 
-#include <Exec/Types.h>
+// TODO: one CPU per physical CPU/core
+
+#include <Types.h>
 
 #define LOCALSIZE 0x1000
 

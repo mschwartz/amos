@@ -1,7 +1,7 @@
 #ifndef AMOS_INSPIRATION_H
 #define AMOS_INSPIRATION_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/BBase.h>
 #include <Graphics/Graphics.h>
 

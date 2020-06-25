@@ -3,7 +3,7 @@
 
 #include <Graphics/Graphics.h>
 #include <Graphics/BBitmap.h>
-#include <Exec/Types/BList.h>
+#include <Types/BList.h>
 /**
   * BConsoleFont is a bitmapped glyph oriented font.  The fonts are found on a linux system in
   * /usr/share/kbd/consolefonts/ *.psf.    They may be gzipped on disk, but must be uncompressed

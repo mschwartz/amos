@@ -1,4 +1,4 @@
-#include <Exec/Types/BSparseArray.h>
+#include <Types/BSparseArray.h>
 
 // constructor
 BSparseArrayNode::BSparseArrayNode(const char *aName, TInt64 aKey) : BNode(aName) {

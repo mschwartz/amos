@@ -1,7 +1,7 @@
 #ifndef KERNEL_GDT_H
 #define KERNEL_GDT_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 
 class TSS;
 

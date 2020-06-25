@@ -1,7 +1,7 @@
 #ifndef EXEC_BSPARSRARRAY_H
 #define EXEC_BSPARSRARRAY_H
 
-#include <Exec/Types/BList.h>
+#include <Types/BList.h>
 #include <Exec/Memory.h>
 
 const TInt MAX_SPARSEARRAY_BUCKETS = 4096;

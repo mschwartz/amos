@@ -1,8 +1,8 @@
 #ifndef GENUS_TNUMBER_H
 #define GENUS_TNUMBER_H
 
-#include <Exec/Types.h>
-#include <posix/string.h>
+#include <Types.h>
+#include <Exec/Memory.h>
 
 struct TPad {
   const char c;
@@ -74,7 +74,7 @@ struct TNumber {
 
     // Store current string length
     // Store a copy of strlen for writing the whole part right to left
-    TUint valueStrLen = strlen(c);
+    TUint valueStrLen = StringLength(c);
     TUint valueStrLenTmp = valueStrLen;
     n = whole;
     c[--valueStrLenTmp] = '0' + n % 10;

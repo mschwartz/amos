@@ -2,8 +2,6 @@
 
 DirtyRect::DirtyRect(TRect &aRect) : BNode("dirty rect") {
   mRect.Set(aRect);
-  dlog("Construct DirtyRect\n");
-  mRect.Dump();
 }
 
 DirtyRectList::DirtyRectList() : BList("dirty Rect list") {

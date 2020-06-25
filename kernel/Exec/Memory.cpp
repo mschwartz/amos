@@ -1,4 +1,4 @@
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/Memory.h>
 #include <Exec/BBase.h>
 

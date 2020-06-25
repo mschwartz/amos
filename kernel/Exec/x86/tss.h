@@ -1,7 +1,7 @@
 #ifndef EXEC_X86_TSS_H
 #define EXEC_X86_TSS_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/BBase.h>
 
 #define KSTACK_SIZE (2 * 1024 * 1024)

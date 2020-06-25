@@ -4,11 +4,8 @@
 // Uncomment for production build
 // #define PRODUCTION
 
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/Memory.h>
-//#include <memory>
-
-//extern void operator delete(TAny *ptr, unsigned long size);
 
 /**
  * BBase is the base class for EVERYTHING.

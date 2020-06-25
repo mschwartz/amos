@@ -1,7 +1,7 @@
 #ifndef EXEC_BHASHTABLE_H
 #define EXEC_BHASHTABLE_H
 
-#include <Exec/Types/BList.h>
+#include <Types/BList.h>
 #include <Exec/Memory.h>
 
 const TInt MAX_HASH_BUCKETS = 4096;

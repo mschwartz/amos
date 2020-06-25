@@ -1,10 +1,10 @@
 #ifndef SIMPLEFILESYSTEM_TASK_H
 #define SIMPLEFILESYSTEM_TASK_H
 
-#include <Devices/AtaDevice.h>
-#include <Exec/BTask.h>
 #include <Exec/ExecBase.h>
-#include <Exec/Types/BSparseArray.h>
+#include <Types/BSparseArray.h>
+#include <Exec/BTask.h>
+#include <Devices/AtaDevice.h>
 
 class SimpleFileSystem;
 

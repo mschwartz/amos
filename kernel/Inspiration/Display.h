@@ -1,7 +1,7 @@
 #ifndef EXEC_DEVICES_SCREEN_SCREENVESA_H
 #define EXEC_DEVICES_SCREEN_SCREENVESA_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Graphics/bitmap/BBitmap32.h>
 
 class Display : public BNode {

@@ -19,7 +19,7 @@
  * a Dock and desktop icons would be rendered.
  */
 
-#include <Exec/Types/BList.h>
+#include <Types/BList.h>
 #include <Inspiration/Display.h>
 #include <Graphics/bitmap/BBitmap32.h>
 #include <Inspiration/BWindow.h>

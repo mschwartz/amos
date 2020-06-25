@@ -14,9 +14,9 @@
  * When the heap is fully allocated, sectors will be allocated from the free list.
  */
 
-#include <Exec/Types.h>
-#include <Exec/Types/BList.h>
-#include <Exec/Types/BSparseArray.h>
+#include <Types.h>
+#include <Types/BList.h>
+#include <Types/BSparseArray.h>
 #include <Exec/MessagePort.h>
 
 #ifdef KERNEL

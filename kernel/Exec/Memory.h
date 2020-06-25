@@ -1,7 +1,7 @@
 #ifndef EXEC_MEMORY_H
 #define EXEC_MEMORY_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 
 // these flags may be ORed together
 enum EMemoryFlags {

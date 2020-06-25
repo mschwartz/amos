@@ -6,9 +6,11 @@
 #include <Graphics/Graphics.h>
 
 class InspirationBase;
+class BScreen;
 
 class BWindow : public BNode {
   friend InspirationBase;
+  friend BScreen;
 
 public:
   BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH);
@@ -33,6 +35,7 @@ public:
   void EndPaint() {
     mPainting = EFalse;
     Repaint();
+    mDirty = ETrue;
   }
 
   void Clear(TUint32 aColor) {
@@ -49,13 +52,13 @@ protected:
   TRect mWindowRect, mClientRect;
   BViewPort32 *mWindowViewPort, // entire window
     *mViewPort;                 // client area
-  TBool mPainting;
+  TBool mPainting, mDirty;
   InspirationBase &mInspirationBase;
 };
 
 class BWindowList : public BList {
 public:
-  BWindowList() : BList("Window LIst") {}
+  BWindowList() : BList("Window List") {}
 };
 
 #endif

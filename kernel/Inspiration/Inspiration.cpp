@@ -7,12 +7,12 @@
 class MousePointerTask : public BTask {
 public:
   MousePointerTask() : BTask("MousePointer", LIST_PRI_MAX), mDisplay(mInspirationBase.GetDisplay()) {
-//    dlog("** Construct MousePointerTask\n");
+    //    dlog("** Construct MousePointerTask\n");
     mX = mY = -1;
   }
 
 protected:
-  Display& mDisplay;
+  Display &mDisplay;
 
 public:
   void Run() {
@@ -31,7 +31,7 @@ public:
       WaitPort(replyPort);
       while (MouseMessage *m = (MouseMessage *)replyPort->GetMessage()) {
         if (m == message) {
-//          dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
+          //          dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
           mDisplay.MoveCursor(m->mMouseX, m->mMouseY);
           message->mReplyPort = replyPort;
           message->SendMessage(mousePort);
@@ -52,6 +52,7 @@ protected:
 // constructor
 InspirationBase::InspirationBase() : mDisplay(*new Display) {
   dlog("** Construct InspirationBase\n");
+  mDesktop = new Desktop();
 }
 
 InspirationBase::~InspirationBase() {
@@ -63,17 +64,27 @@ void InspirationBase::Init() {
   // gExecBase.DumpTasks();
 }
 
+void InspirationBase::AddScreen(BScreen *aScreen) {
+  mScreenList.AddHead(*aScreen);
+}
+
+BScreen *InspirationBase::FindScreen(const char *aTitle) {
+  if (aTitle == ENull) {
+    return mDesktop;
+  }
+
+  return mScreenList.Find(aTitle);
+}
+
 void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
   TBool hidden = mDisplay.HideCursor();
   mDisplay.BltBitmap(aWindow->mBitmap,
-		    aWindow->mWindowRect.x1,
-		    aWindow->mWindowRect.y1);
+    aWindow->mWindowRect.x1,
+    aWindow->mWindowRect.y1);
   mDisplay.SetCursor(!hidden);
 }
 
 void InspirationBase::AddWindow(BWindow *aWindow) {
   mWindowList.AddHead(*aWindow);
-  // dlog("Paint Decorations(%s)\n", aWindow->Title());
   aWindow->PaintDecorations();
-  // aWindow->Paint();
 }

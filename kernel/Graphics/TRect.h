@@ -1,5 +1,5 @@
-#ifndef GENUS_TRECT_H
-#define GENUS_TRECT_H
+#ifndef GRAPHICS_TRECT_H
+#define GRAPHICS_TRECT_H
 
 #include <Exec/Types.h>
 
@@ -105,6 +105,8 @@ public:
 
   void Height(TInt32 aHeight) { y2 = y1 + aHeight - 1; }
 
+  TInt32 Area() { return Width() * Height(); }
+
   void Dump(const char *aArgs = ENull) {
 #ifdef KERNEL
     if (aArgs) {
@@ -169,4 +171,4 @@ public:
   void CenterIn(TRect &aRect);  // centers within rect (typically ViewPort rect)
 } PACKED;
 
-#endif //GENUS_TRECT_H
+#endif //GRAPHICS_TRECT_H

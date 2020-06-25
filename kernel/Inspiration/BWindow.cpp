@@ -37,6 +37,7 @@ BWindow::BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH)
 
   mClientRect.Set(cRect);
 
+  mDirty = EFalse;
   mPainting = EFalse;
 }
 

@@ -91,8 +91,10 @@ public:
     aRect.x2 = mRect.x2;
     aRect.y2 = mRect.y2;
   }
+
   TInt Width() { return mWidth; }
   TInt Height() { return mHeight; }
+  TInt Depth() { return mDepth; }
 
 public:
   void Dump() {

@@ -17,6 +17,11 @@ public:
   }
 
 public:
+  TUint32 Width() { return mBitmap->Width(); }
+  TUint32 Height() { return mBitmap->Height(); }
+  TUint32 Depth() { return mBitmap->Depth(); }
+
+public:
   // mouse curor methods
   void MoveCursor(TInt aX, TInt aY);
   TBool ShowCursor(); // returns previous state

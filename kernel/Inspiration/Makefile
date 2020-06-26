@@ -2,7 +2,15 @@
 
 LIB=	libinspiration.a
 
-OBJ= Display.o DirtyRect.o BScreen.o Desktop.o BWindow.o BConsoleWindow.o TestTask.o InspirationBase.o
+OBJ= 	Display.o \
+	Mouse.o \
+	DirtyRect.o \
+	BScreen.o \
+	Desktop.o \
+	BWindow.o \
+	BConsoleWindow.o \
+	TestTask.o \
+	InspirationBase.o
 
 .cpp.o:
 	@echo $*.cpp

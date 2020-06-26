@@ -47,6 +47,7 @@ protected:
  ********************************************************************************/
 
 class RtcTask : public BTask {
+  friend RtcInterrupt;
 public:
   RtcTask(RtcDevice *aRtcDevice) : BTask("Rtc Task", LIST_PRI_MAX) {
     mRtcDevice = aRtcDevice;
@@ -54,29 +55,77 @@ public:
 
 public:
   void Run() {
-    TUint64 flags = GetFlags();
-    cli();
+    DISABLE;
 
     dlog("RTC Task running!\n");
+
     ReadRtc();
-    dlog("  --- Read RTC: %02d/%02d/%02d %02d:%02d:%02d\n", mRtcDevice->mMonth, mRtcDevice->mDay, mRtcDevice->mYear, mRtcDevice->mHours, mRtcDevice->mMinutes, mRtcDevice->mSeconds);
+    dlog("  --- Read RTC: %02d/%02d/%02d %02d:%02d:%02d\n",
+      mRtcDevice->mMonth, mRtcDevice->mDay, mRtcDevice->mYear,
+      mRtcDevice->mHours, mRtcDevice->mMinutes, mRtcDevice->mSeconds);
 
-#if 0
-    // enable RTC interrupt on the RTC controller
-    // default rate is 1/1024 (1024 hz) or 0x06
-    outb(0x70, 0x08);
-    outb(0x71, inb(0x71) | 0x40);
-#else
-    enable_irq8();
-#endif
+    outb(0x70, 0x0b);
+    TUint8 prev = inb(0x71);
+
+    outb(0x70, 0x0b);
+    outb(0x71, prev | (1 << 6));
+
+    // ACK RTC
+    outb(0x70, 0x0c);
+    inb(0x71);
+
     gExecBase.SetIntVector(ERtcClockIRQ, new RtcInterrupt(this));
+    gExecBase.EnableIRQ(IRQ_RTC);
 
-    SetFlags(flags);
+    mSignalBit = AllocSignal(-1);
+    mMessagePort = CreateMessagePort("rtc.device");
+    gExecBase.AddMessagePort(*mMessagePort);
+
+    BMessageList rtcQueue("rtc.device queue");
+    ENABLE;
+
+    TUint64 port_mask = 1 << mMessagePort->SignalNumber();
+    TUint64 tick_mask = 1 << mSignalBit;
 
     dlog("RTC Wait Signal\n");
     while (ETrue) {
-      TUint64 sigs = Wait(1 << 10);
-    };
+      TUint64 sigs = Wait(port_mask | tick_mask);
+      if (sigs & port_mask) {
+        while (RtcMessage *m = (RtcMessage *)mMessagePort->GetMessage()) {
+          switch (m->mCommand) {
+            case ERtcReadTicks:
+              m->mResult = mRtcDevice->GetTicks();
+              m->ReplyMessage();
+              break;
+            case ERtcSleep:
+              m->mPri = mRtcDevice->GetTicks() + m->mArg1;
+              rtcQueue.Add(*m);
+              break;
+            default:
+              dlog("rtc.device: UnknownmCommand(%d/%x)\n", m->mCommand, m->mCommand);
+              break;
+          }
+        }
+      }
+
+      if (sigs & tick_mask) {
+        TUint64 current = mRtcDevice->Tick();
+        while (ETrue) {
+          TUint64 flags = GetFlags();
+          RtcMessage *m = (RtcMessage *)rtcQueue.First();
+          if (rtcQueue.End(m)) {
+            break;
+          }
+          if (m->mPri > current) {
+            SetFlags(flags);
+            break;
+          }
+          m->Remove();
+          SetFlags(flags);
+          m->ReplyMessage();
+        }
+      }
+    }
   }
 
   void ReadRtc() {
@@ -87,6 +136,7 @@ public:
 
     while (busy())
       ;
+
     sec = read_cmos(SECONDS);
     mins = read_cmos(MINUTES);
     hr = read_cmos(HOURS);
@@ -150,6 +200,8 @@ public:
 
 protected:
   RtcDevice *mRtcDevice;
+  TUint64 mSignalBit;
+  MessagePort *mMessagePort;
 };
 
 /********************************************************************************
@@ -159,14 +211,14 @@ protected:
 extern "C" void ack_irq8();
 
 TBool RtcInterrupt::Run(TAny *aData) {
-//  dlog("RTC\n");
+  // dlog("RTC\n");
   //  cli();
   mTask->UpdateMillis();
-  ack_irq8();
-//  gPIC->ack(IRQ_RTC);
-//  outb(SELECT, 0x0c);
-//  inb(DATA);
-//  mTask->Signal(1 << 10);
+
+  outb(0x70, 0x0c);
+  inb(0x71);
+  gExecBase.AckIRQ(IRQ_RTC);
+  mTask->Signal(1 << mTask->mSignalBit);
   return ETrue;
 }
 
@@ -179,7 +231,7 @@ RtcDevice::RtcDevice() : BDevice("rtc.device") {
   gExecBase.AddTask(new RtcTask(this));
 }
 
-void RtcDevice::Tick() {
+TUint64 RtcDevice::Tick() {
   gExecBase.Tick();
   // should be called once per millisecond
   mFract++;
@@ -195,4 +247,5 @@ void RtcDevice::Tick() {
       }
     }
   }
+  return mMillis;
 }

@@ -90,6 +90,7 @@ void TimerTask::Run() {
         }
       }
     }
+
     if (sigs & tick_mask) {
       TUint64 current = mTimerDevice->IncrementTicks();
       while (ETrue) {

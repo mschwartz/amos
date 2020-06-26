@@ -1,6 +1,7 @@
 #include <Exec/ExecBase.h>
 #include <Exec/BTask.h>
 #include <Devices/TimerDevice.h>
+#include <Devices/RtcDevice.h>
 
 #define DEBUGME
 #undef DEBUGME
@@ -245,6 +246,25 @@ void BTask::Sleep(TUint64 aSeconds) {
   m->SendMessage(timer);
   WaitPort(replyPort);
   while ((m = (TimerMessage *)replyPort->GetMessage())) {
+    delete m;
+  }
+
+  FreeMessagePort(replyPort);
+}
+
+void BTask::MilliSleep(TUint64 aMilliSeconds) {
+  MessagePort *rtc = gExecBase.FindMessagePort("rtc.device");
+  if (!rtc) {
+    dlog("no rtc port\n");
+    return;
+  }
+
+  MessagePort *replyPort = CreateMessagePort();
+  RtcMessage *m = new RtcMessage(replyPort, ERtcSleep);
+  m->mArg1 = aMilliSeconds;
+  m->SendMessage(rtc);
+  WaitPort(replyPort);
+  while ((m = (RtcMessage *)replyPort->GetMessage())) {
     delete m;
   }
 

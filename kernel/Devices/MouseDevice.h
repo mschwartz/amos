@@ -9,6 +9,7 @@ const TUint8 MOUSE_RIGHT_BUTTON = 0x02;
 const TUint8 MOUSE_MIDDLE_BUTTON = 0x04;
 
 class MouseTask;
+
 class MouseDevice : public BDevice {
   friend MouseTask;
 

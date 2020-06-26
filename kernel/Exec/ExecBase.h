@@ -28,6 +28,7 @@ class MMU;
 class IDT;
 class PIC;
 class PS2;
+class ACPI;
 class InspirationBase;
 
 /* External interrupts */
@@ -162,6 +163,7 @@ protected:
   MMU *mMMU;
   IDT *mIDT;
   PIC *mPIC;
+  ACPI *mACPI;
 
 public:
   PS2 *GetPS2() { return mPS2; }

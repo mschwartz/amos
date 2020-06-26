@@ -205,32 +205,11 @@ DATA_SEG:            equ gdt_data - gdt_start
 
 boot2:
 	; copy EBDA to ebda_temp
-	push ds
-	push es
-
-	mov ax, 0x8000
-	mov ds, ax
-	mov ax, ebda_temp / 16
-	mov es, ax
-	xor ax, ax
-	mov si, ax
-	mov di, ax
-	mov cx, 32768
+	; this needs to be done before loading kernel, which might overwrite this memory
+	mov esi, 0x80000
+	mov edi, ebda_temp
+	mov ecx, 32768
 	rep movsw
-
-	mov ax, ds
-	add ax, 1000h
-	mov ds, ax
-
-	mov ax, es
-	add ax, 1000h
-	mov es, ax
-	
-	mov cx, 32768
-	rep movsw
-
-	pop es
-	pop ds
 	
 	jmp load2		; load the kernel
 	
@@ -762,11 +741,11 @@ b32:
         mov ecx, eax
         rep movsb
 
-	; restore ebda_temp at 0x80000
-	mov esi, ebda_temp
-	mov edi, EBDA_ORG
-	mov ecx, 65536 	; 128K
-	rep movsw
+	; ; restore ebda_temp at 0x80000
+	; mov esi, ebda_temp
+	; mov edi, EBDA_ORG
+	; mov ecx, 65536 	; 128K
+	; rep movsw
 
 	; skip oer GDT, etc.
         jmp enter_long_mode

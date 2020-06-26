@@ -109,7 +109,7 @@ TInt CompareMemory(const TAny *aMem1, const TAny *aMem2, TUint64 aCount) {
   char *aString1 = (char *)aMem1;
   char *aString2 = (char *)aMem2;
 
-  while (*aString1) {
+  while (*aString1 && --aCount > 0) {
     if (*aString1 != *aString2) {
       break;
     }

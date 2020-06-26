@@ -18,6 +18,18 @@ typedef struct {
   TUint64 xsdt;
   TUint8 checksum2;
   TUint8 _[3];
+  void Dump() {
+    dprint("\n\n");
+    dlog("RSDP at %x\n", this);
+    dlog("  signature: %8s \n", signature);
+    dlog("   checksum: %x\n", checksum);
+    dlog("   revision: %d\n", revision);
+    dlog("       rsdt: %x\n", rsdt);
+    dlog("     length: %d\n", length);
+    dlog("       xsdt: %x\n", xsdt);
+    dlog("  checksum2: %x\n", checksum2);
+    dprint("\n\n");
+  }
 } PACKED RSDP;
 
 typedef struct {
@@ -31,6 +43,33 @@ typedef struct {
   TUint32 creator;
   TUint32 creator_rev;
   TUint8 data[];
+  void Dump(TUint8 aRevision) {
+    dprint("\n\n");
+    dlog("SDT at %x\n", this);
+    dlog("      signature: %4s\n", signature);
+    dlog("            len: %d\n", len);
+    dlog("       revision: %d\n", revision);
+    dlog("       checksum: %x\n", checksum);
+    dlog("          OEMID: %6s\n", OEMID);
+    dlog("       table_ID: %8s\n", table_ID);
+    dlog("   OEM_revision: %d\n", OEM_revision);
+    dlog("        creator: %x\n", creator);
+    dlog("     creator_rev: %d\n", creator_rev);
+
+    TUint32 *p32 = (TUint32 *)data;
+    TUint64 *p64 = (TUint64 *)data;
+    dlog("            data: ");
+    for (TInt i = 0; i < 8; i++) {
+      if (aRevision) {
+        dprint("%016x ", p64[i]);
+      }
+      else {
+        dprint("%08x ", p32[i]);
+      }
+    }
+    dprint("... \n");
+    dprint("\n\n");
+  }
 } PACKED SDT;
 
 typedef struct {
@@ -63,11 +102,83 @@ typedef struct {
   };
 } PACKED MADTEntry;
 
-static TAny *ScanForRSDP(TUint64 aStart, TUint64 aEnd) {
-  while (aStart < aEnd) {
-    if (CompareMemory((char *)aStart, RSDP_SIGNATURE, 8) == 0) {
-      return (TAny *)aStart;
+#define incptr(p, n) (TUint64(p) + n)
+
+void ACPI::ParseMADT(TAny *aMadt, TInt32 aLen) {
+  MADT *madt = (MADT *)aMadt;
+  TAny *end = (TAny *)(madt + aLen);
+
+  MADTEntry *e = (MADTEntry *)madt->data;
+
+  dlog("    Local Interrupt Controller: %x\n", madt->lic_address);
+
+  while ((TAny *)e < end) {
+    TInt i;
+    switch (e->type) {
+      case MADT_CPU: // APIC descriptor (corresponds to unique cpu core)
+        // Check if cpu is enabled
+        if (!(e->lapic.id & 1)) {
+          break;
+        }
+        // Add to list
+        i = mAcpiInfo.mNumCpus;
+        mAcpiInfo.mCpus[i].mId = e->lapic.id;
+        mAcpiInfo.mCpus[i].mApicId = e->lapic.apic;
+        mAcpiInfo.mNumCpus++;
+        break;
+
+      case MADT_IOAPIC: // IOAPIC descriptor
+        i = mAcpiInfo.mNumIoApics;
+        mAcpiInfo.mIoApics[i].mId = e->ioapic.id;
+        mAcpiInfo.mIoApics[i].mAddr = e->ioapic.addr;
+        mAcpiInfo.mIoApics[i].mBase = e->ioapic.base;
+        mAcpiInfo.mNumIoApics++;
+        break;
+
+      case MADT_INT: // Interrupt remap
+        mAcpiInfo.mIrqMap[e->interrupt.source] = e->interrupt.target;
+        break;
+      default:
+        dlog("******************** %x\n", e);
+        bochs;
     }
+    // dlog(" MADT: type:%d len:%d\n", e->type, e->len);
+    if (e->len == 0) {
+      break;
+    }
+
+    TUint8 *xx = (TUint8 *)e;
+    xx += e->len;
+    e = (MADTEntry *)xx;
+  }
+}
+
+void ACPI::ParseSDT(TAny *aSdt, TUint8 revision) {
+  SDT *sdt = (SDT *)aSdt;
+
+  // sdt->Dump(revision);
+
+  TUint32 *p32 = (TUint32 *)sdt->data;
+  TUint64 *p64 = (TUint64 *)sdt->data;
+  int entries = (sdt->len - sizeof(SDT)) / (revision ? 8 : 4);
+  for (int i = 0; i < entries; i++) {
+    SDT *table = (SDT *)(revision ? p64[i] : p32[i]);
+
+    dlog("    Found table: (%4s), at %016x table->len (%d)\n", (char *)table->signature, table, table->len);
+
+    if (CompareMemory(table->signature, MADT_SIGNATURE, 4) == 0) {
+      ParseMADT(table->data, table->len);
+    }
+  }
+}
+
+static TAny *ScanForRSDP(TUint64 aStart, TUint64 aEnd) {
+  char *ptr = (char *)aStart;
+  while (aStart < aEnd) {
+    if (CompareMemory(ptr, RSDP_SIGNATURE, 8) == 0) {
+      return (TAny *)ptr;
+    }
+    ptr += 16;
     aStart += 16;
   }
   return ENull;
@@ -77,157 +188,37 @@ static TAny *FindRSDP() {
   TSystemInfo info;
   gExecBase.GetSystemInfo(&info);
 
-  TAny *p = ScanForRSDP(info.mEBDA, info.mEBDA+1024);
+  // dlog("  trying %x through %x\n", info.mEBDA, info.mEBDA + 1024);
+  // dhexdump((const TAny *)0x80000, 64);
+  TAny *p = ScanForRSDP(info.mEBDA, info.mEBDA + 1024);
+  // TAny *p = ScanForRSDP(0x80000, 0x9ffff);
   if (p) {
     return p;
   }
+
+  // dlog("  trying %x through %x\n", 0x80000, 0x9ffff);
+  // p = ScanForRSDP(0x80000, 0x9ffff);
+  // dlog("  trying %x through %x\n", 0xe0000, 0xfffff);
   return ScanForRSDP(0xe0000, 0xfffff);
 }
 
-void ACPI::ParseSDT(TAny *aStd, TUint8 revision) {
-  SDT *sdt = (SDT *)aStd;
-
-  TUint32 *p32 = (TUint32 *)sdt->data;
-  TUint64 *p64 = (TUint64 *)sdt->data;
-  int entries = (sdt->len - sizeof(SDT)) / (revision ? 8 : 4);
-  for(int i = 0; i < entries; i++) {
-    SDT *table = (SDT *)(revision ? p64[i] : p32[i]);
-
-    dlog("Found table: %s\n", (char *)table->signature);
-
-    if(CompareMemory(table->signature, MADT_SIGNATURE, 4) == 0) {
-      // parse_madt((void *)table->data, table->len);
-    }
-  }
-  
-}
 ACPI::ACPI() {
+  dprint("\n\n");
   dlog("construct ACPI\n");
-
-  mNumCpus = 0;
-  for (TInt i = 0; i < MAX_CPUS; i++) {
-    mCpus[i].mId = 0;
-    mCpus[i].mApicId = 0;
-  }
-
-  mNumIoApic = 0;
-  for (TInt i = 0; i < MAX_IOAPIC; i++) {
-    mIoApic[i].mId = 0;
-    mIoApic[i].mAddr = 0;
-    mIoApic[i].mBase = 0;
-  }
-
-  for (TInt i = 0; i < 256; i++) {
-    mIrqMap[i] = 0;
-  }
 
   RSDP *rsdp = (RSDP *)FindRSDP();
   if (rsdp == ENull) {
     return;
   }
+  // rsdp->Dump();
 
-  SDT*s = (SDT *)(rsdp->revision ? rsdp->xsdt : rsdp->rsdt);
+  SDT *s = (SDT *)(rsdp->revision ? rsdp->xsdt : rsdp->rsdt);
+  ParseSDT(s, rsdp->revision);
+  mAcpiInfo.Dump();
+  dprint("\n\n");
 }
 
 ACPI::~ACPI() {
   // should neverhappen
   bochs;
 }
-
-#if 0
-#include <acpi.h>
-#include <memory.h>
-#include <debug.h>
-
-
-struct acpi_info acpi_info = {0};
-
-static void *scan_rsdp(TUint64 start, TUint64 end)
-{
-  void *p = P2V(start);
-  while(p < P2V(end))
-    {
-      if(!memcmp(p, RSDP_SIGNATURE, 8))
-	return p;
-      p = incptr(p, 16);
-    }
-  return 0;
-}
-
-static struct rsdp *find_rsdp()
-{
-  // Scan the Extended BIOS Data Area
-  uint16_t *ebda_ptr = P2V(0x40e);
-  TUint64 ebda = *ebda_ptr << 4;
-  void *p = scan_rsdp(ebda, ebda+1024);
-  if(p) return p;
-
-  // Scan 0xE0000 - 0xFFFFF
-  p = scan_rsdp(0xE0000, 0xFFFFF);
-  if(p) return p;
-
-  return 0;
-}
-
-static void parse_madt(struct madt *madt, TUint32 len)
-{
-  uintptr_t end = (uintptr_t)madt + len;
-  struct madt_entry *e = (void *)madt->data;
-  debug_info("Local Interrupt Controller: %x\n", madt->lic_address);
-  while((uintptr_t)e < end)
-    {
-      int i;
-      switch(e->type)
-	{
-	case MADT_CPU: // APIC descriptor (corresponds to unique cpu core)
-	  // Check if cpu is enabled
-	  if(!(e->lapic.id & 1)) break;
-	  // Add to list
-	  i = acpi_info.num_cpus;
-	  acpi_info.cpu[i].id = e->lapic.id;
-	  acpi_info.cpu[i].apic = e->lapic.apic;
-	  acpi_info.num_cpus++;
-	  break;
-
-	case MADT_IOAPIC: // IOAPIC descriptor
-	  i = acpi_info.num_ioapic;
-	  acpi_info.ioapic[i].id = e->ioapic.id;
-	  acpi_info.ioapic[i].addr = e->ioapic.addr;
-	  acpi_info.ioapic[i].base = e->ioapic.base;
-	  acpi_info.num_ioapic++;
-	  break;
-
-	case MADT_INT: // Interrupt remap
-	  acpi_info.int_map[e->interrupt.source] = e->interrupt.target;
-	  break;
-	}
-      debug_info(" MADT: type:%d len:%d\n", e->type, e->len);
-      e = incptr(e, e->len);
-    }
-}
-
-static void parse_sdt(struct sdt *sdt, TUint8 revision)
-{
-  TUint32 *p32 = (void *)sdt->data;
-  TUint64 *p64 = (void *)sdt->data;
-  int entries = (sdt->len - sizeof(struct sdt)) / (revision ? 8 : 4);
-  for(int i = 0; i < entries; i++)
-    {
-      struct sdt *table = P2V(revision ? p64[i] : p32[i]);
-
-      debug_info("Found table: ");
-      debug_putsn((char *)table->signature, 4);
-      debug_printf("\n");
-
-      if(!memcmp(table->signature, MADT_SIGNATURE, 4))
-	parse_madt((void *)table->data, table->len);
-    }
-}
-
-void acpi_init()
-{
-  struct rsdp *rsdp = find_rsdp();
-  struct sdt *s = P2V(rsdp->revision ? rsdp->xsdt : rsdp->rsdt);
-  parse_sdt(s, rsdp->revision);
-}
-#endif

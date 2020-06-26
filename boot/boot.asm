@@ -56,6 +56,7 @@ kernel_sectors:     dw 0	; number of sectors that comprise the kernel image
 root_sector:        dw 0	; root of file system
 
 ;; Anything past here doesn't matter to our build-img tool.
+ebda:               dw 0
 bochs_present:      db 0	; true if bochs is detected
 ;; Variables
 BOOT_DRIVE:         db 0	; boot sector is entered with the drive number of the boot device in dl
@@ -79,6 +80,8 @@ main:
         mov gs, ax
 
         mov [BOOT_DRIVE], dl
+	mov ax, [040ex]
+	mov [ebda], ax
 
         ; detect running in bochs
 detect_bochs:
@@ -165,15 +168,11 @@ load:
 ;; ---------------------------------------------------------------------------------------------
 ;; ---------------------------------------------------------------------------------------------
 ;;
-;; start of second sector
+;; start of second sector (rest of boot program)
 ;;
 ;; ---------------------------------------------------------------------------------------------
 ;; ---------------------------------------------------------------------------------------------
 ;; ---------------------------------------------------------------------------------------------
-
-
-
-
 
 
 gdt_start:
@@ -201,11 +200,19 @@ gdtr:
         dw end_of_gdt - gdt_start - 1   ; limit (Size of GDT)
         dd gdt_start        ; base of GDT
 
-	CODE_SEG            equ gdt_code - gdt_start
-	DATA_SEG            equ gdt_data - gdt_start
+CODE_SEG:            equ gdt_code - gdt_start
+DATA_SEG:            equ gdt_data - gdt_start
 
-align 2
-
+boot2:
+	; copy EBDA to ebda_temp
+	; this needs to be done before loading kernel, which might overwrite this memory
+	mov esi, 0x80000
+	mov edi, ebda_temp
+	mov ecx, 32768
+	rep movsw
+	
+	jmp load2		; load the kernel
+	
 ;; https://stackoverflow.com/questions/45434899/why-isnt-my-root-directory-being-loaded-fat12/45495410#45495410
 ;;
 ;;    Function: lba_to_chs
@@ -260,7 +267,7 @@ num_drives: db 0
 drive_type: db 0
 loading_kernel_msg:  db 'Loading kernel... ', 0
 align 4
-boot2:
+load2:
         mov si, loading_kernel_msg
         call puts16
 
@@ -287,7 +294,7 @@ boot2:
 	and ax, 3fh
 	mov [SectorsPerTrack], ax
 
-; 10011 00 111111	
+	; 10011 00 111111	
 	mov al, ch
 	shr cl, 6
 	mov ah, cl
@@ -643,23 +650,6 @@ align 4
         ; ebx: which memory block to oget
         ; edi: where to copy memory info
 get_memory_block:
-	;                    pusha
-	;                    mov si, .msg
-	;                    call puts16
-	;                    popa
-
-	;                    pusha
-	;                    mov eax, ebx
-	;                    call hexwords16
-	;                    popa
-
-	;                    pusha
-	;                    mov eax, edi
-	;                    call hexwordn16
-	;                    popa
-
-
-
 	mov eax, 0xe820
 	mov [es:edi + 20], dword 1	; force a valid ACPI 3.X entry
 	mov ecx, 24		; ask for 24 bytes
@@ -671,20 +661,21 @@ get_memory_block:
 	jne .failed
 	test ebx, ebx		; ebx = 0 implies list is only 1 entry long (worthless)
 	je .failed
-.skip               clc
+.skip:  clc
         ret
 .failed:
 	;                    mov si, .failmsg
 	;                    call puts16
         stc
         ret
-.failmsg            db '  *** get_memory_block failed', 13, 10, 0
-.msg                db '  get_memory_block ', 0
+.failmsg: db '  *** get_memory_block failed', 13, 10, 0
+.msg:    db '  get_memory_block ', 0
 
-	memory_count        equ memory_info
-	memory_infos        equ memory_count + 4
+memory_count:        equ memory_info
+memory_infos:        equ memory_count + 4
 
-	probe_memory_msg    db 'Probing memory...', 13, 10, 0
+probe_memory_msg:    db 'Probing memory...', 13, 10, 0
+
 probe_memory:
         mov si, probe_memory_msg
         call puts16
@@ -704,47 +695,28 @@ probe_memory:
 
         jmp .loop
 
-.msg                db 'Probed memory ', 0
+.msg:   db 'Probed memory ', 0
 
 align 4
 .done:
         mov si, .msg
         call puts16
 
-	;                    mov eax, [memory_count]
-	;                    call hexlongn16
-
-	;                    mov esi, memory_info
-	;                    mov ecx, 32
-	;                    call hexdump16
-	;                    call newline16
-
 enter_32bit_mode:
         cli
-	;                    mov si, .lgdt_msg
-	;                    call puts16
         lgdt [gdtr]
 
-	;                    mov si, .cr0_msg
-	;                    call puts16
         mov eax, cr0
         or al, 1
         mov cr0, eax
 
-	;                    mov si, .b32_msg
-	;                    call puts16
         jmp 8:b32
-
-.lgdt_msg           db 'about to lgdt', 13, 10, 0
-.cr0_msg            db 'about to cr0', 13, 10, 0
-.b32_msg            db 'about to jmp to b32', 13, 10, 0
-
-
 
 [bits 32]
 
 %include "debug32.inc"
-b32msg:             db 'Entered 32 bit mode', 13, 10,0
+b32msg: db 'Entered 32 bit mode', 13, 10,0
+
 align 16
 b32:
         mov esi, b32msg
@@ -759,196 +731,58 @@ b32:
         mov ebp, ESP32
         mov esp, ebp
 
-	;                    call cls32
-	;                    mov esi, b32msg
-	;                    call puts32
+	; copy kernel to final destination
+        mov esi, KERNEL_LOAD
+        mov edi, KERNEL_ORG
+        xor eax, eax
+        mov ax, [kernel_sectors]
+        mov ecx, 512
+        mul ecx
+        mov ecx, eax
+        rep movsb
 
-	;                    call screen_clear
+	; ; restore ebda_temp at 0x80000
+	; mov esi, ebda_temp
+	; mov edi, EBDA_ORG
+	; mov ecx, 65536 	; 128K
+	; rep movsw
 
-;; go into long mode
+	; skip oer GDT, etc.
         jmp enter_long_mode
 
-	; Global Descriptor Table (64-bit).
-
-%if 0
-gdt64:
-	dq 0x0000000000000000
-	dq 0x00209b0000000000 ;// 64 bit ring0 code segment
-	dq 0x0020930000000000 ;// 64 bit ring0 data segment
-	dq 0x0020fb0000000000 ;// 64 bit ring3 code segment
-	dq 0x0020f30000000000 ;// 64 bit ring3 data segment
-	dq 0x0000000000000000 ;// reserve for TSS low
-	dq 0x0000000000000000 ;// reserve for TSS high
-	dq 0x00cf9b000000ffff ;// 32 bit ring0 code segment
-	dq 0x00cf93000000ffff ;// 32 bit ring0 data segment
-gdt_ptr:
-	dw (gdt_ptr - gdt64 - 1)
-	dq gdt64
-gdt_ptr64:
-	dw (gdt_ptr - gdt64 - 1)
-	dq (gdt64)
-%endif
-
-%if 1
+;; Global Descriptor Table (64-bit).
 GDT64:                           
-Null:               equ $ - GDT64                           ; The null descriptor.
+Null:   equ $ - GDT64                           ; The null descriptor.
         dw 0xFFFF                               ; Limit (low).
         dw 0                                    ; Base (low).
         db 0                                    ; Base (middle)
         db 0                                    ; Access.
         db 1                                    ; Granularity.
         db 0                                    ; Base (high).
-CODE:               equ $ - GDT64                           ; The code descriptor.
+CODE:   equ $ - GDT64                           ; The code descriptor.
         dw 0                                    ; Limit (low).
         dw 0                                    ; Base (low).
         db 0                                    ; Base (middle)
         db 10011010b                            ; Access (exec/read).
         db 10101111b                            ; Granularity, 64 bits flag, limit19:16.
         db 0                                    ; Base (high).
-DATA:               equ $ - GDT64                           ; The data descriptor.
+DATA:   equ $ - GDT64                           ; The data descriptor.
         dw 0                                    ; Limit (low).
         dw 0                                    ; Base (low).
         db 0                                    ; Base (middle)
         db 10010010b                            ; Access (read/write).
         db 00000000b                            ; Granularity.
         db 0                                    ; Base (high).
-GDT64_Pointer:                                              ; The GDT-pointer.
+GDT64_Pointer:                                  ; The GDT-pointer.
         dw $ - GDT64 - 1                        ; Limit.
         dq GDT64                                ; Base.
-%endif
-
-	PTE_PRESENT         equ 1<<0
-	PTE_WRITE           equ 1<<1
-	PTE_LARGE           equ 1<<7
-	PAGE_SIZE           equ 4096
-
-setup_identity_tables:
-        mov edi, PLL4T
-        mov cr3, edi
-        mov si, .cr3_msg
-        call puts32
-
-        mov edx, PLL4T
-        mov eax, PLL4T + PAGE_SIZE
-        or eax, PTE_PRESENT + PTE_WRITE
-
-        mov [edx], eax
-        mov [edx + 2048], eax
-        mov [edx + 4088], eax
-
-        add edx, PAGE_SIZE
-        add eax, PAGE_SIZE
-        mov [edx], eax
-        mov [edx + 4080], eax
-
-        add eax, PAGE_SIZE
-        mov [edx + 8], eax
-        mov [edx + 4088], eax
-
-        add eax, PAGE_SIZE
-        mov [edx + 16], eax
-        add eax, PAGE_SIZE
-        mov [edx+24], eax
-
-        add edx, PAGE_SIZE
-        mov eax, PTE_LARGE + PTE_PRESENT + PTE_WRITE
-        mov ecx, 2048
-.loop:
-        mov [edx], eax
-        add eax, 0x200000
-        add edx, 8
-        loop .loop
-
-        mov eax, PLL4T
-        ret
-.cr3_msg            db 'enter cr3', 13, 10, 0
-
-osdev_page_tables:
-        mov edi, 0x1000    ; Set the destination index to 0x1000.
-        mov cr3, edi       ; Set control register 3 to the destination index.
-	;                    mov si, .cr3_msg
-	;                    call puts32
-
-        xor eax, eax       ; Nullify the A-register.
-        mov ecx, 4096      ; Set the C-register to 4096.
-        rep stosd          ; Clear the memory.
-        mov edi, cr3       ; Set the destination index to control register 3.
-
-        mov DWORD [edi], 0x2003      ; Set the uint32_t at the destination index to 0x2003.
-        add edi, 0x1000              ; Add 0x1000 to the destination index.
-        mov DWORD [edi], 0x3003      ; Set the uint32_t at the destination index to 0x3003.
-        add edi, 0x1000              ; Add 0x1000 to the destination index.
-        mov DWORD [edi], 0x4003      ; Set the uint32_t at the destination index to 0x4003.
-        add edi, 0x1000              ; Add 0x1000 to the destination index.
-
-        mov ebx, 0x00000003          ; Set the B-register to 0x00000003.
-        mov ecx, 512                 ; Set the C-register to 512.
-
-.SetEntry:
-        mov DWORD [edi], ebx         ; Set the uint32_t at the destination index to the B-register.
-        add ebx, 0x1000              ; Add 0x1000 to the B-register.
-        add edi, 8                   ; Add eight to the destination index.
-        loop .SetEntry               ; Set the next entry.
-
-        mov eax, 0x1000
-        ret
-.cr3_msg            db 'enter cr3', 13, 10, 0
-
-	;
-	; Create page tables that identity maps the first 2G of address space
-	;
-identity_map_2g:
-        mov edi, PLL4T
-        mov cr3, edi       ; Set the destination index to control register 3.
-	;                    mov si, .cr3_msg
-	;                    call puts32
-
-        ; zero the page tables
-        ; this makes all pages not present
-	;                    mov edi, PLL4T
-        xor eax, eax       ; Nullify the A-register.
-        mov ecx, 4096      ; Set the C-register to 4096.
-        rep stosd          ; Clear the memory.
-
-        ; map first PLL4T entry to the PDT
-        mov eax, PDT
-        or eax, PTE_PRESENT + PTE_WRITE        ; present + writable
-        mov [PLL4T], eax
-
-        ; map first PDT entry to PDPT table
-        mov eax, PDPT
-        or eax, PTE_PRESENT + PTE_WRITE
-        mov ebx, 128
-        xor ecx, ecx
-.l:                 mov [PDT + ecx * 8], eax
-	;                    mov [PDT], eax
-        inc ecx
-        cmp ecx, ebx
-        jl .l
-
-        ; map the PDT
-        xor ecx, ecx
-.loop:
-	;                    mov eax, 0x200000  
-        xor eax, eax
-        mul ecx
-        or eax, PTE_PRESENT + PTE_WRITE + PTE_LARGE
-        mov [PDT + ecx * 8], eax
-
-        inc ecx
-        cmp ecx, 512
-        jne .loop
-
-        mov eax, cr4                 ; Set the A-register to control register 4.
-        or eax, 1 << 5               ; Set the PAE-bit, which is the 6th bit (bit 5).
-        mov cr4, eax                 ; Set control register 4 to the A-register.
-
-        mov eax, PLL4T
-        ret
-.cr3_msg            db 'enter cr3', 13, 10, 0
 
 align 4
 
+;;
+;; Identity map first 64G of phsical memory
+;; See pure64 boot loader on (GitHub https://github.com/ReturnInfinity/Pure64)
+;;
 identity_map_pure64:
         ; Clear memory for the Page Descriptor Entries (0x10000 - 0x5FFFF)
 	mov edi, 0x00010000
@@ -1008,16 +842,10 @@ pd_low:					; Create a 2 MiB page
         ret
 
 enter_long_mode:
-	;                    mov si, .enter_msg
-	;                    call puts32
-
         mov eax, cr0
         and eax, ~(1<<31)
         mov cr0, eax
 
-	;                    call setup_identity_tables
-	;                    call osdev_page_tables
-	;                    call identity_map_2g
         call identity_map_pure64
 
         ; eax is address of page table (for cr3)
@@ -1070,15 +898,6 @@ go64:
 
 global call_main
 call_main:
-	; copy kernel to final destination
-        mov rsi, KERNEL_LOAD
-        mov rdi, KERNEL_ORG
-        xor rax, rax
-        mov ax, [kernel_sectors]
-        mov rcx, 512
-        mul rcx
-        mov rcx, rax
-        rep movsb
 
 	; set up SYSINFO at sys_info
 	mov rdi, sys_info
@@ -1145,6 +964,11 @@ call_main:
 
         mov eax, [display_mode + VideoMode.fb]
         mov [rdi + SYSINFO.framebuffer], eax
+
+	xor rax, rax
+	mov ax, [ebda]
+	shl rax, 4
+	mov [rdi + SYSINFO.ebda], rax
 
 	; call kernel with SYSINFO as argument
         call KERNEL_ORG

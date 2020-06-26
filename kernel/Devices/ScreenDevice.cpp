@@ -111,9 +111,7 @@ public:
     dprint("\n============ ScreenDevice ScreenTask running\n\n");
     gExecBase.DumpTasks();
     MessagePort *port = CreateMessagePort("screen.device");
-    DISABLE;
     gExecBase.AddMessagePort(*port);
-    ENABLE;
     while (ETrue) {
       WaitPort(port);
       ScreenMessage *m;

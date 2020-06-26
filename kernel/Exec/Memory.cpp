@@ -105,6 +105,20 @@ TInt CompareStrings(const char *aString1, const char *aString2) {
   return (*aString1 - *aString2);
 }
 
+TInt CompareMemory(const TAny *aMem1, const TAny *aMem2, TUint64 aCount) {
+  char *aString1 = (char *)aMem1;
+  char *aString2 = (char *)aMem2;
+
+  while (*aString1 && --aCount > 0) {
+    if (*aString1 != *aString2) {
+      break;
+    }
+    aString1++;
+    aString2++;
+  }
+  return (*aString1 - *aString2);
+}
+
 // these can be optimized by storing TUint64 until we need to store the remaining values
 void SetMemory8(TAny *aDestination, TUint8 aValue, TInt64 aCount) {
   TUint8 *dst = (TUint8 *)aDestination;

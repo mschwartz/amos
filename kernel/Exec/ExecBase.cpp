@@ -9,6 +9,7 @@
 #include <Exec/x86/cpu.h>
 #include <Exec/x86/pic.h>
 #include <Exec/x86/ps2.h>
+#include <Exec/x86/acpi.h>
 
 #include <Devices/AtaDevice.h>
 #include <Devices/SerialDevice.h>
@@ -119,6 +120,9 @@ ExecBase::ExecBase() {
   mIDT = new IDT;
   dlog("  initialized IDT\n");
 
+  mACPI = new ACPI();
+  dlog("  initialized ACPI\n");
+
   InitInterrupts();
 
   // set up 8259 PIC
@@ -134,6 +138,7 @@ ExecBase::ExecBase() {
   mPS2 = ENull;
 #endif
 
+  
   // Before enabling interrupts, we need to have the idle task set up
   IdleTask *task = new IdleTask();
   mActiveTasks.Add(*task);
@@ -162,7 +167,7 @@ ExecBase::ExecBase() {
 
   dlog("  initialize file system\n");
   AddFileSystem(new SimpleFileSystem("ata.device", 0, gSystemInfo.mRootSector));
-  
+
   dlog("  initialize Inspiration\n");
   mInspirationBase = new InspirationBase();
   mInspirationBase->Init();
@@ -247,10 +252,6 @@ void ExecBase::Wake(BTask *aTask) {
 }
 
 void ExecBase::Schedule() {
-  // DISABLE;
-  // mCurrentTask = mActiveTasks.First();
-  // current_task = &mCurrentTask->mRegisters;
-  // ENABLE;
   schedule_trap();
 }
 
@@ -289,7 +290,9 @@ void ExecBase::RescheduleIRQ() {
 }
 
 void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
+  DISABLE;
   mMessagePortList->Add(aMessagePort);
+  ENABLE;
 }
 
 TBool ExecBase::RemoveMessagePort(MessagePort &aMessagePort) {

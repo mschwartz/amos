@@ -46,6 +46,8 @@ extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   gSystemInfo.mDiskSize = gSystemInfo.mNumHeads * gSystemInfo.mNumSectors * gSystemInfo.mNumCylinders * 512;
 
   gSystemInfo.Dump();
+  // dlog("EBDA\n");
+  // dhexdump((TAny *)gSystemInfo.mEBDA, 32);
   call_global_constructors();
 
   gExecBase.Kickstart();  // does not return

@@ -48,14 +48,15 @@ public:
   }
 public:
   void Dump() {
+    dprint("\n\n");
     dlog("TAcpiInfo at %x\n", this);
-    dlog("           mNumCpus: %d\n", mNumCpus);
+    dlog("           NumCpus: %d\n", mNumCpus);
     for (TInt c=0; c<mNumCpus; c++) {
-      dprintf("    mCpus[%02d]: mId(%d) mApicId(%d)\n", c, mCpus[c].mId, mCpus[c].mApicId);
+      dlog("          mCpus[%02d]: mId(%d) mApicId(%d)\n", c, mCpus[c].mId, mCpus[c].mApicId);
     }
     dlog("        mNumIoApics: %d\n", mNumIoApics);
     for (TInt a=0; a<mNumIoApics; a++) {
-      dprintf("  mIoApics[%02d]: mId(%d) mAddr(%x) mBase(%x)\n", a, mIoApics[a].mId, mIoApics[a].mAddr, mIoApics[a].mBase);
+      dlog("          mIoApics[%02d]: mId(%d) mAddr(%x) mBase(%x)\n", a, mIoApics[a].mId, mIoApics[a].mAddr, mIoApics[a].mBase);
     }
 
     dlog("             mIrqMap: ");
@@ -66,6 +67,7 @@ public:
       }
       dprint("%08x ", mIrqMap[i]);
     }
+    dprint("\n\n");
   }
 } PACKED TAcpiInfo;
 

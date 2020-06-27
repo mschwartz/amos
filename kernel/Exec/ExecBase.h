@@ -29,6 +29,7 @@ class IDT;
 class PIC;
 class PS2;
 class ACPI;
+class PCI;
 class InspirationBase;
 
 /* External interrupts */
@@ -164,6 +165,7 @@ protected:
   IDT *mIDT;
   PIC *mPIC;
   ACPI *mACPI;
+  PCI *mPCI;
 
 public:
   PS2 *GetPS2() { return mPS2; }

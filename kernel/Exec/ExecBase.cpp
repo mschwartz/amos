@@ -9,6 +9,7 @@
 #include <Exec/x86/cpu.h>
 #include <Exec/x86/pic.h>
 #include <Exec/x86/ps2.h>
+#include <Exec/x86/pci.h>
 #include <Exec/x86/acpi.h>
 
 #include <Devices/AtaDevice.h>
@@ -119,6 +120,9 @@ ExecBase::ExecBase() {
 
   mIDT = new IDT;
   dlog("  initialized IDT\n");
+
+  mPCI = new PCI();
+  dlog("  initialized PCI\n");
 
   mACPI = new ACPI();
   dlog("  initialized ACPI\n");

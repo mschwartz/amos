@@ -17,7 +17,8 @@ X86=		x86/bochs.o \
 		x86/kernel_utils.o \
 		x86/mmu.o \
 		x86/pic.o \
-		x86/acpi.o
+		x86/acpi.o \
+		x86/pci.o
 
 TYPES= 		Types.o Types/TBCD.o \
 		Types/BList.o \

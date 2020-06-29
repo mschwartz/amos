@@ -26,7 +26,7 @@ extern "C" TUint64 rdtsc();
 
 extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   CopyString(&gSystemInfo.mVersion[0], "AMOS v1.0");
-  in_bochs = *((TUint8 *)0x7c10);
+  // in_bochs = *((TUint8 *)0x7c10);
 
   // compute CPU speed
   cli();

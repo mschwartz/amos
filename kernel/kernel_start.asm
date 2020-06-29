@@ -20,6 +20,7 @@ extern kernel_main
 
 start_msg:
 	db 13, 10, 'kernel_start', 13, 10, 0
+global bochs_present
 bochs_present:
 	db 0
 	
@@ -45,7 +46,9 @@ boot:
 	cpuid
 	test edx, 1<<25
 	jz .noSSE
+
 	;SSE is available
+
 .noSSE:
 	;now enable SSE and the like
 	mov rax, cr0
@@ -57,15 +60,6 @@ boot:
 	mov cr4, rax
 
 	fninit			;
-
-        ; call debug64_init
-
-        mov rsi, start_msg
-        call puts64
-
-	;                    mov rsi, rodata_start
-	;                    mov rcx, 64
-	;                    call hexdump64
 
 	mov rdi, sys_info
 	mov rax, init_start
@@ -91,16 +85,57 @@ boot:
 	mov rax, kernel_end
 	mov [rdi + SYSINFO.kernel_end], rax
 
+        mov rsi, start_msg
+        call puts64
+
         call kernel_main
         ret
 
 global sputc
 sputc:
-        push rax
-        mov rax, rdi
-        call putc64
-        pop rax
+	pushf
+	cli
+	push rax
+	mov rax, rdi
+	call putc64
+	pop rax
+	popf
+	ret
+	
+	push rdx
+	push rax
+
+%if 0
+	mov al, [bochs_present]
+	test al, al
+	jne .bochs
+	
+        mov dx, COM1+5
+.wait:              
+        in al, dx
+        and al, 0x20
+        jz .wait
+
+	mov rax, rdi
+        mov dx, COM1
+        out dx, al
+
+	pop rax
+	pop rdx
+	popf
+
         ret
+
+.bochs:
+	mov rax, rdi
+        out 0xe9, al
+
+	pop rax
+	pop rdx
+	popf
+	ret
+	
+%endif
 
 global sputs
 sputs:

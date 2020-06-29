@@ -973,6 +973,7 @@ call_main:
 	mov [rdi + SYSINFO.ebda], rax
 
 	; call kernel with SYSINFO as argument
+	mov al, [bochs_present]
         call KERNEL_ORG
         cli
         jmp $

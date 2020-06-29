@@ -50,6 +50,7 @@ debug64_init:
 global putc64
 putc64:
         push rdx
+
 	mov dl, [bochs_present]
 	test dl, dl
 	jne .bochs
@@ -60,9 +61,11 @@ putc64:
         in al, dx
         and al, 0x20
         jz .wait
+
         pop rax
         mov dx, COM1
         out dx, al
+
         pop rdx
 	ret
 

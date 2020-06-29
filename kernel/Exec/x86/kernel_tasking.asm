@@ -260,7 +260,7 @@ init_task_state:
         pushf
         cli
 
-	%if 0
+%if 0
         ; push registers we use/modify onto caller's stack
         push rcx
 
@@ -317,6 +317,7 @@ global enter_tasking
 enter_tasking:
         ; jmp $
 	jmp restore_task_state
+%if 0
         cli
         ; restore task state
         mov rdi, [current_task]
@@ -342,7 +343,8 @@ enter_tasking:
         ; finally restore rdi (we don't need it anymore)
         pop rdi
         iretq
-
+%endif
+	
 global save_rsp
 save_rsp:
         pushf

@@ -7,7 +7,9 @@
 #include <Devices/SerialDevice.h>
 //#include <Screen.h>
 
-TUint8 in_bochs; //  = *((TUint8 *)0x7c10);
+extern "C" TUint8 bochs_present;
+
+// TUint8 in_bochs; //  = *((TUint8 *)0x7c10);
 
 //extern "C" TUint64 GetFlags();
 //extern "C" void SetFlags(TUint64 aFlags);
@@ -17,21 +19,21 @@ extern "C" void eputs(const char *s);
 extern "C" void sputc(char c);
 
 void dputc(char c) {
-//  sputc(c);
-//    outb((int)c, 0xe9);
-//  sputc(c);
-  if (in_bochs) {
+  //  sputc(c);
+  //    outb((int)c, 0xe9);
+  //  sputc(c);
+  if (bochs_present) {
     outb(0xe9, (int)c);
   }
   else {
-    sputc(c);
+    //    sputc(c);
   }
 }
 
 void dputs(const char *s) {
   DISABLE;
-  while (*s) { 
-    dputc(*s++); 
+  while (*s) {
+    dputc(*s++);
   }
   ENABLE;
 }

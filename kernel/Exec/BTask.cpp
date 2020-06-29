@@ -68,10 +68,10 @@ static void print_flag(TUint64 flags, TInt bit, const char *m) {
 }
 
 void BTask::DumpRegisters(TTaskRegisters *regs) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
+
   dprint("   ===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
-#if 0
+#if 1
   dprint("   rip: %016x cs: %08x\n", regs->rip, regs->cs);
 
   // print flags
@@ -113,7 +113,7 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   dlog("rip 0x%x flags 0x%x\n", regs->rip, regs->rflags);
 #endif
 #endif
-  SetFlags(flags);
+  ENABLE;
 }
 
 void BTask::Dump() {
@@ -238,11 +238,7 @@ void BTask::Sleep(TUint64 aSeconds) {
     dlog("no timer port\n");
     return;
   }
-  //  while (!timer) {
-  //    dlog("***** can't find timer.device port\n");
-  //    timer = gExecBase.FindMessagePort("timer.device");
-  //  }
-  //  return;
+
   MessagePort *replyPort = CreateMessagePort();
   TimerMessage *m = new TimerMessage(replyPort, ETimerSleep);
   m->mArg1 = aSeconds;
@@ -251,7 +247,7 @@ void BTask::Sleep(TUint64 aSeconds) {
   while ((m = (TimerMessage *)replyPort->GetMessage())) {
     delete m;
   }
-  // dlog("%s slept\n", TaskName());
+
   FreeMessagePort(replyPort);
 }
 
@@ -272,26 +268,23 @@ void BTask::Enable() {
 }
 
 void BTask::Forbid() {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   mForbidNestCount++;
-  SetFlags(flags);
+  ENABLE;
 }
 
 void BTask::Permit() {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   mForbidNestCount--;
   if (mForbidNestCount < 0) {
     mForbidNestCount = 0;
   }
-  SetFlags(flags);
+  ENABLE;
 }
 
 void BTaskList::Dump() {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   BListPri::Dump();
   dprint("\n");
-  SetFlags(flags);
+  ENABLE;
 }

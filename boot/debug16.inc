@@ -1,22 +1,11 @@
 ;; debug16.inc
 
-%if 0
-%macro puts16 1
-	push eax
-	mov esi, %%puts_str
-	call puts16
-	jmp %%puts_end
-	%%puts_str:
-	db %1
-	db 0
-	%%puts_end:
-	pop eax
-%endmacro
-%endif
-
 global debug16_init
 debug16_init:
-%ifdef SERIAL
+	mov bl, [bochs_present]
+	test bl, bl
+	jne .bochs
+
         mov al, 0x00
         mov dx, COM1+1
         out dx, al
@@ -45,9 +34,10 @@ debug16_init:
         mov dx, COM1+4
         out dx, al
         
-%endif
+.bochs:
         ret
 
+%if 0
 cls16:
         mov di, 0
         push VIDEO_MEMORY_SEG
@@ -57,10 +47,13 @@ cls16:
         mov ecx, 25*80
         rep stosw
         ret
+%endif
 putc16:
-%ifdef SERIAL
-
         push dx
+	mov dl, [bochs_present]
+	test dl, dl
+	jne .bochs
+	
         push ax
         mov dx, COM1+5
         ; wait for serial ready to send
@@ -75,13 +68,13 @@ putc16:
         pop dx
 
 	ret
-%else
+.bochs:
         out 0xe9, al
 	xor bx,bx
 	mov ah, 0eh
 	int 10h			; Otherwise, print it
+	pop dx
 	ret
-%endif
 
 puts16:			; Routine: output string in SI to screen
         pusha
@@ -180,6 +173,7 @@ hexdump16:
         call newline16
 	ret
 
+%if 0
 hexdump16x:
 .line:
         pusha
@@ -204,6 +198,7 @@ hexdump16x:
 	ja .loop
         call newline16
 	ret
+%endif
 
 hexbytes16:
 	call hexbyte16

@@ -35,11 +35,13 @@ PIC::PIC() {
   outb(PIC2_DATA, 0x1);
 
 
-  //eenable all interrupts
-  mMasterMask = mSlaveMask = 0x00;
-  outb(PIC1_DATA, 0);
-  outb(PIC2_DATA, 0);
-  sti();
+  // disable/enable interrupts
+  mMasterMask = mSlaveMask = 0xff;
+
+  outb(PIC1_DATA, mMasterMask);
+  outb(PIC2_DATA, mSlaveMask);
+
+  // sti();
 }
 
 PIC::~PIC() {

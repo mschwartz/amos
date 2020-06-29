@@ -9,6 +9,7 @@
 #include <Exec/x86/cpu.h>
 #include <Exec/x86/pic.h>
 #include <Exec/x86/ps2.h>
+#include <Exec/x86/pci.h>
 #include <Exec/x86/acpi.h>
 
 #include <Devices/AtaDevice.h>
@@ -120,6 +121,9 @@ ExecBase::ExecBase() {
   mIDT = new IDT;
   dlog("  initialized IDT\n");
 
+  mPCI = new PCI();
+  dlog("  initialized PCI\n");
+
   mACPI = new ACPI();
   dlog("  initialized ACPI\n");
 
@@ -150,8 +154,8 @@ ExecBase::ExecBase() {
   dlog("  initialize timer\n");
   AddDevice(new TimerDevice());
 
-  dlog("  initialize serial\n");
-  AddDevice(new SerialDevice());
+  // dlog("  initialize serial\n");
+  // AddDevice(new SerialDevice());
 
   dlog("  initialize rtc \n");
   AddDevice(new RtcDevice());
@@ -313,6 +317,7 @@ void ExecBase::GuruMeditation(const char *aFormat, ...) {
   char buf[512];
   dprint("\n\n***********************\n");
   dprint("GURU MEDITATION at %dms\n", SystemTicks());
+
   va_list args;
   va_start(args, aFormat);
   vsprintf(buf, aFormat, args);

@@ -153,6 +153,7 @@ rm -f c.img
 bximage -q -mode=create -hd=12M -imgmode=flat c.img c.img
 echo "cat < bare.img 1<>c.img"
 cat < bare.img 1<>c.img
+chmod 644 c.img
 
 #cat boot.img kernel.img > drive.img
 

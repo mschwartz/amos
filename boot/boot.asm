@@ -58,6 +58,8 @@ root_sector:        dw 0	; root of file system
 ;; Anything past here doesn't matter to our build-img tool.
 ebda:               dw 0
 bochs_present:      db 0	; true if bochs is detected
+serial_initialized: db 0
+	
 ;; Variables
 BOOT_DRIVE:         db 0	; boot sector is entered with the drive number of the boot device in dl
 

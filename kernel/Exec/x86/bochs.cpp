@@ -20,7 +20,7 @@ void dputc(char c) {
 //  sputc(c);
 //    outb((int)c, 0xe9);
 //  sputc(c);
-  if (false || in_bochs) {
+  if (in_bochs) {
     outb(0xe9, (int)c);
   }
   else {

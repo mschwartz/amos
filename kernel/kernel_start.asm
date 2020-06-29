@@ -18,8 +18,11 @@ _start:
 
 extern kernel_main
 
-start_msg:          db 13, 10, 'kernel_start', 13, 10, 0
-
+start_msg:
+	db 13, 10, 'kernel_start', 13, 10, 0
+bochs_present:
+	db 0
+	
 align 8
 
 extern init_start
@@ -35,6 +38,8 @@ extern bss_end
 extern kernel_end
 	
 boot:
+	mov [bochs_present], al
+
 	; SSE code copied from OSDEV SSE page
 	mov eax, 0x1
 	cpuid
@@ -52,9 +57,9 @@ boot:
 	mov cr4, rax
 
 	fninit			;
-%ifdef SERIAL
-        call debug64_init
-%endif
+
+        ; call debug64_init
+
         mov rsi, start_msg
         call puts64
 

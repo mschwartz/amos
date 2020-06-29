@@ -11,3 +11,4 @@ set -e
     docker image inspect cross >/dev/null 2>&1 || docker build --tag cross:latest .
     docker run -it --rm --name build -v "$PWD":/usr/src/myapp -w /usr/src/myapp cross ./cbuild.sh
 # fi
+# chmod 644 c.img

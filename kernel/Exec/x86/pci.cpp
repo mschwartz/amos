@@ -111,18 +111,19 @@ static const char *class_name(TInt16 aClass) {
     [0x07] = "Simple Communication Controller",
     [0x08] = "Base System Peripheral",
     [0x09] = "Input Device Controller",
-    [0x0A] = "Docking Station",
-    [0x0B] = "Processor",
-    [0x0C] = "Serial Bus Controller",
-    [0x0D] = "Wireless Controller",
-    [0x0E] = "Intelligent Controller",
-    [0x0F] = "Satellite Communication Controller",
+    [0x0a] = "Docking Station",
+    [0x0b] = "Processor",
+    [0x0c] = "Serial Bus Controller",
+    [0x0d] = "Wireless Controller",
+    [0x0e] = "Intelligent Controller",
+    [0x0f] = "Satellite Communication Controller",
     [0x10] = "Encryption Controller",
     [0x11] = "Signal Processing Controller",
     [0x12] = "Processing Accelerator",
     [0x13] = "Non-Essential Instrumentation",
     [0x14] = "(Reserved)",
   };
+
   return (aClass > 0x14) ? "Unknown" : class_names[aClass];
 }
 

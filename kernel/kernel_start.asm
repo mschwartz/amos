@@ -41,6 +41,9 @@ extern kernel_end
 boot:
 	mov [bochs_present], al
 
+	; mov rax, kstack_end
+	; mov rsp, kstack_end
+	
 	; SSE code copied from OSDEV SSE page
 	mov eax, 0x1
 	cpuid
@@ -167,7 +170,16 @@ bzero:
         ret
 
 global __stack_chk_fail
-__stack_chk_fail:   ret
+__stack_chk_fail:
+	ret
 
 	;BLOCKS              equ 16
 	;                    times BLOCKS-($-$$) db 0	; Pad remainder of boot sector with 0s
+
+%if 0
+section .bss
+kstack:
+	resb 2 * 1024 * 1024
+kstack_end:
+%endif
+	

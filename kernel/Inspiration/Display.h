@@ -4,17 +4,34 @@
 #include <Exec/Types.h>
 #include <Graphics/bitmap/BBitmap32.h>
 
-class ScreenVesa : public BNode {
+class Display : public BNode {
 public:
-  ScreenVesa();
+  Display();
 
+public:
+  void Dump() {
+    dprint("\n\n");
+    dlog("Display(%s) at %x\n", mNodeName, this);
+    dlog("             mX, mY: %d, %d\n", mX, mY);
+    dlog("       mMouseHidden: %d\n", mMouseHidden);
+    dlog("   mMouseX, mMouseY: %d, %d\n", mMouseX, mMouseY);
+    dlog("            mBitmap: %x\n", mBitmap);
+    mBitmap->Dump();
+  }
+
+public:
   TBool IsCharacterDevice() {
     return EFalse;
   }
   void attr(TUint8 fg, TUint8 bg) {
-    attribute = 0x0f;
-    //    attribute = ((bg << 4) & 0xf0) | (fg & 0x0f);
+    // attribute = 0x0f;
+    attribute = ((bg << 4) & 0xf0) | (fg & 0x0f);
   }
+
+public:
+  TUint32 Width() { return mBitmap->Width(); }
+  TUint32 Height() { return mBitmap->Height(); }
+  TUint32 Depth() { return mBitmap->Depth(); }
 
 public:
   // mouse curor methods

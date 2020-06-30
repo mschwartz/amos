@@ -2,6 +2,7 @@
 #include <Graphics/BViewPort.h>
 #include <Graphics/font/BConsoleFont.h>
 #include <Exec/Random.h>
+#include <Inspiration/BScreen.h>
 
 class ConWindow : public BConsoleWindow {
 public:
@@ -15,25 +16,11 @@ public:
 
 public:
   void Run() {
+    BScreen *screen = mInspirationBase.FindScreen();
+    
     dlog("TestTask2 Running\n");
     ConWindow *con = new ConWindow();
-    mInspirationBase.AddWindow(con);
-    // con->Dump();
-    // bochs
-
-#if 0
-    con->BeginPaint();
-    con->EndPaint();
-    
-    con->BeginPaint();
-    con->ClearScreen();
-    con->Write(0, 0, "Helo, world\nGoodbye!\n");
-    con->EndPaint();
-#endif
-
-    // while (1) {
-    //   Sleep(1);
-    // }
+    screen->AddWindow(con);
     FileDescriptor *fd;
     while (ETrue) {
 
@@ -145,11 +132,13 @@ void TestTask::Run() {
   // while (1)
   //   Sleep(1);
 
-  ScreenVesa &screen = mInspirationBase.GetScreen();
-  screen.Clear(0x4f4fff);
+  // Display &display = mInspirationBase.GetDisplay();
+  // display.Clear(0x4f4fff);
+
+  BScreen *screen = mInspirationBase.FindScreen();
 
   TestWindow *win = new TestWindow();
-  mInspirationBase.AddWindow(win);
+  screen->AddWindow(win);
 
   dprint("Construct TestTask2\n");
   gExecBase.AddTask(new TestTask2());

@@ -31,6 +31,7 @@ class PS2;
 class ACPI;
 class PCI;
 class InspirationBase;
+class IdleTask;
 
 /* External interrupts */
 #define IRQ_OFFSET 0x20 /* Interrupt offset for external interrupts */
@@ -61,11 +62,11 @@ typedef struct {
   TUint64 mRam;
 
   TUint64 mVideoMode;
-  TAny *mScreenFrameBuffer;
-  TInt64 mScreenWidth;
-  TInt64 mScreenHeight;
-  TInt64 mScreenDepth;
-  TInt64 mScreenPitch;
+  TAny *mDisplayFrameBuffer;
+  TInt64 mDisplayWidth;
+  TInt64 mDisplayHeight;
+  TInt64 mDisplayDepth;
+  TInt64 mDisplayPitch;
 
   TUint64 mBootSector;
   TUint64 mBootSectors;
@@ -93,7 +94,7 @@ typedef struct {
   char mVersion[64];
 
   void Dump() {
-    // dprintf("TSystemInfo(%x)\n", this);
+    // dlog("TSystemInfo(%x)\n", this);
     dlog("%s %s\n", mVersion, mBochs ? "BOCHS ENABLED" : "NO BOCHS");
     dlog("     CPU Speed: %0d Mhz\n", mCpuMhz);
     dlog("          init: %016x - %016x\n", mInitStart, mInitEnd);
@@ -104,11 +105,11 @@ typedef struct {
     dlog("    kernel_end: %016x\n", mKernelEnd);
     dlog("          ebda: %016x\n", mEBDA);
     dlog("\n");
-    dlog("  mScreenWidth: %d\n", mScreenWidth);
-    dlog(" mScreenHeight: %d\n", mScreenHeight);
-    dlog("  mScreenDepth: %d\n", mScreenDepth);
-    dlog("  mScreenPitch: %d\n", mScreenPitch);
-    dlog("  mFrameBuffer: %x\n", mScreenFrameBuffer);
+    dlog("  mDisplayWidth: %d\n", mDisplayWidth);
+    dlog(" mDisplayHeight: %d\n", mDisplayHeight);
+    dlog("  mDisplayDepth: %d\n", mDisplayDepth);
+    dlog("  mDisplayPitch: %d\n", mDisplayPitch);
+    dlog("  mFrameBuffer: %x\n", mDisplayFrameBuffer);
     dlog("\n");
     dlog("    mNumDrives: %d\n", mNumDrives);
     dlog("    mBootDrive: %02x\n", mBootDrive);
@@ -132,6 +133,7 @@ static TSystemInfo &gSystemInfo = *(TSystemInfo *)0x5000; // see memory.inc
 
 class ExecBase : public BBase {
   friend RtcDevice;
+  friend IdleTask;
 
 protected:
   void Tick() {

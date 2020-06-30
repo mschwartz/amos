@@ -17,7 +17,7 @@ public:
   ~MouseDevice();
 
 protected:
-  TInt mScreenWidth, mScreenHeight;
+  TInt mDisplayWidth, mDisplayHeight;
   TInt32 mX, mY;
   TUint8 mButtons;
 };

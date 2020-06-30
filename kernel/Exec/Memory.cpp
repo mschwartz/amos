@@ -1,6 +1,14 @@
 #include <Exec/Types.h>
 #include <Exec/Memory.h>
-#include <posix/malloc.h>
+#include <Exec/BBase.h>
+
+// #include <posix/malloc.h>
+
+#ifdef KERNEL
+#include <Exec/x86/bochs.h>
+#else
+#include <stdlib.h>
+#endif
 
 #define LOCKMEM
 //#undef LOCKMEM
@@ -11,17 +19,151 @@
 #endif
 #endif
 
+#ifdef KERNEL
+
+extern "C" TAny *ExtendDataSegment(TUint64 aIncrement) {
+  extern void *kernel_end;
+  static TUint8 *sProgramBreak = ENull;
+
+  if (sProgramBreak == ENull) {
+    sProgramBreak = (TUint8 *)&kernel_end;
+  }
+
+  if (aIncrement == 0) {
+    return sProgramBreak;
+  }
+
+  void *ret = sProgramBreak;
+  sProgramBreak = &sProgramBreak[aIncrement];
+  return ret;
+}
+
+class Chunk : public BBase {
+public:
+  Chunk *mNext, *mPrev;
+  TUint64 mSize;
+
+public:
+  void InsertBeforeChunk(Chunk *aNextChunk) {
+    Chunk *pnode = aNextChunk->mPrev;
+    pnode->mNext = this;
+    aNextChunk->mPrev = this;
+    mNext = aNextChunk;
+    mPrev = pnode;
+  }
+
+  // make this node first on the list, if node is key
+  void InsertAfterChunk(Chunk *mPreviousChunk) {
+    Chunk *nnode = mPreviousChunk->mNext;
+    mPreviousChunk->mNext = this;
+    nnode->mPrev = this;
+    mNext = nnode;
+    mPrev = mPreviousChunk;
+  }
+
+  void Remove() {
+    mNext->mPrev = mPrev;
+    mPrev->mNext = mNext;
+  }
+
+};
+
+class ChunkList : public Chunk {
+public:
+  ChunkList() {
+    mNext = (Chunk *)this;
+    mPrev = (Chunk *)this;
+  }
+  void AddHead(Chunk &aChunk) {
+    aChunk.InsertAfterChunk(this);
+  }
+  Chunk *RemHead() {
+    Chunk *n = mNext;
+    if (n == (Chunk *)this)
+      return ENull;
+    n->Remove();
+    return n;
+  }
+  void AddTail(Chunk &aChunk) {
+    aChunk.InsertBeforeChunk(this);
+  }
+  Chunk *RemTail() {
+    Chunk *n = mPrev;
+    if (n == (Chunk *)this)
+      return NULL;
+    n->Remove();
+    return n;
+  }
+
+  Chunk *First() { return mNext; }
+  Chunk *Next(Chunk *aChunk) { return aChunk->mNext; }
+  Chunk *Last() { return mPrev; }
+  Chunk *Prev(Chunk *aChunk) { return aChunk->mPrev; }
+  TBool End(Chunk *aChunk) { return aChunk == (Chunk *)this; }
+};
+
+static ChunkList sFreeChunks;
+
+TAny *AllocMem(TInt64 aSize, TInt aFlags) {
+  Chunk *ret = ENull;
+  for (Chunk *c = sFreeChunks.First(); !sFreeChunks.End(c); c = c->mNext) {
+    if (c->mSize == aSize) {
+      c->Remove();
+      ret = c;
+    }
+  }
+  if (ret == ENull) {
+    ret = (Chunk *)ExtendDataSegment(sizeof(Chunk) + aSize);
+  }
+
+  ret->mSize = aSize;
+
+  TUint8 *p = (TUint8 *)ret;
+  TUint8 *mem = &p[sizeof(Chunk)];
+  if (aFlags & MEMF_CLEAR) {
+    SetMemory8(mem, 0, aSize);
+  }
+  return mem;
+}
+
+void FreeMem(TAny *aPtr) {
+  // TODO combine this Chunk with any existing that are contiguous
+  TUint8 *p = (TUint8 *) aPtr;
+  Chunk *c = (Chunk *)(p - sizeof(Chunk));
+  sFreeChunks.AddHead(*c);
+}
+
+#else
+void *AllocMem(TInt64 aSize, TInt aFlags) {
+  TAny *mem = malloc(aSize);
+  if (aFlags & MEMF_CLEAR) {
+    SetMemory8(mem, 0, aSize);
+  }
+  return mem;
+}
+
+void FreeMem(TAny *p) {
+  free(p);
+}
+#endif
+
+#if 0
 void *AllocMem(TInt64 aSize, TInt aFlags) {
 #ifdef KERNEL
 #ifdef LOCKMEM
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
 #endif
 #endif
+
+// #ifdef KERNEL
+//   dlog("AllocMem(%d)\n", aSize);
+// #endif
+
   TUint8 *mem = (TUint8 *)malloc(aSize);
+
 #ifdef KERNEL
 #ifdef LOCKMEM
-  SetFlags(flags);
+  ENABLE;
 #endif
 #endif
   if (aFlags & MEMF_CLEAR) {
@@ -44,6 +186,7 @@ void FreeMem(TAny *memory) {
 #endif
 #endif
 }
+#endif
 
 void *operator new(unsigned long aSize) {
 #ifdef KERNEL

@@ -195,7 +195,6 @@ PCI::PCI() {
     d->Dump();
   }
   dprint("\n\n");
-  bochs;
 }
 
 PCI::~PCI() {

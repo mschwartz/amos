@@ -25,6 +25,7 @@ BBitmap32::BBitmap32(TInt aWidth, TInt aHeight, TInt aPitch, TAny *aMemory) {
     mPitch /= 4;
   }
   else {
+    // dlog("Allocating pixels (%d)\n", aWidth * aHeight * sizeof(TUint32));
     mPixels = (TUint32 *)AllocMem(aWidth * aHeight * sizeof(TUint32));
     mFreePixels = ETrue;
   }

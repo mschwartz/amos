@@ -66,8 +66,8 @@ public:
     mButtons = 0;
     TSystemInfo info;
     gExecBase.GetSystemInfo(&info);
-    mMaxX = info.mScreenWidth - 1;
-    mMaxY = info.mScreenHeight - 1;
+    mMaxX = info.mDisplayWidth - 1;
+    mMaxY = info.mDisplayHeight - 1;
 //    dlog("Mouse Max X,Y = %d,%d\n", mMaxX, mMaxY);
   }
 
@@ -267,8 +267,8 @@ void MouseTask::Run() {
 MouseDevice::MouseDevice() : BDevice("mouse.device") {
   TSystemInfo i;
   gExecBase.GetSystemInfo(&i);
-  mScreenWidth = i.mScreenWidth;
-  mScreenHeight = i.mScreenWidth;
+  mDisplayWidth = i.mDisplayWidth;
+  mDisplayHeight = i.mDisplayWidth;
   // initial position
   mX = mY = 20;
   gExecBase.AddTask(new MouseTask(this));

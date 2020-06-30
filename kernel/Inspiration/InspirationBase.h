@@ -5,8 +5,10 @@
 #include <Exec/BBase.h>
 #include <Graphics/Graphics.h>
 
-#include <Inspiration/ScreenVesa.h>
+#include <Inspiration/Display.h>
+#include <Inspiration/BScreen.h>
 #include <Inspiration/BWindow.h>
+#include <Inspiration/Desktop.h>
 #include <Inspiration/BConsoleWindow.h>
 
 class InspirationBase : public BBase {
@@ -17,14 +19,22 @@ public:
   void Init();
 
 public:
-  void AddWindow(BWindow *aWindow);
+  void AddScreen(BScreen *aScreen);
+  BScreen *FindScreen(const char *aTitle = ENull);
+  
+public:
   void UpdateWindow(BWindow *aWindow, TBool mDecorations = EFalse);
 
 public:
-  ScreenVesa& GetScreen() { return mScreen; }
+  Display *GetDisplay() { return mDisplay; }
 
 protected:
-  ScreenVesa& mScreen;
+  Display *mDisplay;
+  Desktop *mDesktop;
+  //
+  BScreenList mScreenList;
+
+  // TODO: windows belong to screens, not to InspirationBase.
   BWindowList mWindowList;
 };
 

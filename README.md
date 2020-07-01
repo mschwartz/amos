@@ -55,15 +55,15 @@ While AMOS is written in C++, it is written using an Object Based style vs. OOP.
 * TAny - same as void.  For example, TAny *foo (void *foo)
 
 ## TODO
-[ ] Multicore
-[ ] Better ACPI
-[ ] Better PCI
-[ ] Sound
-[ ] Overlapping windows
-[ ] AmigaOS style .library methods
-[ ] Higher half kernel
-[ ] VMM and protected Task space (and threads)
-[ ] Mutexes
+- [ ] Multicore
+- [ ] Better ACPI
+- [ ] Better PCI
+- [ ] Sound
+- [ ] Overlapping windows
+- [ ] AmigaOS style .library methods
+- [ ] Higher half kernel
+- [ ] VMM and protected Task space (and threads)
+- [ ] Mutexes
 
 
 ## Useful links

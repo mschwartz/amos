@@ -1,7 +1,7 @@
 #ifndef EXEX_X86_ACPI_H
 #define EXEX_X86_ACPI_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/BBase.h>
 
 const TInt MAX_CPUS = 128; // 128 cores max

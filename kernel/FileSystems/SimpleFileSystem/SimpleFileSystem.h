@@ -16,7 +16,7 @@
  * NOTE: This is not necessarily intended to be the fastest or most robust FS designed.
  */
 
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/BFileSystem.h>
 
 class SimpleFileSystem : public BFileSystem {

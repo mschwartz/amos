@@ -1,8 +1,8 @@
 #ifndef INSPIRATION_DIRTYRECT_H
 #define INSPIRATION_DIRTYRECT_H
 
-#include <Exec/Types/BList.h>
-#include <Graphics/TRect.h>
+#include <Types/BList.h>
+#include <Types/TRect.h>
 
 class DirtyRect : public BNode {
 public:

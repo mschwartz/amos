@@ -1,12 +1,23 @@
 G=		../Graphics
 D=		../Devices
 SF=		../FileSystems/SimpleFileSystem
+T=		../Types
 
-GFX=		$(G)/TRect.o $(G)/BBitmap.o $(G)/bitmap/BBitmap32.o $(G)/BViewPort.o 
+GFX=		$(G)/BBitmap.o \
+		$(G)/bitmap/BBitmap32.o \
+		$(G)/BViewPort.o 
 
-FONTS=  	$(G)/BFont.o $(G)/font/BVectorFont.o $(G)/font/BConsoleFont.o $(G)/kfont.o
+FONTS=  	$(G)/BFont.o \
+		$(G)/font/BVectorFont.o \
+		$(G)/font/BConsoleFont.o \
+		$(G)/kfont.o
 
-DEVICES= 	$(D)/KeyboardDevice.o $(D)/TimerDevice.o $(D)/RtcDevice.o $(D)/MouseDevice.o $(D)/SerialDevice.o $(D)/AtaDevice.o
+DEVICES= 	$(D)/KeyboardDevice.o \
+		$(D)/TimerDevice.o \
+		$(D)/RtcDevice.o \
+		$(D)/MouseDevice.o \
+		$(D)/SerialDevice.o \
+		$(D)/AtaDevice.o
 
 X86=		x86/bochs.o \
 		x86/tss.o \
@@ -20,13 +31,28 @@ X86=		x86/bochs.o \
 		x86/acpi.o \
 		x86/pci.o
 
-TYPES= 		Types.o Types/TBCD.o \
-		Types/BList.o \
-		Types/BAvlTree.o Types/BHashTable.o Types/BSparseArray.o Types/BSymbolTable.h
+TYPES= 		$(T)/Types.o \
+		$(T)/TBCD.o \
+		$(T)/BList.o \
+		$(T)/TRect.o \
+		$(T)/BAvlTree.o \
+		$(T)/BHashTable.o \
+		$(T)/BSparseArray.o \
+		$(T)/BSymbolTable.h
 
-FS=		$(SF)/SimpleFileSystem.o  $(SF)/SimpleFileSystemTask.o
+FS=		$(SF)/SimpleFileSystem.o  \
+		$(SF)/SimpleFileSystemTask.o
 
-EXEC=		Memory.o BBase.o Random.o MessagePort.o BInterrupt.o BTask.o BProcess.o BDevice.o BFileSystem.o ExecBase.o 
+EXEC=		Memory.o \
+		BBase.o \
+		Random.o \
+		MessagePort.o \
+		BInterrupt.o \
+		BTask.o \
+		BProcess.o \
+		BDevice.o \
+		BFileSystem.o \
+		ExecBase.o 
 
 OBJ= 	 	$(FS) $(TYPES) $(X86) $(DEVICES) $(GFX) $(FONTS) $(EXEC)
 

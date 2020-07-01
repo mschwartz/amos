@@ -1,7 +1,7 @@
 #ifndef TASKING_H
 #define TASKING_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 
 typedef struct Task {
   // flags

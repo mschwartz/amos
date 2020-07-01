@@ -6,13 +6,10 @@
 
 BScreen::BScreen(const char *aTitle) : BNode(aTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
   mDisplay = mInspirationBase.GetDisplay();
-  dlog("mDisplay(%x)\n", mDisplay);
   mDisplay->Dump();
   mBitmap = new BBitmap32(mDisplay->Width(), mDisplay->Height());
   mDirty = EFalse;
   mTopY = 0;
-
-  // Clear(0x4f4fff);
 }
 
 BScreen::~BScreen() {
@@ -30,8 +27,6 @@ extern "C" TUint64 GetRSP();
 
 void BScreen::AddDirtyRect(TInt32 aX1, TInt32 aY1, TInt32 aX2, TInt32 aY2) {
   TRect rect(aX1, aY1, aX2, aY2);
-  dlog("AddDirtyRect\n");
-  rect.Dump();
   mDirtyRects.Add(rect);
 }
 

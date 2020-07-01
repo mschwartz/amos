@@ -2,8 +2,8 @@
 #define EXEC_BBITMAP_H
 
 #include <Exec/BBase.h>
-#include <Graphics/TRGB.h>
-#include <Graphics/TRect.h>
+#include <Types/TRGB.h>
+#include <Types/TRect.h>
 
 // base class for different depth bitmaps
 class BBitmap : public BBase {

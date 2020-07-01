@@ -1,7 +1,7 @@
 #ifndef GENUS_TBCD_H
 #define GENUS_TBCD_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 
 // useful for scores and other numbers printed on screen
 struct TBCD {

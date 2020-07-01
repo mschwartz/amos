@@ -1,5 +1,5 @@
+#include <Types/TRGB.h>
 #include <Graphics/BBitmap.h>
-#include <Graphics/TRGB.h>
 #include <Exec/Memory.h>
 
 //#include <Exec/Memory.h>

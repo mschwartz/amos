@@ -6,7 +6,7 @@
 #define MODITE_RESOURCEFILE_H
 
 #include "rcomp.h"
-#include <Exec/Types/BSymbolTable.h>
+#include <Types/BSymbolTable.h>
 
 // maximum number of resources allowed in a .bin file
 const TInt MAX_RESOURCE_FILES=1024;

@@ -3,9 +3,8 @@
 
 // Model/encapsulate the CPU interrupts facilities
 
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/Memory.h>
-//#include <posix/string.h>
 
 /*******************************************************/
 

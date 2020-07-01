@@ -1,8 +1,8 @@
 #ifndef AMOS_INSPIRATION_BWINDOW_H
 #define AMOS_INSPIRATION_BWINDOW_H
 
-#include <Exec/Types.h>
-#include <Exec/Types/BList.h>
+#include <Types.h>
+#include <Types/BList.h>
 #include <Graphics/Graphics.h>
 
 class InspirationBase;

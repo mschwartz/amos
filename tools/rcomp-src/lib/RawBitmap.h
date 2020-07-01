@@ -3,8 +3,8 @@
 
 #include "rcomp.h"
 
-#include <Exec/Types.h>
-#include "../Memory.h"
+#include <Types.h>
+#include "Exec/Memory.h"
 
 class RawBitmap {
 public:

@@ -2,7 +2,7 @@
  * main() entrypoint for our example OS-like application
  */
 
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/ExecBase.h>
 
 typedef void (*func_ptr)(void);

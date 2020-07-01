@@ -6,8 +6,8 @@ LIB=    lib/utils.o lib/RawBitmap.o
 
 CE=     ../../kernel/Exec/Memory.o \
 	../../kernel/Exec/BBase.o \
-	../../kernel/Exec/Types/BList.o \
-	../../kernel/Exec/Types/BSymbolTable.o
+	../../kernel/Types/BList.o \
+	../../kernel/Types/BSymbolTable.o
 
 INC=	-I. -I../../ -I../../kernel -I../../kernel/Exec
 

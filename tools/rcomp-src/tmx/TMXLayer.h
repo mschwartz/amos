@@ -1,7 +1,7 @@
 #ifndef RCOMP_TMXLAYER_H
 #define RCOMP_TMXLAYER_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 
 class RawFile;
 

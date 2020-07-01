@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_TRECT_H
 #define GRAPHICS_TRECT_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 
 struct TPoint {
   TInt32 x, y;

@@ -1,4 +1,4 @@
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/x86/ps2.h>
 
 #ifdef ENABLE_PS2

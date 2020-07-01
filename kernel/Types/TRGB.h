@@ -1,7 +1,7 @@
 #ifndef GENUS_TRGB_H
 #define GENUS_TRGB_H
 
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/BBase.h>
 
 struct TRGB {

@@ -4,7 +4,7 @@
 // https : //github.com/nickwanninger/chariot/blob/cc3649af22126d21e3ff77296f73ec73157b1b8c/kernel/dev/pci.cpp
 
 #include <Exec/BBase.h>
-#include <Exec/Types/BList.h>
+#include <Types/BList.h>
 
 struct PCIDevice : public BNode {
   TUint16 mBus, mDevice, mFunction;

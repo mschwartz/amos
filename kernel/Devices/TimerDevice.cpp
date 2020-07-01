@@ -1,4 +1,4 @@
-#include <Exec/Types.h>
+#include <Types.h>
 #include <Exec/ExecBase.h>
 #include <Devices/TimerDevice.h>
 

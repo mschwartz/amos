@@ -69,8 +69,9 @@ void InspirationBase::Init() {
 }
 
 void InspirationBase::AddScreen(BScreen *aScreen) {
-  mScreenList.AddHead(*aScreen);
-  aScreen->Clear(0x4f4fff);
+  mDisplay->AddScreen(aScreen);
+  // mScreenList.AddHead(*aScreen);
+  // aScreen->Clear(0x4f4fff);
 }
 
 BScreen *InspirationBase::FindScreen(const char *aTitle) {
@@ -78,7 +79,8 @@ BScreen *InspirationBase::FindScreen(const char *aTitle) {
     return mDesktop;
   }
 
-  return mScreenList.Find(aTitle);
+  return mDisplay->Find(aTitle);
+  // mScreenList.Find(aTitle);
 }
 
 void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {

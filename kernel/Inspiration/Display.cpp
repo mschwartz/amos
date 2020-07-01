@@ -1,8 +1,19 @@
 #include <Exec/ExecBase.h>
 #include <Inspiration/Display.h>
+#include <Inspiration/BScreen.h>
+
+void Display::AddScreen(BScreen *aScreen) {
+  mScreenList->AddHead(*aScreen);
+  aScreen->Clear(0x4f4fff);
+}
+
+BScreen *Display::Find(const char *aTitle) {
+  return mScreenList->Find(aTitle);
+}
 
 Display::Display() : BNode("Display") {
   dlog("Construct Display\n");
+  mScreenList = new BScreenList;
   TSystemInfo info;
   gExecBase.GetSystemInfo(&info);
 
@@ -16,10 +27,66 @@ Display::Display() : BNode("Display") {
   ShowCursor();
 }
 
-#include <Inspiration/cursors/pointer.h>
+static const char *cursor_image[] = {
+  "Booooooooooo",
+  "BBoooooooooo",
+  "BXBooooooooo",
+  "BXBBoooooooo",
+  "BXXXBooooooo",
+  "BXXXXBoooooo",
+  "BXXXXXBooooo",
+  "BXXXXXXBoooo",
+  "BXXXXXXXBooo",
+  "BXXXXXXXXBoo",
+  "BXXXXXXXXXBo",
+  "BXXXXXXBBBBB",
+  "BXXXBXXBoooo",
+  "BXXBBXXBoooo",
+  "BXBooBXXBooo",
+  "BBoooBXXBooo",
+  "BoooooBXXBoo",
+  "ooooooBXXBoo",
+  "oooooooBXXBo",
+  "oooooooBXXBo",
+  "ooooooooBBoo",
+};
 
+static const TInt cursor_width = 12, cursor_height = 21;
+
+#if 1
 static void render_cursor(BBitmap32 *aBitmap, TInt aX, TInt aY) {
-//  dlog("render_cursor %d,%d\n", aX, aY);
+  dlog("render_cursor(%x, %d, %d)", aBitmap, aX, aY);
+  for (TInt y = 0; y < cursor_height; y++) {
+    const char *src = cursor_image[y];
+    for (TInt x = 0; x < cursor_width; x++) {
+      switch (*src++) {
+        case 'B':
+          // render pixel below half bright
+          {
+            TRGB c(aBitmap->ReadPixel(aX + x, aY + y));
+            c.r /= 2;
+            c.g /= 2;
+            c.b /= 2;
+            aBitmap->PlotPixel(c, aX + x, aY + y);
+          }
+          break;
+        case 'X':
+          // render black pixel
+          {
+            aBitmap->PlotPixel(0x000000, aX + x, aY + y);
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  }
+}
+
+#else
+// #include <Inspiration/cursors/pointer.h>
+static void render_cursor(BBitmap32 *aBitmap, TInt aX, TInt aY) {
+  //  dlog("render_cursor %d,%d\n", aX, aY);
   TUint8 *img = cursor_image;
   aX -= 8;
   aY -= 8;
@@ -35,109 +102,95 @@ static void render_cursor(BBitmap32 *aBitmap, TInt aX, TInt aY) {
     }
     img += 16;
   }
-  //  const TInt WIDTH = 32, HEIGHT = 32;
-  //  const TInt x1 = aX - WIDTH / 2,
-  //             y1 = aY - HEIGHT / 2,
-  //             x2 = aX + WIDTH / 2,
-  //             y2 = aY + HEIGHT / 2;
-
-  //  for (TInt y = y1; y < y2; y++) {
-  //    for (TInt x = x1; x < x2; x++) {
-  //      if (aBitmap->PointInRect(x, y)) {
-  //        TUint32 color = aBitmap->ReadPixel(x, y);
-  //        color ^= 0xffffffff;
-  //        aBitmap->PlotPixel(color, x, y);
-  //      }
-  //    }
-  //  }
 }
+#endif
 
-void Display::MoveCursor(TInt aX, TInt aY) {
-  if (mMouseX == aX && mMouseY == aY) {
-    return;
+  void Display::MoveCursor(TInt aX, TInt aY) {
+    if (mMouseX == aX && mMouseY == aY) {
+      return;
+    }
+    // erase old position
+    if (!mMouseHidden) {
+      render_cursor(mBitmap, mMouseX, mMouseY);
+    }
+
+    mMouseX = aX;
+    mMouseY = aY;
+
+    // render at new position
+    if (!mMouseHidden) {
+      render_cursor(mBitmap, mMouseX, mMouseY);
+    }
   }
-  // erase old position
-  if (!mMouseHidden) {
+
+  TBool Display::ShowCursor() {
+    TBool ret = mMouseHidden;
+    if (!mMouseHidden) {
+      return ret;
+    }
+    mMouseHidden = EFalse;
     render_cursor(mBitmap, mMouseX, mMouseY);
-  }
-
-  mMouseX = aX;
-  mMouseY = aY;
-
-  // render at new position
-  if (!mMouseHidden) {
-    render_cursor(mBitmap, mMouseX, mMouseY);
-  }
-}
-
-TBool Display::ShowCursor() {
-  TBool ret = mMouseHidden;
-  if (!mMouseHidden) {
     return ret;
   }
-  mMouseHidden = EFalse;
-  render_cursor(mBitmap, mMouseX, mMouseY);
-  return ret;
-}
 
-TBool Display::HideCursor() {
-  TBool ret = mMouseHidden;
-  if (mMouseHidden) {
+  TBool Display::HideCursor() {
+    TBool ret = mMouseHidden;
+    if (mMouseHidden) {
+      return ret;
+    }
+    mMouseHidden = ETrue;
+    render_cursor(mBitmap, mMouseX, mMouseY);
     return ret;
   }
-  mMouseHidden = ETrue;
-  render_cursor(mBitmap, mMouseX, mMouseY);
-  return ret;
-}
 
-void Display::MoveTo(int aX, int aY) {
-  mX = aX;
-  mY = aY;
-}
-
-void Display::GetXY(TInt &aX, TInt &aY) {
-  aX = mX;
-  aY = mY;
-}
-
-void Display::ClearEOL(TUint8 aCharacter) {
-  //
-}
-
-void Display::Down() {
-  //
-}
-
-void Display::ScrollUp() {
-  //
-}
-
-void Display::NewLine() {
-  //
-}
-
-void Display::WriteChar(char c) {
-  //
-}
-
-void Display::Clear(TUint32 aColor) {
-  mBitmap->Clear(aColor);
-  //
-}
-
-void Display::WriteString(TInt aX, TInt aY, const char *s) {
-  TBool hidden = HideCursor();
-  mBitmap->DrawText(aX, aY, s);
-  SetCursor(!hidden);
-}
-
-void Display::WriteString(const char *s) {
-  if (!mMouseHidden) {
-    HideCursor();
-    mBitmap->DrawText(mX, mY, s);
-    ShowCursor();
+  void Display::MoveTo(int aX, int aY) {
+    mX = aX;
+    mY = aY;
   }
-  else {
-    mBitmap->DrawText(mX, mY, s);
+
+  void Display::GetXY(TInt & aX, TInt & aY) {
+    aX = mX;
+    aY = mY;
   }
-}
+
+  void Display::ClearEOL(TUint8 aCharacter) {
+    //
+  }
+
+  void Display::Down() {
+    //
+  }
+
+  void Display::ScrollUp() {
+    //
+  }
+
+  void Display::NewLine() {
+    //
+  }
+
+  void Display::WriteChar(char c) {
+    //
+  }
+
+  void Display::Clear(TUint32 aColor) {
+    mBitmap->Clear(aColor);
+    //
+  }
+
+  void Display::WriteString(TInt aX, TInt aY, const char *s) {
+    TBool hidden = HideCursor();
+    mBitmap->DrawText(aX, aY, s);
+    SetCursor(!hidden);
+  }
+
+  void Display::WriteString(const char *s) {
+    if (!mMouseHidden) {
+      HideCursor();
+      mBitmap->DrawText(mX, mY, s);
+      ShowCursor();
+    }
+    else {
+      mBitmap->DrawText(mX, mY, s);
+    }
+  }

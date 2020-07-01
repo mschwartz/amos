@@ -4,9 +4,15 @@
 #include <Types.h>
 #include <Graphics/bitmap/BBitmap32.h>
 
+class BScreen;
+class BScreenList;
+
 class Display : public BNode {
 public:
   Display();
+
+public:
+  void AddScreen(BScreen *aScreen) ;
 
 public:
   void Dump() {
@@ -71,7 +77,10 @@ public:
     mBitmap->BltBitmap(aOther, aDestX, aDestY);
   }
 
+  BScreen *Find(const char *aTitle);
+
 protected:
+  BScreenList *mScreenList;
   BBitmap32 *mBitmap;
   //  TUint8 *screen;
   TInt mX, mY;

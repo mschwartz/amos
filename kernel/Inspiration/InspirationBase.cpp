@@ -2,6 +2,7 @@
 #include <Exec/ExecBase.h>
 #include <Exec/BTask.h>
 #include <Devices/MouseDevice.h>
+#include <Inspiration/Display/MousePointerTask.h>
 #include <Inspiration/TestTask.h>
 
 // constructor
@@ -12,14 +13,18 @@ InspirationBase::~InspirationBase() {
 }
 
 void InspirationBase::Init() {
+  dprint("\n");
+  dlog("InspirationBase Init\n");
   mDisplay = new Display();
-  dlog("** Init InspirationBase Display(%x)\n", mDisplay);
+  dlog("  Init InspirationBase Display(%x)\n", mDisplay);
 
   mDesktop = new Desktop();
   AddScreen(mDesktop);
   dlog("  Constructed Desktop(%x)\n", mDesktop);
 
+  gExecBase.AddTask(new MousePointerTask());
   gExecBase.AddTask(new TestTask());
+
   mDisplay->Init();
 }
 

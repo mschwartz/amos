@@ -17,8 +17,9 @@ public:
 public:
   void Run() {
     BScreen *screen = mInspirationBase.FindScreen();
-    
-    dlog("TestTask2 Running\n");
+
+    dprint("\n");
+    dlog("TestTask2 Run\n");
     ConWindow *con = new ConWindow();
     screen->AddWindow(con);
     FileDescriptor *fd;
@@ -36,7 +37,9 @@ public:
       
       fd = OpenDirectory("/fonts");
       if (!fd) {
-        dlog("Could not open directory /fonts\n");
+	dprint("\n\n");
+        dlog("*** Could not open directory /fonts\n");
+	dprint("\n\n");
       }
       else {
         const DirectoryStat *s = fd->Stat();
@@ -48,7 +51,6 @@ public:
           char buf[512];
           const DirectoryStat *s = fd->Stat();
           DirectoryStat::Dump(s, fd->Filename(), buf);
-	  // dlog("buf(%s)\n", buf);
           con->BeginPaint();
           con->Write(buf);
           con->EndPaint();
@@ -69,7 +71,9 @@ public:
 
       fd = OpenFile("/fonts/README.psfu");
       if (!fd) {
-        dlog("Could not open /fonts/README.psfu\n");
+	dprint("\n\n");
+        dlog("*** Could not open /fonts/README.psfu\n");
+	dprint("\n\n");
       }
       else {
         char buf[512];
@@ -111,7 +115,7 @@ public:
 
 public:
   void Paint() {
-    dlog("PAINT\n");
+    dlog("TestWidow PAINT\n");
     Clear(0x000000);
   }
   void RandomBox() {
@@ -126,6 +130,7 @@ public:
 };
 
 void TestTask::Run() {
+  dprint("\n");
   dlog("***************************** TEST TASK RUNNING\n");
   Sleep(1);
 
@@ -143,7 +148,6 @@ void TestTask::Run() {
   dprint("Construct TestTask2\n");
   gExecBase.AddTask(new TestTask2());
 
-  dlog("LOOP %x\n", GetFlags());
   TInt count = 0;
   while (ETrue) {
     win->BeginPaint();

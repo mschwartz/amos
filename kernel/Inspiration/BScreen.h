@@ -25,6 +25,10 @@
 #include <Inspiration/BWindow.h>
 #include <Inspiration/DirtyRect.h>
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 class BScreen : public BNode {
 public:
   BScreen(const char *aTitle);
@@ -51,12 +55,19 @@ protected:
   TBool mDirty;
 
 public:
+  // void RenderCursor(Cursor *aCursor, TInt32 aX, TInt32 aY) ;
+
+public:
   void AddDirtyRect(TInt32 aX1, TInt32 aT1, TInt32 aX2, TInt32 aY2);
   void UpdateDirtyRects();
 
 protected:
   DirtyRectList mDirtyRects;
 };
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 class BScreenList : public BList {
 public:

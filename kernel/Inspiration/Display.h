@@ -8,11 +8,12 @@
 class BScreen;
 class BScreenList;
 class DisplayTask;
-class Mouse;
+class Cursor;
+// class Mouse;
 
 class Display : public BNode {
   friend DisplayTask;
-  friend Mouse;
+  // friend Mouse;
 
 public:
   Display();
@@ -21,12 +22,13 @@ public:
 
 public:
   void AddScreen(BScreen *aScreen);
+  BScreen *TopScreen();
 
 public:
   void Dump() {
     dprint("\n\n");
     dlog("Display(%s) at %x\n", mNodeName, this);
-    dlog("             mX, mY: %d, %d\n", mX, mY);
+    // dlog("             mX, mY: %d, %d\n", mX, mY);
     dlog("       mMouseHidden: %d\n", mMouseHidden);
     dlog("   mMouseX, mMouseY: %d, %d\n", mMouseX, mMouseY);
     dlog("            mBitmap: %x\n", mBitmap);
@@ -53,6 +55,10 @@ public:
     }
   }
 
+  void RenderCursor();
+  void SaveCursor();
+  void RestoreCursor();
+
 public:
   void Clear(TUint32 aColor);
   BBitmap32 *GetBitmap() { return mBitmap; }
@@ -68,13 +74,14 @@ public:
 protected:
   BScreenList *mScreenList;
   BBitmap32 *mBitmap;
-  Mouse *mMouse;
 
-  //  TUint8 *screen;
-  TInt mX, mY;
-  TInt mMouseX, mMouseY;
-  char buf[256];
+  Cursor *mCursor;
+
   TBool mMouseHidden;
+
+public:
+  TInt32 mMouseX, mMouseY;
+  TInt32 mLastX, mLastY;
 };
 
 #endif

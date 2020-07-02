@@ -288,12 +288,14 @@ void BTask::Enable() {
 }
 
 void BTask::Forbid() {
+  // needs to be atomic
   DISABLE;
   mForbidNestCount++;
   ENABLE;
 }
 
 void BTask::Permit() {
+  // needs to be atomic
   DISABLE;
   mForbidNestCount--;
   if (mForbidNestCount < 0) {

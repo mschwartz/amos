@@ -60,7 +60,8 @@ protected:
 };
 
 void TimerTask::Run() {
-  dlog("TimerTask Alive!\n");
+  dprint("\n");
+  dlog("TimerTask Run\n");
 
   BMessageList timerQueue("timer.device queue");
 

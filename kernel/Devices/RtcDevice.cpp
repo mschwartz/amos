@@ -57,6 +57,7 @@ public:
   void Run() {
     DISABLE;
 
+    dprint("\n");
     dlog("RTC Task running!\n");
 
     ReadRtc();

@@ -38,9 +38,9 @@ public:
 
 public:
   void Run() {
-    //    sti();
-    dlog("IdleTask Running\n");
-    //  mCurrentTask->Dump();
+    dprint("\n");
+    dlog("IdleTask Run\n");
+
     // initialize devices
     dlog("  initialize timer\n");
     gExecBase.AddDevice(new TimerDevice());
@@ -67,7 +67,6 @@ public:
     gExecBase.mInspirationBase = new InspirationBase();
     gExecBase.mInspirationBase->Init();
 
-    //    gExecBase.Schedule();
     while (1) {
       dlog("IT Run\n");
       halt();
@@ -281,6 +280,9 @@ void ExecBase::RescheduleIRQ() {
         mActiveTasks.Add(*mCurrentTask);
       }
     }
+    // else {
+    //   dlog("FORBID\n");
+    // }
   }
 #endif
   mCurrentTask = mActiveTasks.First();

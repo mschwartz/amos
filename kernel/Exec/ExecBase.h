@@ -136,10 +136,11 @@ class ExecBase : public BBase {
   friend IdleTask;
 
 protected:
-  void Tick() {
+  TUint64 Tick() {
     gSystemInfo.mMillis++;
     // randomize RNG as long as we're here
     Random();
+    return gSystemInfo.mMillis;
   }
 
 public:

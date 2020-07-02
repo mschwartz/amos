@@ -32,10 +32,10 @@ protected:
   Display *mDisplay;
   Desktop *mDesktop;
   //
-  BScreenList mScreenList;
+  // BScreenList mScreenList;
 
   // TODO: windows belong to screens, not to InspirationBase.
-  BWindowList mWindowList;
+  // BWindowList mWindowList;
 };
 
 #endif

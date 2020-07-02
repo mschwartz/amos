@@ -176,16 +176,12 @@ static int ata_read_block(TAtaDrive *drive, TUint64 lba, TAny *buffer) {
       .command = ATA_CMD_READ_SECTORS,
     };
 
-    // dlog("read-block send_command\n");
     int status = ata_send_command(&command);
-    // dlog("read-block send_command status %x\n", status);
     if (status & (ATA_DF | ATA_ERR) || !(status & ATA_DRQ)) {
-      // dlog(" read-block send_command status %x fail\n", status);
       retries--;
       continue;
     }
 
-    // dlog("read_block read sector data\n");
     TUint16 *buf = (TUint16 *)buffer;
     // TODO may need to DISABLE around reading of the sector bytes?
     // DISABLE;
@@ -193,11 +189,12 @@ static int ata_read_block(TAtaDrive *drive, TUint64 lba, TAny *buffer) {
       buf[i] = inw(ATA_DATA(drive->bus));
     }
     // ENABLE;
-    // dlog("read_block success!\n");
     return 0;
   }
 
+  dprint("\n\n");
   dlog("*** Reading disk timeout\n");
+  dprint("\n\n");
   return -1;
 }
 
@@ -218,7 +215,9 @@ static int ata_write_block(TAtaDrive *drive, TUint64 lba, TAny *buffer) {
   };
   int status = ata_send_command(&command);
   if (status & ATA_ERR) {
-    dlog("An error occurred\n");
+    dprint("\n\n");
+    dlog("*** An error occurred\n");
+    dprint("\n\n");
   }
   TUint16 *buf = (TUint16 *)buffer;
   for (int i = 0; i < 256; i++) {
@@ -233,7 +232,7 @@ static int ata_write_block(TAtaDrive *drive, TUint64 lba, TAny *buffer) {
  *******************************************************************************/
 
 static TBool init_drive(TAtaDrive *drive, TInt num) {
-  dlog("init_drive(%d)\n", num);
+  dlog("  init_drive(%d)\n", num);
   TInt16 bus = drive->bus;
   // Check if the controller exists
   // by writing a value to it and check
@@ -242,7 +241,7 @@ static TBool init_drive(TAtaDrive *drive, TInt num) {
   outb(ATA_LBAL(bus), (~v1) & 0xFF);
   int v2 = inb(ATA_LBAL(bus));
   if (v2 != ((~v1) & 0xFF)) {
-    dlog("Controller does not exist drive %d bus %x\n", num, drive - drive->bus);
+    dlog("  Controller does not exist drive %d bus %x\n", num, drive - drive->bus);
     return EFalse;
   }
 
@@ -250,7 +249,7 @@ static TBool init_drive(TAtaDrive *drive, TInt num) {
   // by selecting the drive
   outb(ATA_DEVICE(bus), 0xA0 | drive->mMasterSlave);
   if (!(ata_wait_status(bus) & ATA_RDY)) {
-    dlog("Drive %d does not exist bus %x\n", num, drive->mMasterSlave);
+    dlog("  Drive %d does not exist bus %x\n", num, drive->mMasterSlave);
     return EFalse;
   }
 
@@ -270,7 +269,7 @@ static TBool init_drive(TAtaDrive *drive, TInt num) {
     command.command = ATA_CMD_IDENTIFY_PACKET;
   }
   if (!ata_send_command(&command)) {
-    dlog("init drive %d ata_send_command failed\n", num);
+    dlog("  init drive %d ata_send_command failed\n", num);
     return EFalse;
   }
 
@@ -320,7 +319,8 @@ public:
   }
 
   ~AtaTask() {
-    dlog("AtaTask Desctuctor!\n");
+    dprint("\n");
+    dlog("  AtaTask Desctuctor!\n");
     bochs;
   }
 
@@ -328,11 +328,12 @@ public:
   void Run() {
     DISABLE;
 
+    dprint("\n");
     dlog("AtaTask running\n");
 
     TUint8 sigbit = AllocSignal(-1); // this is for signal from IRQ handler(s)
     mSigMask = (1 << sigbit);
-    dlog("AtaTask signal bit %d(%x)\n", sigbit, mSigMask);
+    dlog("  AtaTask signal bit %d(%x)\n", sigbit, mSigMask);
 
     // handlers for ATA1 and ATA2 IRQs
     gExecBase.SetIntVector(EAta1IRQ, new AtaInterrupt(this, sigbit, 1));
@@ -350,31 +351,21 @@ public:
     mActiveDevice = 3;
     init_drive(&drives[3], 3);
     mActiveDevice = -1;
-    // dlog("  Initialized drives\n");
 
     MessagePort *port = CreateMessagePort("ata.device");
     gExecBase.AddMessagePort(*port);
 
     ENABLE;
     TAtaDrive *drive0 = &drives[0];
-    // dlog("Reading sector 0\n");
-    // ata_read_block(drive0, 0, sector);
-    // dlog("Read sector 0 complete\n");
-    // dhexdump(sector, 16);
     while (1) {
       TUint64 sigs = WaitPort(port, mSigMask);
-      // dlog("Woke %x\n", sigs);
       if (sigs & mSigMask) {
         dlog("  IRQ SIGNAL\n");
       }
       else {
         while (AtaMessage *m = (AtaMessage *)port->GetMessage()) {
-          // dlog("Got Message %d\n", m->mCommand);
           switch (m->mCommand) {
             case EAtaReadBlocks: {
-#ifdef DEBUGME
-              dlog("ata read blocks(%x, %d, %d)\n", m->mBuffer, m->mLba, m->mCount);
-#endif
               TUint8 *buf = (TUint8 *)m->mBuffer;
               TUint64 lba = m->mLba;
               for (TInt i = 0; i < m->mCount; i++) {
@@ -386,9 +377,6 @@ public:
           }
           m->ReplyMessage();
         }
-#ifdef DEBUGME
-        dlog("end of messages\n");
-#endif
       }
     }
   }
@@ -405,7 +393,7 @@ protected:
 
 AtaDevice::AtaDevice() : BDevice("ata.device") {
   gExecBase.AddTask(new AtaTask(this));
-  dlog("Added AtaTask\n");
+  dlog("  Added AtaTask\n");
 }
 
 AtaDevice::~AtaDevice() {
@@ -414,7 +402,7 @@ AtaDevice::~AtaDevice() {
 TBool AtaInterrupt::Run(TAny *aData) {
   TUint64 num = (TUint64)aData;
 #ifdef DEBUGME
-  dlog("----> Ata Interrupt %d\n", num);
+  dlog("  ----> Ata Interrupt %d\n", num);
 #endif
 
   gExecBase.AckIRQ(num == 1 ? IRQ_ATA1 : IRQ_ATA2);

@@ -2,30 +2,37 @@
 #define EXEC_DEVICES_SCREEN_SCREENVESA_H
 
 #include <Types.h>
+#include <Types/BList.h>
 #include <Graphics/bitmap/BBitmap32.h>
 
+class BScreen;
+class BScreenList;
+class DisplayTask;
+class Cursor;
+// class Mouse;
+
 class Display : public BNode {
+  friend DisplayTask;
+  // friend Mouse;
+
 public:
   Display();
+  ~Display();
+  void Init();
+
+public:
+  void AddScreen(BScreen *aScreen);
+  BScreen *TopScreen();
 
 public:
   void Dump() {
     dprint("\n\n");
     dlog("Display(%s) at %x\n", mNodeName, this);
-    dlog("             mX, mY: %d, %d\n", mX, mY);
+    // dlog("             mX, mY: %d, %d\n", mX, mY);
     dlog("       mMouseHidden: %d\n", mMouseHidden);
     dlog("   mMouseX, mMouseY: %d, %d\n", mMouseX, mMouseY);
     dlog("            mBitmap: %x\n", mBitmap);
     mBitmap->Dump();
-  }
-
-public:
-  TBool IsCharacterDevice() {
-    return EFalse;
-  }
-  void attr(TUint8 fg, TUint8 bg) {
-    // attribute = 0x0f;
-    attribute = ((bg << 4) & 0xf0) | (fg & 0x0f);
   }
 
 public:
@@ -38,6 +45,7 @@ public:
   void MoveCursor(TInt aX, TInt aY);
   TBool ShowCursor(); // returns previous state
   TBool HideCursor(); // returns previous state
+
   TBool SetCursor(TBool aShowIt) {
     if (aShowIt) {
       return ShowCursor();
@@ -47,23 +55,12 @@ public:
     }
   }
 
+  void RenderCursor();
+  void SaveCursor();
+  void RestoreCursor();
+
 public:
-  void MoveTo(int x, int y);
-  void GetXY(int &x, int &y);
-  void Down();
-
-  // clear to end of line.  cursor is not moved.
-  void ClearEOL(TUint8 ch = ' ');
-
-  // scroll screen up one line starting at row y.  Fill in bottom row with bTInt
-  void ScrollUp();
-
-  void NewLine();
-  void WriteChar(char c);
   void Clear(TUint32 aColor);
-  void WriteString(const char *s);
-  void WriteString(TInt aX, TInt aY, const char *s);
-
   BBitmap32 *GetBitmap() { return mBitmap; }
 
   // copy aOther bitmap to screen at aDestX,aDestY (as in a window)
@@ -71,14 +68,20 @@ public:
     mBitmap->BltBitmap(aOther, aDestX, aDestY);
   }
 
+public:
+  BScreen *FindScreen(const char *aTitle);
+
 protected:
+  BScreenList *mScreenList;
   BBitmap32 *mBitmap;
-  //  TUint8 *screen;
-  TInt mX, mY;
-  TInt mMouseX, mMouseY;
-  char buf[256];
+
+  Cursor *mCursor;
+
   TBool mMouseHidden;
-  TUint8 attribute;
+
+public:
+  TInt32 mMouseX, mMouseY;
+  TInt32 mLastX, mLastY;
 };
 
 #endif

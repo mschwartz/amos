@@ -3,12 +3,24 @@
 
 #include <Exec/BDevice.h>
 
+/**
+ * RtcDevice
+ *
+ * Handles 1000Hz RTC timer.
+ * Provides 1000Hz (Millisecond resolution) ticks counter.
+ * Provides millisecond resolution wait capability, e.g. for usleep().
+ * Provides methodology to read RTC date/time.
+ */
 class RtcDevice : public BDevice {
 public:
   RtcDevice();
   ~RtcDevice();
+
 public:
-  void Tick();
+  TUint64 Tick();
+  TUint64 GetTicks() { return mMillis; }
+  void IncrementTicks() { mMillis++; }
+
 public:
   volatile TUint16 mMonth, mDay, mYear;
   volatile TUint16 mHours, mMinutes, mSeconds, mFract;
@@ -16,17 +28,22 @@ public:
 };
 
 enum ERtcDeviceCommand {
-  EReadTime,
+  ERtcReadTicks,
+  ERtcSleep,
 };
 
 class RtcMessage : public BMessage {
 public:
-  RtcMessage(MessagePort *aReplyPort, ERtcDeviceCommand aCommand);
-  ~RtcMessage();
+  RtcMessage(MessagePort *aReplyPort, ERtcDeviceCommand aCommand) {
+    mReplyPort = aReplyPort;
+    mCommand = aCommand;
+  }
+  ~RtcMessage() {}
 
 public:
   ERtcDeviceCommand mCommand;
   TInt64 mResult;
+  TInt64 mArg1;
 };
 
 #endif

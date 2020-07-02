@@ -4,7 +4,12 @@
 #include <Types/BList.h>
 #include <Exec/x86/tasking.h>
 
+const TInt64 TASK_PRI_MIN = LIST_PRI_MIN;
+const TInt64 TASK_PRI_MAX = LIST_PRI_MAX;
+const TInt64 TASK_PRI_DEFAULT = LIST_PRI_DEFAULT;
+
 const TUint64 default_task_stack_size = 2 * 1024 * 1024;
+
 //const TUint64 default_task_stack_size = 64 * 1024;
 
 class MessagePort;
@@ -82,6 +87,7 @@ protected:
     * Wait for some number of seconds.
     */
   void Sleep(TUint64 aSeconds);
+  void MilliSleep(TUint64 aMilliSeconds);
 
 protected:
   void Disable();

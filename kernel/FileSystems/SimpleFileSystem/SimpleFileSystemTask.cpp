@@ -192,7 +192,7 @@ void SimpleFileSystemTask::ReadFile(FileSystemMessage *f) {
 
   FileSystemDescriptor *file = (FileSystemDescriptor *)&f->mDescriptor;
   if (file->mDirectorySector == ENull) {
-    dlog("*** file not open\n");
+    dlog("  *** file not open\n");
     f->mError = EFileSystemErrorFileNotOpen;
     f->mCount = actual;
     return;
@@ -249,7 +249,8 @@ void SimpleFileSystemTask::CloseFile(FileSystemMessage *f) {
 void SimpleFileSystemTask::RemoveFile(FileSystemMessage *f) {}
 
 void SimpleFileSystemTask::Run() {
-  dlog("SimpleFileSystemTask Alive!\n");
+  dprint("\n");
+  dlog("SimpleFileSystemTask Run!\n");
 
   mDiskCache = new BSparseArray(4096);
   // create message port to get requests from applications
@@ -259,35 +260,28 @@ void SimpleFileSystemTask::Run() {
   // we send read/write requests messages to mDiskDevice(ada.device) message port
   mAtaPort = ENull;
   while (!mAtaPort) {
-    dlog("Finding port(%s)\n", mDiskDevice);
+    dlog("  Finding port(%s)\n", mDiskDevice);
     Forbid();
     mAtaPort = gExecBase.FindMessagePort(mDiskDevice);
     Permit();
     if (!mAtaPort) {
-      dlog("Port(%s) not found, sleeping\n", mDiskDevice);
+      dlog("  Port(%s) not found, sleeping\n", mDiskDevice);
       Sleep(1);
     }
   }
-  dlog("found ata port %x\n", mAtaPort);
+  dlog("  found ata port %x\n", mAtaPort);
 
   // we get replies to our messages at our private replyPort
   mAtaReplyPort = CreateMessagePort();
 
   // we need to read the root sector
-  dlog("SimpleFileSystemTask read sector %d from unit %d\n", 9, mUnit);
+  dlog("  SimpleFileSystemTask read sector %d from unit %d\n", 9, mUnit);
   mAtaMessage = AtaMessage::CreateReadMessaage(mAtaReplyPort, mUnit, 9, &this->mRootSector, 1);
-  dlog("mAtaMessage created %x\n", mAtaMessage);
+  dlog("  mAtaMessage created %x\n", mAtaMessage);
 
   CopyMemory(&this->mRootSector, Sector(0), 512);
 
   this->mRootSector.Dump();
-
-  // dlog("  Volume(%s)\n", mRootSector.mVolumeName);
-  // dlog("  used/free: %d/%d\n", mRootSector.mUsed, mRootSector.mFree);
-  // dlog("  mLbaRoot: %d\n", mRootSector.mLbaRoot);
-  // dlog("  mLbaHeap: %d\n", mRootSector.mLbaHeap);
-  // dlog("  mLbaFree: %d\n", mRootSector.mLbaFree);
-  // dlog("   mLbaMax: %d\n", mRootSector.mLbaMax);
 
   while (ETrue) {
     WaitPort(msgPort);
@@ -325,7 +319,9 @@ void SimpleFileSystemTask::Run() {
           RemoveFile(f);
           break;
         default:
-          dlog("SimpleFileSystem: unknown command %d\n", f->mCommand);
+	  dprint("\n\n");
+          dlog("*** SimpleFileSystem: unknown command %d\n", f->mCommand);
+	  dprint("\n\n");
           bochs;
       }
       f->ReplyMessage();

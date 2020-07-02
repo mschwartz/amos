@@ -1,6 +1,7 @@
 #include <Exec/ExecBase.h>
 #include <Exec/BTask.h>
 #include <Devices/TimerDevice.h>
+#include <Devices/RtcDevice.h>
 
 #define DEBUGME
 #undef DEBUGME
@@ -251,6 +252,25 @@ void BTask::Sleep(TUint64 aSeconds) {
   FreeMessagePort(replyPort);
 }
 
+void BTask::MilliSleep(TUint64 aMilliSeconds) {
+  MessagePort *rtc = gExecBase.FindMessagePort("rtc.device");
+  if (!rtc) {
+    dlog("no rtc port\n");
+    return;
+  }
+
+  MessagePort *replyPort = CreateMessagePort();
+  RtcMessage *m = new RtcMessage(replyPort, ERtcSleep);
+  m->mArg1 = aMilliSeconds;
+  m->SendMessage(rtc);
+  WaitPort(replyPort);
+  while ((m = (RtcMessage *)replyPort->GetMessage())) {
+    delete m;
+  }
+
+  FreeMessagePort(replyPort);
+}
+
 void BTask::Disable() {
   gExecBase.Disable();
   if (++mDisableNestCount != 1) {
@@ -268,12 +288,14 @@ void BTask::Enable() {
 }
 
 void BTask::Forbid() {
+  // needs to be atomic
   DISABLE;
   mForbidNestCount++;
   ENABLE;
 }
 
 void BTask::Permit() {
+  // needs to be atomic
   DISABLE;
   mForbidNestCount--;
   if (mForbidNestCount < 0) {

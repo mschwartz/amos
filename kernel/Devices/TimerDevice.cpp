@@ -60,7 +60,8 @@ protected:
 };
 
 void TimerTask::Run() {
-  dlog("TimerTask Alive!\n");
+  dprint("\n");
+  dlog("TimerTask Run\n");
 
   BMessageList timerQueue("timer.device queue");
 
@@ -90,6 +91,7 @@ void TimerTask::Run() {
         }
       }
     }
+
     if (sigs & tick_mask) {
       TUint64 current = mTimerDevice->IncrementTicks();
       while (ETrue) {

@@ -1,19 +1,31 @@
 # INSPIRATION
 
-LIB=	libinspiration.a
+LIB=		libinspiration.a
 
-OBJ= Display.o DirtyRect.o BScreen.o Desktop.o BWindow.o BConsoleWindow.o TestTask.o InspirationBase.o
+DISPLAY=	Display.o \
+		Display/DisplayTask.o \
+		Display/Cursor.o \
+		Display/MousePointerTask.o
+
+OBJ= 		$(DISPLAY) \
+		DirtyRect.o \
+		BScreen.o \
+		Desktop.o \
+		BWindow.o \
+		BConsoleWindow.o \
+		TestTask.o \
+		InspirationBase.o
 
 .cpp.o:
-	@echo $*.cpp
-	$(GCC) -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
-	@echo ""
+		@echo $*.cpp
+		$(GCC) -O2 -c $(CFLAGS) $(INCLUDE_PATH) -o $*.o $*.cpp
+		@echo ""
 
 .asm.o:
-	@echo ""
-	nasm -f elf64 -o $*.o $*.asm
-	@echo ""
+		@echo ""
+		nasm -f elf64 -o $*.o $*.asm
+		@echo ""
 
-$(LIB):	$(OBJ)
-	$(AR) rcs $(LIB) $(OBJ)
-	$(RANLIB) $(LIB)
+$(LIB):		$(OBJ)
+		$(AR) rcs $(LIB) $(OBJ)
+		$(RANLIB) $(LIB)

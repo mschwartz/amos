@@ -1,123 +1,74 @@
 #include <Exec/ExecBase.h>
 #include <Inspiration/Display.h>
+#include <Inspiration/BScreen.h>
+#include <Inspiration/Display/Cursor.h>
+#include <Inspiration/Display/DisplayTask.h>
 
-Display::Display() : BNode("Display") {
-  dlog("Construct Display\n");
-  TSystemInfo info;
-  gExecBase.GetSystemInfo(&info);
-
-  TUint64 fb = (TUint64)info.mDisplayFrameBuffer;
-  mBitmap = new BBitmap32(info.mDisplayWidth, info.mDisplayHeight, info.mDisplayPitch, (TAny *)fb);
-  // mBitmap->Dump();
-
-  mMouseX = mMouseY = -1;
-  mMouseHidden = ETrue;
-  MoveCursor(20, 20);
-  ShowCursor();
+void Display::Init() {
+  DisplayTask *task = new DisplayTask(*this);
+  gExecBase.AddTask(task);
 }
 
-#include <Inspiration/cursors/pointer.h>
-
-static void render_cursor(BBitmap32 *aBitmap, TInt aX, TInt aY) {
-//  dlog("render_cursor %d,%d\n", aX, aY);
-  TUint8 *img = cursor_image;
-  aX -= 8;
-  aY -= 8;
-  for (TInt y = 0; y < 16; y++) {
-    for (TInt x = 0; x < 16; x++) {
-      if (img[x]) {
-        if (aBitmap->PointInRect(aX + x, aY + y)) {
-          TUint32 color = aBitmap->ReadPixel(aX + x, aY + y);
-          color ^= 0xffffffff;
-          aBitmap->PlotPixel(color, aX + x, aY + y);
-        }
-      }
-    }
-    img += 16;
-  }
-  //  const TInt WIDTH = 32, HEIGHT = 32;
-  //  const TInt x1 = aX - WIDTH / 2,
-  //             y1 = aY - HEIGHT / 2,
-  //             x2 = aX + WIDTH / 2,
-  //             y2 = aY + HEIGHT / 2;
-
-  //  for (TInt y = y1; y < y2; y++) {
-  //    for (TInt x = x1; x < x2; x++) {
-  //      if (aBitmap->PointInRect(x, y)) {
-  //        TUint32 color = aBitmap->ReadPixel(x, y);
-  //        color ^= 0xffffffff;
-  //        aBitmap->PlotPixel(color, x, y);
-  //      }
-  //    }
-  //  }
+void Display::AddScreen(BScreen *aScreen) {
+  mScreenList->AddHead(*aScreen);
+  aScreen->Clear(0x4f4fff);
 }
+
+BScreen *Display::FindScreen(const char *aTitle) {
+  return mScreenList->Find(aTitle);
+}
+
+BScreen *Display::TopScreen() {
+  return mScreenList->First();
+}
+//
 
 void Display::MoveCursor(TInt aX, TInt aY) {
-  if (mMouseX == aX && mMouseY == aY) {
-    return;
-  }
-  // erase old position
-  if (!mMouseHidden) {
-    render_cursor(mBitmap, mMouseX, mMouseY);
-  }
+  mLastX = mMouseX;
+  mLastY = mMouseY;
 
   mMouseX = aX;
   mMouseY = aY;
 
-  // render at new position
-  if (!mMouseHidden) {
-    render_cursor(mBitmap, mMouseX, mMouseY);
-  }
+  // if (mMouseX == aX && mMouseY == aY) {
+  //   return;
+  // }
+
+  // BScreen *screen = TopScreen();
+  // screen->AddDirtyRect(mMouseX, mMouseY,
+  //   mMouseX + mCursor->Width() - 1, mMouseX + mCursor->Height() - 1);
+
+  // dlog("Move Cursor from %d,%d to %d,%d\n", mLastX, mLastY, mMouseX, mMouseY);
+  // screen->AddDirtyRect(mMouseX, mMouseY, mMouseX + mCursor->Width() - 1,
+  //   mMouseX + mCursor->Height() - 1);
+}
+
+void Display::RestoreCursor() {
+  mCursor->Restore(mBitmap, mLastX, mLastY);
+  mCursor->AddDirtyRect(mScreenList->First(), mLastX, mLastY);
+  mLastX = mMouseX;
+  mLastY = mMouseY;
+}
+
+void Display::SaveCursor() {
+  mCursor->Save(mBitmap, mMouseX, mMouseY);
+}
+
+void Display::RenderCursor() {
+  mCursor->Render(mBitmap, mMouseX, mMouseY);
+  mCursor->AddDirtyRect(mScreenList->First(), mMouseX, mMouseY);
 }
 
 TBool Display::ShowCursor() {
   TBool ret = mMouseHidden;
-  if (!mMouseHidden) {
-    return ret;
-  }
   mMouseHidden = EFalse;
-  render_cursor(mBitmap, mMouseX, mMouseY);
   return ret;
 }
 
 TBool Display::HideCursor() {
   TBool ret = mMouseHidden;
-  if (mMouseHidden) {
-    return ret;
-  }
   mMouseHidden = ETrue;
-  render_cursor(mBitmap, mMouseX, mMouseY);
   return ret;
-}
-
-void Display::MoveTo(int aX, int aY) {
-  mX = aX;
-  mY = aY;
-}
-
-void Display::GetXY(TInt &aX, TInt &aY) {
-  aX = mX;
-  aY = mY;
-}
-
-void Display::ClearEOL(TUint8 aCharacter) {
-  //
-}
-
-void Display::Down() {
-  //
-}
-
-void Display::ScrollUp() {
-  //
-}
-
-void Display::NewLine() {
-  //
-}
-
-void Display::WriteChar(char c) {
-  //
 }
 
 void Display::Clear(TUint32 aColor) {
@@ -125,19 +76,28 @@ void Display::Clear(TUint32 aColor) {
   //
 }
 
-void Display::WriteString(TInt aX, TInt aY, const char *s) {
-  TBool hidden = HideCursor();
-  mBitmap->DrawText(aX, aY, s);
-  SetCursor(!hidden);
+Display::Display() : BNode("Display") {
+  dlog("Construct Display\n");
+  mScreenList = new BScreenList;
+
+  TSystemInfo info;
+  gExecBase.GetSystemInfo(&info);
+
+  TUint64 fb = (TUint64)info.mDisplayFrameBuffer;
+  mBitmap = new BBitmap32(
+    info.mDisplayWidth, info.mDisplayHeight, info.mDisplayPitch,
+    (TAny *)fb);
+
+  mCursor = new Cursor(); // default cursor
+  mMouseX = mLastX = 20;
+  mMouseY = mLastY = 20;
 }
 
-void Display::WriteString(const char *s) {
-  if (!mMouseHidden) {
-    HideCursor();
-    mBitmap->DrawText(mX, mY, s);
-    ShowCursor();
-  }
-  else {
-    mBitmap->DrawText(mX, mY, s);
-  }
+Display::~Display() {
+  // should never happen!
+  // (Maybe if external display is unplugged?)
+  bochs;
+
+  delete mBitmap;
+  delete mScreenList;
 }

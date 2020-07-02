@@ -2,52 +2,8 @@
 #include <Exec/ExecBase.h>
 #include <Exec/BTask.h>
 #include <Devices/MouseDevice.h>
+#include <Inspiration/Display/MousePointerTask.h>
 #include <Inspiration/TestTask.h>
-
-class MousePointerTask : public BTask {
-public:
-  MousePointerTask() : BTask("MousePointer", LIST_PRI_MAX), mDisplay(mInspirationBase.GetDisplay()) {
-    //    dlog("** Construct MousePointerTask\n");
-    mX = mY = -1;
-  }
-
-protected:
-  Display *mDisplay;
-
-public:
-  void Run() {
-    MessagePort *mousePort;
-
-    while ((mousePort = gExecBase.FindMessagePort("mouse.device")) == ENull) {
-      Sleep(1);
-    }
-
-    MessagePort *replyPort = CreateMessagePort("replyPort");
-    MouseMessage *message = new MouseMessage(replyPort, EMouseMove);
-
-    message->mReplyPort = replyPort;
-    message->SendMessage(mousePort);
-    while (1) {
-      WaitPort(replyPort);
-      while (MouseMessage *m = (MouseMessage *)replyPort->GetMessage()) {
-        if (m == message) {
-          //          dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
-          mDisplay->MoveCursor(m->mMouseX, m->mMouseY);
-          message->mReplyPort = replyPort;
-          message->SendMessage(mousePort);
-        }
-        else {
-          dprint("\n\n");
-          dlog("MouseTask: %x != %x\n\n\n", m, message);
-          // shouldn't happen!
-        }
-      }
-    }
-  }
-
-protected:
-  TInt mX, mY;
-};
 
 // constructor
 InspirationBase::InspirationBase() {
@@ -57,8 +13,10 @@ InspirationBase::~InspirationBase() {
 }
 
 void InspirationBase::Init() {
+  dprint("\n");
+  dlog("InspirationBase Init\n");
   mDisplay = new Display();
-  dlog("** Init InspirationBase Display(%x)\n", mDisplay);
+  dlog("  Init InspirationBase Display(%x)\n", mDisplay);
 
   mDesktop = new Desktop();
   AddScreen(mDesktop);
@@ -66,11 +24,12 @@ void InspirationBase::Init() {
 
   gExecBase.AddTask(new MousePointerTask());
   gExecBase.AddTask(new TestTask());
+
+  mDisplay->Init();
 }
 
 void InspirationBase::AddScreen(BScreen *aScreen) {
-  mScreenList.AddHead(*aScreen);
-  aScreen->Clear(0x4f4fff);
+  mDisplay->AddScreen(aScreen);
 }
 
 BScreen *InspirationBase::FindScreen(const char *aTitle) {
@@ -78,7 +37,7 @@ BScreen *InspirationBase::FindScreen(const char *aTitle) {
     return mDesktop;
   }
 
-  return mScreenList.Find(aTitle);
+  return mDisplay->FindScreen(aTitle);
 }
 
 void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {

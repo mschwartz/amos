@@ -106,14 +106,12 @@ protected:
 TBool MouseInterrupt::Run(TAny *aData) {
   TInt8 in_byte = mouse_read();
 
-//  dlog("Mouse Interrupt\n");
   switch (mState) {
     case 0:
       mPacket[0] = in_byte;
 
       if (in_byte & MOUSE_LEFT_BUTTON) {
         mButtons |= MOUSE_LEFT_BUTTON;
-//        dlog("===== LEFT\n");
       }
       else {
         mButtons &= ~MOUSE_LEFT_BUTTON;
@@ -121,7 +119,6 @@ TBool MouseInterrupt::Run(TAny *aData) {
 
       if (in_byte & MOUSE_MIDDLE_BUTTON) {
         mButtons |= MOUSE_MIDDLE_BUTTON;
-//        dlog("===== MIDDLE\n");
       }
       else {
         mButtons &= ~MOUSE_MIDDLE_BUTTON;
@@ -129,7 +126,6 @@ TBool MouseInterrupt::Run(TAny *aData) {
 
       if (in_byte & MOUSE_RIGHT_BUTTON) {
         mButtons |= MOUSE_RIGHT_BUTTON;
-//        dlog("===== RIGHT\n");
       }
       else {
         mButtons &= ~MOUSE_RIGHT_BUTTON;
@@ -185,7 +181,8 @@ void MouseTask::Run() {
   TUint64 flags = GetFlags();
   cli();
 
-  dlog("MouseTask::Run()\n");
+  dprint("\n");
+  dlog("MouseTask Run\n");
 
   mMessagePort = CreateMessagePort("mouse.device");
   gExecBase.AddMessagePort(*mMessagePort);

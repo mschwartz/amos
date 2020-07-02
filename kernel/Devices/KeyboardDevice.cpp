@@ -342,6 +342,7 @@ TBool KeyboardInterrupt::Run(TAny *aData) {
 }
 
 void KeyboardTask::Run() {
+  dprint("\n");
   dlog("keyboard task alive!\n");
 
   // initialize message port and wait for messages
@@ -387,6 +388,7 @@ void KeyboardTask::Run() {
 }
 
 KeyboardDevice::KeyboardDevice() : BDevice("keyboard.device") {
+  dprint("\n");
   dlog("Construct KeyboardDevice\n");
   gExecBase.AddTask(new KeyboardTask);
 }

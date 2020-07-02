@@ -178,7 +178,9 @@ void PCI::ScanBus(TUint8 aBusNumber) {
 }
 
 PCI::PCI() {
-  dlog("CONSTRUCT PCI\n");
+  dprint("\n");
+  dlog("Construct PCI\n");
+
   TUint16 type = sio.GetHeaderType(sio.GetAddress(0, 0, 0));
   if ((type & MULTIFUNCTION_DEVICE) == 0) {
     dlog("  Single PCI host controller\n");

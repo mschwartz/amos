@@ -52,7 +52,6 @@ protected:
   BBitmap32 *mBitmap; // offscreen bitmap, size of screen
   BWindowList mWindowList;
   TInt32 mTopY;
-  TBool mDirty;
 
 public:
   // void RenderCursor(Cursor *aCursor, TInt32 aX, TInt32 aY) ;

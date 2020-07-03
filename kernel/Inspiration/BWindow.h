@@ -5,15 +5,28 @@
 #include <Types/BList.h>
 #include <Graphics/Graphics.h>
 
+#include <Inspiration/NewWindow.h>
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 class InspirationBase;
+class MessagePort;
 class BScreen;
+class BTask;
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 class BWindow : public BNode {
   friend InspirationBase;
   friend BScreen;
 
 public:
-  BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH);
+  // BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH, BScreen *aScreen = ENull);
+  BWindow(const TNewWindow &aNewWindow);
   virtual ~BWindow();
 
 public:
@@ -31,11 +44,9 @@ protected:
   void PaintDecorations();
 
 public:
-  void BeginPaint() { mPainting = ETrue; }
+  void BeginPaint() {}
   void EndPaint() {
-    mPainting = EFalse;
     Repaint();
-    mDirty = ETrue;
   }
 
   void Clear(TUint32 aColor) {
@@ -48,14 +59,30 @@ public:
   }
 
 protected:
-  BScreen *mScreen;
-  BBitmap32 *mBitmap;
-  TRect mWindowRect, mClientRect;
+  TUint64 mIdcmpFlags;
+  TUint64 mWindowFLags;
+  BScreen *mScreen; // BScreen this window is rendered on
+
+  BBitmap32 *mBitmap; // bitmap of window's contents
+
+  TRect mWindowRect, // TRect of the entire window, including titlebar and decorations
+    mClientRect;     // TRect of the client area of the window
+
   BViewPort32 *mWindowViewPort, // entire window
     *mViewPort;                 // client area
-  TBool mPainting, mDirty;
+
+  TInt32 mMinWidth, mMinHeight;
+  TInt32 mMaxWidth, mMaxHeight;
+
+  BTask *mTask;
+  MessagePort *mIdcmpPort;
+
   InspirationBase &mInspirationBase;
 };
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 class BWindowList : public BList {
 public:

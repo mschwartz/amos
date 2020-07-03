@@ -74,8 +74,9 @@ public:
     */
   void Signal(TInt64 aSignalBit);
 
-protected:
   MessagePort *CreateMessagePort(const char *aName = ENull, TInt64 aPri = LIST_PRI_DEFAULT);
+
+protected:
   void FreeMessagePort(MessagePort *aMessagePort);
   /**
    * Wait for message port signal bit as well as any optional other signal bits.

@@ -34,12 +34,12 @@ public:
       con->BeginPaint();
       con->Write("ls /fonts\n");
       con->EndPaint();
-      
+
       fd = OpenDirectory("/fonts");
       if (!fd) {
-	dprint("\n\n");
+        dprint("\n\n");
         dlog("*** Could not open directory /fonts\n");
-	dprint("\n\n");
+        dprint("\n\n");
       }
       else {
         const DirectoryStat *s = fd->Stat();
@@ -71,9 +71,9 @@ public:
 
       fd = OpenFile("/fonts/README.psfu");
       if (!fd) {
-	dprint("\n\n");
+        dprint("\n\n");
         dlog("*** Could not open /fonts/README.psfu\n");
-	dprint("\n\n");
+        dprint("\n\n");
       }
       else {
         char buf[512];
@@ -111,7 +111,15 @@ TestTask::~TestTask() {
 
 class TestWindow : public BWindow {
 public:
-  TestWindow() : BWindow("Test Window", 10, 10, 640, 480) {}
+  // TestWindow() : BWindow("Test Window", 10, 10, 640, 480) {}
+  TestWindow()
+      : BWindow(TNewWindow{
+          .mLeft = 10,
+          .mTop = 10,
+	  .mWidth = 640,
+	  .mHeight = 400,
+	  .mTitle = "Test Window"
+        }) {}
 
 public:
   void Paint() {

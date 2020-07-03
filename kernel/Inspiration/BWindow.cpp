@@ -7,10 +7,11 @@ const TInt BORDER_WIDTH = 2;
 static TRGB BORDER_COLOR(255, 255, 255);
 static TRGB TITLE_COLOR(0, 0, 0);
 
-BWindow::BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH)
+#if 0
+BWindow::BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH, BScreen *aScreen)
     : BNode(aTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
 
-  mScreen = ENull;
+  mScreen = aScreen;
   // mRect x1,y1 is the upper left position of the window in screen coordinates
 
   // bitmap encompasses window decorationsand client area
@@ -35,15 +36,72 @@ BWindow::BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH)
   cRect.x2 -= BORDER_WIDTH;
   cRect.y2 -= BORDER_WIDTH;
   mViewPort->SetRect(cRect);
-
   mClientRect.Set(cRect);
 
-  mDirty = EFalse;
-  mPainting = EFalse;
+}
+#endif
+
+// struct TNewWindow {
+//   BScreen *mScreen; // pointer to custom BScreen or ENull for Desktop
+//   TInt32 mTop, mLeft, mWidth, mHeight;
+//   TInt32 mMinWidth, mMinHeight;
+//   TInt32 mMaxWidth, mMaxHeight;
+//   const char *mTitle;
+//   TUint64 mIdcmpFlags;
+//   TUint64 mWindowFlags;
+// };
+
+BWindow::BWindow(const TNewWindow &aNewWindow)
+    : BNode(aNewWindow.mTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
+
+  mScreen = aNewWindow.mScreen;
+
+  mMinWidth = aNewWindow.mMinWidth ? aNewWindow.mMinWidth : aNewWindow.mWidth;
+  mMinHeight = aNewWindow.mMinHeight ? aNewWindow.mMinHeight : aNewWindow.mHeight;
+
+  mMaxWidth = aNewWindow.mMaxWidth ? aNewWindow.mMaxWidth : aNewWindow.mWidth;
+  mMaxHeight = aNewWindow.mMaxHeight ? aNewWindow.mMaxHeight : aNewWindow.mHeight;
+
+  mBitmap = new BBitmap32(aNewWindow.mWidth, aNewWindow.mHeight);
+
+  //
+  mBitmap->GetRect(mWindowRect);
+  mWindowRect.Offset(aNewWindow.mLeft, aNewWindow.mTop);
+
+  mWindowViewPort = new BViewPort32(mNodeName, mBitmap);
+  mWindowViewPort->SetFont(new BConsoleFont32());
+
+  TRGB fg(aNewWindow.mTitleForeground);
+  TRGB bg(aNewWindow.mBorderColor);
+  mWindowViewPort->SetColors(fg, bg);
+  // mWindowViewPort->SetColors(TITLE_COLOR, BORDER_COLOR);
+
+  // ViewPort for client to render to the client area only
+  mViewPort = new BViewPort32(aNewWindow.mTitle, mBitmap);
+
+  // set Client ViewPort Rect
+  TRect cRect;
+  mWindowViewPort->GetRect(cRect);
+  cRect.x1 += BORDER_WIDTH;
+  cRect.y1 += FONT_HEIGHT + 2;
+  cRect.x2 -= BORDER_WIDTH;
+  cRect.y2 -= BORDER_WIDTH;
+  mViewPort->SetRect(cRect);
+  mClientRect.Set(cRect);
+
+  mIdcmpFlags = aNewWindow.mIdcmpFlags;
+  mWindowFLags = aNewWindow.mWindowFlags;
+
+  mTask = gExecBase.GetCurrentTask();
+  mIdcmpPort = mTask->CreateMessagePort();
 }
 
 BWindow::~BWindow() {
   //
+  delete mIdcmpPort;
+  delete mViewPort;
+  delete mWindowViewPort;
+  delete mBitmap;
 }
 
 void BWindow::PaintDecorations() {

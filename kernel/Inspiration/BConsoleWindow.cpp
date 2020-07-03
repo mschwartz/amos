@@ -2,9 +2,22 @@
 #include <posix/sprintf.h>
 #include <stdarg.h>
 
-BConsoleWindow::BConsoleWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH)
-    : BWindow(aTitle, aX, aY, aW, aH) {
-
+BConsoleWindow::BConsoleWindow(const char *aTitle,
+  TInt32 aX, TInt32 aY,
+  TInt32 aW, TInt32 aH,
+  BScreen *aScreen)
+    : BWindow(TNewWindow({
+        .mLeft = aX,
+        .mTop = aY,
+        .mWidth = aW,
+        .mHeight = aH,
+        .mMinWidth = 0,
+        .mMinHeight = 0,
+        .mMaxWidth = 0,
+        .mMaxHeight = 0,
+        .mTitle = aTitle,
+        .mScreen = aScreen,
+      })) {
   mCharacterMap = ENull;
 
   // set palettes

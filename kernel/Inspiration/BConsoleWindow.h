@@ -13,7 +13,7 @@
  */
 class BConsoleWindow : public BWindow {
 public:
-  BConsoleWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH);
+  BConsoleWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH, BScreen *aScreen = ENull);
   virtual ~BConsoleWindow();
 
 public:

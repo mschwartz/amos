@@ -11,10 +11,6 @@ BConsoleWindow::BConsoleWindow(const char *aTitle,
         .mTop = aY,
         .mWidth = aW,
         .mHeight = aH,
-        .mMinWidth = 0,
-        .mMinHeight = 0,
-        .mMaxWidth = 0,
-        .mMaxHeight = 0,
         .mTitle = aTitle,
         .mScreen = aScreen,
       })) {
@@ -68,10 +64,6 @@ void BConsoleWindow::Resize(TInt32 aW, TInt32 aH) {
 
   mCharacterMapSize = mRows * mCols * sizeof(TUint16);
   mCharacterMapEnd = mCharacterMap + mCharacterMapSize;
-
-  // BeginPaint();
-  // ClearScreen();
-  // EndPaint();
 }
 
 BConsoleWindow::~BConsoleWindow() {

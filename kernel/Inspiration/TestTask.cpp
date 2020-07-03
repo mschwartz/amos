@@ -27,7 +27,7 @@ public:
 
 #if 1
       con->BeginPaint();
-      con->Write("\n\n> ");
+      con->Write("> ");
       con->EndPaint();
 
       Sleep(4);
@@ -119,7 +119,9 @@ public:
 	  .mWidth = 640,
 	  .mHeight = 400,
 	  .mTitle = "Test Window"
-        }) {}
+        }) {
+    mClientRect.Dump();
+  }
 
 public:
   void Paint() {
@@ -129,10 +131,14 @@ public:
   void RandomBox() {
     TRect rect;
     TRGB color(Random64(0, 255), Random64(0, 255), Random64(0, 255));
-    rect.x1 = Random64(mClientRect.x1, mClientRect.x2);
-    rect.x2 = Random64(rect.x1, mClientRect.x2);
-    rect.y1 = Random64(mClientRect.y1, mClientRect.y2);
-    rect.y2 = Random64(rect.y1, mClientRect.y2);
+    rect.x1 = Random64(0, mClientRect.Width());
+    rect.x2 = Random64(rect.x1, mClientRect.Width());
+    rect.y1 = Random64(0, mClientRect.Height());
+    rect.y2 = Random64(rect.y1, mClientRect.Height());
+    // rect.x1 = Random64(mClientRect.x1, mClientRect.x2);
+    // rect.x2 = Random64(rect.x1, mClientRect.x2);
+    // rect.y1 = Random64(mClientRect.y1, mClientRect.y2);
+    // rect.y2 = Random64(rect.y1, mClientRect.y2);
     mViewPort->FillRect(color, rect);
   }
 };

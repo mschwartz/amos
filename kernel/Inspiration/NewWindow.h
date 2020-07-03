@@ -106,16 +106,6 @@ struct TNewWindow {
   TUint32  mBorderColor = 0xffffff, mTitleForeground = 000000, mTitleBackground = 0xffffff;
   BScreen *mScreen = ENull; // pointer to custom BScreen or ENull for Desktop
   BFont *mFont = ENull;;
-  /* TNewWindow() { */
-  /*   mMinWidth = mMinHeight = 0; */
-  /*   mMaxWidth = mMaxHeight = 0; */
-  /*   mIdcmpFlags = 0; */
-  /*   mWindowFlags = WFLAG_DRAGBAR; */
-  /*   mBorderColor = 0xffffff; */
-  /*   mTitleForeground = 0x000000; */
-  /*   mTitleBackground = 0xffffff; */
-  /*   mScreen = ENull; */
-  /* } */
 };
 
 #endif

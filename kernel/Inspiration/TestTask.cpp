@@ -20,8 +20,10 @@ public:
 
     dprint("\n");
     dlog("TestTask2 Run\n");
+
     ConWindow *con = new ConWindow();
     screen->AddWindow(con);
+
     FileDescriptor *fd;
     while (ETrue) {
 
@@ -118,7 +120,8 @@ public:
           .mTop = 10,
 	  .mWidth = 640,
 	  .mHeight = 400,
-	  .mTitle = "Test Window"
+	  .mTitle = "Test Window",
+	  .mIdcmpFlags = IDCMP_MOUSEMOVE,
         }) {
     mClientRect.Dump();
   }
@@ -169,5 +172,9 @@ void TestTask::Run() {
       win->RandomBox();
     }
     win->EndPaint();
+    while (IdcmpMessage *m = win->GetMessage()) {
+      dlog("MouseMove %d,%d buttons(%x)\n", m->mMouseX, m->mMouseY, m->mCode);
+      m->ReplyMessage();
+    }
   }
 }

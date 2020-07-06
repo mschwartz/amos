@@ -6,15 +6,18 @@
 #include <Graphics/Graphics.h>
 
 #include <Inspiration/NewWindow.h>
+#include <Exec/MessagePort.h>
 
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
 class InspirationBase;
+class IdcmpTask;
 class MessagePort;
 class BScreen;
 class BTask;
+class IdcmpMessage;
 
 /********************************************************************************
  ********************************************************************************
@@ -23,6 +26,7 @@ class BTask;
 class BWindow : public BNode {
   friend InspirationBase;
   friend BScreen;
+  friend IdcmpTask;
 
 public:
   // BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH, BScreen *aScreen = ENull);
@@ -58,8 +62,14 @@ public:
     Clear(aColor.rgb888());
   }
 
+public:
+  IdcmpMessage *GetMessage();
+
 protected:
   TUint64 mIdcmpFlags;
+  MessagePort *mIdcmpPort;
+
+protected:
   TUint64 mWindowFLags;
   BScreen *mScreen; // BScreen this window is rendered on
 
@@ -75,7 +85,6 @@ protected:
   TInt32 mMaxWidth, mMaxHeight;
 
   BTask *mTask;
-  MessagePort *mIdcmpPort;
 
   InspirationBase &mInspirationBase;
 };
@@ -87,6 +96,26 @@ protected:
 class BWindowList : public BList {
 public:
   BWindowList() : BList("Window List") {}
+};
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
+struct IdcmpMessage : public BMessage {
+  TUint64 mClass;
+  TUint64 mCode;
+  TUint64 mQualifier;
+  TAny *mAddress;
+  TInt64 mMouseX, mMouseY;
+  TUint64 mTime; // milliseconds
+  BWindow *mWindow;
+};
+
+enum EIdcmpCommand {
+  EIdcmpSubscribe,
+  EIdcmpUnsubscribe,
+  EIdcmpUpdateFlags,
 };
 
 #endif

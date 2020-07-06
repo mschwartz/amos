@@ -7,7 +7,11 @@ DISPLAY=	Display.o \
 		Display/Cursor.o \
 		Display/MousePointerTask.o
 
+IDCMP=		idcmp/IdcmpTask.o \
+		idcmp/IdcmpSubscribers.o
+
 OBJ= 		$(DISPLAY) \
+		$(IDCMP) \
 		DirtyRect.o \
 		BScreen.o \
 		Desktop.o \

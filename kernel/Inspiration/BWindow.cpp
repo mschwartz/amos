@@ -7,50 +7,6 @@ const TInt BORDER_WIDTH = 2;
 static TRGB BORDER_COLOR(255, 255, 255);
 static TRGB TITLE_COLOR(0, 0, 0);
 
-#if 0
-BWindow::BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH, BScreen *aScreen)
-    : BNode(aTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
-
-  mScreen = aScreen;
-  // mRect x1,y1 is the upper left position of the window in screen coordinates
-
-  // bitmap encompasses window decorationsand client area
-  mBitmap = new BBitmap32(aW, aH);
-  mBitmap->GetRect(mWindowRect);
-  mWindowRect.Offset(aX, aY);
-
-  // ViewPort Rect, 0,0 is upper elft of the bitmap/window
-  // Window ViewPort to access entire window bitmap (for decorations)
-  mWindowViewPort = new BViewPort32(aTitle, mBitmap);
-  mWindowViewPort->SetFont(new BConsoleFont32());
-  mWindowViewPort->SetColors(TITLE_COLOR, BORDER_COLOR);
-
-  // ViewPort for client to render to the client area only
-  mViewPort = new BViewPort32(aTitle, mBitmap);
-
-  // set Client ViewPort Rect
-  TRect cRect;
-  mWindowViewPort->GetRect(cRect);
-  cRect.x1 += BORDER_WIDTH;
-  cRect.y1 += FONT_HEIGHT + 2;
-  cRect.x2 -= BORDER_WIDTH;
-  cRect.y2 -= BORDER_WIDTH;
-  mViewPort->SetRect(cRect);
-  mClientRect.Set(cRect);
-
-}
-#endif
-
-// struct TNewWindow {
-//   BScreen *mScreen; // pointer to custom BScreen or ENull for Desktop
-//   TInt32 mTop, mLeft, mWidth, mHeight;
-//   TInt32 mMinWidth, mMinHeight;
-//   TInt32 mMaxWidth, mMaxHeight;
-//   const char *mTitle;
-//   TUint64 mIdcmpFlags;
-//   TUint64 mWindowFlags;
-// };
-
 BWindow::BWindow(const TNewWindow &aNewWindow)
     : BNode(aNewWindow.mTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
 
@@ -102,6 +58,10 @@ BWindow::~BWindow() {
   delete mViewPort;
   delete mWindowViewPort;
   delete mBitmap;
+}
+
+IdcmpMessage *BWindow::GetMessage() {
+  return (IdcmpMessage *)mIdcmpPort->GetMessage();
 }
 
 void BWindow::PaintDecorations() {

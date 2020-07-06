@@ -76,6 +76,7 @@ void Display::Clear(TUint32 aColor) {
   //
 }
 
+BWindow *Display::ActiveWindow() { return TopScreen()->ActiveWindow(); }
 Display::Display() : BNode("Display") {
   dlog("Construct Display\n");
   mScreenList = new BScreenList;

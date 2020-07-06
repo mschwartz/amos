@@ -27,6 +27,7 @@ public:
 
 public:
   Display *GetDisplay() { return mDisplay; }
+  BWindow *ActiveWindow() { return mDisplay->ActiveWindow(); }
 
 protected:
   Display *mDisplay;

@@ -4,6 +4,13 @@
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
+// mouse buttons (IDCMP_MOUSEBUTTONS)
+const TUint64 SELECTDOWN = 1;
+const TUint64 SELECTUP = 2;
+const TUint64 MIDDLEDOWN = 3;
+const TUint64 MIDDLEUP = 4;
+const TUint64 MENUDOWN = 5;
+const TUint64 MENUUP = 6;
 
 // these are actual AmigaOS defines.
 // TODO: review and modify/remove/update these
@@ -74,7 +81,7 @@ const TUint64 WFLAG_RMBTRAP = 0x00010000;       // Catch RMB events for your own
 const TUint64 WFLAG_NOCAREREFRESH = 0x00020000; // not to be bothered with REFRESH
 
 const TUint64 WFLAG_NW_EXTENDED = 0x00040000; // extension data provided
-                                             // see struct ExtNewWindow
+                                              // see struct ExtNewWindow
 
 const TUint64 WFLAG_NEWLOOKMENUS = 0x00200000; // window has NewLook menus
 
@@ -95,6 +102,7 @@ const TUint64 WFLAG_HASZOOM = 0x20000000; // window has a zoom gadget
  *******************************************************************************/
 
 class BScreen;
+class BFont;
 
 struct TNewWindow {
   TInt32 mLeft, mTop, mWidth, mHeight;
@@ -103,9 +111,10 @@ struct TNewWindow {
   const char *mTitle;
   TUint64 mIdcmpFlags = 0;
   TUint64 mWindowFlags = WFLAG_DRAGBAR;
-  TUint32  mBorderColor = 0xffffff, mTitleForeground = 000000, mTitleBackground = 0xffffff;
+  TUint32 mBorderColor = 0xffffff, mTitleForeground = 000000, mTitleBackground = 0xffffff;
   BScreen *mScreen = ENull; // pointer to custom BScreen or ENull for Desktop
-  BFont *mFont = ENull;;
+  BFont *mFont = ENull;
+  ;
 };
 
 #endif

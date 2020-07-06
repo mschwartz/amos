@@ -7,6 +7,8 @@
 const TInt64 TASK_PRI_MIN = LIST_PRI_MIN;
 const TInt64 TASK_PRI_MAX = LIST_PRI_MAX;
 const TInt64 TASK_PRI_DEFAULT = LIST_PRI_DEFAULT;
+const TInt64 TASK_PRI_NICE = TASK_PRI_DEFAULT + 1;
+const TInt64 TASK_PRI_URGENT = TASK_PRI_DEFAULT - 1;
 
 const TUint64 default_task_stack_size = 2 * 1024 * 1024;
 
@@ -16,7 +18,6 @@ class MessagePort;
 
 class ExecBase;
 class InspirationBase;
-
 
 enum ETaskState {
   ETaskRunning,
@@ -78,12 +79,32 @@ public:
 
 protected:
   void FreeMessagePort(MessagePort *aMessagePort);
+
   /**
    * Wait for message port signal bit as well as any optional other signal bits.
    * returns mask of signals received.
    */
   TUint64 WaitPort(MessagePort *aMessagePort, TUint64 aSignalMask = 0);
 
+  /**
+   * Wait for two message ports' signal bits as well as any optional other signal bits.
+   * returns mask of signals received.
+   */
+  TUint64 WaitPort(MessagePort *aMessagePort, MessagePort *aOtherPort, TUint64 aSignalMask = 0);
+
+  /**
+   * Wait for three message ports' signal bits as well as any optional other signal bits.
+   * returns mask of signals received.
+   */
+  TUint64 WaitPort(MessagePort *aMessagePort, MessagePort *aOtherPort, MessagePort *aOtherOtherPort, TUint64 aSignalMask = 0);
+
+  /**
+   * Wait for arbitrary number of  message ports as well as any optional other signal bits .
+   * After aSigMask, some number of MessagePorts, followed by ENull.
+   * returns mask of signals received.
+   */
+  TUint64 WaitPorts(TUint64 aSigMask, ...);
+  
   /**
     * Wait for some number of seconds.
     */
@@ -99,14 +120,15 @@ protected:
 
 protected:
   volatile TInt64 mForbidNestCount, mDisableNestCount;
+
 protected:
-  InspirationBase& mInspirationBase;
+  InspirationBase &mInspirationBase;
 };
 
 class BTaskList : public BListPri {
 public:
   BTaskList(const char *aName = "Task List") : BListPri(aName) {
-//    dlog("Construct BTaskList %s\n", aName);
+    //    dlog("Construct BTaskList %s\n", aName);
   }
 
   static void DumpRegisters(TTaskRegisters *aRegisters);

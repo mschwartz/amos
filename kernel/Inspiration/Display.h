@@ -7,6 +7,7 @@
 
 class BScreen;
 class BScreenList;
+class BWindow;
 class DisplayTask;
 class Cursor;
 // class Mouse;
@@ -23,6 +24,7 @@ public:
 public:
   void AddScreen(BScreen *aScreen);
   BScreen *TopScreen();
+  BWindow *ActiveWindow();
 
 public:
   void Dump() {

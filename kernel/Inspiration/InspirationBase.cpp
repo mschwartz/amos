@@ -3,6 +3,7 @@
 #include <Exec/BTask.h>
 #include <Devices/MouseDevice.h>
 #include <Inspiration/Display/MousePointerTask.h>
+#include <Inspiration/idcmp/IdcmpTask.h>
 #include <Inspiration/TestTask.h>
 
 // constructor
@@ -23,6 +24,7 @@ void InspirationBase::Init() {
   dlog("  Constructed Desktop(%x)\n", mDesktop);
 
   gExecBase.AddTask(new MousePointerTask());
+  gExecBase.AddTask(new IdcmpTask());
   gExecBase.AddTask(new TestTask());
 
   mDisplay->Init();

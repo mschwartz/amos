@@ -295,7 +295,7 @@ TBool KeyboardInterrupt::Run(TAny *aData) {
       if (res) {
         KeyboardMessage *m = new KeyboardMessage(ENull, EKeyUp);
         m->mResult = res;
-        m->SendMessage(mTask->mMessagePort);
+        m->Send(mTask->mMessagePort);
       }
     }
     else {
@@ -304,7 +304,7 @@ TBool KeyboardInterrupt::Run(TAny *aData) {
       if (res) {
         KeyboardMessage *m = new KeyboardMessage(ENull, EKeyDown);
         m->mResult = res;
-        m->SendMessage(mTask->mMessagePort);
+        m->Send(mTask->mMessagePort);
       }
       break;
     }
@@ -368,7 +368,7 @@ void KeyboardTask::Run() {
             m->mResult = mBuffer[mHead++];
             mTail %= KEYBOARD_BUFFER_SIZE;
           }
-	  m->ReplyMessage();
+	  m->Reply();
           break;
 
         default:

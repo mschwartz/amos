@@ -24,7 +24,7 @@ void MousePointerTask::Run() {
   MouseMessage *message = new MouseMessage(replyPort, EMouseMove);
 
   message->mReplyPort = replyPort;
-  message->SendMessage(mousePort);
+  message->Send(mousePort);
   while (1) {
     WaitPort(replyPort);
     while (MouseMessage *m = (MouseMessage *)replyPort->GetMessage()) {
@@ -32,7 +32,7 @@ void MousePointerTask::Run() {
         // dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
         mDisplay->MoveCursor(m->mMouseX, m->mMouseY);
         message->mReplyPort = replyPort;
-        message->SendMessage(mousePort);
+        message->Send(mousePort);
       }
       else {
         dprint("\n\n");

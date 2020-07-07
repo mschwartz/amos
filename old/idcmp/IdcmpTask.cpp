@@ -22,7 +22,7 @@ void IdcmpTask::SendIdcmp(IdcmpMessage *aMessage) {
     IdcmpMessage *m = AllocMessage();
     *m = *aMessage;
     m->mTime = gExecBase.SystemTicks();
-    m->SendMessage(w->mIdcmpPort);
+    m->Send(w->mIdcmpPort);
   }
 }
 
@@ -68,7 +68,7 @@ void IdcmpTask::HandleSubscribe() {
         break;
     }
 
-    m->ReplyMessage();
+    m->Reply();
   }
 }
 
@@ -80,7 +80,7 @@ void IdcmpTask::HandleKeyboard() {
     im.mQualifier = 0;
     im.mAddress = ENull;
     SendIdcmp(&im);
-    m->ReplyMessage();
+    m->Reply();
   }
 }
 
@@ -101,9 +101,9 @@ void IdcmpTask::HandleMouse() {
     im.mClass = IDCMP_MOUSEBUTTONS;
     SendIdcmp(&im);
 
-    m->ReplyMessage();
+    m->Reply();
     mMouseMessage->mReplyPort = mMouseReplyPort;
-    mMouseMessage->SendMessage(mMousePort);
+    mMouseMessage->Send(mMousePort);
   }
 }
 
@@ -135,11 +135,11 @@ void IdcmpTask::Run() {
   // }
   mMouseMessage = new MouseMessage(mMouseReplyPort, EMouseMove);
   mMouseMessage->mReplyPort = mMouseReplyPort;
-  mMouseMessage->SendMessage(mMousePort);
+  mMouseMessage->Send(mMousePort);
 
   mKeyboardMessage = new KeyboardMessage(mKeyboardReplyPort, EKeyRead);
   mKeyboardMessage->mReplyPort = mKeyboardReplyPort;
-  mKeyboardMessage->SendMessage(mKeyboardPort);
+  mKeyboardMessage->Send(mKeyboardPort);
 
   while (ETrue) {
     WaitPorts(0, mCommandPort, mReplyPort, mMouseReplyPort, mKeyboardReplyPort, ENull);

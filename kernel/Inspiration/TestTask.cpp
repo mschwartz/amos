@@ -174,7 +174,7 @@ void TestTask::Run() {
     win->EndPaint();
     while (IdcmpMessage *m = win->GetMessage()) {
       dlog("MouseMove %d,%d buttons(%x)\n", m->mMouseX, m->mMouseY, m->mCode);
-      m->ReplyMessage();
+      m->Reply();
     }
   }
 }

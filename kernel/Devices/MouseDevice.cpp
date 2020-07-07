@@ -160,7 +160,7 @@ TBool MouseInterrupt::Run(TAny *aData) {
         m->mMouseX = mX;
         m->mMouseY = mY;
         m->mButtons = mButtons;
-        m->SendMessage(mTask->mMessagePort);
+        m->Send(mTask->mMessagePort);
       }
       break;
   }
@@ -243,7 +243,7 @@ void MouseTask::Run() {
             m->mMouseY = y;
             m->mButtons = buttons;
 //            dlog(" Reply message %x to port %x\n", m, m->mReplyPort);
-            m->ReplyMessage();
+            m->Reply();
           }
         } break;
         case EMouseMove:

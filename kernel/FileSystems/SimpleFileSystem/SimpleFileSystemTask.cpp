@@ -39,7 +39,7 @@ void *SimpleFileSystemTask::Sector(TUint64 aLba) {
     mAtaMessage->mError = EAtaErrorNone;
     mAtaMessage->mReplyPort = mAtaReplyPort;
 
-    mAtaMessage->SendMessage(mAtaPort);
+    mAtaMessage->Send(mAtaPort);
 
     WaitPort(mAtaReplyPort);
     mDiskCache->Add((BSparseArrayNode &)*fs);
@@ -324,7 +324,7 @@ void SimpleFileSystemTask::Run() {
 	  dprint("\n\n");
           bochs;
       }
-      f->ReplyMessage();
+      f->Reply();
     }
   }
 }

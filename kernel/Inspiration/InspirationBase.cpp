@@ -3,7 +3,6 @@
 #include <Exec/BTask.h>
 #include <Devices/MouseDevice.h>
 #include <Inspiration/Display/MousePointerTask.h>
-#include <Inspiration/idcmp/IdcmpTask.h>
 #include <Inspiration/TestTask.h>
 
 // constructor
@@ -24,7 +23,7 @@ void InspirationBase::Init() {
   dlog("  Constructed Desktop(%x)\n", mDesktop);
 
   gExecBase.AddTask(new MousePointerTask());
-  gExecBase.AddTask(new IdcmpTask());
+  // gExecBase.AddTask(new IdcmpTask());
   gExecBase.AddTask(new TestTask());
 
   mDisplay->Init();
@@ -48,4 +47,13 @@ void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
     aWindow->mWindowRect.x1,
     aWindow->mWindowRect.y1);
   mDisplay->SetCursor(!hidden);
+}
+
+TBool InspirationBase::SendIdcmpMessage(IdcmpMessage *aMessage) {
+  BWindow *w = ActiveWindow();
+  if (w->mIdcmpFlags & aMessage->mClass) {
+    aMessage->Send(w->mIdcmpPort);
+    return ETrue;
+  }
+  return EFalse;
 }

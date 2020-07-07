@@ -13,7 +13,6 @@
  *******************************************************************************/
 
 class InspirationBase;
-class IdcmpTask;
 class MessagePort;
 class BScreen;
 class BTask;
@@ -26,7 +25,6 @@ class IdcmpMessage;
 class BWindow : public BNode {
   friend InspirationBase;
   friend BScreen;
-  friend IdcmpTask;
 
 public:
   // BWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH, BScreen *aScreen = ENull);

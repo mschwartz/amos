@@ -13,11 +13,11 @@ BMessage::~BMessage() {
   //
 }
 
-void BMessage::SendMessage(MessagePort *aToPort) {
+void BMessage::Send(MessagePort *aToPort) {
   aToPort->ReceiveMessage(this);
 }
 
-void BMessage::ReplyMessage() {
+void BMessage::Reply() {
   if (mReplyPort) {
     mReplyPort->ReceiveMessage(this);
   }

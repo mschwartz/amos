@@ -41,7 +41,7 @@ TBool BProcess::DoIO(FileDescriptor *aFileDescriptor) {
   // aFileDescriptor->Dump();
 
   aFileDescriptor->mMessage.mReplyPort = mFsReplyPort;
-  aFileDescriptor->mMessage.SendMessage(port);
+  aFileDescriptor->mMessage.Send(port);
   WaitPort(mFsReplyPort);
   FileSystemMessage *m;
   while ((m = (FileSystemMessage *)mFsReplyPort->GetMessage())) {

@@ -270,7 +270,7 @@ void BTask::Sleep(TUint64 aSeconds) {
   MessagePort *replyPort = CreateMessagePort();
   TimerMessage *m = new TimerMessage(replyPort, ETimerSleep);
   m->mArg1 = aSeconds;
-  m->SendMessage(timer);
+  m->Send(timer);
   WaitPort(replyPort);
   while ((m = (TimerMessage *)replyPort->GetMessage())) {
     delete m;
@@ -289,7 +289,7 @@ void BTask::MilliSleep(TUint64 aMilliSeconds) {
   MessagePort *replyPort = CreateMessagePort();
   RtcMessage *m = new RtcMessage(replyPort, ERtcSleep);
   m->mArg1 = aMilliSeconds;
-  m->SendMessage(rtc);
+  m->Send(rtc);
   WaitPort(replyPort);
   while ((m = (RtcMessage *)replyPort->GetMessage())) {
     delete m;

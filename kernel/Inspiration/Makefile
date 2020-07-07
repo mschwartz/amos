@@ -11,7 +11,6 @@ IDCMP=		idcmp/IdcmpTask.o \
 		idcmp/IdcmpSubscribers.o
 
 OBJ= 		$(DISPLAY) \
-		$(IDCMP) \
 		DirtyRect.o \
 		BScreen.o \
 		Desktop.o \

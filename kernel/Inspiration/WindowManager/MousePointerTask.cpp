@@ -1,5 +1,5 @@
 #include <Inspiration/InspirationBase.h>
-#include <Inspiration/Display/MousePointerTask.h>
+#include <Inspiration/WindowManager/MousePointerTask.h>
 #include <Exec/ExecBase.h>
 #include <Devices/MouseDevice.h>
 

@@ -2,7 +2,8 @@
 #include <Exec/ExecBase.h>
 #include <Exec/BTask.h>
 #include <Devices/MouseDevice.h>
-#include <Inspiration/Display/MousePointerTask.h>
+#include <Inspiration/WindowManager/MousePointerTask.h>
+#include <Inspiration/WindowManager/KeyboardTask.h>
 #include <Inspiration/TestTask.h>
 
 // constructor

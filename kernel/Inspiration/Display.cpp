@@ -1,8 +1,9 @@
 #include <Exec/ExecBase.h>
 #include <Inspiration/Display.h>
 #include <Inspiration/BScreen.h>
-#include <Inspiration/Display/Cursor.h>
-#include <Inspiration/Display/DisplayTask.h>
+#include <Inspiration/Cursor.h>
+#include <Inspiration/WindowManager/DisplayTask.h>
+#include <Inspiration/WindowManager/KeyboardTask.h>
 
 void Display::Init() {
   DisplayTask *task = new DisplayTask(*this);

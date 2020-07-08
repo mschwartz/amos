@@ -1,4 +1,4 @@
-#include <Inspiration/Display/DisplayTask.h>
+#include <Inspiration/WindowManager/DisplayTask.h>
 #include <Inspiration/BScreen.h>
 #include <Exec/ExecBase.h>
 

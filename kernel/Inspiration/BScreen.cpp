@@ -2,7 +2,7 @@
 #include <Exec/ExecBase.h>
 #include <Inspiration/BScreen.h>
 #include <Inspiration/Display.h>
-#include <Inspiration/Display/Cursor.h>
+#include <Inspiration/Cursor.h>
 
 #include <Graphics/bitmap/BBitmap32.h>
 

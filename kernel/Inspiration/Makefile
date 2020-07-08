@@ -2,16 +2,17 @@
 
 LIB=		libinspiration.a
 
-DISPLAY=	Display.o \
-		Display/DisplayTask.o \
-		Display/Cursor.o \
-		Display/MousePointerTask.o
+WINDOWMANAGER=	Display.o \
+		WindowManager/DisplayTask.o \
+		WindowManager/KeyboardTask.o \
+		WindowManager/MousePointerTask.o
 
 IDCMP=		idcmp/IdcmpTask.o \
 		idcmp/IdcmpSubscribers.o
 
-OBJ= 		$(DISPLAY) \
+OBJ= 		$(WINDOWMANAGER) \
 		DirtyRect.o \
+		Cursor.o \
 		BScreen.o \
 		Desktop.o \
 		BWindow.o \

@@ -25,14 +25,22 @@ void MousePointerTask::Run() {
 
   message->mReplyPort = replyPort;
   message->Send(mousePort);
-  while (1) {
+  while (ETrue) {
     WaitPort(replyPort);
     while (MouseMessage *m = (MouseMessage *)replyPort->GetMessage()) {
       if (m == message) {
-        // dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
+        dlog("Move Cursor %d,%d\n", m->mMouseX, m->mMouseY);
         mDisplay->MoveCursor(m->mMouseX, m->mMouseY);
         message->mReplyPort = replyPort;
         message->Send(mousePort);
+        IdcmpMessage im;
+        im.mClass = IDCMP_MOUSEMOVE;
+        im.mCode = m->mButtons;
+        im.mQualifier = 0;
+        im.mAddress = ENull;
+        im.mMouseX = m->mMouseX;
+        im.mMouseY = m->mMouseY;
+        mInspirationBase.SendIdcmpMessage(&im);
       }
       else {
         dprint("\n\n");

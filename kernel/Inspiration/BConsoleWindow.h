@@ -11,6 +11,8 @@
  * Note: BeginPaint() -> render tezt as required -> EndPaint().
  *  if EndPaint() is not called, the changes will not end up on the screen.
  */
+const TInt CONSOLE_BUFFER_SIZE = 4096;
+
 class BConsoleWindow : public BWindow {
 public:
   BConsoleWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH, BScreen *aScreen = ENull);
@@ -74,7 +76,20 @@ public:
   void WriteFormatted(TInt32 aRow, TInt32 aCol, const char *aString, ...); // printf
   void WriteFormatted(const char *aString, ...);                           // printf
 
-  TUint16 Read(TInt32 aRow, TInt32 aCol);
+  TUint16 GetAt(TInt32 aRow, TInt32 aCol);
+
+  //
+  // Keyboard
+  //
+public:
+  TBool KeyReady(); // is a key ready to read from keyboard?
+  TInt ReadKey(); // read a key from keyboard
+  TInt ReadString(char *aString, TInt aMaxLength = -1, char mDelimiter = '\n'); // read a string from keyboard
+
+protected:
+  void FillBuffer();
+  char mBuffer[CONSOLE_BUFFER_SIZE];
+  TInt mBufferHead, mBufferTail;
 
   //
   // colors

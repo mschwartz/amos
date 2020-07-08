@@ -116,6 +116,13 @@ cd posix
 make
 cd ..
 
+echo ""
+echo ""
+echo "  ============== BUILDING EXAMPLES"
+cd ../Examples
+make
+cd ../kernel
+
 echo "    $GCC -c $CFLAGS -o kernel_main.o kernel_main.cpp"
 $GCC -g -c $CFLAGS $INCLUDE_PATH -o kernel_main.o kernel_main.cpp
 
@@ -125,7 +132,8 @@ echo ""
 echo ""
 echo "  LINKING"
 echo "    ld -m64 -Tconfig.ld -o kernel.elf $KERNEL ${LIBS}"
-ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $LIBS  -lexec
+EXAMPLES=../Examples/*.o
+ld  -e _start -Tconfig.ld -o kernel.elf $KERNEL $EXAMPLES $LIBS -lexec 
 echo "    objcopy -O binary kernel.elf kernel.img"
 objcopy -O binary kernel.elf kernel.img
 cd ..

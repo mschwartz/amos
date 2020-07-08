@@ -68,7 +68,7 @@ public:
     gExecBase.mInspirationBase->Init();
 
     while (1) {
-      dlog("IT Run\n");
+      dlog("IdleTask Looping\n");
       halt();
     }
   }

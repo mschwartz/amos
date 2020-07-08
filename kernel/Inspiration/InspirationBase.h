@@ -11,6 +11,8 @@
 #include <Inspiration/Desktop.h>
 #include <Inspiration/BConsoleWindow.h>
 
+class IdcmpMessageReaperTask;
+
 class InspirationBase : public BBase {
 public:
   InspirationBase();
@@ -39,6 +41,7 @@ public:
 protected:
   Display *mDisplay;
   Desktop *mDesktop; // Desktop Screen
+  IdcmpMessageReaperTask *mReaperTask;
 };
 
 #endif

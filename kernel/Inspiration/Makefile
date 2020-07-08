@@ -17,7 +17,6 @@ OBJ= 		$(WINDOWMANAGER) \
 		Desktop.o \
 		BWindow.o \
 		BConsoleWindow.o \
-		TestTask.o \
 		InspirationBase.o
 
 .cpp.o:

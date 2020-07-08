@@ -41,6 +41,7 @@ export KFONTNAME="cp866-8x16"
 export KFONT="$KFONTNAME.psf"
 
 export INCLUDE_PATH="\
+	-I$TOP_DIR \
 	-I$TOP_DIR/kernel/include/ \
 	-I$TOP_DIR/kernel/ \
   	-I. \

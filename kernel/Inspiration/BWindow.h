@@ -63,7 +63,7 @@ public:
 public:
   IdcmpMessage *GetMessage();
 
-protected:
+public:
   TUint64 mIdcmpFlags;
   MessagePort *mIdcmpPort;
 
@@ -108,12 +108,24 @@ struct IdcmpMessage : public BMessage {
   TInt64 mMouseX, mMouseY;
   TUint64 mTime; // milliseconds
   BWindow *mWindow;
+
+public:
+  void Dump() {
+    dlog("IdcmpMessage(%x)\n", this);
+    dlog("       mTime: %d\n", mTime);
+    dlog("      mClass: %x\n", mClass);
+    dlog("       mCode: %x\n", mCode);
+    dlog("  mQualifier: %x\n", mQualifier);
+    dlog("    mAddress: %x\n", mAddress);
+    dlog("       mouse: %d,%d\n", mMouseX, mMouseY);
+    dlog("     mWindow: %s\n", mWindow->Title());
+  }
 };
 
 enum EIdcmpCommand {
-  EIdcmpSubscribe,
-  EIdcmpUnsubscribe,
-  EIdcmpUpdateFlags,
+		    EIdcmpSubscribe,
+		    EIdcmpUnsubscribe,
+		    EIdcmpUpdateFlags,
 };
 
 #endif

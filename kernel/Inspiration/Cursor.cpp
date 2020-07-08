@@ -1,4 +1,4 @@
-#include <Inspiration/Display/Cursor.h>
+#include <Inspiration/Cursor.h>
 #include <Inspiration/Display.h>
 #include <Inspiration/BScreen.h>
 #include <Graphics/bitmap/BBitmap32.h>

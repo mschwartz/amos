@@ -2,18 +2,21 @@
 
 LIB=		libinspiration.a
 
-DISPLAY=	Display.o \
-		Display/DisplayTask.o \
-		Display/Cursor.o \
-		Display/MousePointerTask.o
+WINDOWMANAGER=	Display.o \
+		WindowManager/DisplayTask.o \
+		WindowManager/KeyboardTask.o \
+		WindowManager/MousePointerTask.o
 
-OBJ= 		$(DISPLAY) \
+IDCMP=		idcmp/IdcmpTask.o \
+		idcmp/IdcmpSubscribers.o
+
+OBJ= 		$(WINDOWMANAGER) \
 		DirtyRect.o \
+		Cursor.o \
 		BScreen.o \
 		Desktop.o \
 		BWindow.o \
 		BConsoleWindow.o \
-		TestTask.o \
 		InspirationBase.o
 
 .cpp.o:

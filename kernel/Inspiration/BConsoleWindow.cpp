@@ -2,9 +2,19 @@
 #include <posix/sprintf.h>
 #include <stdarg.h>
 
-BConsoleWindow::BConsoleWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH)
-    : BWindow(aTitle, aX, aY, aW, aH) {
-
+BConsoleWindow::BConsoleWindow(const char *aTitle,
+			       TInt32 aX, TInt32 aY,
+			       TInt32 aW, TInt32 aH,
+			       BScreen *aScreen)
+  : BWindow(TNewWindow({
+			.mLeft = aX,
+			.mTop = aY,
+			.mWidth = aW,
+			.mHeight = aH,
+			.mTitle = aTitle,
+			.mIdcmpFlags = IDCMP_VANILLAKEY,
+			.mScreen = aScreen,
+      })) {
   mCharacterMap = ENull;
 
   // set palettes
@@ -18,13 +28,16 @@ BConsoleWindow::BConsoleWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 
   mFont = new BConsoleFont32();
   mViewPort->SetFont(mFont);
 
+  // keyboard buffer
+  mBufferHead = mBufferTail = 0;
+
   Resize(mClientRect.Width(), mClientRect.Height());
 }
 
 void BConsoleWindow::Resize(TInt32 aW, TInt32 aH) {
   // TODO we're using a 16x8 hard coded font.  This should be dynamic!
   TInt newRows = aH / 16,
-       newCols = aW / 8;
+    newCols = aW / 8;
 
   // set up new map
   TUint16 *newMap = (TUint16 *)AllocMem(newRows * newCols * sizeof(TUint16));
@@ -37,7 +50,7 @@ void BConsoleWindow::Resize(TInt32 aW, TInt32 aH) {
   // if we have an old map, we want to copy existing values into the new map
   if (mCharacterMap) {
     TInt w = newCols >= mCols ? mCols : newCols,
-         h = newRows >= mRows ? mRows : newRows;
+      h = newRows >= mRows ? mRows : newRows;
     for (TInt row = 0; row < h; row++) {
       for (TInt col = 0; col < w; col++) {
         newMap[row * newCols + col] = mCharacterMap[row * mCols + col];
@@ -55,10 +68,6 @@ void BConsoleWindow::Resize(TInt32 aW, TInt32 aH) {
 
   mCharacterMapSize = mRows * mCols * sizeof(TUint16);
   mCharacterMapEnd = mCharacterMap + mCharacterMapSize;
-
-  // BeginPaint();
-  // ClearScreen();
-  // EndPaint();
 }
 
 BConsoleWindow::~BConsoleWindow() {
@@ -84,7 +93,7 @@ void BConsoleWindow::Paint() {
     for (TInt col = 0; col < mCols; col++) {
       TUint16 ac = *ptr++;
       TRGB &fg = mForegroundPalette[(ac >> 8) & 0x0f],
-           bg = mBackgroundPalette[(ac >> 8) & 0x0f];
+	bg = mBackgroundPalette[(ac >> 8) & 0x0f];
       vp->SetColors(fg, bg);
 
       vp->DrawText(col * 8, row * 16, ac & 0x0ff);
@@ -118,7 +127,7 @@ void BConsoleWindow::ClearEol() {
 void BConsoleWindow::ScrollUp(TInt32 aRow) {
   for (TInt row = aRow; row < mRows - 1; row++) {
     TUint16 *dst = &mCharacterMap[row * mCols + 0],
-            *src = &mCharacterMap[(row + 1) * mCols + 0];
+      *src = &mCharacterMap[(row + 1) * mCols + 0];
 
     // dlog("Scrollup row(%d) mRows(%d)\n", row, mRows);
     for (TInt col = 0; col < mCols; col++) {
@@ -139,7 +148,7 @@ void BConsoleWindow::ScrollDown(TInt32 aRow) {
 
   for (TInt row = aRow; row < mRows; row++) {
     TUint16 *src = &mCharacterMap[row * mCols + 0],
-            *dst = &mCharacterMap[(row - 1) * mCols + 0];
+      *dst = &mCharacterMap[(row - 1) * mCols + 0];
     for (TInt col = 0; col < mCols; col++) {
       *dst++ = *src++;
     }
@@ -178,6 +187,7 @@ void BConsoleWindow::Down() {
     mRow = mRows - 1;
   }
 }
+
 void BConsoleWindow::Left() {
   mCol--;
   if (mCol < 0) {
@@ -214,12 +224,6 @@ void BConsoleWindow::Write(TInt32 aRow, TInt32 aCol, const char aChar) {
   else {
     mCharacterMap[mRow * mCols + mCol] = (TUint16)aChar;
 
-#if 0
-    BViewPort32 *vp = mViewPort; // client viewport
-
-    vp->SetColors(mForegroundPalette[0], mBackgroundPalette[0]);
-    vp->DrawText(mCol * 8, mRow * 16, aChar);
-#endif
     Right();
   }
 }
@@ -263,9 +267,57 @@ void BConsoleWindow::WriteFormatted(const char *aFormat, ...) {
   va_end(args);
 }
 
-TUint16 BConsoleWindow::Read(TInt32 aRow, TInt32 aCol) {
+TUint16 BConsoleWindow::GetAt(TInt32 aRow, TInt32 aCol) {
   return mCharacterMap[aRow * mCols + aCol];
 }
+
+//
+// keyboard
+//
+void BConsoleWindow::FillBuffer() {
+  while (IdcmpMessage *m = GetMessage()) {
+    if (m->mClass & IDCMP_VANILLAKEY) {
+      if (((mBufferTail + 1) % CONSOLE_BUFFER_SIZE) != mBufferHead) {
+	mBuffer[mBufferTail++] = m->mCode;
+	mBufferTail %= CONSOLE_BUFFER_SIZE;
+      }
+      else {
+	dlog("*** ConsoleWindow keyboard queue full %d/%d\n", mBufferHead, mBufferTail);
+	bochs;
+      }
+    }
+    m->Reply();
+  }
+}
+
+TBool BConsoleWindow::KeyReady() {
+  FillBuffer();
+  return mBufferHead != mBufferTail;
+}
+
+TInt BConsoleWindow::ReadKey() {
+  if (!KeyReady()) {
+    return -1;
+  }
+  TInt key = mBuffer[mBufferHead++];
+  mBufferHead %= CONSOLE_BUFFER_SIZE;
+  return key;
+}
+
+TInt BConsoleWindow::ReadString(char *aString, TInt aMaxLength, char mDelimeter) {
+  TInt count = 0;
+  while (ETrue) {
+    TInt key = ReadKey();
+    if (key == mDelimeter) {
+      break;
+    }
+    if (key != -1) {
+      *aString++ = key;
+      count++;
+    }
+  }
+  return 0;
+} 
 
 //
 // colors

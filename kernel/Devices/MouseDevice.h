@@ -4,9 +4,9 @@
 #include <Exec/BDevice.h>
 #include <Exec/MessagePort.h>
 
-const TUint8 MOUSE_LEFT_BUTTON = 0x01;
-const TUint8 MOUSE_RIGHT_BUTTON = 0x02;
-const TUint8 MOUSE_MIDDLE_BUTTON = 0x04;
+const TUint8 MOUSE_LEFT_BUTTON = 1 << 0;
+const TUint8 MOUSE_MIDDLE_BUTTON = 1 << 1;
+const TUint8 MOUSE_RIGHT_BUTTON = 1 << 2;
 
 class MouseTask;
 
@@ -19,7 +19,7 @@ public:
 
 protected:
   TInt mDisplayWidth, mDisplayHeight;
-  TInt32 mX, mY;
+  TInt64 mX, mY;
   TUint8 mButtons;
 };
 

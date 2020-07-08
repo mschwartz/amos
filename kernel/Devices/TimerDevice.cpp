@@ -79,7 +79,7 @@ void TimerTask::Run() {
         switch (m->mCommand) {
           case ETimerReadTicks:
             m->mResult = mTimerDevice->GetTicks();
-            m->ReplyMessage();
+            m->Reply();
             break;
           case ETimerSleep:
             m->mPri = mTimerDevice->GetTicks() + m->mArg1 * QUANTUM;
@@ -106,7 +106,7 @@ void TimerTask::Run() {
         }
         m->Remove();
         SetFlags(flags);
-        m->ReplyMessage();
+        m->Reply();
       }
     }
   }

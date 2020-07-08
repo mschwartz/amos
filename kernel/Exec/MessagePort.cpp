@@ -13,11 +13,11 @@ BMessage::~BMessage() {
   //
 }
 
-void BMessage::SendMessage(MessagePort *aToPort) {
+void BMessage::Send(MessagePort *aToPort) {
   aToPort->ReceiveMessage(this);
 }
 
-void BMessage::ReplyMessage() {
+void BMessage::Reply() {
   if (mReplyPort) {
     mReplyPort->ReceiveMessage(this);
   }
@@ -44,13 +44,13 @@ MessagePort::~MessagePort() {
 }
 
 BMessage *MessagePort::GetMessage() {
-  TUint64 flags = GetFlags();
-  cli();
-
+  DISABLE;
   BMessage *m = (BMessage *)mList->RemHead();
-  m->mNext = m->mPrev = ENull;
+  if (m) {
+    m->mNext = m->mPrev = ENull;
+  }
 
-  SetFlags(flags);
+  ENABLE;
   return m;
 }
 
@@ -59,8 +59,7 @@ void MessagePort::ReceiveMessage(BMessage *aMessage) {
 
   mList->AddTail(*aMessage);
   ENABLE;
-  mOwner->Signal(1<<mSignalBit);
-
+  mOwner->Signal(1 << mSignalBit);
 }
 
 void MessagePort::Dump() {
@@ -84,10 +83,10 @@ void BMessageList::Dump() {
   TUint64 flags = GetFlags();
   cli();
 
-  for (BMessage *m = (BMessage *)First(); !End(m); m = (BMessage *)m->mNext)  {
+  for (BMessage *m = (BMessage *)First(); !End(m); m = (BMessage *)m->mNext) {
     m->Dump();
   }
- 
+
   SetFlags(flags);
 }
 
@@ -101,4 +100,3 @@ MessagePortList::MessagePortList(const char *aName) : BListPri(aName) {
 
 MessagePortList::~MessagePortList() {
 }
-

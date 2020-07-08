@@ -183,7 +183,7 @@ void BTask::Signal(TInt64 aSignalSet) {
   // assure this task is in active list and potentially perform a task switch
   if (mSigReceived & mSigWait) {
     //    if (CompareStrings(this->TaskName(), "Timer Task")) {
-//    dlog("Wake(%s)\n", this->TaskName());
+    //    dlog("Wake(%s)\n", this->TaskName());
     //    }
     gExecBase.Wake(this);
   }
@@ -229,8 +229,35 @@ void BTask::FreeMessagePort(MessagePort *aMessagePort) {
   delete aMessagePort;
 }
 
+TUint64 BTask::WaitPorts(TUint64 aSigMask, ...) {
+  va_list args;
+  va_start(args, aSigMask);
+  TUint64 sigmask = aSigMask;
+
+  while (ETrue) {
+    MessagePort *p = va_arg(args, MessagePort *);
+    if (p == ENull) {
+      break;
+    }
+    sigmask |= 1<<p->SignalNumber();
+  }
+  va_end(args);
+  return Wait(sigmask);
+}
+
 TUint64 BTask::WaitPort(MessagePort *aMessagePort, TUint64 aSignalMask) {
   return Wait(aSignalMask | (1 << aMessagePort->SignalNumber()));
+}
+
+TUint64 BTask::WaitPort(MessagePort *aMessagePort, MessagePort *aOtherPort, TUint64 aSignalMask) {
+  return Wait(aSignalMask | (1 << aMessagePort->SignalNumber()) | (1 << aOtherPort->SignalNumber()));
+}
+
+TUint64 BTask::WaitPort(MessagePort *aMessagePort, MessagePort *aOtherPort, MessagePort *aOtherOtherPort, TUint64 aSignalMask) {
+  return Wait(aSignalMask |
+              (1 << aMessagePort->SignalNumber()) |
+	      (1 << aOtherPort->SignalNumber())) |
+	      (1 << aOtherOtherPort->SignalNumber());
 }
 
 void BTask::Sleep(TUint64 aSeconds) {
@@ -243,7 +270,7 @@ void BTask::Sleep(TUint64 aSeconds) {
   MessagePort *replyPort = CreateMessagePort();
   TimerMessage *m = new TimerMessage(replyPort, ETimerSleep);
   m->mArg1 = aSeconds;
-  m->SendMessage(timer);
+  m->Send(timer);
   WaitPort(replyPort);
   while ((m = (TimerMessage *)replyPort->GetMessage())) {
     delete m;
@@ -262,7 +289,7 @@ void BTask::MilliSleep(TUint64 aMilliSeconds) {
   MessagePort *replyPort = CreateMessagePort();
   RtcMessage *m = new RtcMessage(replyPort, ERtcSleep);
   m->mArg1 = aMilliSeconds;
-  m->SendMessage(rtc);
+  m->Send(rtc);
   WaitPort(replyPort);
   while ((m = (RtcMessage *)replyPort->GetMessage())) {
     delete m;

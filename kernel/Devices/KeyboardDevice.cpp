@@ -244,11 +244,11 @@ static inline TUint16 command(TUint8 cmd, TUint8 port = 1) {
   return read_data();
 }
 
-class KeyboardTask;
+class KeyboardDeviceTask;
 
 class KeyboardInterrupt : public BInterrupt {
 public:
-  KeyboardInterrupt(KeyboardTask *aTask) : BInterrupt("keyboard.device", LIST_PRI_MAX) {
+  KeyboardInterrupt(KeyboardDeviceTask *aTask) : BInterrupt("keyboard.device", LIST_PRI_MAX) {
     mTask = aTask;
   }
 
@@ -257,14 +257,14 @@ public:
   //    TUint16 *ptr = (TUint16 *)0xb8000;
 
 protected:
-  KeyboardTask *mTask;
+  KeyboardDeviceTask *mTask;
 };
 
-class KeyboardTask : public BTask {
+class KeyboardDeviceTask : public BTask {
   friend KeyboardInterrupt;
 
 public:
-  KeyboardTask() : BTask("keyboard.device", LIST_PRI_MAX) {
+  KeyboardDeviceTask() : BTask("keyboard.device", LIST_PRI_MAX) {
     mHead = mTail = 0;
     // install kernel handler
     gExecBase.SetIntVector(EKeyboardIRQ, new KeyboardInterrupt(this));
@@ -283,31 +283,29 @@ protected:
 };
 
 TBool KeyboardInterrupt::Run(TAny *aData) {
-#if 1
   TInt timeout;
-  //  dlog("1 kbd_sr = %02x\n", inb(KEYB_SR));
   for (timeout = 1000; timeout > 0; timeout--) {
     TUint8 t = inb(KEYB_DR);
     if (t == 0) {
       continue;
     }
-    dlog("   keycode: %02x\n", t);
+    // dlog("   keycode: %02x\n", t);
     if (t & 0x80) {
       TInt res = kbdus[t & 0x7f];
       if (res) {
         KeyboardMessage *m = new KeyboardMessage(ENull, EKeyUp);
         m->mResult = res;
-        m->SendMessage(mTask->mMessagePort);
+        m->Send(mTask->mMessagePort);
       }
     }
     else {
+      // send message to task
       TInt res = kbdus[t];
       if (res) {
         KeyboardMessage *m = new KeyboardMessage(ENull, EKeyDown);
         m->mResult = res;
-        m->SendMessage(mTask->mMessagePort);
+        m->Send(mTask->mMessagePort);
       }
-      // send message to task
       break;
     }
     if (timeout > 0) {
@@ -316,32 +314,11 @@ TBool KeyboardInterrupt::Run(TAny *aData) {
     return ETrue;
   }
 
-//  TUint16 t = inb(KEYB_DR);
-//  dlog("2 kbd_sr = %02x\n", inb(KEYB_SR));
-#else
-  TInt timeout;
-  for (timeout = 1000; timeout > 0; timeout++) {
-    if ((inb(0x64) & 1) == 0) {
-      continue;
-    }
-  }
-  if (timeout > 0) {
-    TUint16 t = inb(KEYB_DR);
-    TUint64 c = gExecBase.SystemTicks();
-    //  dlog(" keyboard data: %x\n", t);
-    // add key to circular queue
-
-    // send message to task
-    KeyboardMessage *m = new KeyboardMessage(ENull, EQueueChar);
-    m->mResult = t;
-    m->SendMessage(mTask->mMessagePort);
-  }
-#endif
   gExecBase.AckIRQ(IRQ_KEYBOARD);
   return ETrue;
 }
 
-void KeyboardTask::Run() {
+void KeyboardDeviceTask::Run() {
   dprint("\n");
   dlog("keyboard task alive!\n");
 
@@ -353,36 +330,52 @@ void KeyboardTask::Run() {
     while (KeyboardMessage *m = (KeyboardMessage *)mMessagePort->GetMessage()) {
       switch (m->mCommand) {
         case EKeyUp:
-          dlog("Queue key UP %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
+          // dlog("Queue key UP %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
           if (((mTail + 1) % KEYBOARD_BUFFER_SIZE) != mHead) {
             mBuffer[mTail++] = m->mResult | 0x80;
             mTail %= KEYBOARD_BUFFER_SIZE;
           }
           else {
-            dlog("keyboard.device keyboard queue full\n");
+            dlog("*** keyboard.device keyboard queue full\n");
           }
-          // respond to message if keyboard message FIFO is not empty
+          // We don't want to waste time deleting the message in the Interrupt handler, so we do it here.
+          // This is not normal convention!
+          delete m;
           break;
 
         case EKeyDown:
-          dlog("Queue key DOWN %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
+          // dlog("Queue key DOWN %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
           if (((mTail + 1) % KEYBOARD_BUFFER_SIZE) != mHead) {
             mBuffer[mTail++] = m->mResult;
             mTail %= KEYBOARD_BUFFER_SIZE;
           }
           else {
-            dlog("keyboard.device keyboard queue full\n");
+            dlog("*** keyboard.device keyboard queue full\n");
           }
-          // respond to message if keyboard message FIFO is not empty
+          // We don't want to waste time deleting the message in the Interrupt handler, so we do it here.
+          // This is not normal convention!
+          delete m;
           break;
-        case EReadChar:
-          // add message/request to FIFO if keybaord queue is empty
+
+        // respond to message if keyboard message FIFO is not empty
+        case EKeyRead:
+	  // TODO: this looks expensive (lots of try again messages when no activity)
+          if (mHead == mTail) {
+            // queue is empty
+            m->mError = EKeyboardTryAgain;
+          }
+          else {
+            m->mError = EKeyboardErrorNone;
+            m->mResult = mBuffer[mHead++];
+            mHead %= KEYBOARD_BUFFER_SIZE;
+          }
+	  m->Reply();
           break;
+
         default:
           dlog("keyboard.device: Unknown mCommand(%d/%x)\n", m->mCommand, m->mCommand);
           break;
       }
-      delete m;
     }
   }
 }
@@ -390,7 +383,7 @@ void KeyboardTask::Run() {
 KeyboardDevice::KeyboardDevice() : BDevice("keyboard.device") {
   dprint("\n");
   dlog("Construct KeyboardDevice\n");
-  gExecBase.AddTask(new KeyboardTask);
+  gExecBase.AddTask(new KeyboardDeviceTask);
 }
 
 KeyboardDevice::~KeyboardDevice() {

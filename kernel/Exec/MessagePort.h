@@ -19,8 +19,8 @@ public:
   BMessage(MessagePort *aReplyPort = ENull);
   ~BMessage();
 
-  void SendMessage(MessagePort *aToPort);
-  void ReplyMessage();
+  void Send(MessagePort *aToPort);
+  void Reply();
 
 public:
   void Dump();

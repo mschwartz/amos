@@ -375,7 +375,7 @@ public:
               }
             } break;
           }
-          m->ReplyMessage();
+          m->Reply();
         }
       }
     }

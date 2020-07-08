@@ -25,6 +25,10 @@ BViewPort32::BViewPort32(const char *aName, BBitmap32 *aBitmap) : BViewPort(aNam
   mBitmap32->GetRect(mRect);
 }
 
+BViewPort32::~BViewPort32() {
+  
+}
+
 void BViewPort32::Clear(TUint32 aColor) {
   TRGB c(aColor);
   mBitmap32->FillRect(c, mRect);

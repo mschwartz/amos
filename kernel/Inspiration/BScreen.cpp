@@ -2,7 +2,7 @@
 #include <Exec/ExecBase.h>
 #include <Inspiration/BScreen.h>
 #include <Inspiration/Display.h>
-#include <Inspiration/Display/Cursor.h>
+#include <Inspiration/Cursor.h>
 
 #include <Graphics/bitmap/BBitmap32.h>
 
@@ -10,7 +10,6 @@ BScreen::BScreen(const char *aTitle) : BNode(aTitle), mInspirationBase(*gExecBas
   mDisplay = mInspirationBase.GetDisplay();
   mDisplay->Dump();
   mBitmap = new BBitmap32(mDisplay->Width(), mDisplay->Height());
-  mDirty = EFalse;
   mTopY = 0;
 }
 
@@ -34,7 +33,6 @@ void BScreen::AddDirtyRect(TInt32 aX1, TInt32 aY1, TInt32 aX2, TInt32 aY2) {
 
 void BScreen::Clear(const TUint32 aColor) {
   mBitmap->Clear(aColor);
-  mDirty = ETrue;
   AddDirtyRect(0, 0, Width() - 1, Height() - 1);
 }
 

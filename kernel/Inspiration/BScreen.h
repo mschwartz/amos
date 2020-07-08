@@ -41,6 +41,7 @@ public:
 public:
   void AddWindow(BWindow *aWindow);
   void UpdateWindow(BWindow *aWindow, TBool mDecorations = EFalse);
+  BWindow *ActiveWindow() { return (BWindow *)mWindowList.First(); }
 
 public:
   TInt32 Width() { return mBitmap->Width(); }
@@ -52,7 +53,6 @@ protected:
   BBitmap32 *mBitmap; // offscreen bitmap, size of screen
   BWindowList mWindowList;
   TInt32 mTopY;
-  TBool mDirty;
 
 public:
   // void RenderCursor(Cursor *aCursor, TInt32 aX, TInt32 aY) ;

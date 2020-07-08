@@ -2,6 +2,7 @@ clang
 %h -x c++-header
 -DKERNEL
 -DKGFX
+-I.
 -I./kernel
 -I./kernel/posix
 -I.

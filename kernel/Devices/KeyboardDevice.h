@@ -22,9 +22,15 @@ protected:
 };
 
 enum EKeyboardDeviceCommand {
-  EKeyDown,
-  EKeyUp,
-  EReadChar,
+  EKeyDown, // internal use only!
+  EKeyUp,   // internal use only!
+  // commands that can be used by applications
+  EKeyRead, // read one or more keys from 
+};
+
+enum EKeyboardError {
+  EKeyboardErrorNone,
+  EKeyboardTryAgain, // queue is empty, no keys ready
 };
 
 class KeyboardMessage : public BMessage {
@@ -36,6 +42,7 @@ public:
 
 public:
   EKeyboardDeviceCommand mCommand;
+  EKeyboardError mError;
   TInt64 mResult;
 };
 

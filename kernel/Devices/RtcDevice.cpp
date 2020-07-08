@@ -96,7 +96,7 @@ public:
           switch (m->mCommand) {
             case ERtcReadTicks:
               m->mResult = mRtcDevice->GetTicks();
-              m->ReplyMessage();
+              m->Reply();
               break;
             case ERtcSleep:
               m->mPri = mRtcDevice->GetTicks() + m->mArg1;
@@ -123,7 +123,7 @@ public:
           }
           m->Remove();
           SetFlags(flags);
-          m->ReplyMessage();
+          m->Reply();
         }
       }
     }

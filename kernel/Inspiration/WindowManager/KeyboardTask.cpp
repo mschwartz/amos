@@ -27,6 +27,7 @@ void KeyboardTask::Run() {
     while (KeyboardMessage *m = (KeyboardMessage *)replyPort->GetMessage()) {
       if (m == message) {
         if (m->mError != EKeyboardTryAgain && (m->mResult & 0x80) == 0) { // ignore AGAIN and key up
+	  // dlog("key %02x %c\n", m->mResult, m->mResult);
           IdcmpMessage im;
           im.mClass = IDCMP_VANILLAKEY;
           im.mCode = m->mResult;

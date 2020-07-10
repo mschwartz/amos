@@ -86,9 +86,14 @@ public:
   TInt WriteTransparent(BViewPort32 *aViewPort, TInt aX, TInt aY, TInt16 aChar);
   TInt WriteTransparent(BViewPort32 *aViewPort, TInt aX, TInt aY, const char *aString);
 protected:
-  BBitmap32 *mBitmap32;
   TRGB mForegroundColor, mBackgroundColor;
   TConsoleFont mFont;
+public:
+  void Dump() {
+    dprint("\n\n");
+    dlog("BConsoleFont(%x)\n", this);
+    dlog("  FG(%06x) BG(%06x)\n", mForegroundColor.rgb888(), mBackgroundColor.rgb888());
+  }
 };
 
 #endif

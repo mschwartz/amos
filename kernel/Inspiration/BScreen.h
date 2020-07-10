@@ -21,6 +21,7 @@
 
 #include <Types/BList.h>
 #include <Inspiration/Display.h>
+#include <Inspiration/BTheme.h>
 #include <Graphics/bitmap/BBitmap32.h>
 #include <Inspiration/BWindow.h>
 #include <Inspiration/DirtyRect.h>
@@ -42,6 +43,7 @@ public:
   void AddWindow(BWindow *aWindow);
   void UpdateWindow(BWindow *aWindow, TBool mDecorations = EFalse);
   BWindow *ActiveWindow() { return (BWindow *)mWindowList.First(); }
+  void ActivateWindow(BWindow *aWindow);
 
 public:
   TInt32 Width() { return mBitmap->Width(); }
@@ -55,7 +57,10 @@ protected:
   TInt32 mTopY;
 
 public:
+  BTheme *GetTheme(){ return mTheme; }
   // void RenderCursor(Cursor *aCursor, TInt32 aX, TInt32 aY) ;
+protected:
+  BTheme *mTheme;
 
 public:
   void AddDirtyRect(TInt32 aX1, TInt32 aT1, TInt32 aX2, TInt32 aY2);

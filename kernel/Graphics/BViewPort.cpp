@@ -26,7 +26,6 @@ BViewPort32::BViewPort32(const char *aName, BBitmap32 *aBitmap) : BViewPort(aNam
 }
 
 BViewPort32::~BViewPort32() {
-  
 }
 
 void BViewPort32::Clear(TUint32 aColor) {
@@ -124,10 +123,9 @@ void BViewPort32::DrawText(TInt16 aX, TInt16 aY, const char aChar) {
   mFont->Write(mBitmap32, mRect.x1 + aX, mRect.y1 + aY, aChar);
 }
 
-
 void BViewPort32::DrawText(TInt16 aX, TInt16 aY, const char *aString) {
   if (!mFont) {
-    dlog("*** DrawText(%s), no font\n", aString);
+    dlog("*** DrawText(%d,%d) aString(%s), no font\n", aX, aY, aString);
     return;
   }
   mFont->SetColors(mForegroundColor, mBackgroundColor);
@@ -140,5 +138,15 @@ void BViewPort32::DrawTextTransparent(TInt16 aX, TInt16 aY, const char *aString)
     return;
   }
   mFont->SetColors(mForegroundColor, mBackgroundColor);
+  mFont->WriteTransparent(mBitmap32, mRect.x1 + aX, mRect.y1 + aY, aString);
+}
+
+void BViewPort32::DrawTextTransparent(TInt16 aX, TInt16 aY, TUint32 aColor, const char *aString) {
+  if (!mFont) {
+    dlog("*** DrawText, no font\n");
+    return;
+  }
+  TRGB c(aColor);
+  mFont->SetColors(c, mBackgroundColor);
   mFont->WriteTransparent(mBitmap32, mRect.x1 + aX, mRect.y1 + aY, aString);
 }

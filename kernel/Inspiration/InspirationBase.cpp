@@ -5,6 +5,7 @@
 #include <Devices/MouseDevice.h>
 #include <Inspiration/WindowManager/MousePointerTask.h>
 #include <Inspiration/WindowManager/KeyboardTask.h>
+#include <Inspiration/BTheme.h>
 #include <Examples/Examples.h>
 
 /********************************************************************************
@@ -22,7 +23,7 @@ public:
     while (ETrue) {
       WaitPort(mPort);
       while (IdcmpMessage *m = (IdcmpMessage *)mPort->GetMessage()) {
-	// dlog(" Reap(%x)\n", m);
+        // dlog(" Reap(%x)\n", m);
         FreeMessage(m);
       }
     }
@@ -74,8 +75,11 @@ InspirationBase::~InspirationBase() {
 }
 
 void InspirationBase::Init() {
-  dprint("\n");
-  dlog("InspirationBase Init\n");
+  dprint("\n\n\n");
+  dlog("********** InspirationBase Init\n");
+
+  mThemeList.AddHead(*new BTheme("Default Theme"));
+
   mDisplay = new Display();
   dlog("  Init InspirationBase Display(%x)\n", mDisplay);
 
@@ -105,7 +109,7 @@ BScreen *InspirationBase::FindScreen(const char *aTitle) {
   return mDisplay->FindScreen(aTitle);
 }
 
-void InspirationBase::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
+void InspirationBase::UpdateWindow(BWindow *aWindow) {
   TBool hidden = mDisplay->HideCursor();
   mDisplay->BltBitmap(aWindow->mBitmap,
     aWindow->mWindowRect.x1,

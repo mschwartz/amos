@@ -5,6 +5,7 @@
 #include <Exec/BBase.h>
 #include <Graphics/Graphics.h>
 
+#include <Inspiration/BTheme.h>
 #include <Inspiration/Display.h>
 #include <Inspiration/BScreen.h>
 #include <Inspiration/BWindow.h>
@@ -25,11 +26,16 @@ public:
   BScreen *FindScreen(const char *aTitle = ENull);
 
 public:
-  void UpdateWindow(BWindow *aWindow, TBool mDecorations = EFalse);
+  void UpdateWindow(BWindow *aWindow);
+
+public:
+  BTheme *DefaulTTheme(){ return (BTheme *)mThemeList.First(); };
+  BTheme *FindTheme(const char *aName) { return (BTheme *)mThemeList.Find(aName); }
 
 public:
   Display *GetDisplay() { return mDisplay; }
   BWindow *ActiveWindow() { return mDisplay->ActiveWindow(); }
+
   /**
    * Send IdcmpMessage to active window.
    *
@@ -42,6 +48,7 @@ protected:
   Display *mDisplay;
   Desktop *mDesktop; // Desktop Screen
   IdcmpMessageReaperTask *mReaperTask;
+  BThemeList mThemeList;
 };
 
 #endif

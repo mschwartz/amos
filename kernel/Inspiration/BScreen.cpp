@@ -11,6 +11,8 @@ BScreen::BScreen(const char *aTitle) : BNode(aTitle), mInspirationBase(*gExecBas
   mDisplay->Dump();
   mBitmap = new BBitmap32(mDisplay->Width(), mDisplay->Height());
   mTopY = 0;
+  mTheme = new BTheme("Default Theme");
+  mTheme->Dump();
 }
 
 BScreen::~BScreen() {
@@ -20,8 +22,8 @@ BScreen::~BScreen() {
 
 void BScreen::AddWindow(BWindow *aWindow) {
   aWindow->mScreen = this;
-  mWindowList.AddHead(*aWindow);
-  aWindow->PaintDecorations();
+  aWindow->mNext = aWindow->mPrev = ENull;
+  ActivateWindow(aWindow);
 }
 
 extern "C" TUint64 GetRSP();
@@ -42,10 +44,17 @@ void BScreen::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
   AddDirtyRect(rect.x1, rect.y1, rect.x2, rect.y2);
 }
 
-// void BScreen::RenderCursor(Cursor *aCursor, TInt32 aX, TInt32 aY) {
-//   aCursor->Render(mBitmap, aX, aY);
-//   AddDirtyRect(aX, aY, aX + aCursor->Width() - 1, aY + aCursor->Height() - 1);
-// }
+void BScreen::ActivateWindow(BWindow *aWindow) {
+  if (aWindow->mNext != ENull) {
+    aWindow->Remove();
+  }
+  BWindow *w = ActiveWindow();
+  mWindowList.AddHead(*aWindow);
+  if (!mWindowList.End(w)) {
+    w->PaintDecorations(); // inactivate window
+  }
+  aWindow->PaintDecorations();
+}
 
 // This is called from the DisplayTask to render the dirty rects from offscreen to
 // physical screen.  Called during vblank to try to avoid tearing.

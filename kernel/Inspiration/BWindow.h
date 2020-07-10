@@ -32,9 +32,6 @@ public:
   virtual ~BWindow();
 
 public:
-  virtual void Paint() = 0;
-
-public:
   const char *Title() { return mNodeName; }
 
 protected:
@@ -62,6 +59,8 @@ public:
 
 public:
   IdcmpMessage *GetMessage();
+  TBool IsActive();
+  void Activate();
 
 public:
   TUint64 mIdcmpFlags;
@@ -81,6 +80,11 @@ protected:
 
   TInt32 mMinWidth, mMinHeight;
   TInt32 mMaxWidth, mMaxHeight;
+
+  TUint32 mForegroundColor,
+    mBackgroundColor;
+
+  BConsoleFont32 *mFont;
 
   BTask *mTask;
 
@@ -123,9 +127,9 @@ public:
 };
 
 enum EIdcmpCommand {
-		    EIdcmpSubscribe,
-		    EIdcmpUnsubscribe,
-		    EIdcmpUpdateFlags,
+  EIdcmpSubscribe,
+  EIdcmpUnsubscribe,
+  EIdcmpUpdateFlags,
 };
 
 #endif

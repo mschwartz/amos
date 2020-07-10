@@ -112,10 +112,16 @@ struct TNewWindow {
   const char *mTitle;
   TUint64 mIdcmpFlags = 0;
   TUint64 mWindowFlags = WFLAG_DRAGBAR;
-  TUint32 mBorderColor = 0xffffff, mTitleForeground = 000000, mTitleBackground = 0xffffff;
+  TUint32 mBackgroundColor = 0x000000,
+          mForegroundColor = 0xffffff;
   BScreen *mScreen = ENull; // pointer to custom BScreen or ENull for Desktop
-  BFont *mFont = ENull;
-  ;
+  BConsoleFont32 *mFont = ENull;
+public:
+  void Dump() const {
+    dprint("\n\nTNewWindow at %x\n", this);
+    dlog("left, top, width, height: %d,%d, %d,%d\n", mLeft, mTop, mWidth, mHeight);
+    dlog(                 "mScreen: %x\n", mScreen);
+  }
 };
 
 #endif

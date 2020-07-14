@@ -53,31 +53,45 @@
  *******************************************************************************/
 
 typedef struct {
+  TUint16 mPad0[27];
+  TUint16 mModel[20];
+  TUint16 mPad1[13];
+  TUint32 mLbaSectors;
+  TUint16 mPad2[21];
+  TUint16 mLba48;
+  TUint16 mPad3[16];
+  TUint64 mLba48Sectors;
+  TUint16 mPad4[152];
+} PACKED TAtaIdentity;
+
+typedef struct {
   TBool exists;
   TBool atapi;
+  TBool mLba48;
   TInt16 bus;
   TUint16 mMasterSlave;
-  struct {
-    TUint16 config;
-    TUint16 unused1[9];
-    char serial[20];
-    TUint16 unused2[3];
-    char firmware[8];
-    char model[40];
-    TUint8 unused3;
-    TUint8 sectors_per_interrupt;
-    TUint16 unused4;
-    TUint16 capabilities[2];
-    TUint16 unused5[2];
-    TUint16 validity;
-    TUint16 unused6[3];
-    TUint32 capacity_sectors;
-    TUint16 sectors_per_command;
-    TUint32 capacity_lba28;
-    TUint16 unused7[38];
-    TUint64 capcity_lba48;
-    TUint16 unused8[152];
-  } PACKED id;
+  TAtaIdentity mId;
+  // struct {
+  //   TUint16 config;
+  //   TUint16 unused1[9];
+  //   char serial[20];
+  //   TUint16 unused2[3];
+  //   char firmware[8];
+  //   char model[40];
+  //   TUint8 unused3;
+  //   TUint8 sectors_per_interrupt;
+  //   TUint16 unused4;
+  //   TUint16 capabilities[2];
+  //   TUint16 unused5[2];
+  //   TUint16 validity;
+  //   TUint16 unused6[3];
+  //   TUint32 capacity_sectors;
+  //   TUint16 sectors_per_command;
+  //   TUint32 capacity_lba28;
+  //   TUint16 unused7[38];
+  //   TUint64 capcity_lba48;
+  //   TUint16 unused8[152];
+  // } PACKED id;
 } TAtaDrive;
 
 typedef struct {
@@ -268,17 +282,36 @@ static TBool init_drive(TAtaDrive *drive, TInt num) {
     drive->atapi = 1;
     command.command = ATA_CMD_IDENTIFY_PACKET;
   }
+
   if (!ata_send_command(&command)) {
     dlog("  init drive %d ata_send_command failed\n", num);
     return EFalse;
   }
 
   // Read IDENTIFY information
-  TUint16 *buf = (TUint16 *)&drive->id;
+  TUint16 *buf = (TUint16 *)&drive->mId;
   for (int i = 0; i < 256; i++) {
     buf[i] = inw(ATA_DATA(drive->bus));
   }
+  TAtaIdentity *ident = &drive->mId;
 
+  drive->mLba48 = ident->mLba48 & (1<<10) ? ETrue : EFalse;
+  
+  // byte swap the 20 words at mModel
+  char *pc = (char *)&ident->mModel[0];
+  for (TInt n = 0; n < 10; n++) {
+    char c = pc[0];
+    pc[0] = pc[1];
+    pc[1] = c;
+    pc += 2;
+  }
+
+  dlog("          model: (%s)\n", ident->mModel);
+  dlog("    lba sectors: %d\n", ident->mLbaSectors);
+  dlog("          lba48: %x (%s)\n", ident->mLba48, ident->mLba48 & (1 << 10) ? "YES" : "NO");
+  dlog(" lba48 sectors: %d\n ", ident->mLba48Sectors);
+
+  //
   drive->exists = 1;
   return ETrue;
 }

@@ -23,15 +23,9 @@ public:
 			 .mTitle = "Test Window",
 			 .mIdcmpFlags = IDCMP_MOUSEMOVE,
       }) {
-    mClientRect.Dump();
   }
 
 public:
-  void Paint() {
-    dlog("TestWidow PAINT\n");
-    Clear(0x000000);
-  }
-
   void RandomBox() {
     TRect rect;
     TRGB color(Random64(0, 255), Random64(0, 255), Random64(0, 255));

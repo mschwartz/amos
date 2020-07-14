@@ -26,7 +26,7 @@ void dputc(char c) {
     outb(0xe9, (int)c);
   }
   else {
-    //    sputc(c);
+    sputc(c);
   }
 }
 

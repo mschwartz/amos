@@ -40,7 +40,7 @@ PIC::PIC() {
   outb(PIC1_DATA, mMasterMask);
   outb(PIC2_DATA, mSlaveMask);
 
-  sti();
+  // sti();
 }
 
 PIC::~PIC() {

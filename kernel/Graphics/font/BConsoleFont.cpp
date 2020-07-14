@@ -6,17 +6,6 @@
 extern "C" TConsoleFontHeader _binary_cp866_8x16_psf_start;
 extern "C" TUint8 _binary_cp866_8x16_psf_end[];
 
-// BConsoleFont::BConsoleFont(BBitmap *aBitmap, const TConsoleFont *aFont) : BFont("Console Font") {
-//   if (aFont == ENull) {
-//     mFont.mHeader = &_binary_cp866_8x16_psf_start;
-//     mFont.mEnd = &_binary_cp866_8x16_psf_end[0];
-//   }
-//   else {
-//     // copy
-//     mFont = *aFont;
-//   }
-// }
-
 BConsoleFont32::BConsoleFont32(const TConsoleFont *aFont) {
   // dprint("BConsoleFont32 %x\n", this);
   if (aFont == ENull) {
@@ -82,7 +71,7 @@ TInt BConsoleFont32::WriteTransparent(BBitmap32 *aBitmap, TInt aX, TInt aY, TInt
 
 TInt BConsoleFont32::WriteTransparent(BBitmap32 *aBitmap, TInt aX, TInt aY, const char *aString) {
   while (*aString) {
-    aX = Write(aBitmap, aX, aY, *aString++);
+    aX = WriteTransparent(aBitmap, aX, aY, *aString++);
   }
   return aX;
 }

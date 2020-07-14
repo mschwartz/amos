@@ -13,6 +13,7 @@ IDCMP=		idcmp/IdcmpTask.o \
 OBJ= 		$(WINDOWMANAGER) \
 		DirtyRect.o \
 		Cursor.o \
+		BTheme.o \
 		BScreen.o \
 		Desktop.o \
 		BWindow.o \

@@ -94,6 +94,7 @@ public:
   void DrawText(TInt16 aX, TInt16 aY, const char aString);
   void DrawText(TInt16 aX, TInt16 aY, const char *aString);
   void DrawTextTransparent(TInt16 aX, TInt16 aY, const char *aString);
+  void DrawTextTransparent(TInt16 aX, TInt16 aY, TUint32 aColor, const char *aString);
 
 public:
   void SetRect(TRect &aRect) {
@@ -106,6 +107,8 @@ public:
 public:
   void Dump() {
     dlog("BViewPort32 at %x\n", this);
+    dlog(" FG: %06x\n", mForegroundColor.rgb888());
+    dlog(" BG: %06x\n", mBackgroundColor.rgb888());
     mRect.Dump();
   }
 

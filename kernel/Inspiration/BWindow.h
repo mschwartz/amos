@@ -32,10 +32,15 @@ public:
   virtual ~BWindow();
 
 public:
-  virtual void Paint() = 0;
-
-public:
   const char *Title() { return mNodeName; }
+
+  TInt32 WindowLeft() { return mWindowRect.x1; }
+  TInt32 WindowTop() { return mWindowRect.y1; }
+
+  TInt32 ClientLeft() { return mClientRect.x1; }
+  TInt32 ClientTop() { return mClientRect.y1; }
+
+  void MoveTo(TInt32 aX, TInt32 aY);
 
 protected:
   virtual void Repaint();
@@ -62,13 +67,18 @@ public:
 
 public:
   IdcmpMessage *GetMessage();
+  TBool IsActive();
+  void Activate();
 
 public:
   TUint64 mIdcmpFlags;
   MessagePort *mIdcmpPort;
 
+public:
+  TUint64 WindowFlags() { return mWindowFlags; }
+
 protected:
-  TUint64 mWindowFLags;
+  TUint64 mWindowFlags;
   BScreen *mScreen; // BScreen this window is rendered on
 
   BBitmap32 *mBitmap; // bitmap of window's contents
@@ -82,6 +92,11 @@ protected:
   TInt32 mMinWidth, mMinHeight;
   TInt32 mMaxWidth, mMaxHeight;
 
+  TUint32 mForegroundColor,
+    mBackgroundColor;
+
+  BConsoleFont32 *mFont;
+
   BTask *mTask;
 
   InspirationBase &mInspirationBase;
@@ -94,6 +109,10 @@ protected:
 class BWindowList : public BList {
 public:
   BWindowList() : BList("Window List") {}
+
+public:
+  BWindow *First() { return (BWindow *)mNext; }
+  BWindow *Last() { return (BWindow *)mPrev; }
 };
 
 /********************************************************************************
@@ -105,7 +124,8 @@ struct IdcmpMessage : public BMessage {
   TUint64 mCode;
   TUint64 mQualifier;
   TAny *mAddress;
-  TInt64 mMouseX, mMouseY;
+  TInt32 mMouseX, mMouseY;
+  TInt32 mLastMouseX, mLastMouseY;
   TUint64 mTime; // milliseconds
   BWindow *mWindow;
 
@@ -123,9 +143,9 @@ public:
 };
 
 enum EIdcmpCommand {
-		    EIdcmpSubscribe,
-		    EIdcmpUnsubscribe,
-		    EIdcmpUpdateFlags,
+  EIdcmpSubscribe,
+  EIdcmpUnsubscribe,
+  EIdcmpUpdateFlags,
 };
 
 #endif

@@ -25,6 +25,8 @@ protected:
 
 enum EMouseDeviceCommand {
   EMouseUpdate,
+  EMouseButtonsUpdate,
+  EMouseButtons,
   EMouseMove,
 };
 

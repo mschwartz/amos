@@ -56,6 +56,30 @@ void BScreen::ActivateWindow(BWindow *aWindow) {
   aWindow->PaintDecorations();
 }
 
+TBool BScreen::ActivateWindow(TInt32 aX, TInt32 aY) {
+  BWindow *selected = ENull;
+
+  DISABLE;
+  for (BWindow *w = mWindowList.Last(); !mWindowList.End(w); w = (BWindow *)mWindowList.Prev(w)) {
+    // dlog("ActivateWindow, trying %x(%s) %d,%d %d\n", w, w->Title(), aX, aY, w->mWindowRect.PointInRect(aX, aY));
+    if (w->mWindowRect.PointInRect(aX, aY)) {
+      selected = w;
+    }
+  }
+  ENABLE;
+  if (selected) {
+    if (selected != ActiveWindow()) {
+      ActivateWindow(selected);
+      return ETrue;
+    }
+  }
+  else {
+    dlog("Click outside all windows\n");
+  }
+
+  return EFalse;
+}
+
 // This is called from the DisplayTask to render the dirty rects from offscreen to
 // physical screen.  Called during vblank to try to avoid tearing.
 void BScreen::UpdateDirtyRects() {

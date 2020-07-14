@@ -48,17 +48,26 @@ protected:
 
 public:
   TBool SendMessage(IdcmpMessage *aMessage, BWindow *aWindow) {
-
     if (aWindow->mIdcmpFlags & aMessage->mClass) {
       IdcmpMessage *m = AllocMessage(aMessage);
       m->mWindow = aWindow;
       m->mTime = gExecBase.SystemTicks();
+      // handle gimmezerozero
+      if (aWindow->WindowFlags() & WFLAG_GIMMEZEROZERO) {
+        aMessage->mMouseX = aMessage->mMouseX - aWindow->ClientLeft();
+        aMessage->mMouseY = aMessage->mMouseY - aWindow->ClientTop();
+      }
+      else if (aWindow->mIdcmpFlags & IDCMP_DELTAMOVE) {
+      	aMessage->mMouseX = aMessage->mMouseX - aMessage->mLastMouseX;
+      	aMessage->mMouseY = aMessage->mMouseY - aMessage->mLastMouseY;
+      }
+      else {
+      	aMessage->mMouseX = aMessage->mMouseX - aWindow->WindowLeft();
+      	aMessage->mMouseY = aMessage->mMouseY - aWindow->WindowTop();
+      }
       m->Send(aWindow->mIdcmpPort);
       return ETrue;
     }
-    // else {
-    //   dlog("not sent\n");
-    // }
     return EFalse;
   }
 };
@@ -119,7 +128,13 @@ void InspirationBase::UpdateWindow(BWindow *aWindow) {
 
 TBool InspirationBase::SendIdcmpMessage(IdcmpMessage *aMessage) {
   if (aMessage) { // paranoia!
+    // handle gimmezerozero and delta
     return mReaperTask->SendMessage(aMessage, ActiveWindow());
   }
   return EFalse;
+}
+
+TBool InspirationBase::ActivateWindow(TInt32 aX, TInt32 aY) {
+  BScreen *s = mDisplay->TopScreen();
+  return s->ActivateWindow(aX, aY);
 }

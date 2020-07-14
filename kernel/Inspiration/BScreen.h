@@ -43,7 +43,11 @@ public:
   void AddWindow(BWindow *aWindow);
   void UpdateWindow(BWindow *aWindow, TBool mDecorations = EFalse);
   BWindow *ActiveWindow() { return (BWindow *)mWindowList.First(); }
+
   void ActivateWindow(BWindow *aWindow);
+
+  // returns ETrue if another window is activated:
+  TBool ActivateWindow(TInt32 aX, TInt32 aY);
 
 public:
   TInt32 Width() { return mBitmap->Width(); }

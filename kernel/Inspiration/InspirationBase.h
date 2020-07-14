@@ -29,12 +29,18 @@ public:
   void UpdateWindow(BWindow *aWindow);
 
 public:
-  BTheme *DefaulTTheme(){ return (BTheme *)mThemeList.First(); };
+  BTheme *DefaulTTheme() { return (BTheme *)mThemeList.First(); };
   BTheme *FindTheme(const char *aName) { return (BTheme *)mThemeList.Find(aName); }
 
 public:
   Display *GetDisplay() { return mDisplay; }
+
+public:
   BWindow *ActiveWindow() { return mDisplay->ActiveWindow(); }
+  /**
+   * Activate window that the point aX,aY is within.
+   */
+  TBool ActivateWindow(TInt32 aX, TInt32 aY);
 
   /**
    * Send IdcmpMessage to active window.

@@ -29,7 +29,7 @@
 class DisplayTask : public BTask {
 public:
   DisplayTask(Display &aDisplay)
-      : BTask("DisplayTask", TASK_PRI_MAX), mDisplay(aDisplay) {
+      : BTask("DisplayTask", TASK_PRI_URGENT), mDisplay(aDisplay) {
     //
   }
 

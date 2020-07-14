@@ -33,6 +33,7 @@ extern "C" void enter_tasking();
 
 class IdleTask : public BTask {
   friend ExecBase;
+
 public:
   IdleTask() : BTask("Idle Task", LIST_PRI_MIN) {}
 
@@ -304,14 +305,19 @@ void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
 
 TBool ExecBase::RemoveMessagePort(MessagePort &aMessagePort) {
   if (mMessagePortList->Find(aMessagePort)) {
+    DISABLE;
     aMessagePort.Remove();
+    ENABLE;
     return ETrue;
   }
   return EFalse;
 }
 
 MessagePort *ExecBase::FindMessagePort(const char *aName) {
-  return (MessagePort *)mMessagePortList->Find(aName);
+  DISABLE;
+  MessagePort *mp = (MessagePort *)mMessagePortList->Find(aName);
+  ENABLE;
+  return mp;
 }
 
 void ExecBase::GuruMeditation(const char *aFormat, ...) {
@@ -337,15 +343,22 @@ void ExecBase::GuruMeditation(const char *aFormat, ...) {
 }
 
 void ExecBase::AddDevice(BDevice *aDevice) {
+  DISABLE;
   mDeviceList.Add(*aDevice);
+  ENABLE;
 }
 
 BDevice *ExecBase::FindDevice(const char *aName) {
-  return mDeviceList.FindDevice(aName);
+  DISABLE;
+  BDevice *d = mDeviceList.FindDevice(aName);
+  ENABLE;
+  return d;
 }
 
 void ExecBase::AddFileSystem(BFileSystem *aFileSystem) {
+  DISABLE;
   mFileSystemList.AddHead(*aFileSystem);
+  ENABLE;
 }
 
 class DefaultException : public BInterrupt {

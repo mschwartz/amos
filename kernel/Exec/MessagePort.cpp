@@ -33,10 +33,12 @@ void BMessage::Dump() {
 
 MessagePort::MessagePort(const char *aName, BTask *aOwner, TInt64 aSignalBit, TInt64 aPri)
     : BNodePri(aName, aPri) {
+  DISABLE;
   mOwner = aOwner;
   mSignalBit = aSignalBit;
 
   mList = new BMessageList(aName);
+  ENABLE;
 }
 
 MessagePort::~MessagePort() {
@@ -56,9 +58,9 @@ BMessage *MessagePort::GetMessage() {
 
 void MessagePort::ReceiveMessage(BMessage *aMessage) {
   DISABLE;
-
   mList->AddTail(*aMessage);
   ENABLE;
+
   mOwner->Signal(1 << mSignalBit);
 }
 

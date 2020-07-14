@@ -118,8 +118,7 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
 }
 
 void BTask::Dump() {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   TTaskRegisters *regs = &mRegisters;
   dprint("\nTask Dump %016x regs(%x)--- %s ---\n", this, &this->mRegisters, mNodeName);
   DumpRegisters(regs);
@@ -133,12 +132,11 @@ void BTask::Dump() {
     addr++;
   }
   dprint("\n\n");
-  SetFlags(flags);
+  ENABLE;
 }
 
 TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
 
   TInt8 sig = -1;
   if (aSignalNum == -1) {
@@ -158,20 +156,19 @@ TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
     }
   }
 
-  SetFlags(flags);
+  ENABLE;
   return sig == 64 ? -1 : sig;
 }
 
 TBool BTask::FreeSignal(TInt64 aSignalNum) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   TUint64 mask = 1 << aSignalNum;
   if (mSigAlloc & mask) {
     mSigAlloc &= ~mask;
-    SetFlags(flags);
+    ENABLE;
     return ETrue;
   }
-  SetFlags(flags);
+  ENABLE;
   return EFalse;
 }
 
@@ -194,38 +191,42 @@ TUint64 BTask::Wait(TUint64 aSignalSet) {
     gExecBase.Wake(this);
     return 0;
   }
-  TUint64 flags = GetFlags();
-  cli();
 
-  mSigWait |= aSignalSet;
+  {
+    DISABLE;
+    mSigWait |= aSignalSet;
+    ENABLE;
+  }
 
-  SetFlags(flags);
   gExecBase.WaitSignal(this);
 
-  flags = GetFlags();
-  volatile TUint64 received = mSigReceived;
-  mSigReceived = 0;
+  {
+    DISABLE;
+    volatile TUint64 received = mSigReceived;
+    mSigReceived = 0;
+    ENABLE;
 
-  SetFlags(flags);
-  return received;
+    return received;
+  }
 }
 
 MessagePort *BTask::CreateMessagePort(const char *aName, TInt64 aPri) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
   TInt64 sig = AllocSignal(-1);
   MessagePort *p = new MessagePort(aName, this, sig, aPri);
   gExecBase.AddMessagePort(*p);
-  SetFlags(flags);
+  ENABLE;
   return p;
 }
 
 void BTask::FreeMessagePort(MessagePort *aMessagePort) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
+
   FreeSignal(aMessagePort->SignalNumber());
   gExecBase.RemoveMessagePort(*aMessagePort);
-  SetFlags(flags);
+
+  ENABLE;
+ 
   delete aMessagePort;
 }
 
@@ -239,7 +240,7 @@ TUint64 BTask::WaitPorts(TUint64 aSigMask, ...) {
     if (p == ENull) {
       break;
     }
-    sigmask |= 1<<p->SignalNumber();
+    sigmask |= 1 << p->SignalNumber();
   }
   va_end(args);
   return Wait(sigmask);
@@ -256,8 +257,8 @@ TUint64 BTask::WaitPort(MessagePort *aMessagePort, MessagePort *aOtherPort, TUin
 TUint64 BTask::WaitPort(MessagePort *aMessagePort, MessagePort *aOtherPort, MessagePort *aOtherOtherPort, TUint64 aSignalMask) {
   return Wait(aSignalMask |
               (1 << aMessagePort->SignalNumber()) |
-	      (1 << aOtherPort->SignalNumber())) |
-	      (1 << aOtherOtherPort->SignalNumber());
+              (1 << aOtherPort->SignalNumber())) |
+         (1 << aOtherOtherPort->SignalNumber());
 }
 
 void BTask::Sleep(TUint64 aSeconds) {

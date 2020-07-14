@@ -48,7 +48,7 @@ BWindow::BWindow(const TNewWindow &aNewWindow)
   mClientRect.Set(cRect);
 
   mIdcmpFlags = aNewWindow.mIdcmpFlags;
-  mWindowFLags = aNewWindow.mWindowFlags;
+  mWindowFlags = aNewWindow.mWindowFlags;
 
   mForegroundColor = aNewWindow.mForegroundColor;
   mBackgroundColor = aNewWindow.mBackgroundColor;
@@ -76,6 +76,10 @@ BWindow::~BWindow() {
   delete mViewPort;
   delete mWindowViewPort;
   delete mBitmap;
+}
+
+void BWindow::MoveTo(TInt32 aX, TInt32 aY) {
+  //
 }
 
 IdcmpMessage *BWindow::GetMessage() {

@@ -60,12 +60,6 @@ class AtaDevice : public BDevice {
 public:
   AtaDevice();
   ~AtaDevice();
-
-protected:
-  TBool IsPresent() { return mIsPresent; }
-
-protected:
-  TBool mIsPresent;
 };
 
 #endif

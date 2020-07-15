@@ -86,6 +86,31 @@ static inline TUint32 inl(TUint16 port) {
                : "Nd"(port));
   return ret;
 }
+
+static __inline void insl(unsigned short int __port, void *__addr, unsigned long int __count) {
+  __asm__ __volatile__("cld ; rep ; insl"
+                       : "=D"(__addr), "=c"(__count)
+                       : "d"(__port), "0"(__addr), "1"(__count));
+}
+
+static __inline void insw(unsigned short int __port, void *__addr, unsigned long int __count) {
+  __asm__ __volatile__("cld ; rep ; insw"
+                       : "=D"(__addr), "=c"(__count)
+                       : "d"(__port), "0"(__addr), "1"(__count));
+}
+
+static __inline void outsw(unsigned short int __port, const void *__addr, unsigned long int __count) {
+  __asm__ __volatile__("cld ; rep ; outsw"
+                       : "=S"(__addr), "=c"(__count)
+                       : "d"(__port), "0"(__addr), "1"(__count));
+}
+
+static __inline void outsl(unsigned short int __port, const void *__addr, unsigned long int __count) {
+  __asm__ __volatile__("cld ; rep ; outsl"
+                       : "=S"(__addr), "=c"(__count)
+                       : "d"(__port), "0"(__addr), "1"(__count));
+}
+
 #if 0
 static __inline unsigned char inb(unsigned short int __port) {
   unsigned char _v;

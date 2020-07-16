@@ -28,6 +28,7 @@ public:
   ~BNode();
 
 public:
+  void SetName(const char *aName);
   const char *NodeName() { return mNodeName ? mNodeName : "No name"; }
 
 public:

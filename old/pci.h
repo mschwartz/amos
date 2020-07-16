@@ -48,44 +48,14 @@ public:
   void Dump() {
     dprint("\n\n");
     dlog("PCIDevice(%s)\n", mNodeName);
-    dlog("          mAddress: %x mBus(%d) mDevice(%d) mFunction(%d)\n", mAddress, mBus, mDevice, mFunction);
-    dlog("         mVendorId: %x\n", mVendorId);
-    dlog("         mDeviceId: %x\n", mDeviceId);
-
-    dlog("          mCommand: %x\n", mCommand);
-    dlog("           mStatus: %x\n", mStatus);
-
-    dlog("            mClass: %02x\n", mClass);
-    dlog("         mSubclass: %02x\n", mSubclass);
-
-    dlog("     mSecondaryBus: %d\n", mSecondaryBus);
-    dlog("    mInterruptLine: %d\n", mInterruptLine);
-    dlog("               BAR: BAR0(%x) BAR1(%x) BAR2(%x) BAR3(%x) BAR4(%x) BAR5(%x)\n",
+    dlog("     mVendorId: %x\n", mVendorId);
+    dlog("     mDeviceId: %x\n", mDeviceId);
+    dlog("        mClass: %x\n", mClass);
+    dlog("     mSubclass: %x\n", mSubclass);
+    dlog("           BAR: BAR0(%x) BAR1(%x) BAR2(%x) BAR3(%x) BAR4(%x) BAR5(%x)\n",
       mBar0, mBar1, mBar2, mBar3, mBar4, mBar5);
   }
 };
-
-#if 0
-struct PCIDevice : public BNode {
-  TUint16 mBus, mDevice, mFunction;
-  TUint32 mPortBase;
-  TUint16 mVendorId, mDeviceId;
-  TUint32 mBar0, mBar1, mBar2, mBar3, mBar4, mBar5, mBar6;
-  TUint8 mClassId, mSubclassId, mInterfaceId, mRevision, mIRQ;
-
-public: 
-  PCIDevice(const char *aName) : BNode(aName) {}
-public:
-  void Dump() {
-    dprint("\n\n");
-    dlog("PCIDevice(%s)\n", mNodeName);
-    dlog("     mVendorId: %x\n", mVendorId);
-    dlog("     mDeviceId: %x\n", mDeviceId);
-    dlog("      mClassId: %x\n", mClassId);
-    dlog("   mSubclassId: %x\n", mSubclassId);
-  }
-};
-#endif
 
 class PCI : public BBase {
 public:
@@ -94,7 +64,9 @@ public:
 
 protected:
   void CheckFunction(TUint8 aBus, TUint8 aDevice, TUint8 aFunction);
-  void ScanBus(TUint8 aBusNumber);
+  void CheckDevice(TUint8 aBus, TUint8 aDevice, TUint8 aFunction);
+  void CheckBus(TUint8 aBus);
+  void CheckAllBuses();
 
 protected:
   BList mDeviceList;

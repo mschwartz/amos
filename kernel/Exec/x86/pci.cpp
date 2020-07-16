@@ -79,6 +79,11 @@ public:
     // bits 16-23
     return (ReadField(aAddress, OFFSET_SUBCLASS_CODE) >> 16) & 0xff;
   }
+
+  TUint16 GetRevisionId(TUint32 aAddress) {
+    return (ReadField(aAddress, OFFSET_SUBCLASS_CODE) >> 16) & 0xff;
+    
+  }
   TUint16 GetProgIf(TUint32 aAddress) {
     // bits 8-15
     return (ReadField(aAddress, OFFSET_SUBCLASS_CODE) >> 8) & 0xff;
@@ -138,14 +143,14 @@ void PCI::CheckFunction(TUint8 aBus, TUint8 aDevice, TUint8 aFunction) {
     return;
   }
 
-  PCIDevice *dev = new PCIDevice(class_name(baseClass));
+  PCIDevice *dev = new PCIDevice(aBus, aDevice, aFunction);
   dev->mBus = aBus;
   dev->mDevice = aDevice;
   dev->mFunction = aFunction;
-  dev->mVendorId = vendorId;
-  dev->mDeviceId = deviceId;
-  dev->mClassId = baseClass;
-  dev->mSubclassId = subClass;
+  // dev->mVendorId = vendorId;
+  // dev->mDeviceId = deviceId;
+  // dev->mClassId = baseClass;
+  // dev->mSubclassId = subClass;
   mDeviceList.AddTail(*dev);
 
   dlog("      vendorId(%x), baseClass %x(%s) subClass(%x) addr(%x) BRIDGE(%x) SUBBRIDGE(%x)\n",
@@ -192,12 +197,60 @@ PCI::PCI() {
       ScanBus(bus);
     }
   }
+  dprint("\n\n");
+  dlog("============================================================================================================\n\n");
   dlog("Device List:\n");
   for (PCIDevice *d = (PCIDevice *)mDeviceList.First(); !mDeviceList.End(d); d = (PCIDevice *)d->mNext) {
     d->Dump();
   }
+  dprint("\n");
+  dlog("============================================================================================================\n");
   dprint("\n\n");
 }
 
 PCI::~PCI() {
 }
+
+typedef struct {
+  TUint16 mPad0[27];
+  TUint16 mModel[20];
+  TUint16 mPad1[13];
+  TUint32 mLbaSectors;
+  TUint16 mPad2[21];
+  TUint16 mLba48;
+  TUint16 mPad3[16];
+  TUint64 mLba48Sectors;
+  TUint16 mPad4[152];
+} PACKED TAtaIdentity;
+
+PCIDevice::PCIDevice(TUint8 aBus, TUint8 aDevice, TUint8 aFunction) : BNode("temp") {
+  TUint32 addr = sio.GetAddress(aBus, aDevice, aFunction);
+  mAddress = addr;
+
+  mBus = aBus;
+  mDevice = aDevice;
+  mFunction = aFunction;
+
+  mVendorId = sio.GetVendorId(addr);
+  mDeviceId = sio.GetDeviceId(addr);
+  mCommand = sio.GetCommand(addr);
+  mStatus = sio.GetStatus(addr);
+  mRevisionId = sio.GetRevisionId(addr);
+  mProgIf = sio.GetProgIf(addr);
+
+  mSubclass = sio.GetSubclassCode(addr);
+  mClass = sio.GetClassCode(addr);
+  mHeaderType = sio.GetHeaderType(addr);
+
+  mBar0 = sio.ReadField(addr, 0x10);
+  mBar1 = sio.ReadField(addr, 0x14);
+  mBar2 = sio.ReadField(addr, 0x18);
+  mBar3 = sio.ReadField(addr, 0x1c);
+  mBar4 = sio.ReadField(addr, 0x20);
+  mBar5 = sio.ReadField(addr, 0x24);
+
+  mSecondaryBus = sio.GetSecondary(addr);
+  mInterruptLine = sio.GetIRQ(addr);
+
+  SetName(class_name(mClass));
+};

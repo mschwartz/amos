@@ -17,7 +17,8 @@ DEVICES= 	$(D)/KeyboardDevice.o \
 		$(D)/RtcDevice.o \
 		$(D)/MouseDevice.o \
 		$(D)/SerialDevice.o \
-		$(D)/AtaDevice.o
+		$(D)/AtaDevice.o \
+		$(D)/dma.o
 
 X86=		x86/bochs.o \
 		x86/tss.o \

@@ -6,6 +6,10 @@
 #define DEBUGME
 #undef DEBUGME
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 // TODO: make these #defines into const
 #define IDE_ATA 0x00
 #define IDE_ATAPI 0x01
@@ -91,6 +95,10 @@
 // DIRECTIONS
 #define ATA_READ 0x00
 #define ATA_WRITE 0x01
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 // one of these for master and slave
 typedef struct {
@@ -232,6 +240,10 @@ protected:
     return result;
   }
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
   void ide_read_buffer(TUint8 aChannel, TUint8 aRegister, TUint8 *aBuffer, TUint32 aCount) {
     if (aRegister > 0x07 && aRegister < 0x0c) {
       ide_write(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].nIEN);
@@ -267,6 +279,10 @@ protected:
     }
   }
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
   TInt ide_polling(TUint8 aChannel, TBool aAdvancedCheck) {
     // delay 400ms
     ide_read(aChannel, ATA_REG_ALTSTATUS); // 100ms
@@ -293,6 +309,10 @@ protected:
     }
     return 0; // no error
   }
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
   TUint8 ide_print_error(TUint aDrive, TUint8 aError) {
     TUint8 err = aError,
@@ -355,6 +375,10 @@ protected:
 
     return err;
   }
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
   void ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 BAR3, TUint32 BAR4) {
     dlog("  ide_initialize(0x%0x, 0x%0x, 0x%0x, 0x%0, 0x%0xx)\n",
@@ -473,6 +497,10 @@ protected:
     dlog("==============\n");
     dprint("\n\n");
   }
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
   TBool ide_io(TIdeDevice *aIdeDevice, TUint64 aLba, TBool aWrite, TUint8 *aBuffer, TInt aNumSectors) {
     TInt lba_mode = 0,
@@ -627,6 +655,10 @@ protected:
     return ETrue;
   }
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
   TBool ide_read_blocks(TIdeDevice *aIdeDevice, TUint64 aLba, TUint8 *aBuffer, TUint64 aCount) {
     return ide_io(aIdeDevice, aLba, EFalse, aBuffer, aCount);
   }
@@ -640,6 +672,11 @@ protected:
   TUint64 mActiveDevice;
 
 public:
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
   void Run() {
     DISABLE;
 
@@ -695,92 +732,6 @@ protected:
   TIdeChannelRegisters mChannels[2];
   TIdeDevice mDevices[4];
 };
-
-/********************************************************************************
- ********************************************************************************
- *******************************************************************************/
-
-#if 0
-static TUint8 sector[512];
-class AtaTask : public BTask {
-public:
-  AtaTask(AtaDevice *aDevice) : BTask("ata.device") {
-    mDevice = aDevice;
-  }
-
-  ~AtaTask() {
-    dprint("\n");
-    dlog("  AtaTask Desctuctor!\n");
-    bochs;
-  }
-
-protected:
-  TUint64 mSigMask;
-  TUint8 mActiveDevice;
-
-public:
-  void Run() {
-    DISABLE;
-
-    dprint("\n");
-    dlog("AtaTask running\n");
-
-    TUint8 sigbit = AllocSignal(-1); // this is for signal from IRQ handler(s)
-    mSigMask = (1 << sigbit);
-    dlog("  AtaTask signal bit %d(%x)\n", sigbit, mSigMask);
-
-    // handlers for ATA1 and ATA2 IRQs
-    gExecBase.SetIntVector(EAta1IRQ, new AtaInterrupt(this, sigbit, 1));
-    gExecBase.SetIntVector(EAta2IRQ, new AtaInterrupt(this, sigbit, 2));
-    gExecBase.EnableIRQ(IRQ_ATA1);
-    gExecBase.EnableIRQ(IRQ_ATA2);
-
-    // initialize devices
-    mActiveDevice = 0;
-    init_drive(&drives[0], 0);
-    mActiveDevice = 1;
-    init_drive(&drives[1], 1);
-    mActiveDevice = 2;
-    init_drive(&drives[2], 2);
-    mActiveDevice = 3;
-    init_drive(&drives[3], 3);
-    mActiveDevice = -1;
-
-    MessagePort *port = CreateMessagePort("ata.device");
-    gExecBase.AddMessagePort(*port);
-
-    ENABLE;
-    TAtaDrive *drive0 = &drives[0];
-    while (1) {
-      TUint64 sigs = WaitPort(port, mSigMask);
-      if (sigs & mSigMask) {
-        dlog("  IRQ SIGNAL\n");
-      }
-      else {
-        while (AtaMessage *m = (AtaMessage *)port->GetMessage()) {
-          switch (m->mCommand) {
-            case EAtaReadBlocks: {
-              TUint8 *buf = (TUint8 *)m->mBuffer;
-              TUint64 lba = m->mLba;
-              for (TInt i = 0; i < m->mCount; i++) {
-                ata_read_block(&drives[m->mUnit], lba, buf);
-                buf += 512;
-                lba++;
-              }
-            } break;
-          }
-          m->Reply();
-        }
-      }
-    }
-  }
-
-protected:
-  TUint64 mSigMask;
-  AtaDevice *mDevice;
-  TInt32 mActiveDevice;
-};
-#endif
 
 /********************************************************************************
  ********************************************************************************

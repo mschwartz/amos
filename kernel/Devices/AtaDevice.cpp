@@ -102,37 +102,37 @@
 
 // one of these for master and slave
 typedef struct {
-  TUint16 base;  // I/O Base.
-  TUint16 ctrl;  // Control Base
-  TUint16 bmide; // Bus Master IDE
-  TUint8 nIEN;   // nIEN (No Interrupt);
+  TUint16 mBase;         // I/O Base.
+  TUint16 mControl;      // Control Base
+  TUint16 mBusMasterIde; // Bus Master IDE
+  TUint8 mNoInterrupt;   // nIEN (No Interrupt);
 } TIdeChannelRegisters;
 
 typedef struct _tag_TIdeDevice {
-  TUint8 Reserved;      // 0 (Empty) or 1 (This Drive really exists).
-  TUint8 Channel;       // 0 (Primary Channel) or 1 (Secondary Channel).
-  TUint8 Drive;         // 0 (Master Drive) or 1 (Slave Drive).
-  TUint16 Type;         // 0: ATA, 1:ATAPI.
-  TUint16 Signature;    // Drive Signature
-  TUint16 Capabilities; // Features.
-  TUint32 CommandSets;  // Command Sets Supported.
-  TUint32 Size;         // Size in Sectors.
-  TUint8 Model[41];     // Model in string.
+  TUint8 mReserved;      // 0 (Empty) or 1 (This Drive really exists).
+  TUint8 mChannel;       // 0 (Primary Channel) or 1 (Secondary Channel).
+  TUint8 mDrive;         // 0 (Master Drive) or 1 (Slave Drive).
+  TUint16 mType;         // 0: ATA, 1:ATAPI.
+  TUint16 mSignature;    // Drive Signature
+  TUint16 mCapabilities; // Features.
+  TUint32 mCommandSets;  // Command Sets Supported.
+  TUint32 mSize;         // Size in Sectors.
+  TUint8 mModel[41];     // Model in string.
   TBool mLba48;         // ETrue if device supports LBA48 addressing
   void Dump() {
-    if (Reserved == 1) {
+    if (mReserved == 1) {
       dlog("  Channel(%s) Drive(%s) Type(%s) Size(%d) LBA48(%s) Model(%s)\n",
-        Channel ? "Secondary" : "Primary",
-        Drive ? "Slave" : "Master",
-        Type ? "ATAPI" : "ATA",
-        Size,
+        mChannel ? "Secondary" : "Primary",
+        mDrive ? "Slave" : "Master",
+        mType ? "ATAPI" : "ATA",
+        mSize,
         mLba48 ? "YES" : "NO",
-        Model);
+        mModel);
     }
     else {
       dlog("  %s %s %s\n",
-        Channel ? "Secondary" : "Primary",
-        Drive ? "Slave" : "Master",
+        mChannel ? "Secondary" : "Primary",
+        mDrive ? "Slave" : "Master",
         "Not Present");
     }
   }
@@ -195,22 +195,22 @@ protected:
   // write a value to register in a channel
   void ide_write(TUint8 aChannel, TUint8 aRegister, TUint8 aData) {
     if (aRegister > 0x07 && aRegister < 0x0C) {
-      ide_write(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].nIEN);
+      ide_write(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].mNoInterrupt);
     }
     if (aRegister < 0x08) {
-      outb(mChannels[aChannel].base + aRegister - 0x00, aData);
+      outb(mChannels[aChannel].mBase + aRegister - 0x00, aData);
     }
     else if (aRegister < 0x0C) {
-      outb(mChannels[aChannel].base + aRegister - 0x06, aData);
+      outb(mChannels[aChannel].mBase + aRegister - 0x06, aData);
     }
     else if (aRegister < 0x0E) {
-      outb(mChannels[aChannel].ctrl + aRegister - 0x0A, aData);
+      outb(mChannels[aChannel].mControl + aRegister - 0x0A, aData);
     }
     else if (aRegister < 0x16) {
-      outb(mChannels[aChannel].bmide + aRegister - 0x0E, aData);
+      outb(mChannels[aChannel].mBusMasterIde + aRegister - 0x0E, aData);
     }
     if (aRegister > 0x07 && aRegister < 0x0C) {
-      ide_write(aChannel, ATA_REG_CONTROL, mChannels[aChannel].nIEN);
+      ide_write(aChannel, ATA_REG_CONTROL, mChannels[aChannel].mNoInterrupt);
     }
   }
 
@@ -218,52 +218,52 @@ protected:
   TUint8 ide_read(TUint8 aChannel, TUint8 aRegister) {
     TUint8 result;
     if (aRegister > 0x07 && aRegister < 0x0C) {
-      ide_write(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].nIEN);
+      ide_write(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].mNoInterrupt);
     }
     if (aRegister < 0x08) {
-      result = inb(mChannels[aChannel].base + aRegister - 0x00);
+      result = inb(mChannels[aChannel].mBase + aRegister - 0x00);
     }
     else if (aRegister < 0x0C) {
-      result = inb(mChannels[aChannel].base + aRegister - 0x06);
+      result = inb(mChannels[aChannel].mBase + aRegister - 0x06);
     }
     else if (aRegister < 0x0E) {
-      result = inb(mChannels[aChannel].ctrl + aRegister - 0x0A);
+      result = inb(mChannels[aChannel].mControl + aRegister - 0x0A);
     }
     else if (aRegister < 0x16) {
-      result = inb(mChannels[aChannel].bmide + aRegister - 0x0E);
+      result = inb(mChannels[aChannel].mBusMasterIde + aRegister - 0x0E);
     }
 
     if (aRegister > 0x07 && aRegister < 0x0C) {
-      ide_write(aChannel, ATA_REG_CONTROL, mChannels[aChannel].nIEN);
+      ide_write(aChannel, ATA_REG_CONTROL, mChannels[aChannel].mNoInterrupt);
     }
 
     return result;
   }
 
-/********************************************************************************
+  /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
   void ide_read_buffer(TUint8 aChannel, TUint8 aRegister, TUint8 *aBuffer, TUint32 aCount) {
     if (aRegister > 0x07 && aRegister < 0x0c) {
-      ide_write(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].nIEN);
+      ide_write(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].mNoInterrupt);
     }
     TUint16 port = 0;
     if (aRegister < 0x08) {
-      // port = mChannels[aChannel].base + aRegister - 0x00;
-      insl(mChannels[aChannel].base + aRegister - 0x00, aBuffer, aCount);
+      // port = mChannels[aChannel].mBase + aRegister - 0x00;
+      insl(mChannels[aChannel].mBase + aRegister - 0x00, aBuffer, aCount);
     }
     else if (aRegister < 0x0c) {
-      // port = mChannels[aChannel].base + aRegister - 0x06;
-      insl(mChannels[aChannel].base + aRegister - 0x06, aBuffer, aCount);
+      // port = mChannels[aChannel].mBase + aRegister - 0x06;
+      insl(mChannels[aChannel].mBase + aRegister - 0x06, aBuffer, aCount);
     }
     else if (aRegister < 0x0e) {
-      // port = mChannels[aChannel].base + aRegister - 0x0a;
-      insl(mChannels[aChannel].base + aRegister - 0x0a, aBuffer, aCount);
+      // port = mChannels[aChannel].mBase + aRegister - 0x0a;
+      insl(mChannels[aChannel].mBase + aRegister - 0x0a, aBuffer, aCount);
     }
     else if (aRegister < 0x16) {
-      // port = mChannels[aChannel].base + aRegister - 0x03;
-      insl(mChannels[aChannel].base + aRegister - 0x0e, aBuffer, aCount);
+      // port = mChannels[aChannel].mBase + aRegister - 0x03;
+      insl(mChannels[aChannel].mBase + aRegister - 0x0e, aBuffer, aCount);
     }
 
     dlog("PORT(%x)  ", port);
@@ -275,11 +275,11 @@ protected:
     // dprint("\n");
 
     if (aRegister > 0x07 && aRegister < 0x0C) {
-      ide_write(aChannel, ATA_REG_CONTROL, mChannels[aChannel].nIEN);
+      ide_write(aChannel, ATA_REG_CONTROL, mChannels[aChannel].mNoInterrupt);
     }
   }
 
-/********************************************************************************
+  /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
@@ -310,7 +310,7 @@ protected:
     return 0; // no error
   }
 
-/********************************************************************************
+  /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
@@ -327,7 +327,7 @@ protected:
         err = 19;
         break;
       case 2:
-        st = ide_read(mDevices[aDrive].Channel, ATA_REG_ERROR);
+        st = ide_read(mDevices[aDrive].mChannel, ATA_REG_ERROR);
         if (st & ATA_ER_AMNF) {
           dlog("  No address mark found\n");
           err = 7;
@@ -367,16 +367,16 @@ protected:
         break;
       case 4:
         dlog("  Model(%s) Write Protected (%s)/(%s)\n",
-          mDevices[aDrive].Model,
-          mDevices[aDrive].Channel ? "Secondary" : "Primary",
-          mDevices[aDrive].Drive ? "Slave" : "Master");
+          mDevices[aDrive].mModel,
+          mDevices[aDrive].mChannel ? "Secondary" : "Primary",
+          mDevices[aDrive].mDrive ? "Slave" : "Master");
         break;
     }
 
     return err;
   }
 
-/********************************************************************************
+  /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
@@ -386,12 +386,12 @@ protected:
 
     TUint8 buffer[512];
     // set up controller ports
-    mChannels[ATA_PRIMARY].base = (BAR0 & 0xFFFFFFFC) + 0x1F0 * (!BAR0);
-    mChannels[ATA_PRIMARY].ctrl = (BAR1 & 0xFFFFFFFC) + 0x3F6 * (!BAR1);
-    mChannels[ATA_SECONDARY].base = (BAR2 & 0xFFFFFFFC) + 0x170 * (!BAR2);
-    mChannels[ATA_SECONDARY].ctrl = (BAR3 & 0xFFFFFFFC) + 0x376 * (!BAR3);
-    mChannels[ATA_PRIMARY].bmide = (BAR4 & 0xFFFFFFFC) + 0;   // Bus Master IDE
-    mChannels[ATA_SECONDARY].bmide = (BAR4 & 0xFFFFFFFC) + 8; // Bus Master IDE
+    mChannels[ATA_PRIMARY].mBase = (BAR0 & 0xFFFFFFFC) + 0x1F0 * (!BAR0);
+    mChannels[ATA_PRIMARY].mControl = (BAR1 & 0xFFFFFFFC) + 0x3F6 * (!BAR1);
+    mChannels[ATA_SECONDARY].mBase = (BAR2 & 0xFFFFFFFC) + 0x170 * (!BAR2);
+    mChannels[ATA_SECONDARY].mControl = (BAR3 & 0xFFFFFFFC) + 0x376 * (!BAR3);
+    mChannels[ATA_PRIMARY].mBusMasterIde = (BAR4 & 0xFFFFFFFC) + 0;   // Bus Master IDE
+    mChannels[ATA_SECONDARY].mBusMasterIde = (BAR4 & 0xFFFFFFFC) + 8; // Bus Master IDE
 
     // disable IRQs
     ide_write(ATA_PRIMARY, ATA_REG_CONTROL, 2);
@@ -403,7 +403,7 @@ protected:
       for (TUint8 j = 0; j < 2; j++) {
 
         TUint8 err = 0, type = IDE_ATA, status;
-        mDevices[count].Reserved = 0; // Assuming that no drive here.
+        mDevices[count].mReserved = 0; // Assuming that no drive here.
 
         // (I) Select Drive:
         ide_write(i, ATA_REG_HDDEVSEL, 0xA0 | (j << 4)); // Select Drive.
@@ -454,23 +454,23 @@ protected:
 
         // (VI) Read Device Parameters:
         TAtaIdentity *p = (TAtaIdentity *)buffer;
-        mDevices[count].Reserved = 1;
-        mDevices[count].Type = type;
-        mDevices[count].Channel = i;
-        mDevices[count].Drive = j;
-        mDevices[count].Signature = *((TUint16 *)(buffer + ATA_IDENT_DEVICETYPE));
-        mDevices[count].Capabilities = *((TUint16 *)(buffer + ATA_IDENT_CAPABILITIES));
-        mDevices[count].CommandSets = *((TUint32 *)(buffer + ATA_IDENT_COMMANDSETS));
+        mDevices[count].mReserved = 1;
+        mDevices[count].mType = type;
+        mDevices[count].mChannel = i;
+        mDevices[count].mDrive = j;
+        mDevices[count].mSignature = *((TUint16 *)(buffer + ATA_IDENT_DEVICETYPE));
+        mDevices[count].mCapabilities = *((TUint16 *)(buffer + ATA_IDENT_CAPABILITIES));
+        mDevices[count].mCommandSets = *((TUint32 *)(buffer + ATA_IDENT_COMMANDSETS));
 
         // (VII) Get Size:
-        if (mDevices[count].CommandSets & (1 << 26)) {
+        if (mDevices[count].mCommandSets & (1 << 26)) {
           // Device uses 48-Bit Addressing:
-          mDevices[count].Size = *((TUint32 *)(buffer + ATA_IDENT_MAX_LBA_EXT));
+          mDevices[count].mSize = *((TUint32 *)(buffer + ATA_IDENT_MAX_LBA_EXT));
           mDevices[count].mLba48 = ETrue;
         }
         else {
           // Device uses CHS or 28-bit Addressing:
-          mDevices[count].Size = *((TUint32 *)(buffer + ATA_IDENT_MAX_LBA));
+          mDevices[count].mSize = *((TUint32 *)(buffer + ATA_IDENT_MAX_LBA));
           mDevices[count].mLba48 = EFalse;
         }
 
@@ -480,10 +480,10 @@ protected:
 
         // (VIII) String indicates model of device (like Western Digital HDD and SONY DVD-RW...):
         for (TInt k = 0; k < 40; k += 2) {
-          mDevices[count].Model[k] = buffer[ATA_IDENT_MODEL + k + 1];
-          mDevices[count].Model[k + 1] = buffer[ATA_IDENT_MODEL + k];
+          mDevices[count].mModel[k] = buffer[ATA_IDENT_MODEL + k + 1];
+          mDevices[count].mModel[k + 1] = buffer[ATA_IDENT_MODEL + k];
         }
-        mDevices[count].Model[40] = 0; // Terminate String.
+        mDevices[count].mModel[40] = 0; // Terminate String.
         // mDevices[count].mLba48 = *(TUint16 *)(buffer + ATA_IDENT_LBA48) & (1 << 10) ? ETrue : EFalse;
         count++;
       }
@@ -498,7 +498,7 @@ protected:
     dprint("\n\n");
   }
 
-/********************************************************************************
+  /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
@@ -508,9 +508,9 @@ protected:
 
     TUint8 lba_io[6];
 
-    unsigned int channel = aIdeDevice->Channel; // Read the Channel.
-    unsigned int slavebit = aIdeDevice->Drive;  // Read the Drive [Master/Slave]
-    unsigned int bus = mChannels[channel].base; // Bus Base, like 0x1F0 which is also data port.
+    unsigned int channel = aIdeDevice->mChannel; // Read the Channel.
+    unsigned int slavebit = aIdeDevice->mDrive;  // Read the Drive [Master/Slave]
+    unsigned int bus = mChannels[channel].mBase; // Bus Base, like 0x1F0 which is also data port.
     unsigned int words = 256;                   // Almost every ATA drive has a sector-size of 512-byte.
     unsigned short cyl, i;
     unsigned char head, sect, err;
@@ -525,7 +525,7 @@ protected:
       lba_io[5] = 0; // LBA28 is integer, so 32-bits are enough to access 2TB.
       head = 0;      // Lower 4-bits of HDDEVSEL are not used here.
     }
-    else if (aIdeDevice->Capabilities & 0x200) {
+    else if (aIdeDevice->mCapabilities & 0x200) {
       // LBA28:
       lba_mode = 1;
       lba_io[0] = (aLba & 0x00000FF) >> 0;
@@ -655,7 +655,7 @@ protected:
     return ETrue;
   }
 
-/********************************************************************************
+  /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
@@ -672,8 +672,7 @@ protected:
   TUint64 mActiveDevice;
 
 public:
-
-/********************************************************************************
+  /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 

@@ -59,7 +59,7 @@ public:
     gExecBase.AddDevice(new MouseDevice());
 
     dlog("  initialize ata disk \n");
-    gExecBase.AddDevice(new AtaDevice());
+    gExecBase.AddDevice(new AtaDevice(ENull));
 
     dlog("  initialize file system\n");
     gExecBase.AddFileSystem(new SimpleFileSystem("ata.device", 0, gSystemInfo.mRootSector));

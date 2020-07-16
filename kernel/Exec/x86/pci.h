@@ -6,7 +6,7 @@
 #include <Exec/BBase.h>
 #include <Types/BList.h>
 
-struct PCIDevice : public BNode {
+struct TPciDevice : public BNode {
   TUint32 mAddress = 0;
   TUint8 mBus = 0;
   TUint8 mDevice = 0;
@@ -42,25 +42,25 @@ struct PCIDevice : public BNode {
   TUint8 mInterruptLine = 0;
 
 public:
-  PCIDevice(TUint8 aBus, TUint8 aDevice, TUint8 aFunction);
+  TPciDevice(TUint8 aBus, TUint8 aDevice, TUint8 aFunction);
 
 public:
   void Dump() {
     dprint("\n\n");
     dlog("PCIDevice(%s)\n", mNodeName);
-    dlog("          mAddress: %x mBus(%d) mDevice(%d) mFunction(%d)\n", mAddress, mBus, mDevice, mFunction);
-    dlog("         mVendorId: %x\n", mVendorId);
-    dlog("         mDeviceId: %x\n", mDeviceId);
+    dlog("          mAddress: 0x%x mBus(%d) mDevice(%d) mFunction(%d)\n", mAddress, mBus, mDevice, mFunction);
+    dlog("         mVendorId: 0x%x\n", mVendorId);
+    dlog("         mDeviceId: 0x%x\n", mDeviceId);
 
-    dlog("          mCommand: %x\n", mCommand);
-    dlog("           mStatus: %x\n", mStatus);
+    dlog("          mCommand: 0x%x\n", mCommand);
+    dlog("           mStatus: 0x%x\n", mStatus);
 
-    dlog("            mClass: %02x\n", mClass);
-    dlog("         mSubclass: %02x\n", mSubclass);
+    dlog("            mClass: 0x%02x\n", mClass);
+    dlog("         mSubclass: 0x%02x\n", mSubclass);
 
     dlog("     mSecondaryBus: %d\n", mSecondaryBus);
     dlog("    mInterruptLine: %d\n", mInterruptLine);
-    dlog("               BAR: BAR0(%x) BAR1(%x) BAR2(%x) BAR3(%x) BAR4(%x) BAR5(%x)\n",
+    dlog("               BAR: BAR0(0x%x) BAR1(0x%x) BAR2(0x%x) BAR3(0x%x) BAR4(0x%x) BAR5(0x%x)\n",
       mBar0, mBar1, mBar2, mBar3, mBar4, mBar5);
   }
 };

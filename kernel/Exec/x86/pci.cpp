@@ -143,7 +143,7 @@ void PCI::CheckFunction(TUint8 aBus, TUint8 aDevice, TUint8 aFunction) {
     return;
   }
 
-  PCIDevice *dev = new PCIDevice(aBus, aDevice, aFunction);
+  TPciDevice *dev = new TPciDevice(aBus, aDevice, aFunction);
   dev->mBus = aBus;
   dev->mDevice = aDevice;
   dev->mFunction = aFunction;
@@ -200,7 +200,7 @@ PCI::PCI() {
   dprint("\n\n");
   dlog("============================================================================================================\n\n");
   dlog("Device List:\n");
-  for (PCIDevice *d = (PCIDevice *)mDeviceList.First(); !mDeviceList.End(d); d = (PCIDevice *)d->mNext) {
+  for (TPciDevice *d = (TPciDevice *)mDeviceList.First(); !mDeviceList.End(d); d = (TPciDevice *)d->mNext) {
     d->Dump();
   }
   dprint("\n");
@@ -223,7 +223,7 @@ typedef struct {
   TUint16 mPad4[152];
 } PACKED TAtaIdentity;
 
-PCIDevice::PCIDevice(TUint8 aBus, TUint8 aDevice, TUint8 aFunction) : BNode("temp") {
+TPciDevice::TPciDevice(TUint8 aBus, TUint8 aDevice, TUint8 aFunction) : BNode("temp") {
   TUint32 addr = sio.GetAddress(aBus, aDevice, aFunction);
   mAddress = addr;
 

@@ -2,6 +2,7 @@
 #define AMOS_ATADEVICE_H
 
 #include <Exec/BDevice.h>
+#include <Exec/x86/pci.h>
 
 enum EAtaError {
   EAtaErrorNone,
@@ -58,13 +59,14 @@ public:
 
 class AtaDevice : public BDevice {
 public:
-  AtaDevice();
+  AtaDevice(TPciDevice *aPciDevice);
   ~AtaDevice();
 
 protected:
   TBool IsPresent() { return mIsPresent; }
 
 protected:
+  TPciDevice *mPciDevice;
   TBool mIsPresent;
 };
 

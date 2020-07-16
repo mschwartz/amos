@@ -736,8 +736,9 @@ protected:
  ********************************************************************************
  *******************************************************************************/
 
-AtaDevice::AtaDevice() : BDevice("ata.device") {
+AtaDevice::AtaDevice(TPciDevice *aPciDevice) : BDevice("ata.device") {
   mIsPresent = ETrue;
+  mPciDevice = aPciDevice;
   gExecBase.AddTask(new AtaTask(this));
   dlog("  Added AtaTask\n");
 }

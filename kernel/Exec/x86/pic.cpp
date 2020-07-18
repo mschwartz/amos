@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Exec/x86/idt.h>
 #include <Exec/x86/cpu.h>
 #include <Exec/x86/pic.h>
@@ -54,7 +57,7 @@ void PIC::EnableIRQ(TUint16 aIRQ) {
   else {
     mSlaveMask &= ~(1 << aIRQ);
   }
-  dlog("    enable_interrupt %d master(%x) slave(%x)\n", aIRQ, mMasterMask, mSlaveMask);
+  DLOG("    enable_interrupt %d master(%x) slave(%x)\n", aIRQ, mMasterMask, mSlaveMask);
   outb(PIC1_DATA, mMasterMask);
   outb(PIC2_DATA, mSlaveMask);
 }
@@ -67,7 +70,7 @@ void PIC::DisableIRQ(TUint16 aIRQ) {
   else {
     mSlaveMask |= (1 << aIRQ);
   }
-  dlog("    disable_interrupt %d master(%x) slave(%x)\n", aIRQ, mMasterMask, mSlaveMask);
+  DLOG("    disable_interrupt %d master(%x) slave(%x)\n", aIRQ, mMasterMask, mSlaveMask);
   outb(PIC1_DATA, mMasterMask);
   outb(PIC2_DATA, mSlaveMask);
 }

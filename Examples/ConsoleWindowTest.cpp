@@ -1,3 +1,6 @@
+#define DEBUGME
+//#undef DEBUGME
+
 #include <Examples/ConsoleWindowTest.h>
 // #include <Inspiration/BConsoleWindow.h>
 
@@ -8,11 +11,11 @@ public:
 
 void ConsoleWindowTestTask::Run() {
 
-  dprint("\n");
-  dlog("***************************** ConsoleWindowTestTask Running\n");
+  DBANNER();
+  DLOG("ConsoleWindowTestTask Running\n");
 
   Sleep(2);
-  
+
   BScreen *screen = mInspirationBase.FindScreen();
   ConWindow *con = new ConWindow();
   screen->AddWindow(con);
@@ -33,9 +36,9 @@ void ConsoleWindowTestTask::Run() {
 
     fd = OpenDirectory("/fonts");
     if (!fd) {
-      dprint("\n\n");
-      dlog("*** Could not open directory /fonts\n");
-      dprint("\n\n");
+      DSPACE();
+      DLOG("*** Could not open directory /fonts\n");
+      DSPACE();
     }
     else {
       const DirectoryStat *s = fd->Stat();
@@ -67,7 +70,7 @@ void ConsoleWindowTestTask::Run() {
     fd = OpenFile("/fonts/README.psfu");
     if (!fd) {
       dprint("\n\n");
-      dlog("*** Could not open /fonts/README.psfu\n");
+      DLOG("*** Could not open /fonts/README.psfu\n");
       dprint("\n\n");
     }
     else {

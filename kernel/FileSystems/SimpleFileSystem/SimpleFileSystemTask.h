@@ -4,7 +4,7 @@
 #include <Exec/ExecBase.h>
 #include <Types/BSparseArray.h>
 #include <Exec/BTask.h>
-#include <Devices/AtaDevice.h>
+#include <Devices/ata/AtaDevice.h>
 
 class SimpleFileSystem;
 

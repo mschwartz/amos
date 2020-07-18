@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Inspiration/InspirationBase.h>
 #include <Exec/ExecBase.h>
 #include <Exec/BTask.h>
@@ -23,7 +26,7 @@ public:
     while (ETrue) {
       WaitPort(mPort);
       while (IdcmpMessage *m = (IdcmpMessage *)mPort->GetMessage()) {
-        // dlog(" Reap(%x)\n", m);
+         DLOG(" Reap(%x)\n", m);
         FreeMessage(m);
       }
     }
@@ -84,17 +87,17 @@ InspirationBase::~InspirationBase() {
 }
 
 void InspirationBase::Init() {
-  dprint("\n\n\n");
-  dlog("********** InspirationBase Init\n");
+  DSPACE();
+  DLOG("********** InspirationBase Init\n");
 
   mThemeList.AddHead(*new BTheme("Default Theme"));
 
   mDisplay = new Display();
-  dlog("  Init InspirationBase Display(%x)\n", mDisplay);
+  DLOG("  Init InspirationBase Display(%x)\n", mDisplay);
 
   mDesktop = new Desktop();
   AddScreen(mDesktop);
-  dlog("  Constructed Desktop(%x)\n", mDesktop);
+  DLOG("  Constructed Desktop(%x)\n", mDesktop);
 
   mReaperTask = new IdcmpMessageReaperTask;
   gExecBase.AddTask(mReaperTask);

@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Inspiration/InspirationBase.h>
 #include <Inspiration/WindowManager/MousePointerTask.h>
 #include <Exec/ExecBase.h>
@@ -7,7 +10,7 @@
 MousePointerTask::MousePointerTask()
     : BTask("MousePointer", TASK_PRI_URGENT), mDisplay(mInspirationBase.GetDisplay()) {
   dprint("\n\n");
-  dlog("Construct MousePointerTask\n");
+  DLOG("Construct MousePointerTask\n");
   mLastButtons = mCurrentButtons = 0;
   mMouseX = mMouseY = 20;
   mLastMouseX = mLastMouseY = 20;
@@ -34,7 +37,7 @@ void MousePointerTask::HandleButtons(MouseMessage *aMessage) {
 
   // LEFT BUTTON
   if (mCurrentButtons & MOUSE_LEFT_BUTTON) {
-    // dlog("mCurrentButtons(%x / %x)\n", mCurrentButtons, aMessage->mButtons);
+    // DLOG("mCurrentButtons(%x / %x)\n", mCurrentButtons, aMessage->mButtons);
     // SELECT IS JUST DOWN
     if (!(mLastButtons & MOUSE_LEFT_BUTTON)) {
       if (mInspirationBase.ActivateWindow(mMouseX, mMouseY) == EFalse) {
@@ -77,7 +80,7 @@ void MousePointerTask::Run() {
   MessagePort *mousePort;
 
   dprint("\n");
-  dlog("MousePointerTask Run\n");
+  DLOG("MousePointerTask Run\n");
 
   Forbid();
   while ((mousePort = gExecBase.FindMessagePort("mouse.device")) == ENull) {
@@ -105,7 +108,7 @@ void MousePointerTask::Run() {
 
       // note: mouse move messages do not provide mouse buttons state, just mouse x,y
       if (m == move_message) {
-        // dlog("Move Cursor %d,%d\n", mMouseX, mMouseY);
+        // DLOG("Move Cursor %d,%d\n", mMouseX, mMouseY);
         mDisplay->MoveCursor(mMouseX, mMouseY);
 
         SendIdcmpMessage(IDCMP_MOUSEMOVE, m->mButtons, m);
@@ -123,7 +126,7 @@ void MousePointerTask::Run() {
       }
       else {
         dprint("\n\n");
-        dlog("*** MouseTask: %x != %x or %x\n\n\n", m, move_message, buttons_message);
+        DLOG("*** MouseTask: %x != %x or %x\n\n\n", m, move_message, buttons_message);
         // shouldn't happen!
       }
     }

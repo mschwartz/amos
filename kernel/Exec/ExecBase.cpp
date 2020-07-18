@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Exec/ExecBase.h>
 #include <Inspiration/InspirationBase.h>
 #include <stdint.h>
@@ -12,7 +15,7 @@
 #include <Exec/x86/pci.h>
 #include <Exec/x86/acpi.h>
 
-#include <Devices/AtaDevice.h>
+#include <Devices/ata/AtaDevice.h>
 #include <Devices/SerialDevice.h>
 #include <Devices/KeyboardDevice.h>
 #include <Devices/TimerDevice.h>
@@ -39,37 +42,37 @@ public:
 
 public:
   void Run() {
-    dprint("\n");
-    dlog("IdleTask Run\n");
+    DPRINT("\n");
+    DLOG("IdleTask Run\n");
 
     // initialize devices
-    dlog("  initialize timer\n");
+    DLOG("  initialize timer\n");
     gExecBase.AddDevice(new TimerDevice());
 
-    // dlog("  initialize serial\n");
+    // DLOG("  initialize serial\n");
     // AddDevice(new SerialDevice());
 
-    dlog("  initialize rtc \n");
+    DLOG("  initialize rtc \n");
     gExecBase.AddDevice(new RtcDevice());
 
-    dlog("  initialize keyboard \n");
+    DLOG("  initialize keyboard \n");
     gExecBase.AddDevice(new KeyboardDevice);
 
-    dlog("  initialize mouse \n");
+    DLOG("  initialize mouse \n");
     gExecBase.AddDevice(new MouseDevice());
 
-    dlog("  initialize ata disk \n");
+    DLOG("  initialize ata disk \n");
     gExecBase.AddDevice(new AtaDevice(ENull));
 
-    dlog("  initialize file system\n");
+    DLOG("  initialize file system\n");
     gExecBase.AddFileSystem(new SimpleFileSystem("ata.device", 0, gSystemInfo.mRootSector));
 
-    dlog("  initialize Inspiration\n");
+    DLOG("  initialize Inspiration\n");
     gExecBase.mInspirationBase = new InspirationBase();
     gExecBase.mInspirationBase->Init();
 
     while (1) {
-      dlog("IdleTask Looping\n");
+      DLOG("IdleTask Looping\n");
       halt();
     }
   }
@@ -91,7 +94,7 @@ typedef struct {
   TUint32 mFrameBufferSize;
   TUint32 mPad2;
   void Dump() {
-    dlog("Mode(%x) mode(%x) dimensions(%dx%d) depth(%d)  pitch(%d) lfb(0x%x)\n",
+    DLOG("Mode(%x) mode(%x) dimensions(%dx%d) depth(%d)  pitch(%d) lfb(0x%x)\n",
       this, mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
   }
 } PACKED TModeInfo;
@@ -101,7 +104,7 @@ typedef struct {
   TModeInfo mDisplayMode; // chosen display mode
   TModeInfo mModes[];
   void Dump() {
-    dlog("Found %d %x modes\n", mCount, mCount);
+    DLOG("Found %d %x modes\n", mCount, mCount);
     for (TInt16 i = 0; i < mCount; i++) {
       mModes[i].Dump();
     }
@@ -112,7 +115,7 @@ extern "C" TUint64 rdrand();
 
 // ExecBase constructor
 ExecBase::ExecBase() {
-  dlog("ExecBase constructor called\n");
+  DLOG("ExecBase constructor called\n");
 
   TModes *modes = (TModes *)0xa000;
   // TModeInfo &i = modes->mDisplayMode;
@@ -131,12 +134,12 @@ ExecBase::ExecBase() {
   //  SeedRandom(rdrand());
   SeedRandom64(1);
 
-  dlog("\n\nDisplay Mode:\n");
+  DLOG("\n\nDisplay Mode:\n");
   modes->mDisplayMode.Dump();
 
   // set up paging
   mMMU = new MMU;
-  dlog("  initialized MMU\n");
+  DLOG("  initialized MMU\n");
 
   mMessagePortList = new MessagePortList("ExecBase MessagePort List");
 
@@ -144,16 +147,16 @@ ExecBase::ExecBase() {
 
   mGDT = new GDT(mTSS);
   // mGDT = new GDT();
-  dlog("  initialized GDT\n");
+  DLOG("  initialized GDT\n");
 
   mIDT = new IDT;
-  dlog("  initialized IDT\n");
+  DLOG("  initialized IDT\n");
 
   mPCI = new PCI();
-  dlog("  initialized PCI\n");
+  DLOG("  initialized PCI\n");
 
   mACPI = new ACPI();
-  dlog("  initialized ACPI\n");
+  DLOG("  initialized ACPI\n");
 
   InitInterrupts();
 
@@ -163,7 +166,7 @@ ExecBase::ExecBase() {
 
   //  sti();
   Disable();
-  dlog("  initialized 8259 PIC\n");
+  DLOG("  initialized 8259 PIC\n");
 
 #ifdef ENABLE_PS2
   mPS2 = new PS2();
@@ -181,7 +184,7 @@ ExecBase::ExecBase() {
 }
 
 ExecBase::~ExecBase() {
-  dlog("ExecBase destructor called\n");
+  DLOG("ExecBase destructor called\n");
 }
 
 void ExecBase::Disable() {
@@ -206,21 +209,21 @@ void ExecBase::AddTask(BTask *aTask) {
   cli();
 
   aTask->mRegisters.tss = (TUint64)&mTSS->mTss;
-  dlog("    Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
+  DLOG("    Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
   //  aTask->Dump();
   mActiveTasks.Add(*aTask);
   //  mActiveTasks.Dump();
-  //  dlog("x\n");
+  //  DLOG("x\n");
 
   SetFlags(flags);
 }
 
 void ExecBase::DumpTasks() {
-  dprint("\n\nActive Tasks\n");
+  DPRINT("\n\nActive Tasks\n");
   mActiveTasks.Dump();
-  dprint("Waiting Tasks\n");
+  DPRINT("Waiting Tasks\n");
   mWaitingTasks.Dump();
-  dprint("\n\n");
+  DPRINT("\n\n");
 }
 
 void ExecBase::WaitSignal(BTask *aTask) {
@@ -251,7 +254,7 @@ void ExecBase::Wake(BTask *aTask) {
   aTask->Remove();
   mActiveTasks.Add(*aTask);
   aTask->mTaskState = ETaskRunning;
-  //  dlog("Wake %s\n", aTask->TaskName());
+  //  DLOG("Wake %s\n", aTask->TaskName());
   ENABLE;
   //  DumpTasks();
 }
@@ -282,18 +285,18 @@ void ExecBase::RescheduleIRQ() {
       }
     }
     // else {
-    //   dlog("FORBID\n");
+    //   DLOG("FORBID\n");
     // }
   }
 #endif
   mCurrentTask = mActiveTasks.First();
   current_task = &mCurrentTask->mRegisters;
   //  if (t != mCurrentTask) {
-  //    dprint("Reschedule %s(%x) %016x %x\n", mCurrentTask->TaskName(), mCurrentTask, current_task->rip, current_task->rflags);
+  //    DPRINT("Reschedule %s(%x) %016x %x\n", mCurrentTask->TaskName(), mCurrentTask, current_task->rip, current_task->rflags);
   //    mCurrentTask->Dump();
-  //    dprint("Previous task\n");
+  //    DPRINT("Previous task\n");
   //    t->Dump();
-  //    dprint("\n\n\n");
+  //    DPRINT("\n\n\n");
   //  }
 }
 
@@ -324,18 +327,18 @@ void ExecBase::GuruMeditation(const char *aFormat, ...) {
   cli();
   bochs;
   char buf[512];
-  dprint("\n\n***********************\n");
-  dprint("GURU MEDITATION at %dms\n", SystemTicks());
+  DPRINT("\n\n***********************\n");
+  DPRINT("GURU MEDITATION at %dms\n", SystemTicks());
 
   va_list args;
   va_start(args, aFormat);
   vsprintf(buf, aFormat, args);
-  dprint(buf);
-  dprint("\n");
+  DPRINT(buf);
+  DPRINT("\n");
 
   mCurrentTask->Dump();
   va_end(args);
-  dprint("***********************\n\n\nHalted.\n");
+  DPRINT("***********************\n\n\nHalted.\n");
 
   while (1) {
     halt();
@@ -383,7 +386,7 @@ public:
 
 public:
   TBool Run(TAny *aData) {
-    dlog("%s IRQ\n", mNodeName);
+    DLOG("%s IRQ\n", mNodeName);
     return ETrue;
   }
 };
@@ -439,7 +442,7 @@ TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
     }
   }
   // TODO: no handler!
-  dlog("No handler!\n");
+  DLOG("No handler!\n");
   return EFalse;
 }
 
@@ -459,7 +462,7 @@ void ExecBase::SetInterrupt(EInterruptNumber aIndex, const char *aName) {
 
 void ExecBase::SetTrap(EInterruptNumber aIndex, const char *aName) {
   DISABLE;
-  //  dlog("Add Trap %d %s\n", aIndex, aName);
+  //  DLOG("Add Trap %d %s\n", aIndex, aName);
   IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
   SetIntVector(aIndex, new NextTaskTrap(aName));
   ENABLE;

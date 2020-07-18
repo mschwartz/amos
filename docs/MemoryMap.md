@@ -15,5 +15,9 @@ This information is potentially out of date.  See the memory.inc file for accura
 
 0x10000: MMU Paging Tables (through 0x5ffff)
 0x60000: This is where the kernel is loaded using BIOS int 13h.  It is later moved to KERNEL_ORG.
+0x60000-0x7ffff: this is CHIP RAM
 0x80000-0x9ffff: this is the EBDA
 0x100000: This is where the kernel is copied and runs
+
+## NOTE: 
+1) kernel is limited to 0x80000 - 0x60000 bytes!  To use a bigger kernel, we're going to need a 2 stage loader where second stage reads kernel from file system or fixed sectors on disk.

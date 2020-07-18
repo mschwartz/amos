@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Exec/ExecBase.h>
 #include <Inspiration/Display.h>
 #include <Inspiration/BScreen.h>
@@ -39,7 +42,7 @@ void Display::MoveCursor(TInt aX, TInt aY) {
   // screen->AddDirtyRect(mMouseX, mMouseY,
   //   mMouseX + mCursor->Width() - 1, mMouseX + mCursor->Height() - 1);
 
-  // dlog("Move Cursor from %d,%d to %d,%d\n", mLastX, mLastY, mMouseX, mMouseY);
+  // DLOG("Move Cursor from %d,%d to %d,%d\n", mLastX, mLastY, mMouseX, mMouseY);
   // screen->AddDirtyRect(mMouseX, mMouseY, mMouseX + mCursor->Width() - 1,
   //   mMouseX + mCursor->Height() - 1);
 }
@@ -79,7 +82,7 @@ void Display::Clear(TUint32 aColor) {
 
 BWindow *Display::ActiveWindow() { return TopScreen()->ActiveWindow(); }
 Display::Display() : BNode("Display") {
-  dlog("Construct Display\n");
+  DLOG("Construct Display\n");
   mScreenList = new BScreenList;
 
   TSystemInfo info;

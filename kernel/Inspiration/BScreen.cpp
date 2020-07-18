@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Inspiration/InspirationBase.h>
 #include <Exec/ExecBase.h>
 #include <Inspiration/BScreen.h>
@@ -8,11 +11,11 @@
 
 BScreen::BScreen(const char *aTitle) : BNode(aTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
   mDisplay = mInspirationBase.GetDisplay();
-  mDisplay->Dump();
+  // mDisplay->Dump();
   mBitmap = new BBitmap32(mDisplay->Width(), mDisplay->Height());
   mTopY = 0;
   mTheme = new BTheme("Default Theme");
-  mTheme->Dump();
+  // mTheme->Dump();
 }
 
 BScreen::~BScreen() {
@@ -61,7 +64,7 @@ TBool BScreen::ActivateWindow(TInt32 aX, TInt32 aY) {
 
   DISABLE;
   for (BWindow *w = mWindowList.Last(); !mWindowList.End(w); w = (BWindow *)mWindowList.Prev(w)) {
-    // dlog("ActivateWindow, trying %x(%s) %d,%d %d\n", w, w->Title(), aX, aY, w->mWindowRect.PointInRect(aX, aY));
+    // DLOG("ActivateWindow, trying %x(%s) %d,%d %d\n", w, w->Title(), aX, aY, w->mWindowRect.PointInRect(aX, aY));
     if (w->mWindowRect.PointInRect(aX, aY)) {
       selected = w;
     }
@@ -74,7 +77,7 @@ TBool BScreen::ActivateWindow(TInt32 aX, TInt32 aY) {
     }
   }
   else {
-    dlog("Click outside all windows\n");
+    DLOG("Click outside all windows\n");
   }
 
   return EFalse;

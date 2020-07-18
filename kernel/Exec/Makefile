@@ -12,13 +12,18 @@ FONTS=  	$(G)/BFont.o \
 		$(G)/font/BConsoleFont.o \
 		$(G)/kfont.o
 
+ATA=		$(D)/ata/AtaDevice.o \
+		$(D)/ata/AtaTask.o \
+		$(D)/ata/AtaInterrupt.o \
+		$(D)/ata/ata_io.o \
+		$(D)/ata/dma.o
+
 DEVICES= 	$(D)/KeyboardDevice.o \
 		$(D)/TimerDevice.o \
 		$(D)/RtcDevice.o \
 		$(D)/MouseDevice.o \
 		$(D)/SerialDevice.o \
-		$(D)/AtaDevice.o \
-		$(D)/dma.o
+		$(ATA)
 
 X86=		x86/bochs.o \
 		x86/tss.o \

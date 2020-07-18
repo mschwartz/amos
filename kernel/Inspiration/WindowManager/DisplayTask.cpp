@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Inspiration/WindowManager/DisplayTask.h>
 #include <Inspiration/BScreen.h>
 #include <Exec/ExecBase.h>
@@ -21,13 +24,13 @@ static inline TUint64 time_vbl() {
   TUint64 start = gExecBase.SystemTicks();
   start_vbl(); // wait for in vblank
   TUint64 end = gExecBase.SystemTicks();
-  dlog("  start(%d) end(%d) vbl_time(%d)\n", start, end, end - start);
+  DLOG("  start(%d) end(%d) vbl_time(%d)\n", start, end, end - start);
   return end - start;
 }
 
 void DisplayTask::Run() {
-  dprint("\n");
-  dlog("DisplayTask Run %x\n", inb(0x3da));
+  DPRINT("\n");
+  DLOG("DisplayTask Run %x\n", inb(0x3da));
   Sleep(1);
 
   TUint64 vbl_time = time_vbl();
@@ -36,7 +39,7 @@ void DisplayTask::Run() {
     vbl_time = 16;
   }
 
-  dlog("  vbl_time%d\n", vbl_time);
+  DLOG("  vbl_time%d\n", vbl_time);
 
   TUint64 elapsed = 0, start = 0, end = 0;
 
@@ -44,16 +47,16 @@ void DisplayTask::Run() {
   while (ETrue) {
     // We need to account for elapsed time for the drawing.
     TUint64 wait_time = vbl_time - elapsed;
-    // dlog("wait_time(%d) start(%d) end(%d) vbl_time(%d)\n", wait_time, start, end, vbl_time);
+    // DLOG("wait_time(%d) start(%d) end(%d) vbl_time(%d)\n", wait_time, start, end, vbl_time);
     if (wait_time) {
       MilliSleep(vbl_time - elapsed);
     }
     else {
-      dlog("overrun\n");
+      DLOG("overrun\n");
     }
     start_vbl(); // wait for in vblank
 
-    // dlog("start vbl (%d,%d)\n", mDisplay.mMouseX, mDisplay.mMouseY);
+    // DLOG("start vbl (%d,%d)\n", mDisplay.mMouseX, mDisplay.mMouseY);
 
     Forbid();
     // update dirty rects and mouse pointer

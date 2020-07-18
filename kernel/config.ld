@@ -5,6 +5,10 @@ SECTIONS
 {
     . = 0x100000;
 
+    /* MEMF_CHIP */
+    chip_memory     = 0x60000;
+    chip_memory_end = 0x7ffff;
+
     init_start = .;
     .init : {
 	    *(.init)

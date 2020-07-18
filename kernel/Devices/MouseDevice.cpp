@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Exec/ExecBase.h>
 #include <Exec/x86/cpu.h>
 #include <Exec/x86/ps2.h>
@@ -34,7 +37,7 @@ static void mouse_wait(TUint8 a_type) {
       }
     }
   }
-  dlog("mouse_wait(%d) timeout\n", a_type);
+  DLOG("mouse_wait(%d) timeout\n", a_type);
 }
 
 static void mouse_write(TUint8 a_write) {
@@ -68,7 +71,7 @@ public:
     gExecBase.GetSystemInfo(&info);
     mMaxX = info.mDisplayWidth - 1;
     mMaxY = info.mDisplayHeight - 1;
-    //    dlog("Mouse Max X,Y = %d,%d\n", mMaxX, mMaxY);
+    //    DLOG("Mouse Max X,Y = %d,%d\n", mMaxX, mMaxY);
   }
 
 public:
@@ -155,7 +158,7 @@ TBool MouseInterrupt::Run(TAny *aData) {
       mY -= mPacket[2];
       CLAMP(mY, 0, mMaxY);
 
-      // dlog("Int dx(%02x) dy(%02x)\n", mPacket[1], mPacket[2]);
+      // DLOG("Int dx(%02x) dy(%02x)\n", mPacket[1], mPacket[2]);
 
       // send message to Mouse Task
       {
@@ -191,14 +194,14 @@ extern "C" void mouse_trap();
 void MouseTask::Run() {
 
   dprint("\n");
-  dlog("MouseTask Run\n");
+  DLOG("MouseTask Run\n");
   Sleep(3);
 
   DISABLE;
   mMessagePort = CreateMessagePort("mouse.device");
   gExecBase.AddMessagePort(*mMessagePort);
 
-  //  dlog("Initialize Mouse Interrupt... ");
+  //  DLOG("Initialize Mouse Interrupt... ");
 
   // enable the auxilliary mouse device
   mouse_wait(1);
@@ -267,7 +270,7 @@ void MouseTask::Run() {
   BMessageList buttons_messages("buttons_mouse_list");
 
   while (WaitPort(mMessagePort)) {
-    //    dlog("Wake\n");
+    //    DLOG("Wake\n");
     while (MouseMessage *m = (MouseMessage *)mMessagePort->GetMessage()) {
       switch (m->mCommand) {
         case EMouseUpdate: {
@@ -280,11 +283,11 @@ void MouseTask::Run() {
           mDevice->mButtons = buttons;
           delete m;
           while ((m = (MouseMessage *)move_messages.RemHead())) {
-            // dlog("mouse move %x %d,%d %x\n", m, mDevice->mX, mDevice->mY, mDevice->mButtons);
+            // DLOG("mouse move %x %d,%d %x\n", m, mDevice->mX, mDevice->mY, mDevice->mButtons);
             m->mMouseX = x;
             m->mMouseY = y;
             m->mButtons = buttons;
-            //            dlog(" Reply message %x to port %x\n", m, m->mReplyPort);
+            //            DLOG(" Reply message %x to port %x\n", m, m->mReplyPort);
             m->Reply();
           }
         } break;
@@ -301,7 +304,7 @@ void MouseTask::Run() {
           delete m;
 
           while ((m = (MouseMessage *)buttons_messages.RemHead())) {
-            //            dlog("mouse move %x %d,%d %x\n", m, mDevice->mX, mDevice->mY, mDevice->mButtons);
+            //            DLOG("mouse move %x %d,%d %x\n", m, mDevice->mX, mDevice->mY, mDevice->mButtons);
             m->mMouseX = x;
             m->mMouseY = y;
             m->mButtons = buttons;

@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Exec/ExecBase.h>
 #include <Exec/x86/cpu.h>
 #include <Exec/x86/ps2.h>
@@ -289,7 +292,7 @@ TBool KeyboardInterrupt::Run(TAny *aData) {
     if (t == 0) {
       continue;
     }
-    // dlog("   keycode: %02x\n", t);
+    // DLOG("   keycode: %02x\n", t);
     if (t & 0x80) {
       TInt res = kbdus[t & 0x7f];
       if (res) {
@@ -319,8 +322,8 @@ TBool KeyboardInterrupt::Run(TAny *aData) {
 }
 
 void KeyboardDeviceTask::Run() {
-  dprint("\n");
-  dlog("keyboard task alive!\n");
+  DSPACE();
+  DLOG("keyboard task alive!\n");
 
   // initialize message port and wait for messages
   mMessagePort = CreateMessagePort("keyboard.device");
@@ -330,13 +333,13 @@ void KeyboardDeviceTask::Run() {
     while (KeyboardMessage *m = (KeyboardMessage *)mMessagePort->GetMessage()) {
       switch (m->mCommand) {
         case EKeyUp:
-          // dlog("Queue key UP %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
+          // DLOG("Queue key UP %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
           if (((mTail + 1) % KEYBOARD_BUFFER_SIZE) != mHead) {
             mBuffer[mTail++] = m->mResult | 0x80;
             mTail %= KEYBOARD_BUFFER_SIZE;
           }
           else {
-            dlog("*** keyboard.device keyboard queue full\n");
+            DLOG("*** keyboard.device keyboard queue full\n");
           }
           // We don't want to waste time deleting the message in the Interrupt handler, so we do it here.
           // This is not normal convention!
@@ -344,13 +347,13 @@ void KeyboardDeviceTask::Run() {
           break;
 
         case EKeyDown:
-          // dlog("Queue key DOWN %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
+          // DLOG("Queue key DOWN %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
           if (((mTail + 1) % KEYBOARD_BUFFER_SIZE) != mHead) {
             mBuffer[mTail++] = m->mResult;
             mTail %= KEYBOARD_BUFFER_SIZE;
           }
           else {
-            dlog("*** keyboard.device keyboard queue full\n");
+            DLOG("*** keyboard.device keyboard queue full\n");
           }
           // We don't want to waste time deleting the message in the Interrupt handler, so we do it here.
           // This is not normal convention!
@@ -373,7 +376,7 @@ void KeyboardDeviceTask::Run() {
           break;
 
         default:
-          dlog("keyboard.device: Unknown mCommand(%d/%x)\n", m->mCommand, m->mCommand);
+          DLOG("keyboard.device: Unknown mCommand(%d/%x)\n", m->mCommand, m->mCommand);
           break;
       }
     }
@@ -381,8 +384,6 @@ void KeyboardDeviceTask::Run() {
 }
 
 KeyboardDevice::KeyboardDevice() : BDevice("keyboard.device") {
-  dprint("\n");
-  dlog("Construct KeyboardDevice\n");
   gExecBase.AddTask(new KeyboardDeviceTask);
 }
 

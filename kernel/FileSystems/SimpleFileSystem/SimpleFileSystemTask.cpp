@@ -1,8 +1,8 @@
-#include <FileSystems/SimpleFileSystem/SimpleFileSystem.h>
-#include <FileSystems/SimpleFileSystem/SimpleFileSystemTask.h>
-
 #define DEBUGME
 #undef DEBUGME
+
+#include <FileSystems/SimpleFileSystem/SimpleFileSystem.h>
+#include <FileSystems/SimpleFileSystem/SimpleFileSystemTask.h>
 
 /********************************************************************************
  ********************************************************************************
@@ -26,11 +26,11 @@ SimpleFileSystemTask::SimpleFileSystemTask(SimpleFileSystem *aFileSystem,
 void *SimpleFileSystemTask::Sector(TUint64 aLba) {
   // first look in sector cache
 
+  DLOG("SECTOR(%d)\n", aLba);
+
   CachedSector *fs = (CachedSector *)mDiskCache->Find(aLba);
   if (fs == ENull) {
-#ifdef DEBUGME
-    dlog("cache miss\n");
-#endif
+    DLOG("cache miss\n");
     fs = new CachedSector(aLba);
     mAtaMessage->mCommand = EAtaReadBlocks;
     mAtaMessage->mLba = aLba + mRootLba;
@@ -41,13 +41,14 @@ void *SimpleFileSystemTask::Sector(TUint64 aLba) {
 
     mAtaMessage->Send(mAtaPort);
 
+    DLOG("  WAITING FOR REPLY\n");
     WaitPort(mAtaReplyPort);
+    DLOG("  GOT REPLY\n");
     mDiskCache->Add((BSparseArrayNode &)*fs);
+    DLOG("  CACHE ADD\n");
   }
   else {
-#ifdef DEBUGME
-    dlog("cache hit %x\n", fs);
-#endif
+    DLOG("cache hit %x\n", fs);
   }
 
   fs->mLru++;
@@ -78,6 +79,7 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
   char path[4096], *xpath = &path[0];
   CopyString(path, aPath);
 
+  DLOG("FindPath(%s)\n", aPath);
   DirectorySector *cwd = (DirectorySector *)Sector(mRootSector.mLbaRoot);
   if (xpath[0] == '/') {
     xpath++;
@@ -126,7 +128,7 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
       // not a directory, so it cannot be .../file/more...
       if (next_token[0] != '\0') {
         mError = EFileSystemErrorInvalidPath;
-        dlog("*** invalid path at %s/%s\n", token, next_token);
+        DLOG("*** invalid path at %s/%s\n", token, next_token);
         return ENull;
       }
     }
@@ -139,6 +141,7 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
  *******************************************************************************/
 
 void SimpleFileSystemTask::OpenDirectory(FileSystemMessage *f) {
+  DLOG("OpenDirectory (%s)\n", f->mBuffer);;
   DirectorySector *d = FindPath((char *)f->mBuffer);
   f->mDescriptor.mDirectorySector = d;
   f->mDescriptor.mDataIndex = -1;
@@ -146,12 +149,14 @@ void SimpleFileSystemTask::OpenDirectory(FileSystemMessage *f) {
 }
 
 void SimpleFileSystemTask::ReadDirectory(FileSystemMessage *f) {
+  DLOG("ReadDirectory\n");
+
   DirectorySector *d = (DirectorySector *)f->mDescriptor.mDirectorySector;
   if (!d) {
     f->mError = EFileSystemErrorNotADirectory;
   }
   else if (f->mDescriptor.mDataIndex == -1 && d->mLbaFirst) {
-    // dlog("ReadDirectory(%s)\n", d->mFilename);
+    DLOG("ReadDirectory(%s)\n", d->mFilename);
     DirectorySector *dd = (DirectorySector *)Sector(d->mLbaFirst);
     f->mDescriptor.mDirectorySector = dd;
     f->mDescriptor.mDataIndex++;
@@ -192,7 +197,7 @@ void SimpleFileSystemTask::ReadFile(FileSystemMessage *f) {
 
   FileSystemDescriptor *file = (FileSystemDescriptor *)&f->mDescriptor;
   if (file->mDirectorySector == ENull) {
-    dlog("  *** file not open\n");
+    DLOG("  *** file not open\n");
     f->mError = EFileSystemErrorFileNotOpen;
     f->mCount = actual;
     return;
@@ -208,7 +213,8 @@ void SimpleFileSystemTask::ReadFile(FileSystemMessage *f) {
   TUint8 *dst = (TUint8 *)f->mBuffer;
 
   TUint64 size = file->mDirectorySector->mStat.mSize,
-    bufsize = f->mCount;;
+          bufsize = f->mCount;
+  ;
 
   TInt64 count;
   for (count = 0; count < f->mCount; count++) {
@@ -249,8 +255,8 @@ void SimpleFileSystemTask::CloseFile(FileSystemMessage *f) {
 void SimpleFileSystemTask::RemoveFile(FileSystemMessage *f) {}
 
 void SimpleFileSystemTask::Run() {
-  dprint("\n");
-  dlog("SimpleFileSystemTask Run!\n");
+  DPRINT("\n");
+  DLOG("SimpleFileSystemTask Run!\n");
 
   mDiskCache = new BSparseArray(4096);
   // create message port to get requests from applications
@@ -260,24 +266,24 @@ void SimpleFileSystemTask::Run() {
   // we send read/write requests messages to mDiskDevice(ada.device) message port
   mAtaPort = ENull;
   while (!mAtaPort) {
-    dlog("  Finding port(%s)\n", mDiskDevice);
+    DLOG("  Finding port(%s)\n", mDiskDevice);
     Forbid();
     mAtaPort = gExecBase.FindMessagePort(mDiskDevice);
     Permit();
     if (!mAtaPort) {
-      dlog("  Port(%s) not found, sleeping\n", mDiskDevice);
+      DLOG("  Port(%s) not found, sleeping\n", mDiskDevice);
       Sleep(1);
     }
   }
-  dlog("  found ata port %x\n", mAtaPort);
+  DLOG("  found ata port %x\n", mAtaPort);
 
   // we get replies to our messages at our private replyPort
   mAtaReplyPort = CreateMessagePort();
 
   // we need to read the root sector
-  dlog("  SimpleFileSystemTask read sector %d from unit %d\n", 9, mUnit);
+  DLOG("  SimpleFileSystemTask read sector %d from unit %d\n", 9, mUnit);
   mAtaMessage = AtaMessage::CreateReadMessaage(mAtaReplyPort, mUnit, 9, &this->mRootSector, 1);
-  dlog("  mAtaMessage created %x\n", mAtaMessage);
+  DLOG("  mAtaMessage created %x\n", mAtaMessage);
 
   CopyMemory(&this->mRootSector, Sector(0), 512);
 
@@ -319,9 +325,9 @@ void SimpleFileSystemTask::Run() {
           RemoveFile(f);
           break;
         default:
-	  dprint("\n\n");
-          dlog("*** SimpleFileSystem: unknown command %d\n", f->mCommand);
-	  dprint("\n\n");
+          DPRINT("\n\n");
+          DLOG("*** SimpleFileSystem: unknown command %d\n", f->mCommand);
+          DPRINT("\n\n");
           bochs;
       }
       f->Reply();

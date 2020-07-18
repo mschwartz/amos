@@ -13,9 +13,6 @@ BSparseArrayNode::~BSparseArrayNode() {
 BSparseArray::BSparseArray(const TInt aSparseArrayBuckets) {
   mCount = 0;
   mSparseArrayBuckets = aSparseArrayBuckets;
-  // mDiskCache = new BSparseArray(mSparseArrayBuckets);
-  dlog("construct BSparseArray(%d)\n", mSparseArrayBuckets);
-  // mSparseArrayLists = new BList[aSparseArrayBuckets];
 }
 
 BSparseArray::~BSparseArray() {
@@ -25,21 +22,16 @@ BSparseArray::~BSparseArray() {
       delete node;
     }
   }
-  // delete[] mSparseArrayLists;
 }
 
 BSparseArrayNode *BSparseArray::Find(const TInt64 aKey) {
-  // dlog("BSParsaeArray::Find(%d) buckets(%d)\n", aKey, mSparseArrayBuckets);
   TInt64 index = aKey % mSparseArrayBuckets;
-  // dlog("index(%d)\n", index);
   BList *list = (BList *)&mSparseArrayLists[index];
-  // dlog("list(%x)\n", list);
 
   for (BSparseArrayNode *node = (BSparseArrayNode *)list->First();
        !list->End(node);
        node = (BSparseArrayNode *)node->mNext) {
 
-    // dlog("node(%x)\n", node);
     if (node->mSparseKey == aKey) {
       return node;
     }

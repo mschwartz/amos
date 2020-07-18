@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Exec/ExecBase.h>
 #include <Exec/x86/idt.h>
 #include <posix/string.h>
@@ -86,12 +89,12 @@ static TIsrHandler interrupt_handlers[INTERRUPTS];
 extern "C" bool kernel_isr(TInt64 aIsrNumber) {
   cli();
 
-  // dlog("kernel_isr %d\n", aIsrNumber);
+  // DLOG("kernel_isr %d\n", aIsrNumber);
 
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {
     const char *desc = IDT::InterruptDescription(current_task->isr_num);
-    dlog("no handler: %d(%d) %s\n", aIsrNumber, current_task->isr_num, desc);
+    DLOG("no handler: %d(%d) %s\n", aIsrNumber, current_task->isr_num, desc);
     return false;
   }
 

@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Types.h>
 #include <Exec/Memory.h>
 #include <Exec/BBase.h>
@@ -21,6 +24,43 @@
 
 #ifdef KERNEL
 
+extern "C" TAny *ExtendChipRam(TUint64 aIncrement) {
+  extern void *chip_memory;
+  extern void *chip_memory_end;
+  static TUint8 *sChipBreak = ENull;
+  static void *end = &chip_memory_end;
+
+  if (sChipBreak == ENull) {
+    sChipBreak = (TUint8 *)&chip_memory;
+    DLOG("ExtendChipRam(0x%x)\n", sChipBreak);
+  }
+
+  if (aIncrement == 0) {
+    if (sChipBreak > end) {
+      DLOG("AllocMem(%d) OUT OF CHIP MEMORY\n", aIncrement);
+      bochs;
+      return ENull;
+    }
+    return sChipBreak;
+  }
+
+  if (sChipBreak > end) {
+    DLOG("OUT OF CHIP MEMORY\n", sChipBreak, end);
+    bochs;
+    return ENull;
+  }
+
+  void *ret = sChipBreak;
+  sChipBreak = &sChipBreak[aIncrement];
+  if (sChipBreak > end) {
+    DLOG("OUT OF CHIP MEMORY\n", sChipBreak, end);
+    bochs;
+    return ENull;
+  }
+
+  return ret;
+}
+
 extern "C" TAny *ExtendDataSegment(TUint64 aIncrement) {
   extern void *kernel_end;
   static TUint8 *sProgramBreak = ENull;
@@ -41,7 +81,12 @@ extern "C" TAny *ExtendDataSegment(TUint64 aIncrement) {
 class Chunk : public BBase {
 public:
   Chunk *mNext, *mPrev;
-  TUint64 mSize;
+  TUint64 mSize; // high bit = 1 means MEMF_CHIP
+
+public:
+  void Dump() {
+    dlog("Chunk(%x) mNext(%x) mPrev(%x) mSize(%016x)\n", this, mNext, mPrev, mSize);
+  }
 
 public:
   void InsertBeforeChunk(Chunk *aNextChunk) {
@@ -65,9 +110,9 @@ public:
     mNext->mPrev = mPrev;
     mPrev->mNext = mNext;
   }
-
 };
 
+const TUint64 CHUNK_CHIP = 0x8000000000000000;
 class ChunkList : public Chunk {
 public:
   ChunkList() {
@@ -106,29 +151,50 @@ static ChunkList sFreeChunks;
 
 TAny *AllocMem(TInt64 aSize, TInt aFlags) {
   Chunk *ret = ENull;
+
+  // search for free chunk of desired size
   for (Chunk *c = sFreeChunks.First(); !sFreeChunks.End(c); c = c->mNext) {
-    if (c->mSize == aSize) {
+    if (aFlags & MEMF_CHIP) {
+      // mSize will have CHUNK_CHIP bit set if the Chunk is in Chip RAM
+      if (c->mSize == (aSize | CHUNK_CHIP)) {
+        c->Remove();
+        ret = c;
+        break;
+      }
+    }
+    else if (c->mSize == aSize) {
       c->Remove();
       ret = c;
+      break;
     }
   }
-  if (ret == ENull) {
-    ret = (Chunk *)ExtendDataSegment(sizeof(Chunk) + aSize);
-  }
 
-  ret->mSize = aSize;
+  if (ret == ENull) {
+    // no Chunk found
+    if (aFlags & MEMF_CHIP) {
+      ret = (Chunk *)ExtendChipRam(sizeof(Chunk) + aSize);
+      ret->mSize = aSize | CHUNK_CHIP;
+      DLOG("New CHIP Chunk(%x)\n", ret);
+      ret->Dump();
+    }
+    else {
+      ret = (Chunk *)ExtendDataSegment(sizeof(Chunk) + aSize);
+      ret->mSize = aSize;
+    }
+  }
 
   TUint8 *p = (TUint8 *)ret;
   TUint8 *mem = &p[sizeof(Chunk)];
   if (aFlags & MEMF_CLEAR) {
     SetMemory8(mem, 0, aSize);
   }
+
   return mem;
 }
 
 void FreeMem(TAny *aPtr) {
   // TODO combine this Chunk with any existing that are contiguous
-  TUint8 *p = (TUint8 *) aPtr;
+  TUint8 *p = (TUint8 *)aPtr;
   Chunk *c = (Chunk *)(p - sizeof(Chunk));
   sFreeChunks.AddHead(*c);
 }

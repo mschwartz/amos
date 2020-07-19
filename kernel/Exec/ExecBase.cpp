@@ -61,8 +61,55 @@ public:
     DLOG("  initialize mouse \n");
     gExecBase.AddDevice(new MouseDevice());
 
-    DLOG("  initialize ata disk \n");
-    gExecBase.AddDevice(new AtaDevice(ENull));
+    // loop through PCI devices and add Devices to handle them
+    for (TPciDevice *d = gExecBase.FirstPciDevice(); !gExecBase.EndPciDevices(d); d = gExecBase.NextPciDevice((d))) {
+      switch (d->mClass) {
+        case PCI_CLASS_UNCLASSIFIED:
+          break;
+        case PCI_CLASS_MASS_STORAGE_CONTROLLER:
+          DLOG("  initialize ata disk \n");
+          gExecBase.AddDevice(new AtaDevice(d));
+          break;
+        case PCI_CLASS_NETWORK_CONTROLLER:
+          break;
+        case PCI_CLASS_DISPLAY_CONTROLLER:
+          break;
+        case PCI_CLASS_MULTIMEDIA_CONTROLLER:
+          break;
+        case PCI_CLASS_MEMORY_CONTROLLER:
+          break;
+        case PCI_CLASS_BRIDGE_DEVICE:
+          break;
+        case PCI_CLASS_SIMPLE_COMMUNICATION_CONTROLLER:
+          break;
+        case PCI_CLASS_BASE_SYATEM_PERIPHERAL:
+          break;
+        case PCI_CLASS_INPUT_DEVICE_CONTROLLER:
+          break;
+        case PCI_CLASS_DOCKING_STATION:
+          break;
+        case PCI_CLASS_PROCESSOR:
+          break;
+        case PCI_CLASS_SERIAL_BUS_CONTROLLER:
+          break;
+        case PCI_CLASS_WIRELESS_CONTROLLER:
+          break;
+        case PCI_CLASS_INTELLIGENT_CONTROLLER:
+          break;
+        case PCI_CLASS_SATELLITE_COMMUNICATION_CONTROLLER:
+          break;
+        case PCI_CLASS_ENCRYPTION_CONTROLLER:
+          break;
+        case PCI_CLASS_SIGNAL_PROCESSING_CONTROLLER:
+          break;
+        case PCI_CLASS_PROCESSING_ACCELERATOR:
+          break;
+        case PCI_CLASS_NON_ESSENTIAL_INSTRUMENTATION:
+          break;
+        case PCI_CLASS_RESERVED:
+          break;
+      }
+    }
 
     DLOG("  initialize file system\n");
     gExecBase.AddFileSystem(new SimpleFileSystem("ata.device", 0, gSystemInfo.mRootSector));

@@ -1,5 +1,5 @@
-#ifndef AMOS_DEVICES_DMA_H
-#define AMOS_DEVICES_DMA_H
+#ifndef AMOS_DEVICES_ATA_DMA_H
+#define AMOS_DEVICES_ATA_DMA_H
 
 // DMA
 

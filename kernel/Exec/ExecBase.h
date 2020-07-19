@@ -9,6 +9,7 @@
 #include <Exec/BTask.h>
 #include <Exec/BProcess.h>
 #include <Exec/Random.h>
+#include <Exec/x86/pci.h>
 
 extern "C" TUint64 GetFlags();
 extern "C" void SetFlags(TUint64 aFlags);
@@ -168,7 +169,6 @@ protected:
   IDT *mIDT;
   PIC *mPIC;
   ACPI *mACPI;
-  PCI *mPCI;
 
 public:
   PS2 *GetPS2() { return mPS2; }
@@ -248,8 +248,12 @@ protected:
 public:
   void AddDevice(BDevice *aDevice);
   BDevice *FindDevice(const char *aName);
+  TPciDevice *FirstPciDevice() { return mPCI->FirstDevice(); }
+  TBool EndPciDevices(TPciDevice *aDevice) { return mPCI->EndDevices(aDevice); }
+  TPciDevice *NextPciDevice(TPciDevice *aDevice) { return mPCI->NextDevice(aDevice); }
 
 protected:
+  PCI *mPCI;
   BDeviceList mDeviceList;
 
   //

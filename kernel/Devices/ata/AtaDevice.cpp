@@ -4,7 +4,7 @@
 #include <Exec/x86/cpu.h>
 
 #define DEBUGME
-#undef DEBUGME
+// #undef DEBUGME
 
 #include "ata.h"
 
@@ -17,10 +17,14 @@
  *******************************************************************************/
 
 AtaDevice::AtaDevice(TPciDevice *aPciDevice) : BDevice("ata.device") {
+  DLOG("new AtaDevice(%x)\n", aPciDevice);
   mIsPresent = ETrue;
   mPciDevice = aPciDevice;
+  mPciDevice->Dump();
+  mBusMasterPort = mPciDevice->mBar4 & 0xfffc;
+  DLOG("Bus Master Port (%x)\n", mBusMasterPort);
   gExecBase.AddTask(new AtaTask(this));
-  dlog("  Added AtaTask\n");
+  DLOG("  Added AtaTask\n");
 }
 
 AtaDevice::~AtaDevice() {

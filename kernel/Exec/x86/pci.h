@@ -6,6 +6,28 @@
 #include <Exec/BBase.h>
 #include <Types/BList.h>
 
+const TUint8 PCI_CLASS_UNCLASSIFIED = 0x00;
+const TUint8 PCI_CLASS_MASS_STORAGE_CONTROLLER = 0x01;
+const TUint8 PCI_CLASS_NETWORK_CONTROLLER = 0x02;
+const TUint8 PCI_CLASS_DISPLAY_CONTROLLER = 0x03;
+const TUint8 PCI_CLASS_MULTIMEDIA_CONTROLLER = 0x04;
+const TUint8 PCI_CLASS_MEMORY_CONTROLLER = 0x05;
+const TUint8 PCI_CLASS_BRIDGE_DEVICE = 0x06;
+const TUint8 PCI_CLASS_SIMPLE_COMMUNICATION_CONTROLLER = 0x07;
+const TUint8 PCI_CLASS_BASE_SYATEM_PERIPHERAL = 0x08;
+const TUint8 PCI_CLASS_INPUT_DEVICE_CONTROLLER = 0x09;
+const TUint8 PCI_CLASS_DOCKING_STATION = 0x0a;
+const TUint8 PCI_CLASS_PROCESSOR = 0x0b;
+const TUint8 PCI_CLASS_SERIAL_BUS_CONTROLLER = 0x0c;
+const TUint8 PCI_CLASS_WIRELESS_CONTROLLER = 0x0d;
+const TUint8 PCI_CLASS_INTELLIGENT_CONTROLLER = 0x0e;
+const TUint8 PCI_CLASS_SATELLITE_COMMUNICATION_CONTROLLER = 0x0f;
+const TUint8 PCI_CLASS_ENCRYPTION_CONTROLLER = 0x10;
+const TUint8 PCI_CLASS_SIGNAL_PROCESSING_CONTROLLER = 0x11;
+const TUint8 PCI_CLASS_PROCESSING_ACCELERATOR = 0x12;
+const TUint8 PCI_CLASS_NON_ESSENTIAL_INSTRUMENTATION = 0x13;
+const TUint8 PCI_CLASS_RESERVED = 0x14;
+
 struct TPciDevice : public BNode {
   TUint32 mAddress = 0;
   TUint8 mBus = 0;
@@ -45,6 +67,9 @@ public:
   TPciDevice(TUint8 aBus, TUint8 aDevice, TUint8 aFunction);
 
 public:
+  TBool IsAtaDevice() { return mClass == 1; }
+
+public:
   void Dump() {
     dprint("\n\n");
     dlog("PCIDevice(%s)\n", mNodeName);
@@ -65,28 +90,6 @@ public:
   }
 };
 
-#if 0
-struct PCIDevice : public BNode {
-  TUint16 mBus, mDevice, mFunction;
-  TUint32 mPortBase;
-  TUint16 mVendorId, mDeviceId;
-  TUint32 mBar0, mBar1, mBar2, mBar3, mBar4, mBar5, mBar6;
-  TUint8 mClassId, mSubclassId, mInterfaceId, mRevision, mIRQ;
-
-public: 
-  PCIDevice(const char *aName) : BNode(aName) {}
-public:
-  void Dump() {
-    dprint("\n\n");
-    dlog("PCIDevice(%s)\n", mNodeName);
-    dlog("     mVendorId: %x\n", mVendorId);
-    dlog("     mDeviceId: %x\n", mDeviceId);
-    dlog("      mClassId: %x\n", mClassId);
-    dlog("   mSubclassId: %x\n", mSubclassId);
-  }
-};
-#endif
-
 class PCI : public BBase {
 public:
   PCI();
@@ -96,59 +99,13 @@ protected:
   void CheckFunction(TUint8 aBus, TUint8 aDevice, TUint8 aFunction);
   void ScanBus(TUint8 aBusNumber);
 
+public:
+  TPciDevice *FirstDevice() { return (TPciDevice *)mDeviceList.First(); }
+  TBool EndDevices(TPciDevice *aDevice) { return mDeviceList.End(aDevice); }
+  TPciDevice *NextDevice(TPciDevice *aDevice) { return (TPciDevice *)mDeviceList.Next(aDevice); }
+
 protected:
   BList mDeviceList;
 };
-
-#if 0
-#define PCI_VENDOR_ID 0x00
-#define PCI_DEVICE_ID 0x02
-#define PCI_COMMAND 0x04
-#define PCI_STATUS 0x06      // 2
-#define PCI_REVISION_ID 0x08 // 1
-
-#define PCI_PROG_IF 0x09         // 1
-#define PCI_SUBCLASS 0x0a        // 1
-#define PCI_CLASS 0x0b           // 1
-#define PCI_CACHE_LINE_SIZE 0x0c // 1
-#define PCI_LATENCY_TIMER 0x0d   // 1
-#define PCI_HEADER_TYPE 0x0e     // 1
-#define PCI_BIST 0x0f            // 1
-#define PCI_BAR0 0x10            // 4
-#define PCI_BAR1 0x14            // 4
-#define PCI_BAR2 0x18            // 4
-#define PCI_BAR3 0x1C            // 4
-#define PCI_BAR4 0x20            // 4
-#define PCI_BAR5 0x24            // 4
-
-#define PCI_INTERRUPT_LINE 0x3C // 1
-
-#define PCI_SECONDARY_BUS 0x19 // 1
-
-#define PCI_TYPE_BRIDGE 0x0604
-#define PCI_TYPE_SATA 0x0106
-
-#define PCI_ADDRESS_PORT 0xCF8
-#define PCI_VALUE_PORT 0xCFC
-
-#define PCI_INVALID_VENDOR_ID 0xFFFF
-#define PCI_MULTIFUNCTION_DEVICE 0x80
-
-#define PCI_CLASS_CODE_MASS_STORAGE 0x01
-#define PCI_CLASS_CODE_BRIDGE_DEVICE 0x06
-
-#define PCI_SUBCLASS_IDE 0x01
-#define PCI_SUBCLASS_PCI_TO_PCI_BRIDGE 0x04
-
-#define PCI_COMMAND_REG_BUS_MASTER (1 << 2)
-
-struct pci_device {
-	int32_t address;
-	int32_t deviceID, vendorID;
-	uint32_t bar0, bar1, bar2, bar3, bar4, bar5, bar6;
-	struct list_head sibling;
-};
-
-#endif
 
 #endif

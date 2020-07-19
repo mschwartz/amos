@@ -16,7 +16,8 @@ ATA=		$(D)/ata/AtaDevice.o \
 		$(D)/ata/AtaTask.o \
 		$(D)/ata/AtaInterrupt.o \
 		$(D)/ata/ata_io.o \
-		$(D)/ata/dma.o
+		$(D)/ata/ata_pio.o \
+		$(D)/ata/ata_dma.o
 
 DEVICES= 	$(D)/KeyboardDevice.o \
 		$(D)/TimerDevice.o \

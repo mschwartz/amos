@@ -1,0 +1,4 @@
+#ifndef AMOS_DEVICES_ATA_PIO_H
+#define AMOS_DEVICES_ATA_PIO_H
+
+#endif

@@ -4,7 +4,7 @@
 #include <Devices/RtcDevice.h>
 
 #define DEBUGME
-#undef DEBUGME
+// #undef DEBUGME
 
 extern "C" TUint32 GetCS(), GetDS(), GetES(), GetFS(), GetGS(), GetSS(), GetRFLAGS();
 extern "C" void init_task_state(TTaskRegisters *t);
@@ -198,6 +198,7 @@ TUint64 BTask::Wait(TUint64 aSignalSet) {
     ENABLE;
   }
 
+  DLOG("WaitSignal\n");
   gExecBase.WaitSignal(this);
 
   {

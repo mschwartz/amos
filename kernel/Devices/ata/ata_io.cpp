@@ -1,8 +1,8 @@
 #define DEBUGME
-//#undef DEBUGME
+// #undef DEBUGME
 
 #include "ata_io.h"
-#include "dma.h"
+// #include "dma.h"
 
 void AtaTask::write_register(TUint8 aChannel, TUint8 aRegister, TUint8 aData) {
   if (aRegister > 0x07 && aRegister < 0x0C) {
@@ -54,31 +54,19 @@ void AtaTask::read_buffer(TUint8 aChannel, TUint8 aRegister, TUint8 *aBuffer, TU
   if (aRegister > 0x07 && aRegister < 0x0c) {
     write_register(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].mNoInterrupt);
   }
-  TUint16 port = 0;
+
   if (aRegister < 0x08) {
-    // port = mChannels[aChannel].mBase + aRegister - 0x00;
     insl(mChannels[aChannel].mBase + aRegister - 0x00, aBuffer, aWordCount);
   }
   else if (aRegister < 0x0c) {
-    // port = mChannels[aChannel].mBase + aRegister - 0x06;
     insl(mChannels[aChannel].mBase + aRegister - 0x06, aBuffer, aWordCount);
   }
   else if (aRegister < 0x0e) {
-    // port = mChannels[aChannel].mBase + aRegister - 0x0a;
     insl(mChannels[aChannel].mBase + aRegister - 0x0a, aBuffer, aWordCount);
   }
   else if (aRegister < 0x16) {
-    // port = mChannels[aChannel].mBase + aRegister - 0x03;
     insl(mChannels[aChannel].mBase + aRegister - 0x0e, aBuffer, aWordCount);
   }
-
-  DLOG("PORT(%x)  ", port);
-  // read aCount bytes
-  // for (TInt i = 0; i < aCount; i++) {
-  //   aBuffer[i] = inb(port);
-  //   DPRINT("%02x ", aBuffer[i] & 0xff);
-  // }
-  // DPRINT("\n");
 
   if (aRegister > 0x07 && aRegister < 0x0C) {
     write_register(aChannel, ATA_REG_CONTROL, mChannels[aChannel].mNoInterrupt);
@@ -300,139 +288,18 @@ void AtaTask::initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 BAR3,
   DPRINT("\n\n");
 }
 
-TBool AtaTask::dma_read_sector(TIdeDevice *aIdeDevice, TUint64 aLba, TUint8 *aBuffer) {
-  TUint32 bm = mDevice->BusMasterPort();
-
-  TUint64 buffer_address = (TUint64)mSectorBuffer,
-          prdt_address = (TUint64)mPrdt;
-
-  TPrd *prdt = (TPrd *)mPrdt;
-  TUint channel = aIdeDevice->mChannel; // Read the Channel.
-
-  DLOG("dma_io bm(0x%x) prdt_address(0x%x) buffer_address(0x%x)\n", bm, prdt_address, buffer_address);
-
-  wait_ready(channel, 0);
-  // stop
-  outb(bm, 0x00);
-
-  // set the prdt
-  outl(bm + 0x04, buffer_address);
-
-  // enable error/irq status
-  outb(bm + 0x02, inb(bm + 0x02) | 0x04 | 0x02);
-
-  // set read
-  outb(bm, 0x08);
-
-  wait_ready(channel, 0);
-
-  // ATA drive controls
-  write_register(channel, ATA_REG_CONTROL, 0x00);
-  write_register(channel, ATA_REG_HDDEVSEL, 0xe0 | (aIdeDevice->mDrive << 4));
-
-  io_wait(channel);
-  write_register(channel, ATA_REG_FEATURES, 0x00);
-
-  write_register(channel, ATA_REG_SECCOUNT0, 0);
-  write_register(channel, ATA_REG_LBA0, (aLba & 0xff000000) >> 24);
-  write_register(channel, ATA_REG_LBA1, (aLba & 0xff00000000) >> 32);
-  write_register(channel, ATA_REG_LBA2, (aLba & 0xff0000000000) >> 40);
-
-  write_register(channel, ATA_REG_SECCOUNT0, 0);
-  write_register(channel, ATA_REG_LBA0, (aLba & 0x0000ff) >> 0);
-  write_register(channel, ATA_REG_LBA1, (aLba & 0x00ff00) >> 0);
-  write_register(channel, ATA_REG_LBA2, (aLba & 0xff0000) >> 0);
-
-  write_register(channel, ATA_REG_COMMAND, DMA_READ_LBA48);
-  io_wait(channel);
-
-  // start the DMA!
-  outb(bm + 0x00, 0x08 | 0x01);
-
-  // wait for IO to complete
-  Wait(mSigMask);
-
-#if 0
-  while (1) {
-    int status = inportb(dev->bar4 + 0x02);
-    int dstatus = inportb(dev->io_base + ATA_REG_STATUS);
-    if (!(status & 0x04)) {
-      continue;
-    }
-    if (!(dstatus & ATA_SR_BSY)) {
-      break;
-    }
-  }
-#endif
-
-  // copy memory from our CHIP RAM to the caller's buffer
-  CopyMemory(aBuffer, mSectorBuffer, 512);
-
-  return ETrue;
-}
-
-TBool AtaTask::dma_read(TIdeDevice *aIdeDevice, TUint64 aLba, TUint8 *aBuffer, TInt aNumSectors) {
-  for (TInt n = 0; n < aNumSectors; n++) {
-    if (dma_read_sector(aIdeDevice, aLba, &aBuffer[n & 512])) {
-      return EFalse;
-    }
-    aLba++;
-  }
-  return ETrue;
-}
-
-TBool AtaTask::dma_write_sector(TIdeDevice *aIdeDevice, TUint64 aLba, TUint8 *aBuffer) {
-  // we DMA from mSectorBuffer which is in CHIP RAM (can't access caller's buffer)
-  CopyMemory(mSectorBuffer, aBuffer, 512);
-
-  TUint32 bm = mDevice->BusMasterPort();
-
-  TUint64 buffer_address = (TUint64)mSectorBuffer,
-          prdt_address = (TUint64)mPrdt;
-
-  TPrd *prdt = (TPrd *)mPrdt;
-  TUint channel = aIdeDevice->mChannel; // Read the Channel.
-  write_register(channel, ATA_REG_CONTROL, 0x02);
-
-  wait_ready(channel, 0);
-  write_register(channel, ATA_REG_HDDEVSEL, 0xe0 | (aIdeDevice->mDrive << 4));
-  wait_ready(channel, 0);
-
-  io_wait(channel);
-  write_register(channel, ATA_REG_FEATURES, 0x00);
-
-  write_register(channel, ATA_REG_SECCOUNT0, 0);
-  write_register(channel, ATA_REG_LBA0, (aLba & 0xff000000) >> 24);
-  write_register(channel, ATA_REG_LBA1, (aLba & 0xff00000000) >> 32);
-  write_register(channel, ATA_REG_LBA2, (aLba & 0xff0000000000) >> 40);
-
-  write_register(channel, ATA_REG_SECCOUNT0, 0);
-  write_register(channel, ATA_REG_LBA0, (aLba & 0x0000ff) >> 0);
-  write_register(channel, ATA_REG_LBA1, (aLba & 0x00ff00) >> 0);
-  write_register(channel, ATA_REG_LBA2, (aLba & 0xff0000) >> 0);
-
-  write_register(channel, ATA_REG_COMMAND, DMA_WRITE_LBA48);
-  io_wait(channel);
-
-  // start the DMA!
-  outb(bm + 0x00, 0x08 | 0x01);
-
-  // wait for IO to complete
-  Wait(mSigMask);
-  return ETrue;
-}
-
-TBool AtaTask::dma_write(TIdeDevice *aIdeDevice, TUint64 aLba, TUint8 *aBuffer, TInt aNumSectors) {
-  for (TInt n = 0; n < aNumSectors; n++) {
-    if (dma_write_sector(aIdeDevice, aLba, &aBuffer[n & 512])) {
-      return EFalse;
-    }
-    aLba++;
-  }
-  return ETrue;
-}
-
 TBool AtaTask::do_io(TIdeDevice *aIdeDevice, TUint64 aLba, TBool aWrite, TUint8 *aBuffer, TInt aNumSectors) {
+  // TBool dma = mDevice->BusMasterPort();
+  TBool dma = 0;
+
+  if (false && dma) {
+    return aWrite ? dma_write(aIdeDevice, aLba, aBuffer, aNumSectors) : dma_read(aIdeDevice, aLba, aBuffer, aNumSectors);
+  }
+  else {
+    return aWrite ? pio_write(aIdeDevice, aLba, aBuffer, aNumSectors) : pio_read(aIdeDevice, aLba, aBuffer, aNumSectors);
+  }
+
+  #if 0
   TInt lba_mode = 0,
        cmd;
 
@@ -445,17 +312,9 @@ TBool AtaTask::do_io(TIdeDevice *aIdeDevice, TUint64 aLba, TBool aWrite, TUint8 
   TUint16 cyl, i;
   TUint8 head, sect, err;
 
-  TBool dma = mDevice->BusMasterPort();
-  DLOG("do_io DMA(%x)\n", dma);
-
-  if (dma) {
-    return aWrite ? dma_write(aIdeDevice, aLba, aBuffer, aNumSectors) : dma_read(aIdeDevice, aLba, aBuffer, aNumSectors);
-  }
-
-  
   DSPACE();
 
-  if (aIdeDevice->mLba48) {
+  if (false && aIdeDevice->mLba48) {
     DLOG("  LBA48\n");
     lba_mode = 2;
     lba_io[0] = (aLba & 0x000000FF) >> 0;
@@ -467,7 +326,7 @@ TBool AtaTask::do_io(TIdeDevice *aIdeDevice, TUint64 aLba, TBool aWrite, TUint8 
     head = 0;      // Lower 4-bits of HDDEVSEL are not used here.
   }
   else if (aIdeDevice->mCapabilities & 0x200) {
-    DLOG("  LBA48\n");
+    DLOG("  LBA28\n");
     lba_mode = 1;
     lba_io[0] = (aLba & 0x00000FF) >> 0;
     lba_io[1] = (aLba & 0x000FF00) >> 8;
@@ -491,6 +350,7 @@ TBool AtaTask::do_io(TIdeDevice *aIdeDevice, TUint64 aLba, TBool aWrite, TUint8 
     head = (aLba + 1 - sect) % (16 * 63) / (63); // Head number is written to HDDEVSEL lower 4-bits.
   }
 
+  dma = 0;
   while (read_register(channel, ATA_REG_STATUS) & ATA_SR_BSY) {
     // Wait while busy.
   };
@@ -510,7 +370,7 @@ TBool AtaTask::do_io(TIdeDevice *aIdeDevice, TUint64 aLba, TBool aWrite, TUint8 
     write_register(channel, ATA_REG_LBA5, lba_io[5]);
   }
   DLOG("   Write LBAregisters\n");
-  write_register(channel, ATA_REG_SECCOUNT0, aNumSectors);
+  write_register(channel, ATA_REG_SECCOUNT0, 1);
   write_register(channel, ATA_REG_LBA0, lba_io[0]);
   write_register(channel, ATA_REG_LBA1, lba_io[1]);
   write_register(channel, ATA_REG_LBA2, lba_io[2]);
@@ -573,6 +433,7 @@ TBool AtaTask::do_io(TIdeDevice *aIdeDevice, TUint64 aLba, TBool aWrite, TUint8 
     write_register(channel, ATA_REG_COMMAND,
       (TUint8[]){ ATA_CMD_CACHE_FLUSH, ATA_CMD_CACHE_FLUSH, ATA_CMD_CACHE_FLUSH_EXT }[lba_mode]);
     wait_ready(channel, 0); // Polling.
+
   }
   else {
     DLOG("  READ SECTORS(%d)\n", aNumSectors);
@@ -583,10 +444,19 @@ TBool AtaTask::do_io(TIdeDevice *aIdeDevice, TUint64 aLba, TBool aWrite, TUint8 
         bochs;
         return EFalse;
       }
-      insw(bus, ptr, words);
-      ptr = &ptr[words];
+      dlog("PIO ");
+      for (TInt n = 0; n < 512; n++) {
+	TUint8 b = inb(bus);
+	dprint("%02x ", b);
+
+	*ptr++ = b;
+      }
+      break;
+      // insw(bus, ptr, words);
+      // ptr = &ptr[words];
     }
     DLOG("  READ COMPLETED\n");
   }
   return ETrue;
+  #endif
 }

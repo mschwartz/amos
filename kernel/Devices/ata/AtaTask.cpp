@@ -1,12 +1,12 @@
 #define DEBUGME
-// #undef DEBUGME
+#undef DEBUGME
 
 #include <Types.h>
 #include <Exec/ExecBase.h>
 #include <Devices/ata/AtaDevice.h>
 #include "AtaTask.h"
 #include "AtaInterrupt.h"
-#include "dma.h"
+#include "ata_dma.h"
 
 /********************************************************************************
  ********************************************************************************
@@ -20,12 +20,16 @@ AtaTask::AtaTask(AtaDevice *aDevice) : BTask("ata.device") {
     DLOG("can't AllocMem(MEMF_CHIP) for mSectorBuffer\n");
     bochs;
   }
-  mPrdt = (TUint8 *)AllocMem(sizeof(TPrd), MEMF_CHIP);
+  mPrdt = (TPrd *)AllocMem(sizeof(TPrd), MEMF_CHIP);
   if (mPrdt == ENull) {
     DLOG("can't AllocMem(MEMF_CHIP) for mPrdt\n");
     bochs;
   }
   DLOG("  mSectorBuffer(0x%x) mPrdt(%x)\n", mSectorBuffer, mPrdt);
+  TUint64 sb_addr = (TUint64)mSectorBuffer;
+  mPrdt->mPhysicalAddress = sb_addr;
+  mPrdt->mSize = ATA_IO_SIZE;
+  mPrdt->mEot = 0x8000;
 }
 
 AtaTask::~AtaTask() {

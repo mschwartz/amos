@@ -65,18 +65,12 @@ public:
 public:
   TBool IsPresent() { return mIsPresent; }
   TUint64 BusMasterPort() {
-    if (mPciDevice->mBar4 & 1) {
-      return mPciDevice->mBar4 & 0xFFFFFFFC;
-    }
-    else {
-      dlog("invalid ATA bus master register %x\n", mPciDevice->mBar4);
-      bochs;
-    }
-    return 0;
+    return mPciDevice->mBar4 & 0xFFFFFFFC;
   }
 
 protected:
   TPciDevice *mPciDevice;
+  TUint16 mBusMasterPort;
   TBool mIsPresent;
 };
 

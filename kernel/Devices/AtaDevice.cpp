@@ -94,10 +94,10 @@
 
 // one of these for master and slave
 typedef struct {
-  TUint16 base;  // I/O Base.
-  TUint16 ctrl;  // Control Base
-  TUint16 bmide; // Bus Master IDE
-  TUint8 nIEN;   // nIEN (No Interrupt);
+  TUint16 mBasePort;    // I/O Base.
+  TUint16 mControlBase; // Control Base
+  TUint16 mDmaPort;     // Bus Master IDE
+  TUint8 nIEN;          // nIEN (No Interrupt);
 } TIdeChannelRegisters;
 
 typedef struct _tag_TIdeDevice {
@@ -190,16 +190,16 @@ protected:
       ide_write(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].nIEN);
     }
     if (aRegister < 0x08) {
-      outb(mChannels[aChannel].base + aRegister - 0x00, aData);
+      outb(mChannels[aChannel].mBasePort + aRegister - 0x00, aData);
     }
     else if (aRegister < 0x0C) {
-      outb(mChannels[aChannel].base + aRegister - 0x06, aData);
+      outb(mChannels[aChannel].mBasePort + aRegister - 0x06, aData);
     }
     else if (aRegister < 0x0E) {
-      outb(mChannels[aChannel].ctrl + aRegister - 0x0A, aData);
+      outb(mChannels[aChannel].mControlBase + aRegister - 0x0A, aData);
     }
     else if (aRegister < 0x16) {
-      outb(mChannels[aChannel].bmide + aRegister - 0x0E, aData);
+      outb(mChannels[aChannel].mDmaPort + aRegister - 0x0E, aData);
     }
     if (aRegister > 0x07 && aRegister < 0x0C) {
       ide_write(aChannel, ATA_REG_CONTROL, mChannels[aChannel].nIEN);
@@ -213,16 +213,16 @@ protected:
       ide_write(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].nIEN);
     }
     if (aRegister < 0x08) {
-      result = inb(mChannels[aChannel].base + aRegister - 0x00);
+      result = inb(mChannels[aChannel].mBasePort + aRegister - 0x00);
     }
     else if (aRegister < 0x0C) {
-      result = inb(mChannels[aChannel].base + aRegister - 0x06);
+      result = inb(mChannels[aChannel].mBasePort + aRegister - 0x06);
     }
     else if (aRegister < 0x0E) {
-      result = inb(mChannels[aChannel].ctrl + aRegister - 0x0A);
+      result = inb(mChannels[aChannel].mControlBase + aRegister - 0x0A);
     }
     else if (aRegister < 0x16) {
-      result = inb(mChannels[aChannel].bmide + aRegister - 0x0E);
+      result = inb(mChannels[aChannel].mDmaPort + aRegister - 0x0E);
     }
 
     if (aRegister > 0x07 && aRegister < 0x0C) {
@@ -236,31 +236,18 @@ protected:
     if (aRegister > 0x07 && aRegister < 0x0c) {
       ide_write(aChannel, ATA_REG_CONTROL, 0x80 | mChannels[aChannel].nIEN);
     }
-    TUint16 port = 0;
     if (aRegister < 0x08) {
-      // port = mChannels[aChannel].base + aRegister - 0x00;
-      insl(mChannels[aChannel].base + aRegister - 0x00, aBuffer, aCount);
+      insl(mChannels[aChannel].mBasePort + aRegister - 0x00, aBuffer, aCount);
     }
     else if (aRegister < 0x0c) {
-      // port = mChannels[aChannel].base + aRegister - 0x06;
-      insl(mChannels[aChannel].base + aRegister - 0x06, aBuffer, aCount);
+      insl(mChannels[aChannel].mBasePort + aRegister - 0x06, aBuffer, aCount);
     }
     else if (aRegister < 0x0e) {
-      // port = mChannels[aChannel].base + aRegister - 0x0a;
-      insl(mChannels[aChannel].base + aRegister - 0x0a, aBuffer, aCount);
+      insl(mChannels[aChannel].mBasePort + aRegister - 0x0a, aBuffer, aCount);
     }
     else if (aRegister < 0x16) {
-      // port = mChannels[aChannel].base + aRegister - 0x03;
-      insl(mChannels[aChannel].base + aRegister - 0x0e, aBuffer, aCount);
+      insl(mChannels[aChannel].mBasePort + aRegister - 0x0e, aBuffer, aCount);
     }
-
-    dlog("PORT(%x)  ", port);
-    // read aCount bytes
-    // for (TInt i = 0; i < aCount; i++) {
-    //   aBuffer[i] = inb(port);
-    //   dprint("%02x ", aBuffer[i] & 0xff);
-    // }
-    // dprint("\n");
 
     if (aRegister > 0x07 && aRegister < 0x0C) {
       ide_write(aChannel, ATA_REG_CONTROL, mChannels[aChannel].nIEN);
@@ -362,12 +349,12 @@ protected:
 
     TUint8 buffer[512];
     // set up controller ports
-    mChannels[ATA_PRIMARY].base = (BAR0 & 0xFFFFFFFC) + 0x1F0 * (!BAR0);
-    mChannels[ATA_PRIMARY].ctrl = (BAR1 & 0xFFFFFFFC) + 0x3F6 * (!BAR1);
-    mChannels[ATA_SECONDARY].base = (BAR2 & 0xFFFFFFFC) + 0x170 * (!BAR2);
-    mChannels[ATA_SECONDARY].ctrl = (BAR3 & 0xFFFFFFFC) + 0x376 * (!BAR3);
-    mChannels[ATA_PRIMARY].bmide = (BAR4 & 0xFFFFFFFC) + 0;   // Bus Master IDE
-    mChannels[ATA_SECONDARY].bmide = (BAR4 & 0xFFFFFFFC) + 8; // Bus Master IDE
+    mChannels[ATA_PRIMARY].mBasePort = (BAR0 & 0xFFFFFFFC) + 0x1F0 * (!BAR0);
+    mChannels[ATA_PRIMARY].mControlBase = (BAR1 & 0xFFFFFFFC) + 0x3F6 * (!BAR1);
+    mChannels[ATA_SECONDARY].mBasePort = (BAR2 & 0xFFFFFFFC) + 0x170 * (!BAR2);
+    mChannels[ATA_SECONDARY].mControlBase = (BAR3 & 0xFFFFFFFC) + 0x376 * (!BAR3);
+    mChannels[ATA_PRIMARY].mDmaPort = (BAR4 & 0xFFFFFFFC) + 0;   // Bus Master IDE
+    mChannels[ATA_SECONDARY].mDmaPort = (BAR4 & 0xFFFFFFFC) + 8; // Bus Master IDE
 
     // disable IRQs
     ide_write(ATA_PRIMARY, ATA_REG_CONTROL, 2);
@@ -480,10 +467,10 @@ protected:
 
     TUint8 lba_io[6];
 
-    unsigned int channel = aIdeDevice->Channel; // Read the Channel.
-    unsigned int slavebit = aIdeDevice->Drive;  // Read the Drive [Master/Slave]
-    unsigned int bus = mChannels[channel].base; // Bus Base, like 0x1F0 which is also data port.
-    unsigned int words = 256;                   // Almost every ATA drive has a sector-size of 512-byte.
+    unsigned int channel = aIdeDevice->Channel;      // Read the Channel.
+    unsigned int slavebit = aIdeDevice->Drive;       // Read the Drive [Master/Slave]
+    unsigned int bus = mChannels[channel].mBasePort; // Bus Base, like 0x1F0 which is also data port.
+    unsigned int words = 256;                        // Almost every ATA drive has a sector-size of 512-byte.
     unsigned short cyl, i;
     unsigned char head, sect, err;
 
@@ -522,6 +509,7 @@ protected:
       head = (aLba + 1 - sect) % (16 * 63) / (63); // Head number is written to HDDEVSEL lower 4-bits.
     }
 
+    // TBool dma = aIdeDevice->IsDma();
     TBool dma = EFalse; // dma not detected (yet)
     while (ide_read(channel, ATA_REG_STATUS) & ATA_SR_BSY)
       ; // Wait if busy.
@@ -695,92 +683,6 @@ protected:
   TIdeChannelRegisters mChannels[2];
   TIdeDevice mDevices[4];
 };
-
-/********************************************************************************
- ********************************************************************************
- *******************************************************************************/
-
-#if 0
-static TUint8 sector[512];
-class AtaTask : public BTask {
-public:
-  AtaTask(AtaDevice *aDevice) : BTask("ata.device") {
-    mDevice = aDevice;
-  }
-
-  ~AtaTask() {
-    dprint("\n");
-    dlog("  AtaTask Desctuctor!\n");
-    bochs;
-  }
-
-protected:
-  TUint64 mSigMask;
-  TUint8 mActiveDevice;
-
-public:
-  void Run() {
-    DISABLE;
-
-    dprint("\n");
-    dlog("AtaTask running\n");
-
-    TUint8 sigbit = AllocSignal(-1); // this is for signal from IRQ handler(s)
-    mSigMask = (1 << sigbit);
-    dlog("  AtaTask signal bit %d(%x)\n", sigbit, mSigMask);
-
-    // handlers for ATA1 and ATA2 IRQs
-    gExecBase.SetIntVector(EAta1IRQ, new AtaInterrupt(this, sigbit, 1));
-    gExecBase.SetIntVector(EAta2IRQ, new AtaInterrupt(this, sigbit, 2));
-    gExecBase.EnableIRQ(IRQ_ATA1);
-    gExecBase.EnableIRQ(IRQ_ATA2);
-
-    // initialize devices
-    mActiveDevice = 0;
-    init_drive(&drives[0], 0);
-    mActiveDevice = 1;
-    init_drive(&drives[1], 1);
-    mActiveDevice = 2;
-    init_drive(&drives[2], 2);
-    mActiveDevice = 3;
-    init_drive(&drives[3], 3);
-    mActiveDevice = -1;
-
-    MessagePort *port = CreateMessagePort("ata.device");
-    gExecBase.AddMessagePort(*port);
-
-    ENABLE;
-    TAtaDrive *drive0 = &drives[0];
-    while (1) {
-      TUint64 sigs = WaitPort(port, mSigMask);
-      if (sigs & mSigMask) {
-        dlog("  IRQ SIGNAL\n");
-      }
-      else {
-        while (AtaMessage *m = (AtaMessage *)port->GetMessage()) {
-          switch (m->mCommand) {
-            case EAtaReadBlocks: {
-              TUint8 *buf = (TUint8 *)m->mBuffer;
-              TUint64 lba = m->mLba;
-              for (TInt i = 0; i < m->mCount; i++) {
-                ata_read_block(&drives[m->mUnit], lba, buf);
-                buf += 512;
-                lba++;
-              }
-            } break;
-          }
-          m->Reply();
-        }
-      }
-    }
-  }
-
-protected:
-  TUint64 mSigMask;
-  AtaDevice *mDevice;
-  TInt32 mActiveDevice;
-};
-#endif
 
 /********************************************************************************
  ********************************************************************************

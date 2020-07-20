@@ -22,6 +22,12 @@ const TUint16 INVALID_VENDOR_ID = 0xffff;
 const TUint16 SUBCLASS_PCI_TO_PCI_BRIDGE = 0x04;
 const TUint16 CLASS_CODE_BRIDGE_DEVICE = 0x06;
 
+TPciDevice::TPciDevice(TUint8 aBus, TUint8 aDevice, TUint8 aFunction) : BNode("temp") {
+  mBus = aBus;
+  mDevice = aDevice;
+  mFunction = aFunction;
+}
+
 class PCI_IO {
 public:
   PCI_IO() {}
@@ -99,7 +105,7 @@ public:
 
 static PCI_IO sio;
 
-static const char *class_name(TInt16 aClass) {
+const char *PCI::ClassName(TUint8 aClass) {
   static const char *class_names[] = {
     [0x00] = "Unclassified",
     [0x01] = "Mass Storage Controller",
@@ -138,18 +144,23 @@ void PCI::CheckFunction(TUint8 aBus, TUint8 aDevice, TUint8 aFunction) {
     return;
   }
 
-  PCIDevice *dev = new PCIDevice(class_name(baseClass));
-  dev->mBus = aBus;
-  dev->mDevice = aDevice;
-  dev->mFunction = aFunction;
+  TPciDevice *dev = new TPciDevice(aBus, aDevice, aFunction);
+  dev->SetName(ClassName(baseClass));
   dev->mVendorId = vendorId;
   dev->mDeviceId = deviceId;
   dev->mClassId = baseClass;
   dev->mSubclassId = subClass;
+
+  dev->mBar0 = sio.ReadField(addr, 0x10);
+  dev->mBar1 = sio.ReadField(addr, 0x14);
+  dev->mBar2 = sio.ReadField(addr, 0x18);
+  dev->mBar3 = sio.ReadField(addr, 0x1c);
+  dev->mBar4 = sio.ReadField(addr, 0x20);
+  dev->mBar5 = sio.ReadField(addr, 0x24);
+
   mDeviceList.AddTail(*dev);
 
-  dlog("      vendorId(%x), baseClass %x(%s) subClass(%x) addr(%x) BRIDGE(%x) SUBBRIDGE(%x)\n",
-    vendorId, baseClass, class_name(baseClass), subClass, addr, CLASS_CODE_BRIDGE_DEVICE, SUBCLASS_PCI_TO_PCI_BRIDGE);
+  dev->Dump(EFalse);
 
   if ((baseClass == CLASS_CODE_BRIDGE_DEVICE) && (subClass == SUBCLASS_PCI_TO_PCI_BRIDGE)) {
     ScanBus(sio.GetSecondary(addr));
@@ -193,7 +204,7 @@ PCI::PCI() {
     }
   }
   dlog("Device List:\n");
-  for (PCIDevice *d = (PCIDevice *)mDeviceList.First(); !mDeviceList.End(d); d = (PCIDevice *)d->mNext) {
+  for (TPciDevice *d = (TPciDevice *)mDeviceList.First(); !mDeviceList.End(d); d = (TPciDevice *)d->mNext) {
     d->Dump();
   }
   dprint("\n\n");

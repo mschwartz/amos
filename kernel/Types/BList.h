@@ -29,6 +29,7 @@ public:
 
 public:
   const char *NodeName() { return mNodeName ? mNodeName : "No name"; }
+  void SetName(const char *aName);
 
 public:
   // make this node last on the list, if node is key

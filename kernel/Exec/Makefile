@@ -16,8 +16,12 @@ DEVICES= 	$(D)/KeyboardDevice.o \
 		$(D)/TimerDevice.o \
 		$(D)/RtcDevice.o \
 		$(D)/MouseDevice.o \
-		$(D)/SerialDevice.o \
-		$(D)/AtaDevice.o
+		$(D)/SerialDevice.o
+
+ATA=		$(D)/AtaDevice.o \
+		$(D)/ata/task.o \
+		$(D)/ata/interrupt.o \
+		$(D)/ata/dma.o
 
 X86=		x86/bochs.o \
 		x86/tss.o \
@@ -54,7 +58,7 @@ EXEC=		Memory.o \
 		BFileSystem.o \
 		ExecBase.o 
 
-OBJ= 	 	$(FS) $(TYPES) $(X86) $(DEVICES) $(GFX) $(FONTS) $(EXEC)
+OBJ= 	 	$(FS) $(TYPES) $(X86) $(DEVICES) $(ATA) $(GFX) $(FONTS) $(EXEC)
 
 LIB=		libexec.a
 

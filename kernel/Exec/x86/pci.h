@@ -6,23 +6,57 @@
 #include <Exec/BBase.h>
 #include <Types/BList.h>
 
-struct PCIDevice : public BNode {
+enum EPciClass {
+  EPciUnclassified,                     // [0x00] = "Unclassified",
+  EpciMassStorageController,            //   [0x01] = "Mass Storage Controller",
+  EPciNetworkController,                //   [0x02] = "Network Controller",
+  EPciDisplayController,                //   [0x03] = "Display Controller",
+  EPciMultimediaController,             //   [0x04] = "Multimedia Controller",
+  EPciMemoryController,                 // [0x05] = "Memory Controller",
+  EPciBridgeDevice,                     // [0x06] = "Bridge Device",
+  EPciSimpleCommunicationController,    // [0x07] = "Simple Communication Controller",
+  EPciBaseSystemPeripheral,             // [0x08] = "Base System Peripheral",
+  EPciInputDeviceContoller,             //   [0x09] = "Input Device Controller",
+  EPciDockingStation,                   //   [0x0a] = "Docking Station",
+  EPciProcessor,                        //   [0x0b] = "Processor",
+  EPciSerialBusController,              //   [0x0c] = "Serial Bus Controller",
+  EPciWirelessController,               //   [0x0d] = "Wireless Controller",
+  EPciIntellientController,             //   [0x0e] = "Intelligent Controller",
+  EPciSatelliteCommunicationController, //   [0x0f] = "Satellite Communication Controller",
+  EPciEncryptionController,             //   [0x10] = "Encryption Controller",
+  EPciSignalProcessingController,       //   [0x11] = "Signal Processing Controller",
+  EPciProcessingAccelerator,            //   [0x12] = "Processing Accelerator",
+  EPciNonEssentialInstrumentation,      //   [0x13] = "Non-Essential Instrumentation",
+  EPciReserved,                         //   [0x14] = "(Reserved)",
+  EPciMax = EPciReserved,
+};
+
+struct TPciDevice : public BNode {
   TUint16 mBus, mDevice, mFunction;
   TUint32 mPortBase;
   TUint16 mVendorId, mDeviceId;
-  TUint32 mBar0, mBar1, mBar2, mBar3, mBar4, mBar5, mBar6;
+  TUint32 mBar0, mBar1, mBar2, mBar3, mBar4, mBar5;
   TUint8 mClassId, mSubclassId, mInterfaceId, mRevision, mIRQ;
 
-public: 
-  PCIDevice(const char *aName) : BNode(aName) {}
 public:
-  void Dump() {
-    dprint("\n\n");
-    dlog("PCIDevice(%s)\n", mNodeName);
-    dlog("     mVendorId: %x\n", mVendorId);
-    dlog("     mDeviceId: %x\n", mDeviceId);
-    dlog("      mClassId: %x\n", mClassId);
-    dlog("   mSubclassId: %x\n", mSubclassId);
+  TPciDevice(TUint8 aBus, TUint8 aDevice, TUint8 aFunction);
+
+public:
+  void Dump(TBool aVerbose = ETrue) {
+    if (aVerbose) {
+      dprint("\n\n");
+      dlog("TPciDevice(%s)\n", mNodeName);
+      dlog("     mVendorId: %x\n", mVendorId);
+      dlog("     mDeviceId: %x\n", mDeviceId);
+      dlog("      mClassId: %x\n", mClassId);
+      dlog("   mSubclassId: %x\n", mSubclassId);
+      dlog("         mBars: 0(0x%04x) 1(0x%04x)  2(0x%04x) 3(0x%04x) 4(0x%04x) 5(0x%04x)\n", mBar0, mBar1, mBar2, mBar3, mBar4, mBar5);
+    }
+    else {
+      dlog("  TPciDevice(%s) mVendorId(0x%04x) mDeviceId(%0x04x) mClassId(0x%04x) mSubClassid(0x%04x)\n",
+        mNodeName, mVendorId, mDeviceId, mClassId, mSubclassId);
+      dlog("      mBars: 0(0x%04x) 1(0x%04x)  2(0x%04x) 3(0x%04x) 4(0x%04x) 5(0x%04x)\n", mBar0, mBar1, mBar2, mBar3, mBar4, mBar5);
+    }
   }
 };
 
@@ -31,63 +65,20 @@ public:
   PCI();
   ~PCI();
 
+public:
+  static const char *ClassName(TUint8 aClass);
+
 protected:
   void CheckFunction(TUint8 aBus, TUint8 aDevice, TUint8 aFunction);
   void ScanBus(TUint8 aBusNumber);
 
+public:
+  TPciDevice *First() { return (TPciDevice *)mDeviceList.First(); }
+  TPciDevice *Next(TPciDevice *aDevice) { return (TPciDevice *)mDeviceList.Next((BNode *)aDevice); }
+  TBool End(TPciDevice *aDevice) { return (TPciDevice *)mDeviceList.End((BNode *)aDevice); }
+
 protected:
   BList mDeviceList;
 };
-
-#if 0
-#define PCI_VENDOR_ID 0x00
-#define PCI_DEVICE_ID 0x02
-#define PCI_COMMAND 0x04
-#define PCI_STATUS 0x06      // 2
-#define PCI_REVISION_ID 0x08 // 1
-
-#define PCI_PROG_IF 0x09         // 1
-#define PCI_SUBCLASS 0x0a        // 1
-#define PCI_CLASS 0x0b           // 1
-#define PCI_CACHE_LINE_SIZE 0x0c // 1
-#define PCI_LATENCY_TIMER 0x0d   // 1
-#define PCI_HEADER_TYPE 0x0e     // 1
-#define PCI_BIST 0x0f            // 1
-#define PCI_BAR0 0x10            // 4
-#define PCI_BAR1 0x14            // 4
-#define PCI_BAR2 0x18            // 4
-#define PCI_BAR3 0x1C            // 4
-#define PCI_BAR4 0x20            // 4
-#define PCI_BAR5 0x24            // 4
-
-#define PCI_INTERRUPT_LINE 0x3C // 1
-
-#define PCI_SECONDARY_BUS 0x19 // 1
-
-#define PCI_TYPE_BRIDGE 0x0604
-#define PCI_TYPE_SATA 0x0106
-
-#define PCI_ADDRESS_PORT 0xCF8
-#define PCI_VALUE_PORT 0xCFC
-
-#define PCI_INVALID_VENDOR_ID 0xFFFF
-#define PCI_MULTIFUNCTION_DEVICE 0x80
-
-#define PCI_CLASS_CODE_MASS_STORAGE 0x01
-#define PCI_CLASS_CODE_BRIDGE_DEVICE 0x06
-
-#define PCI_SUBCLASS_IDE 0x01
-#define PCI_SUBCLASS_PCI_TO_PCI_BRIDGE 0x04
-
-#define PCI_COMMAND_REG_BUS_MASTER (1 << 2)
-
-struct pci_device {
-	int32_t address;
-	int32_t deviceID, vendorID;
-	uint32_t bar0, bar1, bar2, bar3, bar4, bar5, bar6;
-	struct list_head sibling;
-};
-
-#endif
 
 #endif

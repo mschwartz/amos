@@ -5,6 +5,8 @@
 #include "dma.h"
 #include "task.h"
 
+// reference: https://github.com/klange/toaruos/blob/96fe218d2f79998bcfcdc3c6d51444a209b5c279/modules/ata.c
+
 DMA::DMA(AtaTask *aTask, TUint16 aBusMasterPort) {
   DLOG("DMA CONSTRUCTOR\n");
   mTask = aTask;

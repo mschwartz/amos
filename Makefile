@@ -1,3 +1,5 @@
+OBJDIR=		./obj
+
 bare.img: 	boot/boot.img kernel/kernel.img tools/build-img
 	./tools/build-img boot/boot.img kernel/kernel.img
 

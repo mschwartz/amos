@@ -18,6 +18,26 @@ extern "C" void eputs(const char *s);
 
 extern "C" void sputc(char c);
 
+void dassert(TBool aValue, const char *aFormat, ...) {
+  if (aValue) {
+    return;
+  }
+  DISABLE;
+
+  va_list args;
+  va_start(args, aFormat);
+
+  char buf[512];
+  dprint("%020d %-16s ASSERT FAILED!", gExecBase.SystemTicks(), gExecBase.CurrentTaskName());
+  vsprintf(buf, aFormat, args);
+  dputs(buf);
+  va_end(args);
+
+  bochs;
+  ENABLE;
+  
+}
+
 void dputc(char c) {
   //  sputc(c);
   //    outb((int)c, 0xe9);

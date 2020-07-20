@@ -56,16 +56,26 @@ public:
   TUint32 mCount;
 };
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
+struct TPciDevice;
+
 class AtaDevice : public BDevice {
 public:
-  AtaDevice();
+  AtaDevice(TPciDevice *aPciDevice);
   ~AtaDevice();
 
-protected:
+public:
   TBool IsPresent() { return mIsPresent; }
+  TUint16 BusMasterPort();
+  TPciDevice *PciDevice() { return mPciDevice; }
 
 protected:
   TBool mIsPresent;
+  TPciDevice *mPciDevice;
+  TUint16 mBusMasterPort;
 };
 
 #endif

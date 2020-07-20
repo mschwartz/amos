@@ -168,7 +168,16 @@ protected:
   IDT *mIDT;
   PIC *mPIC;
   ACPI *mACPI;
-  PCI *mPCI;
+
+public:
+  // TPciDevice *FirstPciDevice() { return mPci->First(); }
+  // TPciDevice *NextPciDevice(TPciDevice *aDevice) { return mPci->Next(aDevice); }
+  // TPciDevice *EndPciDevices(TPciDevice *aDevice) { return mPci->End(aDevice); }
+
+  PCI *GetPci() { return mPci; }
+
+protected:
+  PCI *mPci;
 
 public:
   PS2 *GetPS2() { return mPS2; }
@@ -260,7 +269,7 @@ protected:
 
 protected:
   BFileSystemList mFileSystemList;
-  
+
 public:
   TUint64 SystemTicks() { return gSystemInfo.mMillis; }
 

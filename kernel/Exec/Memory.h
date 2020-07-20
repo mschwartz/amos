@@ -7,7 +7,7 @@
 enum EMemoryFlags {
   MEMF_ANY,
   MEMF_PUBLIC,
-  MEMF_CHIP,
+  MEMF_CHIP, // fits in TUint32 size address (e.g. for DMA)
   MEMF_FAST,
   MEMF_CLEAR
 };

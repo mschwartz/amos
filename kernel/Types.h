@@ -1,6 +1,22 @@
 #ifndef BTYPES_H
 #define BTYPES_H
 
+#ifdef DEBUGME
+#define DLOG(...) dlog(__VA_ARGS__)
+#define DPRINT(...) dprint(__VA_ARGS__)
+#define DSPACE(...) dprint("\n\n")
+#define DBANNER(...) dprint("\n\n================================================\n")
+// ASSERT(value, fmt, ...)
+#define ASSERT(...) dassert(__VA_ARGS__);
+#else
+#define DLOG(...) do {} while (0);
+#define DPRINT(...) do {} while (0);
+#define DSPACE(...) do {} while (0);
+#define DBANNER(...) do {} while (0);
+// ASSERT(value, fmt, ...)
+#define ASSERT(...) do {} while (0);
+#endif
+
 #define PACKED __attribute__ ((packed))
 #define ALIGN2 __attribute__ ((aligned (2)))
 #define ALIGN4 __attribute__ ((aligned (4)))
@@ -187,6 +203,7 @@ inline void dbreak() {
 extern void dputc(char c);
 extern void dlog(const char *fmt, ...);
 extern void dputs(const char *s);
+extern void dassert(TBool aValue, const char *fmt, ...);
 extern void dprintf(const char *fmt, ...);
 extern void dprint(const char *fmt, ...);
 

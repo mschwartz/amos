@@ -58,6 +58,7 @@ TBool DMA::ReadSector(TUint64 aLba, TAny *aBuffer) {
   outb(dma, 0);
   // SET the PRDT
   outl(dma + 4, (TUint64)mPrdt);
+
   // enable error, irq status
   outb(dma + 2, inb(dma + 2) | 6);
   // set direction to read
@@ -109,17 +110,22 @@ TBool DMA::ReadSector(TUint64 aLba, TAny *aBuffer) {
 
   outb(dma, 0x08 | 0x01); // start DMA!
 
+#if 0
+  mTask->WaitIrq();
+#else
   // wait for DMA?
   for (;;) {
-    TUint8 status = inb(dma +2);
+    TUint8 status = inb(dma + 2);
     TUint8 dstatus = inb(ata + ATA_REG_STATUS);
     if ((status & 0x04) == 0) {
+      mTask->usleep(1); // so we don't hog the CPU
       continue;
     }
     if ((dstatus & ATA_SR_BSY) == 0) {
       break;
     }
   }
+#endif
 
   CopyFromDmaBuffer(aBuffer, DMA_IO_SIZE);
 
@@ -132,7 +138,7 @@ TBool DMA::Read(TUint64 aLba, TAny *aBuffer, TInt32 aNumSectors) {
     if (!ReadSector(aLba, buf)) {
       return EFalse;
     }
-    buf+= 512;
+    buf += 512;
   }
   return ETrue;
 }

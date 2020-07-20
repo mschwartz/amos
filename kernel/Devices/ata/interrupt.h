@@ -12,12 +12,7 @@ class AtaTask;
 
 class AtaInterrupt : public BInterrupt {
 public:
-  AtaInterrupt(AtaTask *aTask, TUint8 aSignalBit, TInt64 aDevice)
-      : BInterrupt("ata.device", LIST_PRI_MAX, (TAny *)aDevice) {
-    mTask = aTask;
-    mSignalBit = aSignalBit;
-    mDevice = aDevice;
-  }
+  AtaInterrupt(AtaTask *aTask, TUint8 aSignalBit, TInt64 aDevice);
 
 public:
   TBool Run(TAny *aData);

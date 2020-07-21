@@ -1,105 +1,50 @@
 TOPDIR=		$(shell git rev-parse --show-toplevel)
 
-FONTDIR=	"$(TOPDIR)/kernel/Graphics/font/console"
-
+# Where we compile our .o
 BUILDDIR=	$(TOPDIR)/obj
-INCLUDE_PATH=	-I$(TOPDIR)/kernel -I$(TOPDIR)/kernel/posix -I$(TOPDIR)/kernel/include -I$(TOPDIR)
+ISODIR=		$(TOPDIR)/iso
+BAREFILE=	$(ISODIR)/bare.img
 
-SOURCES=	$(shell find kernel -name '*.cpp')
-OBJECTS= 	$(addprefix $(BUILDDIR)/, $(SOURCES:.cpp=.o))
+include mk/build-tools.mk
+include mk/cflags.mk
 
-EXAMPLESRC=	$(shell find Examples -name '*.cpp')
-EXAMPLESOBJ= 	$(addprefix $(BUILDDIR)/, $(EXAMPLESRC:.cpp=.o))
+#
+# Defualt rule just prints "use build.sh"
+# Using build.sh runs the build using the cross compiler in a docker container.
+#
+invalid:
+	echo "use build.sh"
 
-ASM=		$(shell find kernel -name '*.asm')
-ASMOBJECTS= 	$(addprefix $(BUILDDIR)/, $(ASM:.asm=.o))
+#
+###
+#
+c.img:	$(BAREFILE)
+	@echo ""
+	@echo ""
+	@echo "    Making c.img"
 
-KFONTNAME=	cp866-8x16
-KFONT=		$(KFONTNAME).psf
-KFONTGZ=	$(KFONT).gz
-FONTFILE=	$(FONTDIR)/$(KFONT)
-KFONTOBJ=	$(BUILDDIR)/$(KFONTNAME).o
-
-KFONTSYMBASE=	_binary_$(subst -,_,$(subst /,_,$(KFONTOBJ)))
-KFONTSYMSTART=	$(subst .o,_psf_start,$(KFONTSYMBASE))
-KFONTSYMEND=	$(subst .o,_psf_end,$(KFONTSYMBASE))
-KFONTSYMSIZE=	$(subst .o,_psf_size,$(KFONTSYMBASE))
-
-CFLAGS= 	-DKFONTSTART="$(KFONTSYMSTART)" \
-		-mno-red-zone \
-		-nostartfiles \
-		-ffreestanding \
-		-nostdlib \
-		-m64 \
-		-fno-stack-protector \
-		-fno-exceptions \
-		-fno-use-cxa-atexit \
-		-fno-rtti \
-		-DKERNEL \
-		-DKFONTNAME="$(KFONTNAME)" \
-		$(KGFX) \
-		-DKFONTEND="$(KFONTSYMEND)" \
-		-DKFONTSIZE="$(KFONTSYMSIZE)" 
-
-GCC=		gcc
-GPP=		g++
-LD=		ld
-AR=		ar
-RANLIB=		ranlib
-OBJCOPY=	objcopy
-GZIP=		gzip
-NASM=		nasm
+	@rm -f c.img
+	@bximage -q -mode=create -hd=12M -imgmode=flat c.img c.img
+	@cat < $(BAREFILE) 1<>c.img
+	@chmod 644 c.img
+	@echo ""
+	@echo ""
+	@ls -l  */*.img
+	@echo ""
+	@ls -l c.img
 
 
-bare.img:	kernel.elf
-# link
-
-kernel.elf:	$(KFONTOBJ) $(ASMOBJECTS) $(OBJECTS) $(EXAMPLESOBJ)
-	@echo "LINKING"
-	@echo "     KFONTSYMSTART" $(KFONTSYMSTART)
-	@echo "       KFONTSYMEND" $(KFONTSYMEND)
-	@echo "      KFONTSYMSIZE" $(KFONTSYMSIZE)
-	@nm $(KFONTOBJ)
-	@ld  -e _start -Tkernel/config.ld -o kernel.elf $(KFONTOBJ) $(ASMOBJECTS) $(OBJECTS) $(EXAMPLESOBJ)
-
-$(BUILDDIR)/%.o: %.cpp
-	@mkdir -p $(@D)
-	@echo "     "CC $*.cpp
-	@$(GCC) -O2 -c \
-		$(CFLAGS) \
-		$(INCLUDE_PATH) \
-		-o $@ $<
-
-$(BUILDDIR)/%.o: %.asm
-	@mkdir -p $(@D)
-	@echo "     "AS $*.asm
-	@$(NASM) -I$(TOPDIR)/boot -f elf64 -o $@  $<
-
-$(KFONTOBJ): $(KFONTFILE)
-	@echo "CREATING FONT" $(KFONTSYMBASE)
-	@mkdir -p $(BUILDDIR)
-
-	cp $(FONTFILE).gz $(BUILDDIR)
-	gunzip $(BUILDDIR)/$(KFONT).gz
-	$(OBJCOPY) -O elf64-x86-64 -B i386 -I binary $(BUILDDIR)/$(KFONT) $(KFONTOBJ)
-	rm -f $(BUILDDIR)/$(KFONT)
-
-
-# boot/boot.img: boot/*.asm boot/*.inc
-# 	+cd boot && make
-
-# kernel/kernel.img:
-# 	+cd kernel && make
-
-# tools/build-img:
-# 	+cd tools && make
+include mk/bare.mk
+include mk/kernel.mk
+include mk/boot.mk
 
 clean:
-	find . -name '*.o' -delete
-	find . -name '*.a' -delete
-	find . -name '*.raw' -delete
-	find . -name '*.elf' -delete
-	find . -name '*.psf' -delete
+	@find . -name '*.o' -delete
+	@find . -name '*.a' -delete
+	@find . -name '*.raw' -delete
+	@find . -name '*.elf' -delete
+	@find . -name '*.psf' -delete
+	@find . -name '*.img' -delete
+	@echo "Cleaned build files"
 
-run: 	bare.img
-	qemu-system-x86_64 bare.img
+-include $(DEPENDENCIES)

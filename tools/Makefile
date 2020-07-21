@@ -1,3 +1,5 @@
+include ../mk/build-tools.mk
+
 BUILDOBJ=	build-img.o
 
 GDTOBJ= 	generate-gdt.o
@@ -8,9 +10,11 @@ GDTOBJ= 	generate-gdt.o
 all: 	build-img generate-gdt
 
 build-img:	$(BUILDOBJ)
-	$(GCC) -o build-img $(BUILDOBJ) -lstdc++
+	@echo Build build-img
+	@$(GCC) -o build-img $(BUILDOBJ) -lstdc++
 
 generate-gdt:	$(GDTOBJ)
+	@echo Build generate-gdt
 	$(GCC) -o generate-gdt $(GDTOBJ) -lstdc++
 
 clean:

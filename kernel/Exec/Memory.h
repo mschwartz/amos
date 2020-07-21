@@ -12,6 +12,7 @@ enum EMemoryFlags {
   MEMF_CLEAR
 };
 
+extern void InitAllocMem();
 extern TAny *AllocMem(TInt64 aSize, int aFlags = MEMF_ANY);
 extern void FreeMem(TAny *aMemory);
 

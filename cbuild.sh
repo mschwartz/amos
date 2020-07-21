@@ -32,7 +32,8 @@ CRTEND_OBJ=`$GCC -print-file-name=crtend.o`
 
 #export KERNEL="crti.o $CRTBEGIN_OBJ main.o kernel_start.o $CRTEND_OBJ crtn.o "
 #export KERNEL="crti.o $CRTBEGIN_OBJ kernel_main.o kernel_start.o $CRTEND_OBJ crtn.o "
-export KERNEL="$CRTBEGIN_OBJ kernel_main.o kernel_start.o $CRTEND_OBJ "
+# export KERNEL="$CRTBEGIN_OBJ kernel_main.o kernel_start.o $CRTEND_OBJ "
+export KERNEL="kernel_main.o kernel_start.o"
 
 #echo $INCLUDE_PATH
 #echo $LIBS
@@ -160,7 +161,7 @@ echo ""
 rm -f c.img
 bximage -q -mode=create -hd=12M -imgmode=flat c.img c.img
 echo "cat < bare.img 1<>c.img"
-cat < bare.img 1<>c.img
+cat < iso/bare.img 1<>c.img
 chmod 644 c.img
 
 #cat boot.img kernel.img > drive.img

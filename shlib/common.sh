@@ -9,6 +9,26 @@ TOP_DIR=`git rev-parse --show-toplevel`
 #export RANLIB=/usr/bin/i686-elf-ranlib
 #export OBJCOPY=/usr/bin/i686-elf-objcopy
 
+FONTDIR="$TOP_DIR/kernel/Graphics/font/console"
+
+KFONTNAME="cp866-8x16"
+KFONT=$KFONTNAME.psf
+KFONTGZ=$KFONT.gz
+FONTFILE=$FONTDIR/$KFONT
+KFONTOBJ=$KFONTNAME.o
+
+KFONTSYMBASE="_binary_"`echo $KFONTOBJ | sed -e "s/-/_/g" | sed -e "s/\//_/g"`
+KFONTSYMSTART=`echo $KFONTSYMBASE | sed -e "s/.o/_psf_start/"`
+KFONTSYMEND=`echo $KFONTSYMBASE | sed -e "s/.o/_psf_end/"`
+KFONTSYMSIZE=`echo $KFONTSYMBASE | sed -e "s/.o/_psf_size/"`
+
+echo $KFONTSYMBASE $KFONTSYMSTART $KFONTSYMEND $KFONTSYMSIZE
+# exit
+# KFONTSYMBASE=$(subst -,_,$(subst /,_,$(KFONTOBJ)))
+# KFONTSYMSTART=$(subst .o,_psf_start,$(KFONTSYMBASE))
+# KFONTSYMEND=$(subst .o,_psf_end,$(KFONTSYMBASE))
+# KFONTSYMSIZE=$(subst .o,_psf_size,$(KFONTSYMBASE))
+
 
 export GCC=gcc
 export GPP=g++
@@ -60,6 +80,9 @@ export CFLAGS="\
 	-DKERNEL \
   	-DKFONTNAME=$KFONTNAME \
 	$KGFX \
+	-DKFONTEND=$KFONTSYMEND \
+	-DKFONTSTART=$KFONTSYMSTART \
+	-DKFONTSIZE=$KFONTSYMSIZE \
 	$INCLUDE_PATH \
 	"
 

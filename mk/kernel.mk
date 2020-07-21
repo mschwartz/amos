@@ -5,7 +5,7 @@
 ### KERNEL FONT
 FONTDIR=	"$(TOPDIR)/kernel/Graphics/font/console"
 
-KFONTNAME=	cp866-8x16
+#KFONTNAME=	cp866-8x16
 KFONT=		$(KFONTNAME).psf
 KFONTGZ=	$(KFONT).gz
 FONTFILE=	$(FONTDIR)/$(KFONT)

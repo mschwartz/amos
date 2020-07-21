@@ -5,6 +5,9 @@ BUILDDIR=	$(TOPDIR)/obj
 ISODIR=		$(TOPDIR)/iso
 BAREFILE=	$(ISODIR)/bare.img
 
+# name of console font to use by default
+KFONTNAME="cp866-8x16"
+
 include mk/build-tools.mk
 include mk/cflags.mk
 

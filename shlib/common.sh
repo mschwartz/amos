@@ -22,7 +22,7 @@ KFONTSYMSTART=`echo $KFONTSYMBASE | sed -e "s/.o/_psf_start/"`
 KFONTSYMEND=`echo $KFONTSYMBASE | sed -e "s/.o/_psf_end/"`
 KFONTSYMSIZE=`echo $KFONTSYMBASE | sed -e "s/.o/_psf_size/"`
 
-echo $KFONTSYMBASE $KFONTSYMSTART $KFONTSYMEND $KFONTSYMSIZE
+# echo $KFONTSYMBASE $KFONTSYMSTART $KFONTSYMEND $KFONTSYMSIZE
 # exit
 # KFONTSYMBASE=$(subst -,_,$(subst /,_,$(KFONTOBJ)))
 # KFONTSYMSTART=$(subst .o,_psf_start,$(KFONTSYMBASE))

@@ -30,6 +30,7 @@ extern "C" TAny *ExtendChipRam(TUint64 aIncrement) {
   static TUint8 *sChipBreak = ENull;
   static void *end = &chip_memory_end;
 
+  DLOG("ExtendChipRam(%d)\n", aIncrement);
   if (sChipBreak == ENull) {
     sChipBreak = (TUint8 *)&chip_memory;
     DLOG("ExtendChipRam(0x%x)\n", sChipBreak);
@@ -116,6 +117,11 @@ const TUint64 CHUNK_CHIP = 0x8000000000000000;
 class ChunkList : public Chunk {
 public:
   ChunkList() {
+    DLOG("ChunkList constructorn");
+    Init();
+  }
+  void Init() {
+    DLOG("ChunkList Init\n");
     mNext = (Chunk *)this;
     mPrev = (Chunk *)this;
   }
@@ -147,23 +153,35 @@ public:
   TBool End(Chunk *aChunk) { return aChunk == (Chunk *)this; }
 };
 
-static ChunkList sFreeChunks;
+static TUint8 sChunkListMem[sizeof(ChunkList)];
+static ChunkList *sFreeChunks = ENull;
+
+void InitAllocMem() {
+  if (!sFreeChunks) {
+    sFreeChunks = (ChunkList *)&sChunkListMem;
+    sFreeChunks->Init();
+  }
+}
 
 TAny *AllocMem(TInt64 aSize, TInt aFlags) {
   Chunk *ret = ENull;
+  DLOG("AllocMem aSize(%d) aFlags(%x)\n", aSize, aFlags);
 
   // search for free chunk of desired size
-  for (Chunk *c = sFreeChunks.First(); !sFreeChunks.End(c); c = c->mNext) {
+  for (Chunk *c = sFreeChunks->First(); !sFreeChunks->End(c); c = c->mNext) {
+    DLOG("Chunk(%x)\n", c);
     if (aFlags & MEMF_CHIP) {
       // mSize will have CHUNK_CHIP bit set if the Chunk is in Chip RAM
       if (c->mSize == (aSize | CHUNK_CHIP)) {
         c->Remove();
+        DLOG("AllocMem CHIP freeList HIT\n");
         ret = c;
         break;
       }
     }
     else if (c->mSize == aSize) {
       c->Remove();
+      DLOG("AllocMem freeList HIT\n");
       ret = c;
       break;
     }
@@ -171,6 +189,7 @@ TAny *AllocMem(TInt64 aSize, TInt aFlags) {
 
   if (ret == ENull) {
     // no Chunk found
+    DLOG("AllocMem freeList MISS\n");
     if (aFlags & MEMF_CHIP) {
       ret = (Chunk *)ExtendChipRam(sizeof(Chunk) + aSize);
       ret->mSize = aSize | CHUNK_CHIP;
@@ -189,6 +208,7 @@ TAny *AllocMem(TInt64 aSize, TInt aFlags) {
     SetMemory8(mem, 0, aSize);
   }
 
+  DLOG("AllocMem returns(%x)\n", mem);
   return mem;
 }
 
@@ -196,7 +216,7 @@ void FreeMem(TAny *aPtr) {
   // TODO combine this Chunk with any existing that are contiguous
   TUint8 *p = (TUint8 *)aPtr;
   Chunk *c = (Chunk *)(p - sizeof(Chunk));
-  sFreeChunks.AddHead(*c);
+  sFreeChunks->AddHead(*c);
 }
 
 #else

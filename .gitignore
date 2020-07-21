@@ -10,8 +10,10 @@ test*
 rcomp
 tools/rcomp-src/rcomp
 tools/disk-tool/disk-tool
+tools/build-img
 bochsrc
 *.psf
 \#*
 #*
 *.raw
+obj

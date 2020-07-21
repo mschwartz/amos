@@ -14,17 +14,18 @@ extern "C" void sputs(const char *s);
 extern "C" func_ptr __init_array_start[0], __init_array_end[0];
 
 static void call_global_constructors(void) {
-//  dlog("about to call global constructors %x %x\n", __init_array_end, __init_array_start);
+ // dlog("about to call global constructors %x %x\n", __init_array_end, __init_array_start);
   for (func_ptr *func = __init_array_start; func != __init_array_end; func++) {
-//    dlog("call global constructor %x\n", func);
+   // dlog("call global constructor %x\n", func);
     (*func)();
-//    dlog("  called global constructor %x\n", func);
+   // dlog("  called global constructor %x\n", func);
   }
 }
 
 extern "C" TUint64 rdtsc();
 
 extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
+  InitAllocMem();
   CopyString(&gSystemInfo.mVersion[0], "AMOS v1.0");
   // in_bochs = *((TUint8 *)0x7c10);
 

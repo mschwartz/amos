@@ -16,7 +16,7 @@
 const int DISK_BLOCKS = (12 * 1024 * 1024 / 512) - 1;
 const int MIN_BLOCKS = 10;
 const int BLOCKSIZE = 512;
-const char *BARE_FILE = "bare.img";
+const char *BARE_FILE = "iso/bare.img";
 
 class IMG {
 public:

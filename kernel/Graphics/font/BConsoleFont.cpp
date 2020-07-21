@@ -3,14 +3,18 @@
 #include <posix/sprintf.h>
 #include <limits.h>
 
-extern "C" TConsoleFontHeader _binary_cp866_8x16_psf_start;
-extern "C" TUint8 _binary_cp866_8x16_psf_end[];
+// extern "C" TConsoleFontHeader _binary_cp866_8x16_psf_start;
+// extern "C" TUint8 _binary_cp866_8x16_psf_end[];
+extern "C" TConsoleFontHeader KFONTSTART;
+extern "C" TUint8 KFONTEND[];
 
 BConsoleFont32::BConsoleFont32(const TConsoleFont *aFont) {
   // dprint("BConsoleFont32 %x\n", this);
   if (aFont == ENull) {
-    mFont.mHeader = &_binary_cp866_8x16_psf_start;
-    mFont.mEnd = &_binary_cp866_8x16_psf_end[0];
+    // mFont.mHeader = &_binary_cp866_8x16_psf_start;
+    // mFont.mEnd = &_binary_cp866_8x16_psf_end[0];
+    mFont.mHeader = &KFONTSTART;
+    mFont.mEnd = &KFONTEND[0];
   }
   else {
     // copy

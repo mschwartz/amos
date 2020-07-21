@@ -1,6 +1,10 @@
 #ifndef BTYPES_H
 #define BTYPES_H
 
+
+//
+// Before including Types.h, you can add #define DEBUGME to enable these macros
+//
 #ifdef DEBUGME
 #define DLOG(...) dlog(__VA_ARGS__)
 #define DPRINT(...) dprint(__VA_ARGS__)
@@ -16,6 +20,7 @@
 // ASSERT(value, fmt, ...)
 #define ASSERT(...) do {} while (0);
 #endif
+
 
 #define PACKED __attribute__ ((packed))
 #define ALIGN2 __attribute__ ((aligned (2)))

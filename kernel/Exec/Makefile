@@ -8,7 +8,6 @@ GFX=		$(G)/BBitmap.o \
 		$(G)/BViewPort.o 
 
 FONTS=  	$(G)/BFont.o \
-		$(G)/font/BVectorFont.o \
 		$(G)/font/BConsoleFont.o \
 		$(G)/kfont.o
 

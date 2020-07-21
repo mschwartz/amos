@@ -274,7 +274,7 @@ global pic_100hz
 pic_100hz:
         push rdx
         mov dx, 1193180 / 100
-        mov al, 110110
+        mov al, 110110B
         out 0x43, al
 
         mov ax, dx

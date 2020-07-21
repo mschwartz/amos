@@ -1,6 +1,6 @@
 #include <Graphics/Graphics.h>
 #include <Graphics/BFont.h>
-#include <Graphics/font/BVectorFont.h>
+// #include <Graphics/font/BVectorFont.h>
 #include <Graphics/font/BConsoleFont.h>
 
 #include <posix/string.h>

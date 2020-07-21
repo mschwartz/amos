@@ -2,7 +2,7 @@
 #define KERNEL_MEMORY_H
 
 #include <Types.h>
-#include <x86/mmu.h>
+#include <Exec/x86/mmu.h>
 
 const TUint64 KILOBYTE = 1024;
 const TUint64 MEGABYTE = 1024 * KILOBYTE;

@@ -38,7 +38,7 @@ PIC::PIC() {
   outb(PIC2_DATA, 0x1);
 
   // disable/enable interrupts
-  mMasterMask = mSlaveMask = 0x00;
+  mMasterMask = mSlaveMask = 0xff;
 
   outb(PIC1_DATA, mMasterMask);
   outb(PIC2_DATA, mSlaveMask);

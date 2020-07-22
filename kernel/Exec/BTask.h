@@ -77,7 +77,7 @@ protected:
     *
     * Returns a mask of the signals actually received.
     */
-  TUint64 Wait(TUint64 aSignalSet);
+  TUint64 Wait(TUint64 aSignalSet = 0);
 
 public:
   /**

@@ -9,7 +9,8 @@
 extern "C" TUint32 GetCS(), GetDS(), GetES(), GetFS(), GetGS(), GetSS(), GetRFLAGS();
 extern "C" void init_task_state(TTaskRegisters *t);
 
-BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aName, aPri), mInspirationBase(*gExecBase.GetInspirationBase()) {
+BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize)
+    : BNodePri(aName, aPri), mInspirationBase(*gExecBase.GetInspirationBase()) {
   // initialize Forbid/Permit
   mForbidNestCount = 0;
   mDisableNestCount = 0;
@@ -219,7 +220,7 @@ void BTask::FreeMessagePort(MessagePort *aMessagePort) {
   gExecBase.RemoveMessagePort(*aMessagePort);
 
   ENABLE;
- 
+
   delete aMessagePort;
 }
 

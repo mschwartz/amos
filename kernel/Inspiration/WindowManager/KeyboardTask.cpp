@@ -23,7 +23,7 @@ TInt64 KeyboardTask::Run() {
 
   message->Send(keyboardPort);
 
-  while (ETrue) {
+  for (;;) {
     WaitPort(replyPort);
     while (KeyboardMessage *m = (KeyboardMessage *)replyPort->GetMessage()) {
       if (m == message) {

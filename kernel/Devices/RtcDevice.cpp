@@ -89,7 +89,7 @@ public:
     TUint64 tick_mask = 1 << mSignalBit;
 
     dlog("RTC Wait Signal\n");
-    while (ETrue) {
+    for (;;) {
       TUint64 sigs = Wait(port_mask | tick_mask);
       if (sigs & port_mask) {
         while (RtcMessage *m = (RtcMessage *)mMessagePort->GetMessage()) {
@@ -111,7 +111,7 @@ public:
 
       if (sigs & tick_mask) {
         TUint64 current = mRtcDevice->Tick();
-        while (ETrue) {
+        for (;;) {
           TUint64 flags = GetFlags();
           RtcMessage *m = (RtcMessage *)rtcQueue.First();
           if (rtcQueue.End(m)) {

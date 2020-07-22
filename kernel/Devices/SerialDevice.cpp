@@ -48,7 +48,7 @@ TBool SerialInterrupt::Run(TAny *aData) {
 }
 
 TInt64 SerialTask::Run() {
-  while (1) {
+  for (;;) {
     Sleep(1);
   }
 }

@@ -46,7 +46,7 @@ TInt64 TestTask::Run() {
   TestWindow *win = new TestWindow();
   screen->AddWindow(win);
 
-  while (ETrue) {
+  for (;;) {
     win->BeginPaint();
     for (TInt i = 0; i < 10; i++) {
       win->RandomBox();

@@ -95,7 +95,7 @@ DirectorySector *SimpleFileSystemTask::FindPath(const char *aPath) {
     return cwd;
   }
 
-  while (ETrue) {
+  for (;;) {
     char next_token[256];
     next_token[0] = '\0';
     xpath = GetToken(xpath, next_token, '/');

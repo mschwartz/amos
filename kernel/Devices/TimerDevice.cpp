@@ -72,7 +72,7 @@ TInt64 TimerTask::Run() {
   TUint64 port_mask = 1<<mMessagePort->SignalNumber();
   TUint64 tick_mask = 1<<mSignalBit;
   
-  while (ETrue) {
+  for (;;) {
     TUint64 sigs = Wait(port_mask | tick_mask);
     if (sigs & port_mask) {
       while (TimerMessage *m = (TimerMessage *)mMessagePort->GetMessage()) {
@@ -94,7 +94,7 @@ TInt64 TimerTask::Run() {
 
     if (sigs & tick_mask) {
       TUint64 current = mTimerDevice->IncrementTicks();
-      while (ETrue) {
+      for (;;) {
         TUint64 flags = GetFlags();
         TimerMessage *m = (TimerMessage *)timerQueue.First();
         if (timerQueue.End(m)) {

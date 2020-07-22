@@ -35,7 +35,7 @@ TInt64 TestIdcmpTask::Run() {
   IdcmpWindow *win = new IdcmpWindow();
   win->Activate();
 
-  while (ETrue) {
+  for (;;) {
     WaitPort(win->mIdcmpPort);
 
     while (IdcmpMessage *m = win->GetMessage()) {

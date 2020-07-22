@@ -29,6 +29,7 @@ TInt64 ConsoleWindowTestTask::Run() {
     wait(4, con);
     con->BeginPaint();
     con->Write("ls /fonts\n");
+    dlog("ls /fonts\n");
     con->EndPaint();
 
     fd = OpenDirectory("/fonts");
@@ -48,6 +49,7 @@ TInt64 ConsoleWindowTestTask::Run() {
         const DirectoryStat *s = fd->Stat();
         DirectoryStat::Dump(s, fd->Filename(), buf);
         con->BeginPaint();
+	// dlog("%s\n", buf);
         con->Write(buf);
         con->EndPaint();
       }

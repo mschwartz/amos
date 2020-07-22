@@ -38,7 +38,8 @@ PIC::PIC() {
   outb(PIC2_DATA, 0x1);
 
   // disable/enable interrupts
-  mMasterMask = mSlaveMask = 0xff;
+  mMasterMask = 0x01;
+  mSlaveMask = 0x00; // 0xff & ~0x20;
 
   outb(PIC1_DATA, mMasterMask);
   outb(PIC2_DATA, mSlaveMask);
@@ -57,7 +58,7 @@ void PIC::EnableIRQ(TUint16 aIRQ) {
   else {
     mSlaveMask &= ~(1 << aIRQ);
   }
-  DLOG("    enable_interrupt %d master(%x) slave(%x)\n", aIRQ, mMasterMask, mSlaveMask);
+  DLOG("    enable_interrupt %d masterMask(%x) slaveMask(%x)\n", aIRQ, mMasterMask, mSlaveMask);
   outb(PIC1_DATA, mMasterMask);
   outb(PIC2_DATA, mSlaveMask);
 }

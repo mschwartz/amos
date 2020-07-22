@@ -9,13 +9,7 @@
 
 extern "C" TUint8 bochs_present;
 
-// TUint8 in_bochs; //  = *((TUint8 *)0x7c10);
-
-//extern "C" TUint64 GetFlags();
-//extern "C" void SetFlags(TUint64 aFlags);
-
 extern "C" void eputs(const char *s);
-
 extern "C" void sputc(char c);
 
 void dassert(TBool aValue, const char *aFormat, ...) {

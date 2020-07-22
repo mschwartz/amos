@@ -25,6 +25,7 @@ AtaDevice::AtaDevice(TPciDevice *aPciDevice) : BDevice("ata.device") {
 
   gExecBase.AddTask(new AtaTask(this));
   DLOG("  Added AtaTask\n");
+  DSPACE();
 }
 
 AtaDevice::~AtaDevice() {

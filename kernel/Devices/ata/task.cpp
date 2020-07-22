@@ -4,12 +4,15 @@
 #include <Exec/ExecBase.h>
 #include "task.h"
 
+extern "C" TUint8 bochs_present;
 inline static void wait_io() {
-  outb(0x80, 0);
+  outb(0x80, 0x70);
 }
 static void delay() {
-  for (TInt i = 0; i < 1000000; i++)
-    ;
+  for (TInt i = 0; i < 100; i++) {
+    outb(0x80, 0x00); // 1 microsecond
+    // wait_io();
+  };
 }
 
 AtaTask::AtaTask(AtaDevice *aDevice) : BTask("ata.device") {
@@ -45,6 +48,8 @@ TInt64 AtaTask::Run() {
   gExecBase.SetIntVector(EAta2IRQ, new AtaInterrupt(this, sigbit, 2));
   gExecBase.EnableIRQ(IRQ_ATA1);
   gExecBase.EnableIRQ(IRQ_ATA2);
+  // gExecBase.DisableIRQ(IRQ_ATA1);
+  // gExecBase.DisableIRQ(IRQ_ATA2);
 
   // initialize devices
   mActiveDevice = 0;
@@ -65,12 +70,14 @@ TInt64 AtaTask::Run() {
     else {
       DLOG("ATA MESSAGE?\n");
       while (AtaMessage *m = (AtaMessage *)port->GetMessage()) {
-	DLOG("ATA MESSAGE\n");
+        DLOG("ATA MESSAGE\n");
         switch (m->mCommand) {
           case EAtaReadBlocks: {
             TUint8 *buf = (TUint8 *)m->mBuffer;
             TUint64 lba = m->mLba;
+            dlog("read blocks lba(%d) count(%d)\n", lba, m->mCount);
             ide_read_blocks(&mDevices[m->mUnit], lba, buf, m->mCount);
+            dlog("  /read blocks\n");
           } break;
         }
         m->Reply();
@@ -241,7 +248,7 @@ void AtaTask::ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 B
   DLOG("  ide_initialize(0x%0x, 0x%0x, 0x%0x, 0x%0, 0x%0xx)\n",
     BAR0, BAR1, BAR2, BAR3, BAR4);
 
-  Sleep(3);
+  // Sleep(3);
 
   TUint8 buffer[512];
   // set up controller ports
@@ -270,8 +277,8 @@ void AtaTask::ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 B
       // ide_read(i, ATA_REG_ALTSTATUS);                  // 100ms
       // Wait();
       // MilliSleep(1); // Wait 1ms for drive select to work.
-      wait_io();
-      // delay();
+      // wait_io();
+      delay();
 
       // (II) Send ATA Identify Command:
       DLOG("  2) SEND ATA_CMD_IDENTIFY\n");
@@ -279,8 +286,8 @@ void AtaTask::ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 B
       // ide_read(i, ATA_REG_ALTSTATUS);                  // 100ms
       // Wait();
       // MilliSleep(1); // This function should be implemented in your OS. which waits for 1 ms.
-      wait_io();
-      // delay();
+      // wait_io();
+      delay();
       // it is based on System Timer Device Driver.
 
       // (III) Polling:
@@ -323,8 +330,8 @@ void AtaTask::ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 B
 
         ide_write(i, ATA_REG_COMMAND, ATA_CMD_IDENTIFY_PACKET);
         // MilliSleep(1);
-        // delay();
-        wait_io();
+        delay();
+        // wait_io();
         // Wait();
       }
 
@@ -385,7 +392,9 @@ void AtaTask::ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 B
 
 TBool AtaTask::ide_io(TIdeDevice *aIdeDevice, TUint64 aLba, TBool aWrite, TUint8 *aBuffer, TInt aNumSectors) {
   TBool dma = mDevice->BusMasterPort() != 0;
-  dma = EFalse;
+  if (!bochs_present) {
+    dma = EFalse;
+  }
 
   if (dma && (aWrite == EFalse)) {
     return mDma->Read(aLba, aBuffer, aNumSectors);

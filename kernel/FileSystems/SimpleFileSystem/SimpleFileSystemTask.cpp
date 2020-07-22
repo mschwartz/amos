@@ -248,7 +248,7 @@ void SimpleFileSystemTask::CloseFile(FileSystemMessage *f) {
 
 void SimpleFileSystemTask::RemoveFile(FileSystemMessage *f) {}
 
-void SimpleFileSystemTask::Run() {
+TInt64 SimpleFileSystemTask::Run() {
   dprint("\n");
   dlog("SimpleFileSystemTask Run!\n");
 
@@ -283,7 +283,7 @@ void SimpleFileSystemTask::Run() {
 
   this->mRootSector.Dump();
 
-  while (ETrue) {
+  for (;;) {
     WaitPort(msgPort);
     while (FileSystemMessage *f = (FileSystemMessage *)msgPort->GetMessage()) {
       f->mError = EFileSystemErrorNone;

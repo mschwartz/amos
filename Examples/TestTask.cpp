@@ -37,7 +37,7 @@ public:
   }
 };
 
-void TestTask::Run() {
+TInt64 TestTask::Run() {
   dprint("\n");
   dlog("***************************** TEST TASK RUNNING\n");
 

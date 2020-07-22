@@ -10,7 +10,7 @@ class TestIdcmpTask : public BTask {
   ~TestIdcmpTask();
 
  public:
-  void Run();
+  TInt64 Run();
 };
 
 #endif

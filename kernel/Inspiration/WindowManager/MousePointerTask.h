@@ -25,7 +25,7 @@ protected:
   TInt32 mLastMouseX, mLastMouseY;
   
 public:
-  void Run();
+  TInt64 Run();
 };
 
 #endif

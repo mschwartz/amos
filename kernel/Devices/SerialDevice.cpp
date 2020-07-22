@@ -36,7 +36,7 @@ public:
   }
 
 public:
-  void Run();
+  TInt64 Run();
 
 protected:
   MessagePort *mMessagePort;
@@ -47,7 +47,7 @@ TBool SerialInterrupt::Run(TAny *aData) {
   return ETrue;
 }
 
-void SerialTask::Run() {
+TInt64 SerialTask::Run() {
   while (1) {
     Sleep(1);
   }

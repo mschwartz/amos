@@ -28,7 +28,7 @@ TestIdcmpTask::TestIdcmpTask() : BTask("Idcmp Test") {
 TestIdcmpTask::~TestIdcmpTask() {
 }
 
-void TestIdcmpTask::Run() {
+TInt64 TestIdcmpTask::Run() {
   char buf[512];
 
   Sleep(3);

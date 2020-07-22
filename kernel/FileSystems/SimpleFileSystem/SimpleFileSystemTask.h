@@ -17,7 +17,7 @@ public:
   }
 
 public:
-  void Run();
+  TInt64 Run();
 
 protected:
   /**

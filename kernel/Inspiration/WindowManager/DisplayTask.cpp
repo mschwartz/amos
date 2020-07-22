@@ -25,7 +25,7 @@ static inline TUint64 time_vbl() {
   return end - start;
 }
 
-void DisplayTask::Run() {
+TInt64 DisplayTask::Run() {
   dprint("\n");
   dlog("DisplayTask Run %x\n", inb(0x3da));
   Sleep(1);
@@ -41,7 +41,7 @@ void DisplayTask::Run() {
   TUint64 elapsed = 0, start = 0, end = 0;
 
   // Wait for vbl in a loop and update screen via DirtyRects
-  while (ETrue) {
+  for (;;) {
     // We need to account for elapsed time for the drawing.
     TUint64 wait_time = vbl_time - elapsed;
     // dlog("wait_time(%d) start(%d) end(%d) vbl_time(%d)\n", wait_time, start, end, vbl_time);

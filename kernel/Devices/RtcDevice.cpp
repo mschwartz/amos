@@ -54,7 +54,7 @@ public:
   }
 
 public:
-  void Run() {
+  TInt64 Run() {
     DISABLE;
 
     dprint("\n");

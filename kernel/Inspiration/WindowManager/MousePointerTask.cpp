@@ -73,7 +73,7 @@ void MousePointerTask::HandleButtons(MouseMessage *aMessage) {
   // else do nothing, button and last button not pressed
 }
 
-void MousePointerTask::Run() {
+TInt64 MousePointerTask::Run() {
   MessagePort *mousePort;
 
   dprint("\n");
@@ -95,7 +95,7 @@ void MousePointerTask::Run() {
   buttons_message->mReplyPort = replyPort;
   buttons_message->Send(mousePort);
 
-  while (ETrue) {
+  for (;;) {
     WaitPort(replyPort);
     while (MouseMessage *m = (MouseMessage *)replyPort->GetMessage()) {
       mLastMouseX = mMouseX;

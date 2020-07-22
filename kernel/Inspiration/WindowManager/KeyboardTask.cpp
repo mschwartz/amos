@@ -7,7 +7,7 @@ KeyboardTask::KeyboardTask() : BTask("inspiration-keyboard.task", TASK_PRI_DEFAU
   //
 }
 
-void KeyboardTask::Run() {
+TInt64 KeyboardTask::Run() {
   MessagePort *keyboardPort;
 
   dprint("\n");

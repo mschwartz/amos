@@ -6,7 +6,7 @@ public:
   ConWindow() : BConsoleWindow("Test Console Window", 800, 40, 640, 480) {}
 };
 
-void ConsoleWindowTestTask::Run() {
+TInt64 ConsoleWindowTestTask::Run() {
 
   dprint("\n");
   dlog("***************************** ConsoleWindowTestTask Running\n");
@@ -18,7 +18,7 @@ void ConsoleWindowTestTask::Run() {
   screen->AddWindow(con);
 
   FileDescriptor *fd;
-  while (ETrue) {
+  for (;;) {
 
     con->BeginPaint();
     con->Write("> ");

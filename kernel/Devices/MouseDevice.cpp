@@ -96,7 +96,7 @@ public:
   ~MouseTask() {}
 
 public:
-  void Run();
+  TInt64 Run();
 
 protected:
   MouseDevice *mDevice;
@@ -188,8 +188,7 @@ TBool MouseInterrupt::Run(TAny *aData) {
 
 extern "C" void mouse_trap();
 
-void MouseTask::Run() {
-
+TInt64 MouseTask::Run() {
   dprint("\n");
   dlog("MouseTask Run\n");
   Sleep(3);
@@ -266,59 +265,61 @@ void MouseTask::Run() {
   BMessageList move_messages("move_mouse_list");
   BMessageList buttons_messages("buttons_mouse_list");
 
-  while (WaitPort(mMessagePort)) {
-    //    dlog("Wake\n");
-    while (MouseMessage *m = (MouseMessage *)mMessagePort->GetMessage()) {
-      switch (m->mCommand) {
-        case EMouseUpdate: {
-          TInt32 x = m->mMouseX,
-                 y = m->mMouseY;
-          TUint8 buttons = m->mButtons;
+  for (;;) {
+    while (WaitPort(mMessagePort)) {
+      //    dlog("Wake\n");
+      while (MouseMessage *m = (MouseMessage *)mMessagePort->GetMessage()) {
+        switch (m->mCommand) {
+          case EMouseUpdate: {
+            TInt32 x = m->mMouseX,
+                   y = m->mMouseY;
+            TUint8 buttons = m->mButtons;
 
-          mDevice->mX = x;
-          mDevice->mY = y;
-          mDevice->mButtons = buttons;
-          delete m;
-          while ((m = (MouseMessage *)move_messages.RemHead())) {
-            // dlog("mouse move %x %d,%d %x\n", m, mDevice->mX, mDevice->mY, mDevice->mButtons);
-            m->mMouseX = x;
-            m->mMouseY = y;
-            m->mButtons = buttons;
-            //            dlog(" Reply message %x to port %x\n", m, m->mReplyPort);
-            m->Reply();
-          }
-        } break;
+            mDevice->mX = x;
+            mDevice->mY = y;
+            mDevice->mButtons = buttons;
+            delete m;
+            while ((m = (MouseMessage *)move_messages.RemHead())) {
+              // dlog("mouse move %x %d,%d %x\n", m, mDevice->mX, mDevice->mY, mDevice->mButtons);
+              m->mMouseX = x;
+              m->mMouseY = y;
+              m->mButtons = buttons;
+              //            dlog(" Reply message %x to port %x\n", m, m->mReplyPort);
+              m->Reply();
+            }
+          } break;
 
-        case EMouseButtonsUpdate: {
-          TInt32 x = m->mMouseX,
-                 y = m->mMouseY;
-          TUint8 buttons = m->mButtons;
+          case EMouseButtonsUpdate: {
+            TInt32 x = m->mMouseX,
+                   y = m->mMouseY;
+            TUint8 buttons = m->mButtons;
 
-          mDevice->mX = x;
-          mDevice->mY = y;
-          mDevice->mButtons = buttons;
+            mDevice->mX = x;
+            mDevice->mY = y;
+            mDevice->mButtons = buttons;
 
-          delete m;
+            delete m;
 
-          while ((m = (MouseMessage *)buttons_messages.RemHead())) {
-            //            dlog("mouse move %x %d,%d %x\n", m, mDevice->mX, mDevice->mY, mDevice->mButtons);
-            m->mMouseX = x;
-            m->mMouseY = y;
-            m->mButtons = buttons;
-            m->Reply();
-          }
-        } break;
+            while ((m = (MouseMessage *)buttons_messages.RemHead())) {
+              //            dlog("mouse move %x %d,%d %x\n", m, mDevice->mX, mDevice->mY, mDevice->mButtons);
+              m->mMouseX = x;
+              m->mMouseY = y;
+              m->mButtons = buttons;
+              m->Reply();
+            }
+          } break;
 
-        case EMouseMove:
-          move_messages.AddTail(*m);
-          break;
+          case EMouseMove:
+            move_messages.AddTail(*m);
+            break;
 
-        case EMouseButtons:
-          buttons_messages.AddTail(*m);
-          break;
+          case EMouseButtons:
+            buttons_messages.AddTail(*m);
+            break;
 
-        default:
-          break;
+          default:
+            break;
+        }
       }
     }
   }

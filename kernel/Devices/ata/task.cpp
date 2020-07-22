@@ -18,7 +18,7 @@ void AtaTask::WaitIrq() {
   Wait(mSigMask);
 }
 
-void AtaTask::Run() {
+TInt64 AtaTask::Run() {
     // TODO: queue reads in increasing LBA order to optimize (reduce) head seek
     DISABLE;
 
@@ -46,7 +46,7 @@ void AtaTask::Run() {
     ENABLE;
 
     TIdeDevice *drive0 = &mDevices[0];
-    while (1) {
+    for(;;) {
       TUint64 sigs = WaitPort(port, mSigMask);
       if (sigs & mSigMask) {
         DLOG("  IRQ SIGNAL\n");
@@ -63,10 +63,6 @@ void AtaTask::Run() {
           m->Reply();
         }
       }
-    }
-
-    while (1) {
-      Sleep(1);
     }
 }
 

@@ -38,7 +38,17 @@ protected:
   volatile ETaskState mTaskState;
 
 public:
-  virtual void Run() = 0;
+  /**
+   * Run()
+   * This is the task's entrypoint.  You must override this; the class is abstract.
+   * Return to exit the task, or call Suicide/Exit.  
+   * The return value is an arbitrary (for now) exit code.
+   */
+  virtual TInt64 Run() = 0;
+  void Suicide(TInt64 aCode);
+  void Exit(TInt64 aCode) {
+    Suicide(aCode);
+  }
 
 public:
   const char *TaskName() { return mNodeName; }

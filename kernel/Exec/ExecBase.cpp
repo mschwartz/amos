@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Exec/ExecBase.h>
 #include <Inspiration/InspirationBase.h>
 #include <stdint.h>
@@ -23,6 +26,7 @@
 
 #include <posix/sprintf.h>
 #include <Exec/Random.h>
+#include <Exec/IdleTask.hh>
 
 ExecBase gExecBase;
 
@@ -30,145 +34,6 @@ extern "C" void schedule_trap();
 extern "C" void eputs(const char *s);
 
 extern "C" void enter_tasking();
-
-class IdleTask : public BTask {
-  friend ExecBase;
-
-public:
-  IdleTask() : BTask("Idle Task", LIST_PRI_MIN) {}
-
-public:
-  void Run() {
-    dprint("\n");
-    dlog("IdleTask Run\n");
-
-    // initialize devices
-    dlog("  initialize timer\n");
-    gExecBase.AddDevice(new TimerDevice());
-
-    // dlog("  initialize serial\n");
-    // AddDevice(new SerialDevice());
-
-    dlog("  initialize rtc \n");
-    gExecBase.AddDevice(new RtcDevice());
-
-    dlog("  initialize keyboard \n");
-    gExecBase.AddDevice(new KeyboardDevice);
-
-    dlog("  initialize mouse \n");
-    gExecBase.AddDevice(new MouseDevice());
-
-    // Initialize PCI Devices
-    dprint("\n\n");
-    dlog("  initialze PCI Devices\n");
-    PCI *pci = gExecBase.GetPci();
-    for (TPciDevice *d = pci->First(); !pci->End(d); d = pci->Next(d)) {
-      d->Dump(EFalse);
-      switch (d->mClassId) {
-        case EPciUnclassified:
-          dlog("    Skipping Unclassified PCI Device\n");
-          break;
-
-        case EpciMassStorageController: //   [0x01] = "Mass Storage Controller":
-          dlog("    initialize ata disk \n");
-          gExecBase.AddDevice(new AtaDevice(d));
-          continue;
-
-        case EPciNetworkController: //   [0x02] = "Network Controller":
-          dlog("    Skipping NetworkController\n");
-          break;
-
-        case EPciDisplayController: //   [0x03] = "Display Controller":
-          dlog("    Skipping Display Controller\n");
-          break;
-
-        case EPciMultimediaController: //   [0x04] = "Multimedia Controller":
-          dlog("    Skipping Multimedia Controller\n");
-          break;
-
-        case EPciMemoryController: // [0x05] = "Memory Controller":
-          dlog("    Skipping Memory Controller\n");
-          break;
-
-        case EPciBridgeDevice: // [0x06] = "Bridge Device":
-          dlog("    Skipping Bridge Device\n");
-          break;
-
-        case EPciSimpleCommunicationController: // [0x07] = "Simple Communication Controller":
-          dlog("    Skipping Simple Communication Controller\n");
-          break;
-
-        case EPciBaseSystemPeripheral: // [0x08] = "Base System Peripheral":
-          dlog("    Skipping Base System Peripheral\n");
-          break;
-
-        case EPciInputDeviceContoller: //   [0x09] = "Input Device Controller":
-          dlog("    Skipping Input Device Controller\n");
-          break;
-
-        case EPciDockingStation: //   [0x0a] = "Docking Station":
-          dlog("    Skipping Docking Station\n");
-          break;
-
-        case EPciProcessor: //   [0x0b] = "Processor":
-          dlog("    Skipping Processor\n");
-          break;
-
-        case EPciSerialBusController: //   [0x0c] = "Serial Bus Controller":
-          dlog("    Skipping Serial Bus Controller\n");
-          break;
-
-        case EPciWirelessController: //   [0x0d] = "Wireless Controller":
-          dlog("    Skipping Wireless Controller\n");
-          break;
-
-        case EPciIntellientController: //   [0x0e] = "Intelligent Controller":
-          dlog("    Skipping Intelligent Controller\n");
-          break;
-
-        case EPciSatelliteCommunicationController: //   [0x0f] = "Satellite Communication Controller":
-          dlog("    Skipping Satellite Communication Controller\n");
-          break;
-
-        case EPciEncryptionController: //   [0x10] = "Encryption Controller":
-          dlog("    Skipping Encryption Controller\n");
-          break;
-
-        case EPciSignalProcessingController: //   [0x11] = "Signal Processing Controller":
-          dlog("    Skipping Signal Processing Controller\n");
-          break;
-
-        case EPciProcessingAccelerator: //   [0x12] = "Processing Accelerator":
-          dlog("    Skipping Processing Accelerator\n");
-          break;
-
-        case EPciNonEssentialInstrumentation: //   [0x13] = "Non-Essential Instrumentation":
-          dlog("    Skipping Non-Essential Instrumentation\n");
-          break;
-
-        case EPciReserved: //   [0x14] = "(Reserved)":
-          dlog("    Skipping Reserved class PCI Device\n");
-          break;
-
-        default:
-          dlog("    *** Skipping invlalid PCI class (%x)\n", d->mClassId);
-          break;
-      }
-    }
-
-    dlog("  initialize file system\n");
-    gExecBase.AddFileSystem(new SimpleFileSystem("ata.device", 0, gSystemInfo.mRootSector));
-
-    dlog("  initialize Inspiration\n");
-    gExecBase.mInspirationBase = new InspirationBase();
-    gExecBase.mInspirationBase->Init();
-
-    while (1) {
-      dlog("IdleTask Looping\n");
-      halt();
-    }
-  }
-};
 
 typedef struct {
   //  TUint16 mPad0;
@@ -279,6 +144,11 @@ ExecBase::~ExecBase() {
   dlog("ExecBase destructor called\n");
 }
 
+void ExecBase::SetInspirationBase(InspirationBase *aInspirationBase) {
+  mInspirationBase = aInspirationBase;
+  mInspirationBase->Init();
+}
+
 void ExecBase::Disable() {
   if (mDisableNestCount++ == 0) {
     cli();
@@ -308,6 +178,36 @@ void ExecBase::AddTask(BTask *aTask) {
   //  dlog("x\n");
 
   SetFlags(flags);
+}
+
+TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
+  DISABLE;
+
+  aTask->Remove();
+  TBool isCurrentTask = aTask == mCurrentTask;
+  if (isCurrentTask) {
+    dlog("RemoveTask(%s) code(%d) delete(%d) CURRENT TASK\n", aTask->TaskName(), aExitCode, aDelete);
+  }
+  else {
+    dlog("RemoveTask(%s) code(%d) delete(%d)\n", aTask->TaskName(), aExitCode, aDelete);
+  }
+
+  if (aDelete) {
+    delete aTask;
+  }
+
+  if (isCurrentTask) {
+    mCurrentTask = mActiveTasks.First();
+    current_task = &mCurrentTask->mRegisters;
+    Kickstart();
+
+    //   // need to do this with interrupts disabled so there can be no task struct access for the deleted task
+    //   // RescheduleIRQ();
+    //   Kickstart();
+    //   // Schedule();
+  }
+  ENABLE;
+  return aExitCode;
 }
 
 void ExecBase::DumpTasks() {

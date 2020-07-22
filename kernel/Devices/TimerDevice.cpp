@@ -51,7 +51,7 @@ public:
     outb(I8253_CH0, (divisor >> 8) & 0xff);
   }
 
-  void Run();
+  TInt64 Run();
 
 protected:
   TimerDevice *mTimerDevice;
@@ -59,7 +59,7 @@ protected:
   TUint16 mSignalBit;
 };
 
-void TimerTask::Run() {
+TInt64 TimerTask::Run() {
   dprint("\n");
   dlog("TimerTask Run\n");
 

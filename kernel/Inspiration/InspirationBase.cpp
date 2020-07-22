@@ -12,15 +12,21 @@
  ********************************************************************************
  *******************************************************************************/
 
+/**
+ * IdcmpMessageReaperTask
+ * 
+ * Idcmp Messages are sent from this task.  We need a task to have a reply port
+ * to get the applications' replies, and to deal with the replied messages.
+ */
 class IdcmpMessageReaperTask : public BTask {
 public:
   IdcmpMessageReaperTask() : BTask("IdcmpMessageRepaerTask") {
   }
 
 public:
-  void Run() {
+  TInt64 Run() {
     mPort = CreateMessagePort("ReaperPort");
-    while (ETrue) {
+    for (;;) {
       WaitPort(mPort);
       while (IdcmpMessage *m = (IdcmpMessage *)mPort->GetMessage()) {
         // dlog(" Reap(%x)\n", m);

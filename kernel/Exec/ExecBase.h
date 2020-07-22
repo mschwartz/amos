@@ -157,6 +157,7 @@ public:
 
 public:
   InspirationBase *GetInspirationBase() { return mInspirationBase; }
+  void SetInspirationBase(InspirationBase *aInspirationBase);
 
 protected:
   InspirationBase *mInspirationBase;
@@ -218,7 +219,11 @@ protected:
   // TASKS
   //
 public:
+  // add task to active task list
   void AddTask(BTask *aTask);
+  // suicide/exit/kill task
+  TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete = ETrue);
+
   void DumpTasks();
   void DumpCurrentTask() { mCurrentTask->Dump(); }
   BTask *GetCurrentTask() { return mCurrentTask; }
@@ -264,6 +269,7 @@ protected:
   //
   // FILESYSTEMS
   //
+public:
   void AddFileSystem(BFileSystem *aFileSystem);
   BFileSystem *FindFileSystem(const char *aName);
 

@@ -10,7 +10,7 @@ public:
   ~TestTask();
 
 public:
-  void Run();
+  TInt64 Run();
 };
 
 #endif

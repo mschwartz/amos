@@ -42,7 +42,8 @@ $(ISODIR)/kernel.elf:	$(ALL_OBJ)
 	@echo ""
 	@echo "LINKING"
 	@echo "    LD "$(ISODIR)/kernel.elf
-	@ld  -e _start -Tkernel/config.ld -o $(ISODIR)/kernel.elf $(CRTBEGIN_OBJ) $(BUILDDIR)/kernel/kernel_main.o $(BUILDDIR)/kernel/kernel_start.o $(CRTEND_OBJ) $(KERNEL_OBJ)
+	@ld  -e _start -Tkernel/config.ld -o $(ISODIR)/kernel.elf \
+		$(CRTBEGIN_OBJ) $(BUILDDIR)/kernel/kernel_main.o $(BUILDDIR)/kernel/kernel_start.o $(CRTEND_OBJ) $(KERNEL_OBJ)
 	@echo ""
 	@echo "     KFONTSYMSTART" $(KFONTSYMSTART)
 	@echo "       KFONTSYMEND" $(KFONTSYMEND)
@@ -62,11 +63,14 @@ $(BUILDDIR)/%.o: %.asm
 	@echo "     "AS $*.asm
 	@$(NASM) -I$(TOPDIR)/boot -f elf64 -o $@  $<
 
-$(KFONTOBJ): $(KFONTFILE)
-	@echo "     -> CREATING FONT" $(KFONTSYMBASE)
+$(BUILDDIR)/$(KFONTNAME).psf:
+	@echo "MAKING PSF"
 	@mkdir -p $(BUILDDIR)
+	@cp $(FONTDIR)/$(KFONTNAME).psf.gz $(BUILDDIR)
+	@gunzip -f $(BUILDDIR)/$(KFONT).gz
 
-	@cp $(FONTFILE).gz $(BUILDDIR)
-	@gunzip $(BUILDDIR)/$(KFONT).gz
+
+$(KFONTOBJ): $(BUILDDIR)/$(KFONTNAME).psf
+	@echo "MAKING font .o file"
 	@$(OBJCOPY) -O elf64-x86-64 -B i386 -I binary $(BUILDDIR)/$(KFONT) $(KFONTOBJ)
-	@rm -f $(BUILDDIR)/$(KFONT)
+

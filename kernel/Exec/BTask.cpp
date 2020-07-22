@@ -41,25 +41,26 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize) : BNodePri(aNam
   regs->es = GetES();
   regs->fs = GetFS();
   regs->gs = GetGS();
-  regs->rflags = 0x202; // GetRFLAGS();
+  regs->rflags = 0x202;
   init_task_state(regs);
-  //  dlog("Create Task %s, sp=%016x\n", this->TaskName(), regs->rsp);
-  //  bochs
 }
 
 BTask::~BTask() {
   //
 }
 
+void BTask::Suicide(TInt64 aCode) {
+  // remove and delete me
+  gExecBase.RemoveTask(this, aCode, ETrue);
+}
+
 void BTask::RunWrapper(BTask *aTask) {
   BTask *t = gExecBase.GetCurrentTask();
-  t->Run();
-  dlog("*** Task %s exited\n", t->TaskName());
+  TInt64 code = t->Run();
+
   // if task returns it is removed from the active list and deleted.
-  t->Remove();
-  delete t;
-  // since active task was deleted and removed, we need to set a new active task.
-  gExecBase.Schedule();
+  dlog("*** Task %s exited code(%d)\n", t->TaskName(), code);
+  aTask->Suicide(code);
 }
 
 static void print_flag(TUint64 flags, TInt bit, const char *m) {
@@ -72,7 +73,6 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   DISABLE;
 
   dprint("   ===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
-#if 1
   dprint("   rip: %016x cs: %08x\n", regs->rip, regs->cs);
 
   // print flags
@@ -106,14 +106,7 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   dprint("   rdi: %016x\n", regs->rdi);
   dprint("    ds: %08x es: %08x fs: %08x gs: %08x\n", regs->ds, regs->es, regs->fs, regs->gs);
   dprint("    ss %08x rsp %016x rbp %016x\n", regs->ss, regs->rsp, regs->rbp);
-#if 0
-  dlog("rax 0x%x rbx 0x%x rcx 0x%x rdx 0x%x\n", regs->rax, regs->rbx, regs->rcx, regs->rdx);
-  dlog("rsi %0x%x rdi %0x%x\n", regs->rsi, regs->rdi);
-  dlog("cs 0x%x ds 0x%x es 0x%x fs 0x%x gs 0x%x\n", regs->cs, regs->ds, regs->es, regs->fs, regs->gs);
-  dlog("ss 0x%x rsp 0x%x rbp 0x%x\n", regs->ss, regs->rsp, regs->rbp);
-  dlog("rip 0x%x flags 0x%x\n", regs->rip, regs->rflags);
-#endif
-#endif
+
   ENABLE;
 }
 

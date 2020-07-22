@@ -272,7 +272,7 @@ public:
     gExecBase.EnableIRQ(IRQ_KEYBOARD);
   }
 
-  void Run();
+  TInt64 Run();
 
 public:
   MessagePort *mMessagePort;
@@ -318,7 +318,7 @@ TBool KeyboardInterrupt::Run(TAny *aData) {
   return ETrue;
 }
 
-void KeyboardDeviceTask::Run() {
+TInt64 KeyboardDeviceTask::Run() {
   dprint("\n");
   dlog("keyboard task alive!\n");
 
@@ -326,55 +326,57 @@ void KeyboardDeviceTask::Run() {
   mMessagePort = CreateMessagePort("keyboard.device");
   gExecBase.AddMessagePort(*mMessagePort);
 
-  while (WaitPort(mMessagePort)) {
-    while (KeyboardMessage *m = (KeyboardMessage *)mMessagePort->GetMessage()) {
-      switch (m->mCommand) {
-        case EKeyUp:
-          // dlog("Queue key UP %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
-          if (((mTail + 1) % KEYBOARD_BUFFER_SIZE) != mHead) {
-            mBuffer[mTail++] = m->mResult | 0x80;
-            mTail %= KEYBOARD_BUFFER_SIZE;
-          }
-          else {
-            dlog("*** keyboard.device keyboard queue full\n");
-          }
-          // We don't want to waste time deleting the message in the Interrupt handler, so we do it here.
-          // This is not normal convention!
-          delete m;
-          break;
+  for (;;) {
+    while (WaitPort(mMessagePort)) {
+      while (KeyboardMessage *m = (KeyboardMessage *)mMessagePort->GetMessage()) {
+        switch (m->mCommand) {
+          case EKeyUp:
+            // dlog("Queue key UP %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
+            if (((mTail + 1) % KEYBOARD_BUFFER_SIZE) != mHead) {
+              mBuffer[mTail++] = m->mResult | 0x80;
+              mTail %= KEYBOARD_BUFFER_SIZE;
+            }
+            else {
+              dlog("*** keyboard.device keyboard queue full\n");
+            }
+            // We don't want to waste time deleting the message in the Interrupt handler, so we do it here.
+            // This is not normal convention!
+            delete m;
+            break;
 
-        case EKeyDown:
-          // dlog("Queue key DOWN %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
-          if (((mTail + 1) % KEYBOARD_BUFFER_SIZE) != mHead) {
-            mBuffer[mTail++] = m->mResult;
-            mTail %= KEYBOARD_BUFFER_SIZE;
-          }
-          else {
-            dlog("*** keyboard.device keyboard queue full\n");
-          }
-          // We don't want to waste time deleting the message in the Interrupt handler, so we do it here.
-          // This is not normal convention!
-          delete m;
-          break;
+          case EKeyDown:
+            // dlog("Queue key DOWN %d, %x, %c\n", m->mResult, m->mResult, m->mResult);
+            if (((mTail + 1) % KEYBOARD_BUFFER_SIZE) != mHead) {
+              mBuffer[mTail++] = m->mResult;
+              mTail %= KEYBOARD_BUFFER_SIZE;
+            }
+            else {
+              dlog("*** keyboard.device keyboard queue full\n");
+            }
+            // We don't want to waste time deleting the message in the Interrupt handler, so we do it here.
+            // This is not normal convention!
+            delete m;
+            break;
 
-        // respond to message if keyboard message FIFO is not empty
-        case EKeyRead:
-	  // TODO: this looks expensive (lots of try again messages when no activity)
-          if (mHead == mTail) {
-            // queue is empty
-            m->mError = EKeyboardTryAgain;
-          }
-          else {
-            m->mError = EKeyboardErrorNone;
-            m->mResult = mBuffer[mHead++];
-            mHead %= KEYBOARD_BUFFER_SIZE;
-          }
-	  m->Reply();
-          break;
+          // respond to message if keyboard message FIFO is not empty
+          case EKeyRead:
+            // TODO: this looks expensive (lots of try again messages when no activity)
+            if (mHead == mTail) {
+              // queue is empty
+              m->mError = EKeyboardTryAgain;
+            }
+            else {
+              m->mError = EKeyboardErrorNone;
+              m->mResult = mBuffer[mHead++];
+              mHead %= KEYBOARD_BUFFER_SIZE;
+            }
+            m->Reply();
+            break;
 
-        default:
-          dlog("keyboard.device: Unknown mCommand(%d/%x)\n", m->mCommand, m->mCommand);
-          break;
+          default:
+            dlog("keyboard.device: Unknown mCommand(%d/%x)\n", m->mCommand, m->mCommand);
+            break;
+        }
       }
     }
   }

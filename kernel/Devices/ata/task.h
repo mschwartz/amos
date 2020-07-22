@@ -44,7 +44,7 @@ protected:
   TUint64 mActiveDevice;
 
 public:
-  void Run();
+  TInt64 Run();
 
  public:
   TIdeDevice *IdeDevice(TInt aChannel = 0) { return &mDevices[aChannel]; }

@@ -332,7 +332,7 @@ void ExecBase::GuruMeditation(const char *aFormat, ...) {
   va_end(args);
   dprint("***********************\n\n\nHalted.\n");
 
-  while (1) {
+  for (;;) {
     halt();
   }
 }

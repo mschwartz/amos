@@ -306,7 +306,7 @@ TInt BConsoleWindow::ReadKey() {
 
 TInt BConsoleWindow::ReadString(char *aString, TInt aMaxLength, char mDelimeter) {
   TInt count = 0;
-  while (ETrue) {
+  for (;;) {
     TInt key = ReadKey();
     if (key == mDelimeter) {
       break;

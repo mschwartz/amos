@@ -228,7 +228,7 @@ TUint64 BTask::WaitPorts(TUint64 aSigMask, ...) {
   va_start(args, aSigMask);
   TUint64 sigmask = aSigMask;
 
-  while (ETrue) {
+  for (;;) {
     MessagePort *p = va_arg(args, MessagePort *);
     if (p == ENull) {
       break;

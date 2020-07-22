@@ -72,7 +72,7 @@ TInt64 ConsoleWindowTestTask::Run() {
     }
     else {
       char buf[512];
-      while (ETrue) {
+      for (;;) {
         HandleKeys(con);
         TUint64 actual = ReadFile(fd, buf, 512);
         if (actual == 0) {

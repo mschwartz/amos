@@ -264,7 +264,7 @@ void AtaTask::ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 B
           continue; // If Status = 0, No Device.
         }
 
-        while (ETrue) {
+        for (;;) {
           status = ide_read(i, ATA_REG_STATUS);
           if ((status & ATA_SR_ERR)) {
             err = 1;

@@ -137,7 +137,7 @@ TInt64 IdleTask::Run() {
   gExecBase.SetInspirationBase(new InspirationBase());
   // gExecBase.mInspirationBase->Init();
 
-  while (1) {
+  for (;;) {
     dlog("IdleTask Looping\n");
     halt();
   }

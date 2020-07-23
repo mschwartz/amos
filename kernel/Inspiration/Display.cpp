@@ -6,6 +6,7 @@
 #include <Inspiration/WindowManager/KeyboardTask.h>
 
 void Display::Init() {
+  dlog("Display::Init\n");
   DisplayTask *task = new DisplayTask(*this);
   gExecBase.AddTask(task);
 }

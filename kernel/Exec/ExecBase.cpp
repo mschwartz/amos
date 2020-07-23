@@ -27,6 +27,7 @@
 #include <posix/sprintf.h>
 #include <Exec/Random.h>
 #include <Exec/IdleTask.hh>
+#include <Exec/InitTask.hh>
 
 ExecBase gExecBase;
 
@@ -132,7 +133,7 @@ ExecBase::ExecBase() {
 #endif
 
   // Before enabling interrupts, we need to have the idle task set up
-  IdleTask *task = new IdleTask();
+  InitTask *task = new InitTask();
   mActiveTasks.Add(*task);
   mCurrentTask = mActiveTasks.First();
   current_task = &mCurrentTask->mRegisters;

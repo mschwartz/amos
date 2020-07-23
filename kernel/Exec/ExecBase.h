@@ -31,7 +31,9 @@ class PS2;
 class ACPI;
 class PCI;
 class InspirationBase;
+
 class IdleTask;
+class InitTask;
 
 /* External interrupts */
 #define IRQ_OFFSET 0x20 /* Interrupt offset for external interrupts */
@@ -134,6 +136,7 @@ static TSystemInfo &gSystemInfo = *(TSystemInfo *)0x5000; // see memory.inc
 class ExecBase : public BBase {
   friend RtcDevice;
   friend IdleTask;
+  friend InitTask;
 
 protected:
   TUint64 Tick() {

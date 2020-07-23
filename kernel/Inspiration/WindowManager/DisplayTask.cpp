@@ -1,18 +1,33 @@
+#define DEBUGME
+// #undef DEBUGME
+
 #include <Inspiration/WindowManager/DisplayTask.h>
 #include <Inspiration/BScreen.h>
 #include <Exec/ExecBase.h>
 
+DisplayTask::DisplayTask(Display &aDisplay)
+    // : BTask("DisplayTask", TASK_PRI_URGENT), mDisplay(aDisplay) {
+    : BTask("DisplayTask", TASK_PRI_DEFAULT), mDisplay(aDisplay) {
+  //
+}
 static inline void start_vbl() {
-  while ((inb(0x3da) & 0x08) == 0) {
+  // dlog("enter start_vbl\n");
+  while ((inb(0x3da) & (1<<3)) == 0) {
+    // dlog("loop start_vbl\n");
   }
+  // dlog("exit start_vbl\n");
 }
 
 static inline void end_vbl() {
-  while ((inb(0x3da) & 0x08) != 0) {
+  // dlog("enter end_vbl\n");
+  while ((inb(0x3da) & (1<<3)) != 0) {
+    // dlog("loop end_vbl\n");
   }
+  // dlog("exit end_vbl\n");
 }
 
 static inline TUint64 time_vbl() {
+  // dlog("time_vbl!\n");
   end_vbl();   // wait until we're not in vbl
   start_vbl(); // not in vblank at this point, wait until we are in vblank
   end_vbl();   // we know we're in vblank, wait until we're not in vbl
@@ -21,22 +36,24 @@ static inline TUint64 time_vbl() {
   TUint64 start = gExecBase.SystemTicks();
   start_vbl(); // wait for in vblank
   TUint64 end = gExecBase.SystemTicks();
-  dlog("  start(%d) end(%d) vbl_time(%d)\n", start, end, end - start);
+  dlog("  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> start(%d) end(%d) vbl_time(%d)\n", start, end, end - start);
   return end - start;
 }
 
 TInt64 DisplayTask::Run() {
-  dprint("\n");
+  dprint("\n\n");
+  dprint("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
   dlog("DisplayTask Run %x\n", inb(0x3da));
   Sleep(1);
 
   TUint64 vbl_time = time_vbl();
+  // TUint64 vbl_time = 0;
 
   if (vbl_time == 0) {
     vbl_time = 16;
   }
 
-  dlog("  vbl_time%d\n", vbl_time);
+  dlog("  vbl_time %d\n", vbl_time);
 
   TUint64 elapsed = 0, start = 0, end = 0;
 
@@ -55,10 +72,9 @@ TInt64 DisplayTask::Run() {
 
     // dlog("start vbl (%d,%d)\n", mDisplay.mMouseX, mDisplay.mMouseY);
 
-    Forbid();
+    // Forbid();
     // update dirty rects and mouse pointer
     start = gExecBase.SystemTicks();
-
 
     // Cursor saved pristine screen pixels after all dirty rects were rendered last frame
     // so we need to restore those saved pixels so the screen is pristine again before
@@ -76,6 +92,6 @@ TInt64 DisplayTask::Run() {
 
     end = gExecBase.SystemTicks();
     elapsed = end - start;
-    Permit();
+    // Permit();
   }
 }

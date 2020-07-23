@@ -98,30 +98,30 @@ typedef struct {
 } TIdeChannelRegisters;
 
 typedef struct _tag_TIdeDevice {
-  TUint8 Reserved;      // 0 (Empty) or 1 (This Drive really exists).
-  TUint8 Channel;       // 0 (Primary Channel) or 1 (Secondary Channel).
-  TUint8 Drive;         // 0 (Master Drive) or 1 (Slave Drive).
-  TUint16 Type;         // 0: ATA, 1:ATAPI.
-  TUint16 Signature;    // Drive Signature
-  TUint16 Capabilities; // Features.
-  TUint32 CommandSets;  // Command Sets Supported.
-  TUint32 Size;         // Size in Sectors.
-  TUint8 Model[41];     // Model in string.
+  TUint8 mReserved;      // 0 (Empty) or 1 (This Drive really exists).
+  TUint8 mChannel;       // 0 (Primary Channel) or 1 (Secondary Channel).
+  TUint8 mSlave;         // 0 (Master Drive) or 1 (Slave Drive).
+  TUint16 mType;         // 0: ATA, 1:ATAPI.
+  TUint16 mSignature;    // Drive Signature
+  TUint16 mCapabilities; // Features.
+  TUint32 mCommandSets;  // Command Sets Supported.
+  TUint32 mSize;         // Size in Sectors.
+  TUint8 mModel[41];     // Model in string.
   TBool mLba48;         // ETrue if device supports LBA48 addressing
   void Dump() {
-    if (Reserved == 1) {
+    if (mReserved == 1) {
       dlog("  Channel(%s) Drive(%s) Type(%s) Size(%d) LBA48(%s) Model(%s)\n",
-        Channel ? "Secondary" : "Primary",
-        Drive ? "Slave" : "Master",
-        Type ? "ATAPI" : "ATA",
-        Size,
+        mChannel ? "Secondary" : "Primary",
+        mSlave ? "Slave" : "Master",
+        mType ? "ATAPI" : "ATA",
+        mSize,
         mLba48 ? "YES" : "NO",
-        Model);
+        mModel);
     }
     else {
       dlog("  %s %s %s\n",
-        Channel ? "Secondary" : "Primary",
-        Drive ? "Slave" : "Master",
+        mChannel ? "Secondary" : "Primary",
+        mSlave ? "Slave" : "Master",
         "Not Present");
     }
   }

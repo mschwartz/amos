@@ -29,6 +29,7 @@ TestIdcmpTask::~TestIdcmpTask() {
 }
 
 TInt64 TestIdcmpTask::Run() {
+  dlog("TestIdcmpTask::Run\n");
   char buf[512];
 
   Sleep(3);

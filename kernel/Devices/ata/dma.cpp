@@ -73,7 +73,7 @@ TBool DMA::ReadSector(TUint64 aLba, TAny *aBuffer) {
   }
 
   outb(ata + ATA_REG_CONTROL, 0x00);
-  outb(ata + ATA_REG_HDDEVSEL, 0xe0 | (dev->Drive << 4));
+  outb(ata + ATA_REG_HDDEVSEL, 0xe0 | (dev->mSlave << 4));
 
   // wait 400ms
   inb(ata + ATA_REG_ALTSTATUS); // 100ms
@@ -132,7 +132,7 @@ TBool DMA::ReadSector(TUint64 aLba, TAny *aBuffer) {
   return ETrue;
 }
 
-TBool DMA::Read(TUint64 aLba, TAny *aBuffer, TInt32 aNumSectors) {
+TBool DMA::ReadSectors(TUint64 aLba, TAny *aBuffer, TInt32 aNumSectors) {
   TUint8 *buf = (TUint8 *)aBuffer;
   for (TInt i = 0; i < aNumSectors; i++) {
     if (!ReadSector(aLba, buf)) {
@@ -147,6 +147,6 @@ TBool DMA::WriteSector(TUint64 aLba, TAny *aBuffer) {
   return ETrue;
 }
 
-TBool DMA::Write(TUint64 aLba, TAny *aBuffer, TInt32 aNumSectors) {
+TBool DMA::WriteSectors(TUint64 aLba, TAny *aBuffer, TInt32 aNumSectors) {
   return ETrue;
 }

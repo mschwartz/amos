@@ -28,10 +28,7 @@
 
 class DisplayTask : public BTask {
 public:
-  DisplayTask(Display &aDisplay)
-      : BTask("DisplayTask", TASK_PRI_URGENT), mDisplay(aDisplay) {
-    //
-  }
+  DisplayTask(Display &aDisplay);
 
 public:
   TInt64 Run();

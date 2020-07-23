@@ -20,6 +20,7 @@ AtaTask::AtaTask(AtaDevice *aDevice) : BTask("ata.device") {
   mBusMasterPort = mDevice->BusMasterPort();
 
   mDma = (mBusMasterPort != 0) ? new DMA(this, mBusMasterPort) : ENull;
+  mPio = (mBusMasterPort -= 0) ? new PIO(this) : ENull;
 }
 
 AtaTask::~AtaTask() {
@@ -48,8 +49,6 @@ TInt64 AtaTask::Run() {
   gExecBase.SetIntVector(EAta2IRQ, new AtaInterrupt(this, sigbit, 2));
   gExecBase.EnableIRQ(IRQ_ATA1);
   gExecBase.EnableIRQ(IRQ_ATA2);
-  // gExecBase.DisableIRQ(IRQ_ATA1);
-  // gExecBase.DisableIRQ(IRQ_ATA2);
 
   // initialize devices
   mActiveDevice = 0;
@@ -75,9 +74,9 @@ TInt64 AtaTask::Run() {
           case EAtaReadBlocks: {
             TUint8 *buf = (TUint8 *)m->mBuffer;
             TUint64 lba = m->mLba;
-            dlog("read blocks lba(%d) count(%d)\n", lba, m->mCount);
+            DLOG("read blocks lba(%d) count(%d)\n", lba, m->mCount);
             ide_read_blocks(&mDevices[m->mUnit], lba, buf, m->mCount);
-            dlog("  /read blocks\n");
+            DLOG("  /read blocks\n");
           } break;
         }
         m->Reply();
@@ -195,7 +194,7 @@ TUint8 AtaTask::ide_print_error(TUint aDrive, TUint8 aError) {
       err = 19;
       break;
     case 2:
-      st = ide_read(mDevices[aDrive].Channel, ATA_REG_ERROR);
+      st = ide_read(mDevices[aDrive].mChannel, ATA_REG_ERROR);
       if (st & ATA_ER_AMNF) {
         dlog("  No address mark found\n");
         err = 7;
@@ -235,9 +234,9 @@ TUint8 AtaTask::ide_print_error(TUint aDrive, TUint8 aError) {
       break;
     case 4:
       dlog("  Model(%s) Write Protected (%s)/(%s)\n",
-        mDevices[aDrive].Model,
-        mDevices[aDrive].Channel ? "Secondary" : "Primary",
-        mDevices[aDrive].Drive ? "Slave" : "Master");
+        mDevices[aDrive].mModel,
+        mDevices[aDrive].mChannel ? "Secondary" : "Primary",
+        mDevices[aDrive].mSlave ? "Slave" : "Master");
       break;
   }
 
@@ -269,7 +268,7 @@ void AtaTask::ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 B
     for (TUint8 j = 0; j < 2; j++) { // master, slave
 
       TUint8 err = 0, type = IDE_ATA, status;
-      mDevices[count].Reserved = 0; // Assuming that no drive here.
+      mDevices[count].mReserved = 0; // Assuming that no drive here.
       DSPACE();
       // (I) Select Drive:
       DLOG("  1) SELECT DRIVE %02x\n", 0xa0 | (j << 4));
@@ -343,24 +342,24 @@ void AtaTask::ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 B
       // (VI) Read Device Parameters:
       DLOG("  6) READ DEVICE PARAMETERS\n");
       TAtaIdentity *p = (TAtaIdentity *)buffer;
-      mDevices[count].Reserved = 1;
-      mDevices[count].Type = type;
-      mDevices[count].Channel = i;
-      mDevices[count].Drive = j;
-      mDevices[count].Signature = *((TUint16 *)(buffer + ATA_IDENT_DEVICETYPE));
-      mDevices[count].Capabilities = *((TUint16 *)(buffer + ATA_IDENT_CAPABILITIES));
-      mDevices[count].CommandSets = *((TUint32 *)(buffer + ATA_IDENT_COMMANDSETS));
+      mDevices[count].mReserved = 1;
+      mDevices[count].mType = type;
+      mDevices[count].mChannel = i;
+      mDevices[count].mSlave = j;
+      mDevices[count].mSignature = *((TUint16 *)(buffer + ATA_IDENT_DEVICETYPE));
+      mDevices[count].mCapabilities = *((TUint16 *)(buffer + ATA_IDENT_CAPABILITIES));
+      mDevices[count].mCommandSets = *((TUint32 *)(buffer + ATA_IDENT_COMMANDSETS));
 
       // (VII) Get Size:
       DLOG("  7) Get Size\n");
-      if (mDevices[count].CommandSets & (1 << 26)) {
+      if (mDevices[count].mCommandSets & (1 << 26)) {
         // Device uses 48-Bit Addressing:
-        mDevices[count].Size = *((TUint32 *)(buffer + ATA_IDENT_MAX_LBA_EXT));
+        mDevices[count].mSize = *((TUint32 *)(buffer + ATA_IDENT_MAX_LBA_EXT));
         mDevices[count].mLba48 = ETrue;
       }
       else {
         // Device uses CHS or 28-bit Addressing:
-        mDevices[count].Size = *((TUint32 *)(buffer + ATA_IDENT_MAX_LBA));
+        mDevices[count].mSize = *((TUint32 *)(buffer + ATA_IDENT_MAX_LBA));
         mDevices[count].mLba48 = EFalse;
       }
 
@@ -371,10 +370,10 @@ void AtaTask::ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 B
       // (VIII) String indicates model of device (like Western Digital HDD and SONY DVD-RW...):
       DLOG("  7) Get Model\n");
       for (TInt k = 0; k < 40; k += 2) {
-        mDevices[count].Model[k] = buffer[ATA_IDENT_MODEL + k + 1];
-        mDevices[count].Model[k + 1] = buffer[ATA_IDENT_MODEL + k];
+        mDevices[count].mModel[k] = buffer[ATA_IDENT_MODEL + k + 1];
+        mDevices[count].mModel[k + 1] = buffer[ATA_IDENT_MODEL + k];
       }
-      mDevices[count].Model[40] = 0; // Terminate String.
+      mDevices[count].mModel[40] = 0; // Terminate String.
       // mDevices[count].mLba48 = *(TUint16 *)(buffer + ATA_IDENT_LBA48) & (1 << 10) ? ETrue : EFalse;
       count++;
     }
@@ -391,163 +390,15 @@ void AtaTask::ide_initialize(TUint32 BAR0, TUint32 BAR1, TUint32 BAR2, TUint32 B
 }
 
 TBool AtaTask::ide_io(TIdeDevice *aIdeDevice, TUint64 aLba, TBool aWrite, TUint8 *aBuffer, TInt aNumSectors) {
-  TBool dma = mDevice->BusMasterPort() != 0;
-  if (!bochs_present) {
-    dma = EFalse;
-  }
+  TBool dma = bochs_present ? (mDevice->BusMasterPort() != 0) : EFalse;
+  // dma = EFalse;
 
-  if (dma && (aWrite == EFalse)) {
-    return mDma->Read(aLba, aBuffer, aNumSectors);
-  }
-  TInt lba_mode = 0,
-       cmd;
-
-  TUint8 lba_io[6];
-
-  unsigned int channel = aIdeDevice->Channel;      // Read the Channel.
-  unsigned int slavebit = aIdeDevice->Drive;       // Read the Drive [Master/Slave]
-  unsigned int bus = mChannels[channel].mBasePort; // Bus Base, like 0x1F0 which is also data port.
-  unsigned int words = 256;                        // Almost every ATA drive has a sector-size of 512-byte.
-  unsigned short cyl, i;
-  unsigned char head, sect, err;
-
-  if (aIdeDevice->mLba48) {
-    lba_mode = 2;
-    lba_io[0] = (aLba & 0x000000FF) >> 0;
-    lba_io[1] = (aLba & 0x0000FF00) >> 8;
-    lba_io[2] = (aLba & 0x00FF0000) >> 16;
-    lba_io[3] = (aLba & 0xFF000000) >> 24;
-    lba_io[4] = 0; // LBA28 is integer, so 32-bits are enough to access 2TB.
-    lba_io[5] = 0; // LBA28 is integer, so 32-bits are enough to access 2TB.
-    head = 0;      // Lower 4-bits of HDDEVSEL are not used here.
-  }
-  else if (aIdeDevice->Capabilities & 0x200) {
-    // LBA28:
-    lba_mode = 1;
-    lba_io[0] = (aLba & 0x00000FF) >> 0;
-    lba_io[1] = (aLba & 0x000FF00) >> 8;
-    lba_io[2] = (aLba & 0x0FF0000) >> 16;
-    lba_io[3] = 0; // These Registers are not used here.
-    lba_io[4] = 0; // These Registers are not used here.
-    lba_io[5] = 0; // These Registers are not used here.
-    head = (aLba & 0xF000000) >> 24;
-  }
-  else {
-    // CHS:
-    lba_mode = 0;
-    sect = (aLba % 63) + 1;
-    cyl = (aLba + 1 - sect) / (16 * 63);
-    lba_io[0] = sect;
-    lba_io[1] = (cyl >> 0) & 0xFF;
-    lba_io[2] = (cyl >> 8) & 0xFF;
-    lba_io[3] = 0;
-    lba_io[4] = 0;
-    lba_io[5] = 0;
-    head = (aLba + 1 - sect) % (16 * 63) / (63); // Head number is written to HDDEVSEL lower 4-bits.
-  }
-
-  // TBool dma = EFalse; // dma not detected (yet)
-  while (ide_read(channel, ATA_REG_STATUS) & ATA_SR_BSY)
-    ; // Wait if busy.
-
-  if (lba_mode == 0) {
-    ide_write(channel, ATA_REG_HDDEVSEL, 0xA0 | (slavebit << 4) | head); // Drive & CHS.
-  }
-  else {
-    ide_write(channel, ATA_REG_HDDEVSEL, 0xE0 | (slavebit << 4) | head); // Drive & LBA
-  }
-
-  if (lba_mode == 2) {
-    ide_write(channel, ATA_REG_SECCOUNT1, 0);
-    ide_write(channel, ATA_REG_LBA3, lba_io[3]);
-    ide_write(channel, ATA_REG_LBA4, lba_io[4]);
-    ide_write(channel, ATA_REG_LBA5, lba_io[5]);
-  }
-  ide_write(channel, ATA_REG_SECCOUNT0, aNumSectors);
-  ide_write(channel, ATA_REG_LBA0, lba_io[0]);
-  ide_write(channel, ATA_REG_LBA1, lba_io[1]);
-  ide_write(channel, ATA_REG_LBA2, lba_io[2]);
-
-  if (lba_mode == 0 && dma == 0 && aWrite == EFalse) {
-    cmd = ATA_CMD_READ_PIO;
-  }
-  if (lba_mode == 1 && dma == 0 && aWrite == EFalse) {
-    cmd = ATA_CMD_READ_PIO;
-  }
-  if (lba_mode == 2 && dma == 0 && aWrite == EFalse) {
-    cmd = ATA_CMD_READ_PIO_EXT;
-  }
-  if (lba_mode == 0 && dma == 1 && aWrite == EFalse) {
-    cmd = ATA_CMD_READ_DMA;
-  }
-  if (lba_mode == 1 && dma == 1 && aWrite == EFalse) {
-    cmd = ATA_CMD_READ_DMA;
-  }
-  if (lba_mode == 2 && dma == 1 && aWrite == EFalse) {
-    cmd = ATA_CMD_READ_DMA_EXT;
-  }
-  if (lba_mode == 0 && dma == 0 && aWrite == ETrue) {
-    cmd = ATA_CMD_WRITE_PIO;
-  }
-  if (lba_mode == 1 && dma == 0 && aWrite == ETrue) {
-    cmd = ATA_CMD_WRITE_PIO;
-  }
-  if (lba_mode == 2 && dma == 0 && aWrite == ETrue) {
-    cmd = ATA_CMD_WRITE_PIO_EXT;
-  }
-  if (lba_mode == 0 && dma == 1 && aWrite == ETrue) {
-    cmd = ATA_CMD_WRITE_DMA;
-  }
-  if (lba_mode == 1 && dma == 1 && aWrite == ETrue) {
-    cmd = ATA_CMD_WRITE_DMA;
-  }
-  if (lba_mode == 2 && dma == 1 && aWrite == ETrue) {
-    cmd = ATA_CMD_WRITE_DMA_EXT;
-  }
-
-  ide_write(channel, ATA_REG_COMMAND, cmd); // Send the Command.
-
-  // read or write the data
-  if (dma) {
-    DLOG("*** DMA not implemented!\n");
-    if (aWrite) {
-      // DMA Write
-    }
-    else {
-      // DMA Read
-    }
-    return EFalse;
-  }
-
-  TUint8 *ptr = aBuffer;
   if (aWrite) {
-    // write sectors
-    for (TInt i = 0; i < aNumSectors; i++) {
-      if ((err = ide_polling(channel, 0))) {
-        DLOG("*** ide_polling error(%d)\n", err);
-        bochs;
-        return EFalse;
-      }
-      outsw(bus, ptr, words);
-      ptr = &ptr[words];
-    }
-    // TODO this is ugly!
-    ide_write(channel, ATA_REG_COMMAND, (TUint8[]){ ATA_CMD_CACHE_FLUSH, ATA_CMD_CACHE_FLUSH, ATA_CMD_CACHE_FLUSH_EXT }[lba_mode]);
-    ide_polling(channel, 0); // Polling.
+    return dma ? mDma->WriteSectors(aLba, aBuffer, aNumSectors) : mPio->WriteSectors(aLba, aBuffer, aNumSectors);
   }
   else {
-    // read sectors
-    for (TInt i = 0; i < aNumSectors; i++) {
-      if ((err = ide_polling(channel, 0))) {
-        DLOG("*** ide_polling error(%d)\n", err);
-        bochs;
-        return EFalse;
-      }
-      insw(bus, ptr, words);
-      ptr = &ptr[words];
-    }
+    return dma ? mDma->ReadSectors(aLba, aBuffer, aNumSectors) : mPio->ReadSectors(aLba, aBuffer, aNumSectors);
   }
-  return ETrue;
 }
 
 TBool AtaTask::ide_read_blocks(TIdeDevice *aIdeDevice, TUint64 aLba, TUint8 *aBuffer, TUint64 aCount) {

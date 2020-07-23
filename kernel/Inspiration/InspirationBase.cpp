@@ -108,8 +108,8 @@ void InspirationBase::Init() {
   gExecBase.AddTask(new MousePointerTask());
   gExecBase.AddTask(new KeyboardTask());
 
-  StartExamples();
   mDisplay->Init();
+  StartExamples();
 }
 
 void InspirationBase::AddScreen(BScreen *aScreen) {

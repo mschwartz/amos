@@ -41,10 +41,10 @@ protected:
 
 public:
   TBool ReadSector(TUint64 aLba, TAny *aBuffer);
-  TBool Read(TUint64 aLba, TAny *aBuffer, TInt32 aNumSectors);
+  TBool ReadSectors(TUint64 aLba, TAny *aBuffer, TInt32 aNumSectors);
   //
   TBool WriteSector(TUint64 aLba, TAny *aBuffer);
-  TBool Write(TUint64 aLba, TAny *aBuffer, TInt32 aNumSectors);
+  TBool WriteSectors(TUint64 aLba, TAny *aBuffer, TInt32 aNumSectors);
 
 protected:
   // these must be in CHIP RAM!

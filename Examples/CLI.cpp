@@ -16,7 +16,11 @@ CliTask::~CliTask() {
 }
 
 TInt64 CliTask::ExecuteCommand(char *aCommand) {
-  
+  mWindow->BeginPaint();
+  mWindow->WriteFormatted("Execute(%s)\n", aCommand);
+  mWindow->EndPaint();
+  dlog("Command(%s)\n", aCommand);
+  return 0;
 }
 
 void CliTask::ReadCommand() {
@@ -58,8 +62,7 @@ TInt64 CliTask::Run() {
   for (;;) {
     // print prompt and read command
     ReadCommand();
-    dlog("Command(%s)\n", mCommand);
-    mWindow->WriteFormatted("Execute(%s)\n", mCommand);
+    ExecuteCommand(mCommand);
     // execute command
   }
   return 0;

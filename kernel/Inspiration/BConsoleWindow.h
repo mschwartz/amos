@@ -24,6 +24,7 @@ public:
 
 protected:
   void Repaint();
+  void RenderCursor();
 
   //
   // Dimensions and character map
@@ -44,6 +45,7 @@ public:
 
 protected:
   TUint16 *mCharacterMap, *mCharacterMapEnd;
+  TUint16 *mShadowMap;
   TInt64 mCharacterMapSize;
   TInt32 mRows, mCols;
 
@@ -82,8 +84,8 @@ public:
   // Keyboard
   //
 public:
-  TBool KeyReady(); // is a key ready to read from keyboard?
-  TInt ReadKey(); // read a key from keyboard
+  TBool KeyReady();                                                             // is a key ready to read from keyboard?
+  TInt ReadKey();                                                               // read a key from keyboard
   TInt ReadString(char *aString, TInt aMaxLength = -1, char mDelimiter = '\n'); // read a string from keyboard
 
 protected:

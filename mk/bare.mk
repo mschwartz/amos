@@ -2,6 +2,7 @@
 ### bare.img
 #
 $(BAREFILE):	$(ISODIR)/boot.img $(ISODIR)/kernel.img
+	echo `id`
 	@echo ""
 	@echo ""
 	@cd tools && $(MAKE)
@@ -10,4 +11,5 @@ $(BAREFILE):	$(ISODIR)/boot.img $(ISODIR)/kernel.img
 	@cd iso && ./make-iso.sh
 	@echo ""
 	@echo ""
-	@./tools/build-img $(ISODIR)/boot.img $(ISODIR)/kernel.img $(ISODIR)/fs.img
+	echo `id`
+	@./tools/build-img/build-img $(ISODIR)/boot.img $(ISODIR)/kernel.img $(ISODIR)/fs.img

@@ -3,6 +3,7 @@
 #include <Graphics/font/BConsoleFont.h>
 #include <Exec/Random.h>
 #include <Inspiration/BScreen.h>
+#include <posix/sprintf.h>
 
 class IdcmpWindow : public BWindow {
 public:

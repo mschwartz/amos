@@ -96,6 +96,8 @@ void BConsoleWindow::Paint() {
 	bg = mBackgroundPalette[(ac >> 8) & 0x0f];
       vp->SetColors(fg, bg);
 
+      // TODO: this can be optimized by rendering FillRect if ac is a blank ' '
+      //       or if the rest of the line is blanks, clear to EOL
       vp->DrawText(col * 8, row * 16, ac & 0x0ff);
     }
   }

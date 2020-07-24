@@ -17,3 +17,8 @@ docker run -it --rm --name build -v "$PWD":/usr/src/myapp -w /usr/src/myapp cros
 echo ""
 echo ""
 echo "-> BUILT IN DOCKER CONTAINER"
+
+echo ""
+ls -l iso/*.img
+echo ""
+ls -l c.img

@@ -1,12 +1,17 @@
-BUILDOBJ=	main.o RawDisk.o
+TOPDIR=		$(shell git rev-parse --show-toplevel)
+
+include $(TOPDIR)/mk/tools.mk
+
+OBJ=	main.o RawDisk.o
+PROGRAM=	disk-tool
 
 .cpp.o:
-	$(GCC) -c -O2 -g $(INCLUDE_PATH) -o $*.o $*.cpp
+	$(GCC) -c $(INCLUDE_PATH) -O2 -g $(INCLUDE_PATH) -o $*.o $*.cpp
 
-disk-tool: $(BUILDOBJ)
-	gcc -o disk-tool $(BUILDOBJ) -lstdc++
+$(PROGRAM): $(OBJ)
+	gcc -o $(PROGRAM) $(OBJ) -lstdc++
 
-all: 	disk-tool
+all: 	$(PROGRAM)
 
 clean:
-	rm -f *.o disk-tool
+	rm -f *.o $(PROGRAM)

@@ -32,9 +32,10 @@ c.img:	$(BAREFILE)
 	@chmod 644 c.img
 	@echo ""
 	@echo ""
-	@ls -l  */*.img
-	@echo ""
-	@ls -l c.img
+	@chown -R 1000.985  $(BUILDDIR) iso c.img
+# @ls -l  */*.img
+# @echo ""
+# @ls -l c.img
 
 
 include mk/bare.mk

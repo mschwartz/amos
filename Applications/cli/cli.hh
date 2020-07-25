@@ -14,6 +14,7 @@ public:
   TInt64 Run();
 
 protected:
+  TInt64 Error(const char *fmt, ...);
   void PrintPrompt();
   void ReadCommand();
   TInt64 ExecuteCommand(char *aCommand);

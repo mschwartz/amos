@@ -196,6 +196,8 @@ const char kbdus[128] = {
   0, /* All other keys are undefined */
 };
 
+#define TOUPPER(x) (('a' <= (x) && (x) <= 'z') ? ((x - 'a') + 'A') : (x))
+
 //Keyboard *gKeyboard;
 
 static inline TUint8 read_config_byte(TUint8 offset) {
@@ -283,6 +285,8 @@ protected:
 };
 
 TBool KeyboardInterrupt::Run(TAny *aData) {
+  static TBool shift_key = EFalse;
+
   TInt timeout;
   for (timeout = 1000; timeout > 0; timeout--) {
     TUint8 t = inb(KEYB_DR);
@@ -291,20 +295,37 @@ TBool KeyboardInterrupt::Run(TAny *aData) {
     }
     // dlog("   keycode: %02x\n", t);
     if (t & 0x80) {
-      TInt res = kbdus[t & 0x7f];
-      if (res) {
-        KeyboardMessage *m = new KeyboardMessage(ENull, EKeyUp);
-        m->mResult = res;
-        m->Send(mTask->mMessagePort);
+      t &= 0x7f;
+      if (t == 0x2a) {
+        shift_key = EFalse;
+      }
+      else {
+        TInt res = kbdus[t];
+        if (res) {
+          if (shift_key) {
+            res = TOUPPER(res);
+          }
+          KeyboardMessage *m = new KeyboardMessage(ENull, EKeyUp);
+          m->mResult = res;
+          m->Send(mTask->mMessagePort);
+        }
       }
     }
     else {
       // send message to task
-      TInt res = kbdus[t];
-      if (res) {
-        KeyboardMessage *m = new KeyboardMessage(ENull, EKeyDown);
-        m->mResult = res;
-        m->Send(mTask->mMessagePort);
+      if (t == 0x2a) {
+        shift_key = ETrue;
+      }
+      else {
+        TInt res = kbdus[t];
+        if (res) {
+          if (shift_key) {
+            res = TOUPPER(res);
+          }
+          KeyboardMessage *m = new KeyboardMessage(ENull, EKeyDown);
+          m->mResult = res;
+          m->Send(mTask->mMessagePort);
+        }
       }
       break;
     }

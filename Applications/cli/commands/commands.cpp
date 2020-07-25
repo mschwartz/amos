@@ -18,3 +18,38 @@ struct cli_commands  gCommands[] = {
   "less", &CliTask::command_less, "type file to screen with pager",
   ENull, ENull
 };
+
+TInt64 CliTask::ExecuteCommand(char *aCommand) {
+  // mWindow->BeginPaint();
+  // mWindow->WriteFormatted("Execute(%s)\n", aCommand);
+  // mWindow->EndPaint();
+  dlog("Command(%s)\n", aCommand);
+
+  const int MAXARGS = 64;
+  TInt ac = 0;
+  char *av[MAXARGS];
+  char *p1 = aCommand;
+  while (*p1 != '\0') {
+    char *p2 = p1;
+    while (*p2 != ' ') {
+      if (*p2 == '\0') {
+        break;
+      }
+      p2++;
+    }
+    av[ac++] = p1;
+    if (*p2 == ' ') {
+      *p2++ = '\0';
+    }
+    p1 = p2;
+  }
+
+  for (TInt i = 0; gCommands[i].mFunc != ENull; i++) {
+    if (CompareStrings(av[0], gCommands[i].mName) == 0) {
+      return (this->*gCommands[i].mFunc)(ac, av);
+    }
+  }
+
+  mWindow->WriteFormatted("*** Invalid command(%s)\n", mCommand);
+  return -1;
+}

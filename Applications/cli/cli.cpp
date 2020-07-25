@@ -1,6 +1,10 @@
 #include "cli.hh"
 #include "commands/commands.hh"
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 CliTask::CliTask() : BProcess("CliTask") {
   mPrompt = DuplicateString(" %s > ");
   CopyString(mCurrentDirectory, "/");
@@ -15,40 +19,25 @@ CliTask::~CliTask() {
  ********************************************************************************
  *******************************************************************************/
 
-TInt64 CliTask::ExecuteCommand(char *aCommand) {
-  // mWindow->BeginPaint();
-  // mWindow->WriteFormatted("Execute(%s)\n", aCommand);
-  // mWindow->EndPaint();
-  dlog("Command(%s)\n", aCommand);
+TInt64 CliTask::Error(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
 
-  const int MAXARGS = 64;
-  TInt ac = 0;
-  char *av[MAXARGS];
-  char *p1 = aCommand;
-  while (*p1 != '\0') {
-    char *p2 = p1;
-    while (*p2 != ' ') {
-      if (*p2 == '\0') {
-        break;
-      }
-      p2++;
-    }
-    av[ac++] = p1;
-    if (*p2 == ' ') {
-      *p2++ = '\0';
-    }
-    p1 = p2;
-  }
+  char buf[512];
+  vsprintf(buf, fmt, args);
+  dputs(buf);
+  va_end(args);
 
-  for (TInt i = 0; gCommands[i].mFunc != ENull; i++) {
-    if (CompareStrings(av[0], gCommands[i].mName) == 0) {
-      return (this->*gCommands[i].mFunc)(ac, av);
-    }
-  }
-
-  mWindow->WriteFormatted("*** Invalid command(%s)\n", mCommand);
+  mWindow->BeginPaint();
+  mWindow->WriteFormatted("*** Error: %s\n", buf);
+  mWindow->EndPaint();
   return -1;
 }
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
+// repl
 
 void CliTask::PrintPrompt() {
   mWindow->BeginPaint();
@@ -61,19 +50,31 @@ void CliTask::ReadCommand() {
   char *ptr = &mCommand[0];
   for (;;) {
     TInt c = mWindow->ReadKey();
-    mWindow->BeginPaint();
     switch (c) {
       case -1:
         continue;
+      case 8: // backspace
+        dlog("backspace!\n");
+        if (ptr != &mCommand[0]) {
+          *ptr-- = ' ';
+          mWindow->BeginPaint();
+          mWindow->Left();
+          mWindow->Write(" ");
+          mWindow->Left();
+          mWindow->EndPaint();
+        }
+        break;
       case 13:
       case 10:
         *ptr = '\0';
+        mWindow->BeginPaint();
         mWindow->Write("\n");
         mWindow->EndPaint();
         return;
       default:
         if (c >= 0x20 && c <= 0x7f) {
           *ptr++ = c;
+          mWindow->BeginPaint();
           mWindow->Write(c);
           mWindow->EndPaint();
         }

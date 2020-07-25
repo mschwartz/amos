@@ -13,10 +13,17 @@
  */
 const TInt CONSOLE_BUFFER_SIZE = 4096;
 
+class ConsoleWindowTask;
+
 class BConsoleWindow : public BWindow {
+  friend ConsoleWindowTask;
+
 public:
   BConsoleWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH, BScreen *aScreen = ENull);
   virtual ~BConsoleWindow();
+
+protected:
+  BTask *mConsoleTask;
 
 public:
   void Paint();
@@ -24,7 +31,6 @@ public:
 
 protected:
   void Repaint();
-  void RenderCursor();
 
   //
   // Dimensions and character map
@@ -53,8 +59,9 @@ protected:
   // cursor
   //
 public:
+  void RenderCursor(TBool aErase = EFalse);
   void ShowCursor(TBool aEnable = ETrue) { mCursorEnabled = aEnable; }
-  void TOgglecURSOR() { mCursorEnabled = !mCursorEnabled; }
+  void ToggleCursor() { mCursorEnabled = !mCursorEnabled; }
   void MoveTo(TInt32 aRow, TInt32 aCol);
   void Up();
   void Down();

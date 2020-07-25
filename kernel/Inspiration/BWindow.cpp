@@ -82,6 +82,11 @@ void BWindow::MoveTo(TInt32 aX, TInt32 aY) {
   //
 }
 
+void BWindow::SetIdcmpPort(BTask *aTask) {
+  delete mIdcmpPort;
+  mIdcmpPort = aTask->CreateMessagePort();
+}
+
 IdcmpMessage *BWindow::GetMessage() {
   return (IdcmpMessage *)mIdcmpPort->GetMessage();
 }

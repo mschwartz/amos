@@ -114,7 +114,8 @@ protected:
    * returns mask of signals received.
    */
   TUint64 WaitPorts(TUint64 aSigMask, ...);
-  
+
+public:
   /**
     * Wait for some number of seconds.
     */

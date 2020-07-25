@@ -1,7 +1,47 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Inspiration/BConsoleWindow.h>
 #include <posix/sprintf.h>
 #include <stdarg.h>
-#include <Exec/Memory.h>
+#include <Exec/ExecBase.h>
+
+const TInt NOKEY_DELAY = 1;
+
+class ConsoleWindowTask : public BTask {
+public:
+  ConsoleWindowTask(BConsoleWindow *aWindow) : BTask(aWindow->Title()) {
+    mWindow = aWindow;
+  }
+
+public:
+  TInt64 Run() {
+    DLOG("ConsoleWindowTask Run\n");
+    delete mWindow->mIdcmpPort;
+    mWindow->mIdcmpPort = CreateMessagePort();
+    IdcmpMessage *m;
+    for (;;) {
+      WaitPort(mWindow->mIdcmpPort);
+      while ((m = mWindow->GetMessage())) {
+        if (m->mClass & IDCMP_VANILLAKEY) {
+          if (((mWindow->mBufferTail + 1) % CONSOLE_BUFFER_SIZE) != mWindow->mBufferHead) {
+            DLOG("  Queue(%02x) %c\n", m->mCode, m->mCode);
+            mWindow->mBuffer[mWindow->mBufferTail++] = m->mCode;
+            mWindow->mBufferTail %= CONSOLE_BUFFER_SIZE;
+          }
+          else {
+            dlog("*** ConsoleWindow keyboard queue full %d/%d\n", mWindow->mBufferHead, mWindow->mBufferTail);
+            bochs;
+          }
+        }
+        m->Reply();
+      }
+    }
+  }
+
+protected:
+  BConsoleWindow *mWindow;
+};
 
 BConsoleWindow::BConsoleWindow(const char *aTitle,
   TInt32 aX, TInt32 aY,
@@ -33,6 +73,8 @@ BConsoleWindow::BConsoleWindow(const char *aTitle,
   mBufferHead = mBufferTail = 0;
 
   Resize(mClientRect.Width(), mClientRect.Height());
+  mConsoleTask = new ConsoleWindowTask(this);
+  gExecBase.AddTask(mConsoleTask);
 }
 
 void BConsoleWindow::Resize(TInt32 aW, TInt32 aH) {
@@ -78,6 +120,8 @@ void BConsoleWindow::Resize(TInt32 aW, TInt32 aH) {
 }
 
 BConsoleWindow::~BConsoleWindow() {
+  gExecBase.RemoveTask(mConsoleTask, 0);
+  mConsoleTask = ENull;
 }
 
 void BConsoleWindow::Dump() {
@@ -89,6 +133,7 @@ void BConsoleWindow::Dump() {
 
 void BConsoleWindow::Repaint() {
   Paint();
+  RenderCursor();
   BWindow::Repaint();
 }
 
@@ -101,7 +146,7 @@ void BConsoleWindow::Paint() {
     for (TInt col = 0; col < mCols; col++) {
       TUint16 ac = *ptr++;
       // if ac is *shadow, then we don't ened to render, character has notchanged
-      if (ac != *shadow) {
+      // if (ac != *shadow) {
         *shadow++ = ac;
         TRGB &fg = mForegroundPalette[(ac >> 8) & 0x0f],
              bg = mBackgroundPalette[(ac >> 8) & 0x0f];
@@ -110,7 +155,7 @@ void BConsoleWindow::Paint() {
         // TODO: this can be optimized by rendering FillRect if ac is a blank ' '
         //       or if the rest of the line is blanks, clear to EOL
         vp->DrawText(col * 8, row * 16, ac & 0x0ff);
-      }
+      // }
     }
   }
 }
@@ -182,12 +227,35 @@ void BConsoleWindow::ScrollDown(TInt32 aRow) {
 //
 // Cursor
 //
+
+void BConsoleWindow::RenderCursor(TBool aErase) {
+  BViewPort32 *vp = mViewPort; // client viewport
+  if (mCursorEnabled) {
+    if (aErase) {
+      TUint16 ac = mCharacterMap[mRow * mRows + mCol];
+      TRGB &fg = mForegroundPalette[(ac >> 8) & 0x0f],
+           bg = mBackgroundPalette[(ac >> 8) & 0x0f];
+      vp->SetColors(fg, bg);
+
+      // TODO: this can be optimized by rendering FillRect if ac is a blank ' '
+      //       or if the rest of the line is blanks, clear to EOL
+      vp->DrawText(mCol * 8, mRow * 16, ac & 0x0ff);
+    }
+    else {
+      mViewPort->FillRect(0xffffff, mCol * 8, mRow * 16, mCol * 8 + 7, mRow * 16 + 15);
+    }
+  }
+}
+
 void BConsoleWindow::MoveTo(TInt32 aRow, TInt32 aCol) {
+  RenderCursor(ETrue);
   mRow = CLAMP(aRow, 0, mRows);
   mCol = CLAMP(aCol, 0, mCols);
+  mShadowMap[mRow * mRows + mCol] = 0;
 }
 
 void BConsoleWindow::Up() {
+  RenderCursor(ETrue);
   mRow--;
   if (mRow < 0) {
     mRow = 0;
@@ -196,6 +264,7 @@ void BConsoleWindow::Up() {
 }
 
 void BConsoleWindow::Down() {
+  RenderCursor(ETrue);
   mRow++;
   if (mRow >= mRows) {
     ScrollUp();
@@ -204,6 +273,7 @@ void BConsoleWindow::Down() {
 }
 
 void BConsoleWindow::Left() {
+  RenderCursor(ETrue);
   mCol--;
   if (mCol < 0) {
     mCol = 0;
@@ -212,6 +282,7 @@ void BConsoleWindow::Left() {
 }
 
 void BConsoleWindow::Right() {
+  RenderCursor(ETrue);
   mCol++;
   if (mCol >= mCols) {
     mCol = 0;
@@ -229,9 +300,11 @@ void BConsoleWindow::Write(TInt32 aRow, TInt32 aCol, const char aChar) {
   mCol = aCol;
 
   if (aChar == '\r') {
+    RenderCursor(ETrue);
     mCol = 0;
   }
   else if (aChar == '\n') {
+    RenderCursor(ETrue);
     ClearEol();
     mCol = 0;
     Down();
@@ -289,34 +362,19 @@ TUint16 BConsoleWindow::GetAt(TInt32 aRow, TInt32 aCol) {
 //
 // keyboard
 //
-void BConsoleWindow::FillBuffer() {
-  while (IdcmpMessage *m = GetMessage()) {
-    if (m->mClass & IDCMP_VANILLAKEY) {
-      if (((mBufferTail + 1) % CONSOLE_BUFFER_SIZE) != mBufferHead) {
-        mBuffer[mBufferTail++] = m->mCode;
-        mBufferTail %= CONSOLE_BUFFER_SIZE;
-      }
-      else {
-        dlog("*** ConsoleWindow keyboard queue full %d/%d\n", mBufferHead, mBufferTail);
-        bochs;
-      }
-    }
-    m->Reply();
-  }
-}
-
 TBool BConsoleWindow::KeyReady() {
-  FillBuffer();
   return mBufferHead != mBufferTail;
 }
 
 TInt BConsoleWindow::ReadKey() {
-  if (!KeyReady()) {
-    return -1;
+  for (;;) {
+    if (KeyReady()) {
+      TInt key = mBuffer[mBufferHead++];
+      mBufferHead %= CONSOLE_BUFFER_SIZE;
+      return key;
+    }
+    mTask->MilliSleep(NOKEY_DELAY);
   }
-  TInt key = mBuffer[mBufferHead++];
-  mBufferHead %= CONSOLE_BUFFER_SIZE;
-  return key;
 }
 
 TInt BConsoleWindow::ReadString(char *aString, TInt aMaxLength, char mDelimeter) {

@@ -66,7 +66,18 @@ public:
   }
 
 public:
+  /**
+   * SetIdcmpPort
+   * Remove/delete old IdcmpPort and set new one for specified Task
+   */
+  void SetIdcmpPort(BTask *aTask);
+
+  /**
+   * GetMessage
+   * Remve and return next IdcmpMessage from IdcmpPort
+   */
   IdcmpMessage *GetMessage();
+
   TBool IsActive();
   void Activate();
 

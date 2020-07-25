@@ -25,13 +25,17 @@ DEPENDENCIES= 	$(addprefix $(BUILDDIR)/, $(SOURCES:.cpp=.d))
 EXAMPLESRC=	$(shell find Examples -name '*.cpp')
 EXAMPLESOBJ= 	$(addprefix $(BUILDDIR)/, $(EXAMPLESRC:.cpp=.o))
 
+# Applications sources
+APPSRC=		$(shell find Applications -name '*.cpp')
+APPSOBJ= 	$(addprefix $(BUILDDIR)/, $(APPSRC:.cpp=.o))
+
 # Kernel assembly sources
 ASM=		$(shell find kernel -name '*.asm')
 ASMOBJECTS= 	$(addprefix $(BUILDDIR)/, $(ASM:.asm=.o))
 
 CRTBEGIN_OBJ=	$(shell $(GCC) -print-file-name=crtbegin.o)
 CRTEND_OBJ=	$(shell $(GCC) -print-file-name=crtend.o)
-ALL_OBJ=	$(KFONTOBJ) $(ASMOBJECTS) $(OBJECTS) $(EXAMPLESOBJ)
+ALL_OBJ=	$(KFONTOBJ) $(ASMOBJECTS) $(OBJECTS) $(EXAMPLESOBJ) $(APPSOBJ)
 KERNEL_OBJ=	$(filter-out $(BUILDDIR)/kernel/kernel_main.o, $(filter-out $(BUILDDIR)/kernel/kernel_start.o, $(ALL_OBJ) ))
 
 # the rule

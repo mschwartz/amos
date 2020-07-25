@@ -3,8 +3,7 @@
 
 #include <Exec/ExecBase.h>
 #include <Inspiration/InspirationBase.h>
-
-class CliWindow;
+#include "cliwindow.hh"
 
 class CliTask : public BProcess {
 public:

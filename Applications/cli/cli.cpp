@@ -1,9 +1,5 @@
-#include "CLI.hh"
-
-class CliWindow : public BConsoleWindow {
-public:
-  CliWindow() : BConsoleWindow("Test Cli Window", 900, 700, 640, 480) {}
-};
+#include "cli.hh"
+#include "commands/commands.hh"
 
 CliTask::CliTask() : BProcess("CliTask") {
   mPrompt = DuplicateString(" %s > ");
@@ -13,147 +9,6 @@ CliTask::CliTask() : BProcess("CliTask") {
 CliTask::~CliTask() {
   delete[] mPrompt;
   mPrompt = ENull;
-}
-
-/********************************************************************************
- ********************************************************************************
- *******************************************************************************/
-
-typedef TInt64 (CliTask::*TCommand)(TInt ac, char *av[]);
-
-static struct {
-  const char *mName;
-  TCommand mFunc;
-  const char *mHelp;
-} sCommands[] = {
-  "help", &CliTask::command_help, "print help (for command)",
-  "pwd", &CliTask::command_pwd, "print cwd",
-  "lsahci", &CliTask::command_lsahci, "list ahci table",
-  "lspci", &CliTask::command_lspci, "list pci devices",
-  "sysinfo", &CliTask::command_sysinfo, "print system information",
-  "date", &CliTask::command_date, "print date and time",
-  "uptime", &CliTask::command_uptime, "ptime - print uptime",
-  "df", &CliTask::command_df, "print disk infomration about devices",
-  "ps", &CliTask::command_ps, "list Tasks in system",
-  "theme", &CliTask::command_theme, "print desktop theme information",
-  // files
-  "ls", &CliTask::command_ls, "print directory info of files (or cwd)",
-  "touch", &CliTask::command_touch, "touch files (update mtime or create if not exists)",
-  "cat", &CliTask::command_cat, "type file to screen",
-  "less", &CliTask::command_less, "type file to screen with pager",
-  ENull, ENull
-};
-
-TInt64 CliTask::command_help(TInt ac, char **av) {
-  mWindow->WriteFormatted("Help\n");
-  for (TInt i = 0; sCommands[i].mFunc != ENull; i++) {
-    mWindow->WriteFormatted("%-10s %s\n", sCommands[i].mName, sCommands[i].mHelp);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_pwd(TInt ac, char **av) {
-  mWindow->WriteFormatted("pwd argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_lsahci(TInt ac, char **av) {
-  mWindow->WriteFormatted("lsahci argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_lspci(TInt ac, char **av) {
-  mWindow->WriteFormatted("lspci argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_sysinfo(TInt ac, char **av) {
-  mWindow->WriteFormatted("sysinfo argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_date(TInt ac, char **av) {
-  mWindow->WriteFormatted("date argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_uptime(TInt ac, char **av) {
-  mWindow->WriteFormatted("uptime argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_df(TInt ac, char **av) {
-  mWindow->WriteFormatted("df argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_ps(TInt ac, char **av) {
-  mWindow->WriteFormatted("ps argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_theme(TInt ac, char **av) {
-  mWindow->WriteFormatted("theme argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_ls(TInt ac, char **av) {
-  mWindow->WriteFormatted("ls argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_touch(TInt ac, char **av) {
-  mWindow->WriteFormatted("touch argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_cat(TInt ac, char **av) {
-  mWindow->WriteFormatted("cat argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
-}
-
-TInt64 CliTask::command_less(TInt ac, char **av) {
-  mWindow->WriteFormatted("less argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
-  }
-  return 0;
 }
 
 /********************************************************************************
@@ -185,9 +40,9 @@ TInt64 CliTask::ExecuteCommand(char *aCommand) {
     p1 = p2;
   }
 
-  for (TInt i = 0; sCommands[i].mFunc != ENull; i++) {
-    if (CompareStrings(av[0], sCommands[i].mName) == 0) {
-      return (this->*sCommands[i].mFunc)(ac, av);
+  for (TInt i = 0; gCommands[i].mFunc != ENull; i++) {
+    if (CompareStrings(av[0], gCommands[i].mName) == 0) {
+      return (this->*gCommands[i].mFunc)(ac, av);
     }
   }
 

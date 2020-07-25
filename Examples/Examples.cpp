@@ -2,7 +2,7 @@
 #include <Examples/ConsoleWindowTest.h>
 #include <Examples/TestIdcmp.h>
 #include <Examples/ExitTest.hh>
-#include <Examples/CLI.hh>
+#include <Applications/cli/cli.hh>
 
 extern "C" void StartExamples() {
   dlog("------- Construct TestIdcmp\n");
@@ -16,8 +16,8 @@ extern "C" void StartExamples() {
 
   dlog("------- Construct CLI\n");
   gExecBase.AddTask(new CliTask());
-//   dprint("Construct ExitTests\n");
-//   gExecBase.AddTask(new ExitTestTask(EExitTestReturn, "RETURN", 4));
-//   gExecBase.AddTask(new ExitTestTask(EExitTestSuicide, "SUICIDE", 8));
-//   gExecBase.AddTask(new ExitTestTask(EExitTestExit, "EXIT", 12));
+  //   dprint("Construct ExitTests\n");
+  //   gExecBase.AddTask(new ExitTestTask(EExitTestReturn, "RETURN", 4));
+  //   gExecBase.AddTask(new ExitTestTask(EExitTestSuicide, "SUICIDE", 8));
+  //   gExecBase.AddTask(new ExitTestTask(EExitTestExit, "EXIT", 12));
 }

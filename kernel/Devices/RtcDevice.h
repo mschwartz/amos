@@ -25,6 +25,7 @@ public:
   volatile TUint16 mMonth, mDay, mYear, mWeekday;
   volatile TUint16 mHours, mMinutes, mSeconds, mFract;
   volatile TUint64 mMillis;
+  TBool mPm;
 };
 
 enum ERtcDeviceCommand {

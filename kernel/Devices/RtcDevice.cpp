@@ -175,6 +175,7 @@ public:
       yr = read_cmos(YEAR);
     } while ((xsec != sec) || (xmins != mins) || (xhr != hr) || (xday != day) || (xmo != mo) || (xyr != yr) || (xwd != wd));
 
+    dlog("hr = %x\n", hr);
     // convert BCD
     TUint8 registerB = read_cmos(0x0b);
     if ((registerB & 0x04) == 0) {
@@ -196,6 +197,7 @@ public:
       mRtcDevice->mYear = yr;
     }
     mRtcDevice->mYear += 2000; // we will have a y3k problem!!!
+    mRtcDevice->mPm = (hr & 0x80);
 
     // convert 12 hour time to 24 hour time
     if ((registerB & 0x02) == 0 && (hr & 0x80)) {

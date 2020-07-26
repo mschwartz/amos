@@ -54,7 +54,6 @@ void CliTask::ReadCommand() {
       case -1:
         continue;
       case 8: // backspace
-        dlog("backspace!\n");
         if (ptr != &mCommand[0]) {
           *ptr-- = ' ';
           mWindow->BeginPaint();

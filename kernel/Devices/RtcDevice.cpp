@@ -8,6 +8,7 @@ const TUint8 DATA = 0x71;
 const TUint8 SECONDS = 0;
 const TUint8 MINUTES = 2;
 const TUint8 HOURS = 4;
+const TUint8 WEEKDAY = 6;
 const TUint8 DAY = 7;
 const TUint8 MONTH = 8;
 const TUint8 YEAR = 9;
@@ -48,6 +49,7 @@ protected:
 
 class RtcTask : public BTask {
   friend RtcInterrupt;
+
 public:
   RtcTask(RtcDevice *aRtcDevice) : BTask("Rtc Task", LIST_PRI_MAX) {
     mRtcDevice = aRtcDevice;
@@ -61,9 +63,12 @@ public:
     dlog("RTC Task running!\n");
 
     ReadRtc();
-    dlog("  --- Read RTC: %02d/%02d/%02d %02d:%02d:%02d\n",
-      mRtcDevice->mMonth, mRtcDevice->mDay, mRtcDevice->mYear,
+
+    dprint("\n\n");
+    dlog("  --- Read RTC: %02d/%02d/%02d weekday(%d) %02d:%02d:%02d\n",
+      mRtcDevice->mMonth, mRtcDevice->mDay, mRtcDevice->mYear, mRtcDevice->mWeekday,
       mRtcDevice->mHours, mRtcDevice->mMinutes, mRtcDevice->mSeconds);
+    dprint("\n\n");
 
     outb(0x70, 0x0b);
     TUint8 prev = inb(0x71);
@@ -79,7 +84,7 @@ public:
     gExecBase.EnableIRQ(IRQ_RTC);
 
     mSignalBit = AllocSignal(-1);
-    mMessagePort = CreateMessagePort("rtc.device");
+    mMessagePort = CreatePort("rtc.device");
     gExecBase.AddMessagePort(*mMessagePort);
 
     BMessageList rtcQueue("rtc.device queue");
@@ -132,8 +137,8 @@ public:
   void ReadRtc() {
     mRtcDevice->mMillis = 0;
 
-    TUint8 sec, mins, hr, mo, day, yr;
-    TUint8 xsec, xmins, xhr, xmo, xday, xyr;
+    TUint8 sec, mins, hr, mo, day, wd, yr;
+    TUint8 xsec, xmins, xhr, xmo, xday, xwd, xyr;
 
     while (busy())
       ;
@@ -142,6 +147,7 @@ public:
     mins = read_cmos(MINUTES);
     hr = read_cmos(HOURS);
 
+    wd = read_cmos(WEEKDAY);
     day = read_cmos(DAY);
     mo = read_cmos(MONTH);
     yr = read_cmos(YEAR);
@@ -151,7 +157,9 @@ public:
       xmins = mins;
       xhr = hr;
       xday = day;
+      xwd = wd;
       xmo = mo;
+      xyr = yr;
       xyr = yr;
 
       while (busy())
@@ -161,10 +169,11 @@ public:
       mins = read_cmos(MINUTES);
       hr = read_cmos(HOURS);
 
+      wd = read_cmos(WEEKDAY);
       day = read_cmos(DAY);
       mo = read_cmos(MONTH);
       yr = read_cmos(YEAR);
-    } while ((xsec != sec) || (xmins != mins) || (xhr != hr) || (xday != day) || (xmo != mo) || (xyr != yr));
+    } while ((xsec != sec) || (xmins != mins) || (xhr != hr) || (xday != day) || (xmo != mo) || (xyr != yr) || (xwd != wd));
 
     // convert BCD
     TUint8 registerB = read_cmos(0x0b);
@@ -172,6 +181,7 @@ public:
       mRtcDevice->mSeconds = (sec & 0x0f) + ((sec / 16 * 10));
       mRtcDevice->mMinutes = (mins & 0x0f) + ((mins / 16 * 10));
       mRtcDevice->mHours = (hr & 0x0f) + ((hr / 16 * 10)) | (hr & 0x80);
+      mRtcDevice->mWeekday = wd & 0x0f;
       mRtcDevice->mDay = (day & 0x0f) + ((day / 16 * 10));
       mRtcDevice->mMonth = (mo & 0x0f) + ((mo / 16 * 10));
       mRtcDevice->mYear = (yr & 0x0f) + ((yr / 16 * 10));
@@ -180,6 +190,7 @@ public:
       mRtcDevice->mSeconds = sec;
       mRtcDevice->mMinutes = mins;
       mRtcDevice->mHours = hr;
+      mRtcDevice->mWeekday = wd;
       mRtcDevice->mDay = day;
       mRtcDevice->mMonth = mo;
       mRtcDevice->mYear = yr;

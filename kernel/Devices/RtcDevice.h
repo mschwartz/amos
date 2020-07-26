@@ -22,7 +22,7 @@ public:
   void IncrementTicks() { mMillis++; }
 
 public:
-  volatile TUint16 mMonth, mDay, mYear;
+  volatile TUint16 mMonth, mDay, mYear, mWeekday;
   volatile TUint16 mHours, mMinutes, mSeconds, mFract;
   volatile TUint64 mMillis;
 };
@@ -30,6 +30,7 @@ public:
 enum ERtcDeviceCommand {
   ERtcReadTicks,
   ERtcSleep,
+  ERtcDate,
 };
 
 class RtcMessage : public BMessage {

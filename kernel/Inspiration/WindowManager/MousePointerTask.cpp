@@ -85,7 +85,7 @@ TInt64 MousePointerTask::Run() {
   }
   Permit();
 
-  MessagePort *replyPort = CreateMessagePort("replyPort");
+  MessagePort *replyPort = CreatePort("replyPort");
 
   MouseMessage *move_message = new MouseMessage(replyPort, EMouseMove);
   move_message->mReplyPort = replyPort;

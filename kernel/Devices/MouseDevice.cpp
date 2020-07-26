@@ -194,7 +194,7 @@ TInt64 MouseTask::Run() {
   Sleep(3);
 
   DISABLE;
-  mMessagePort = CreateMessagePort("mouse.device");
+  mMessagePort = CreatePort("mouse.device");
   gExecBase.AddMessagePort(*mMessagePort);
 
   //  dlog("Initialize Mouse Interrupt... ");

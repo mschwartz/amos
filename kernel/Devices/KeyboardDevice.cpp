@@ -344,7 +344,7 @@ TInt64 KeyboardDeviceTask::Run() {
   dlog("keyboard task alive!\n");
 
   // initialize message port and wait for messages
-  mMessagePort = CreateMessagePort("keyboard.device");
+  mMessagePort = CreatePort("keyboard.device");
   gExecBase.AddMessagePort(*mMessagePort);
 
   for (;;) {

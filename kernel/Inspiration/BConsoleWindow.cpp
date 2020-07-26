@@ -18,7 +18,7 @@ public:
   TInt64 Run() {
     DLOG("ConsoleWindowTask Run\n");
     delete mWindow->mIdcmpPort;
-    mWindow->mIdcmpPort = CreateMessagePort();
+    mWindow->mIdcmpPort = CreatePort();
     IdcmpMessage *m;
     for (;;) {
       WaitPort(mWindow->mIdcmpPort);

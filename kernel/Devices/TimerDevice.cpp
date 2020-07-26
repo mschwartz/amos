@@ -66,7 +66,7 @@ TInt64 TimerTask::Run() {
   BMessageList timerQueue("timer.device queue");
 
   mSignalBit = AllocSignal(-1);
-  mMessagePort = CreateMessagePort("timer.device");
+  mMessagePort = CreatePort("timer.device");
   gExecBase.AddMessagePort(*mMessagePort);
 
   TUint64 port_mask = 1<<mMessagePort->SignalNumber();

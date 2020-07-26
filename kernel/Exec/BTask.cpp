@@ -204,7 +204,7 @@ TUint64 BTask::Wait(TUint64 aSignalSet) {
   }
 }
 
-MessagePort *BTask::CreateMessagePort(const char *aName, TInt64 aPri) {
+MessagePort *BTask::CreatePort(const char *aName, TInt64 aPri) {
   DISABLE;
   TInt64 sig = AllocSignal(-1);
   MessagePort *p = new MessagePort(aName, this, sig, aPri);
@@ -213,7 +213,7 @@ MessagePort *BTask::CreateMessagePort(const char *aName, TInt64 aPri) {
   return p;
 }
 
-void BTask::FreeMessagePort(MessagePort *aMessagePort) {
+void BTask::FreePort(MessagePort *aMessagePort) {
   DISABLE;
 
   FreeSignal(aMessagePort->SignalNumber());
@@ -262,7 +262,7 @@ void BTask::Sleep(TUint64 aSeconds) {
     return;
   }
 
-  MessagePort *replyPort = CreateMessagePort();
+  MessagePort *replyPort = CreatePort();
   TimerMessage *m = new TimerMessage(replyPort, ETimerSleep);
   m->mArg1 = aSeconds;
   m->Send(timer);
@@ -271,7 +271,7 @@ void BTask::Sleep(TUint64 aSeconds) {
     delete m;
   }
 
-  FreeMessagePort(replyPort);
+  FreePort(replyPort);
 }
 
 void BTask::MilliSleep(TUint64 aMilliSeconds) {
@@ -281,7 +281,7 @@ void BTask::MilliSleep(TUint64 aMilliSeconds) {
     return;
   }
 
-  MessagePort *replyPort = CreateMessagePort();
+  MessagePort *replyPort = CreatePort();
   RtcMessage *m = new RtcMessage(replyPort, ERtcSleep);
   m->mArg1 = aMilliSeconds;
   m->Send(rtc);
@@ -290,7 +290,7 @@ void BTask::MilliSleep(TUint64 aMilliSeconds) {
     delete m;
   }
 
-  FreeMessagePort(replyPort);
+  FreePort(replyPort);
 }
 
 void BTask::Disable() {

@@ -17,3 +17,12 @@ docker run -it --rm --name build -v "$PWD":/usr/src/myapp -w /usr/src/myapp cros
 echo ""
 echo ""
 echo "-> BUILT IN DOCKER CONTAINER"
+
+echo ""
+ls -l iso/*.img
+echo ""
+ls -l c.img
+
+nm iso/kernel.elf | grep " T " | awk '{ print $1" "$3 }' > kernel.sym
+echo ""
+wc -l kernel.sym

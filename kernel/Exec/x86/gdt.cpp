@@ -1,4 +1,4 @@
-#include <Exec/x86/cpu.h>
+#include <Exec/x86/cpu_utils.hh>
 #include <Exec/x86/tss.h>
 #include <Exec/x86/gdt.h>
 #include <Exec/Memory.h>

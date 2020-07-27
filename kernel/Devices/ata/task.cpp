@@ -54,7 +54,7 @@ TInt64 AtaTask::Run() {
   mActiveDevice = 0;
   ide_initialize(0x1f0, 0x3f6, 0x170, 0x376, 0x000);
 
-  MessagePort *port = CreateMessagePort("ata.device");
+  MessagePort *port = CreatePort("ata.device");
   gExecBase.AddMessagePort(*port);
 
   ENABLE;

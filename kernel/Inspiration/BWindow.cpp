@@ -65,7 +65,7 @@ BWindow::BWindow(const TNewWindow &aNewWindow)
   mViewPort->SetFont(mFont);
 
   mTask = gExecBase.GetCurrentTask();
-  mIdcmpPort = mTask->CreateMessagePort();
+  mIdcmpPort = mTask->CreatePort();
 
   mViewPort->Clear(bg);
 }
@@ -80,6 +80,11 @@ BWindow::~BWindow() {
 
 void BWindow::MoveTo(TInt32 aX, TInt32 aY) {
   //
+}
+
+void BWindow::SetIdcmpPort(BTask *aTask) {
+  delete mIdcmpPort;
+  mIdcmpPort = aTask->CreatePort();
 }
 
 IdcmpMessage *BWindow::GetMessage() {

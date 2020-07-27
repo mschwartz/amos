@@ -85,10 +85,10 @@ public:
     */
   void Signal(TInt64 aSignalBit);
 
-  MessagePort *CreateMessagePort(const char *aName = ENull, TInt64 aPri = LIST_PRI_DEFAULT);
+  MessagePort *CreatePort(const char *aName = ENull, TInt64 aPri = LIST_PRI_DEFAULT);
 
 protected:
-  void FreeMessagePort(MessagePort *aMessagePort);
+  void FreePort(MessagePort *aMessagePort);
 
   /**
    * Wait for message port signal bit as well as any optional other signal bits.
@@ -114,7 +114,8 @@ protected:
    * returns mask of signals received.
    */
   TUint64 WaitPorts(TUint64 aSigMask, ...);
-  
+
+public:
   /**
     * Wait for some number of seconds.
     */

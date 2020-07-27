@@ -1,24 +1,25 @@
-include ../mk/build-tools.mk
+TOPDIR=		$(shell git rev-parse --show-toplevel)
+include $(TOPDIR)/mk/tools.mk
 
 BUILDOBJ=	build-img.o
 
 GDTOBJ= 	generate-gdt.o
 
-.cpp.o:
-	$(GCC) -c -O2 -g -o $*.o $*.cpp
+all: 
+	cd disk-tool && $(MAKE)
+	cd build-img && $(MAKE)
 
-all: 	build-img generate-gdt
+# generate-gdt:	$(GDTOBJ)
+# 	@echo Build generate-gdt
+# 	$(GCC) -o generate-gdt $(GDTOBJ) -lstdc++
 
-build-img:	$(BUILDOBJ)
-	@echo Build build-img
-	@$(GCC) -o build-img $(BUILDOBJ) -lstdc++
-
-generate-gdt:	$(GDTOBJ)
-	@echo Build generate-gdt
-	$(GCC) -o generate-gdt $(GDTOBJ) -lstdc++
+# disk-tool:
+# 	@echo Build disk-tool
+# 	cd disk-tool && make
 
 clean:
-	rm -rf build-img *.o
+	cd disk-tool && $(MAKE) clean
+	cd build-img && && $(MAKE) clean
 
 install: build-img
 	cp build-img /usr/local/bin

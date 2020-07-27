@@ -1,7 +1,7 @@
 #ifndef EXAMPLES_TEST_IDCMP_H
 #define EXAMPLES_TEST_IDCMP_H
 
-#include <Exec/ExecBase.h>
+#include <Exec/BTask.h>
 #include <Inspiration/InspirationBase.h>
 
 class TestIdcmpTask : public BTask {

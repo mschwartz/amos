@@ -254,7 +254,7 @@ TInt64 SimpleFileSystemTask::Run() {
 
   mDiskCache = new BSparseArray(4096);
   // create message port to get requests from applications
-  MessagePort *msgPort = CreateMessagePort("simple.filesystem");
+  MessagePort *msgPort = CreatePort("simple.filesystem");
   gExecBase.AddMessagePort(*msgPort);
 
   // we send read/write requests messages to mDiskDevice(ada.device) message port
@@ -272,7 +272,7 @@ TInt64 SimpleFileSystemTask::Run() {
   dlog("  found ata port %x\n", mAtaPort);
 
   // we get replies to our messages at our private replyPort
-  mAtaReplyPort = CreateMessagePort();
+  mAtaReplyPort = CreatePort();
 
   // we need to read the root sector
   dlog("  SimpleFileSystemTask read sector %d from unit %d\n", 9, mUnit);
@@ -280,6 +280,7 @@ TInt64 SimpleFileSystemTask::Run() {
   dlog("  mAtaMessage created %x\n", mAtaMessage);
 
   CopyMemory(&this->mRootSector, Sector(0), 512);
+  mFileSystem->mRootSector = &this->mRootSector;
 
   this->mRootSector.Dump();
 

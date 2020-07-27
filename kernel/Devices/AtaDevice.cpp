@@ -4,7 +4,7 @@
 #include <Exec/ExecBase.h>
 #include <Devices/AtaDevice.h>
 #include <Exec/BTask.h>
-#include <Exec/x86/cpu.h>
+#include <Exec/x86/cpu_utils.hh>
 #include <Exec/x86/pci.h>
 #include "ata/ata.h"
 #include "ata/task.h"

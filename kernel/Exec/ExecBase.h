@@ -30,6 +30,8 @@ class PIC;
 class PS2;
 class ACPI;
 class PCI;
+class CPU;
+class CPUList;
 class InspirationBase;
 
 class IdleTask;
@@ -184,6 +186,12 @@ protected:
   PCI *mPci;
 
 public:
+  void AddCpu(CPU *aCPU);
+
+protected:
+  CPUList *mCpuList;
+  
+public:
   PS2 *GetPS2() { return mPS2; }
 
 protected:
@@ -275,6 +283,9 @@ protected:
 public:
   void AddFileSystem(BFileSystem *aFileSystem);
   BFileSystem *FindFileSystem(const char *aName);
+  BFileSystem *FirstFileSystem() { return (BFileSystem *)mFileSystemList.First(); }
+  BFileSystem *NextFileSystem(BFileSystem *aFileSystem) { return (BFileSystem *)mFileSystemList.Next(aFileSystem); }
+  TBool EndFileSystems(BFileSystem *aFileSystem) { return mFileSystemList.End(aFileSystem); }
 
 protected:
   BFileSystemList mFileSystemList;

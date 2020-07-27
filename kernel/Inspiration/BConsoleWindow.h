@@ -13,10 +13,17 @@
  */
 const TInt CONSOLE_BUFFER_SIZE = 4096;
 
+class ConsoleWindowTask;
+
 class BConsoleWindow : public BWindow {
+  friend ConsoleWindowTask;
+
 public:
   BConsoleWindow(const char *aTitle, TInt32 aX, TInt32 aY, TInt32 aW, TInt32 aH, BScreen *aScreen = ENull);
   virtual ~BConsoleWindow();
+
+protected:
+  BTask *mConsoleTask;
 
 public:
   void Paint();
@@ -42,8 +49,12 @@ public:
   //
   void Flush();
 
+  TUint32 Rows() { return mRows; }
+  TUint32 Cols() { return mCols; }
+
 protected:
   TUint16 *mCharacterMap, *mCharacterMapEnd;
+  TUint16 *mShadowMap;
   TInt64 mCharacterMapSize;
   TInt32 mRows, mCols;
 
@@ -51,8 +62,9 @@ protected:
   // cursor
   //
 public:
+  void RenderCursor(TBool aErase = EFalse);
   void ShowCursor(TBool aEnable = ETrue) { mCursorEnabled = aEnable; }
-  void TOgglecURSOR() { mCursorEnabled = !mCursorEnabled; }
+  void ToggleCursor() { mCursorEnabled = !mCursorEnabled; }
   void MoveTo(TInt32 aRow, TInt32 aCol);
   void Up();
   void Down();
@@ -82,8 +94,8 @@ public:
   // Keyboard
   //
 public:
-  TBool KeyReady(); // is a key ready to read from keyboard?
-  TInt ReadKey(); // read a key from keyboard
+  TBool KeyReady();                                                             // is a key ready to read from keyboard?
+  TInt ReadKey();                                                               // read a key from keyboard
   TInt ReadString(char *aString, TInt aMaxLength = -1, char mDelimiter = '\n'); // read a string from keyboard
 
 protected:

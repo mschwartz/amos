@@ -253,6 +253,8 @@ class BFileSystem : public BNode {
 public:
   BFileSystem(const char *aName);
   ~BFileSystem();
+public:
+  RootSector *mRootSector;
 };
 
 class BFileSystemList : public BList {
@@ -274,6 +276,7 @@ enum EFileSystemError {
 
 enum EFileSystemCommand {
   EFileSystemInvalidCommand,
+  EFileSystemVolumeInfo,
   EFileSystemOpenDirectory,
   EFileSystemReadDirectory,
   EFileSystemCloseDirectory,

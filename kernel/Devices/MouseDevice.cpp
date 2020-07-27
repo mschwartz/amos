@@ -1,5 +1,5 @@
 #include <Exec/ExecBase.h>
-#include <Exec/x86/cpu.h>
+#include <Exec/x86/cpu_utils.hh>
 #include <Exec/x86/ps2.h>
 #include <Devices/MouseDevice.h>
 
@@ -194,7 +194,7 @@ TInt64 MouseTask::Run() {
   Sleep(3);
 
   DISABLE;
-  mMessagePort = CreateMessagePort("mouse.device");
+  mMessagePort = CreatePort("mouse.device");
   gExecBase.AddMessagePort(*mMessagePort);
 
   //  dlog("Initialize Mouse Interrupt... ");

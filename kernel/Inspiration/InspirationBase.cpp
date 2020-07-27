@@ -25,7 +25,7 @@ public:
 
 public:
   TInt64 Run() {
-    mPort = CreateMessagePort("ReaperPort");
+    mPort = CreatePort("ReaperPort");
     for (;;) {
       WaitPort(mPort);
       while (IdcmpMessage *m = (IdcmpMessage *)mPort->GetMessage()) {

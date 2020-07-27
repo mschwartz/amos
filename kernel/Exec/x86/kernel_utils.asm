@@ -336,3 +336,47 @@ CopyRect:
 	loop CopyRect
 
 	ret
+
+global cpuid
+;; rdi = eax
+;; rsi = ebx
+;; rdx = ecx
+;; rcx = edx
+cpuid:
+	mov [cpuid_rax], rdi	; address of caller's eax
+	mov [cpuid_rbx], rsi 	; address of caller's ebx
+	mov [cpuid_rcx], rdx	; address of caller's ecx
+	mov [cpuid_rdx], rcx	; address of caller's edx
+
+	mov rdi, [cpuid_rdx]
+	mov edx, [rdi]
+
+	mov rdi, [cpuid_rcx]
+	mov ecx, [rdi]
+
+	mov rdi, [cpuid_rbx]
+	mov ebx, [rdi]
+
+	mov rdi, [cpuid_rax]
+	mov eax, [rdi]
+
+	cpuid
+
+	mov rdi, [cpuid_rdx]
+	mov [rdi],edx
+	
+	mov rdi, [cpuid_rcx]
+	mov [rdi],ecx
+
+	mov rdi, [cpuid_rbx]
+	mov [rdi],ebx
+
+	mov rdi, [cpuid_rax]
+	mov [rdi],eax
+
+	ret
+
+cpuid_rax: dq 0
+cpuid_rbx: dq 0
+cpuid_rcx: dq 0
+cpuid_rdx: dq 0

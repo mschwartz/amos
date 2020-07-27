@@ -8,7 +8,7 @@
 // constructor
 BProcess::BProcess(const char *aName, TInt64 aPri, TUint64 aStackSize) : BTask(aName, aPri, aStackSize) {
   //
-  mFsReplyPort = CreateMessagePort();
+  mFsReplyPort = CreatePort();
 }
 
 // destructor

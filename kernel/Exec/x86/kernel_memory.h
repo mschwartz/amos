@@ -4,10 +4,6 @@
 #include <Types.h>
 #include <Exec/x86/mmu.h>
 
-const TUint64 KILOBYTE = 1024;
-const TUint64 MEGABYTE = 1024 * KILOBYTE;
-const TUint64 GIGABYTE = 1024 * MEGABYTE;
-
 //
 // memory map
 //

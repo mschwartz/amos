@@ -18,7 +18,7 @@ TInt64 KeyboardTask::Run() {
   }
   Permit();
 
-  MessagePort *replyPort = CreateMessagePort("replyPort");
+  MessagePort *replyPort = CreatePort("replyPort");
   KeyboardMessage *message = new KeyboardMessage(replyPort, EKeyRead);
 
   message->Send(keyboardPort);

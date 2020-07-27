@@ -2,6 +2,7 @@
 
 struct cli_commands  gCommands[] = {
   "help", &CliTask::command_help, "print help (for command)",
+  "cd", &CliTask::command_cd, "change current directory",
   "pwd", &CliTask::command_pwd, "print cwd",
   "lsahci", &CliTask::command_lsahci, "list ahci table",
   "lspci", &CliTask::command_lspci, "list pci devices",

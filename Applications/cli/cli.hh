@@ -21,6 +21,7 @@ protected:
 
 public:
   TInt64 command_help(TInt ac, char *av[]);
+  TInt64 command_cd(TInt ac, char *av[]);
   TInt64 command_pwd(TInt ac, char *av[]);
   TInt64 command_lsahci(TInt ac, char *av[]);
   TInt64 command_lspci(TInt ac, char *av[]);

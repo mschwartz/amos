@@ -205,7 +205,7 @@ const TUint64 TERRABYTE = GIGABYTE * 1024;
 //#include "Types/TNumber.h"
 
 #ifdef KERNEL
-#include <Exec/x86/cpu.h>
+#include <Exec/x86/cpu_utils.hh>
 #define bochs asm volatile("xchg %bx, %bx;");
 
 extern TUint8 in_bochs;

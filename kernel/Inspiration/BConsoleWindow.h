@@ -49,6 +49,9 @@ public:
   //
   void Flush();
 
+  TUint32 Rows() { return mRows; }
+  TUint32 Cols() { return mCols; }
+
 protected:
   TUint16 *mCharacterMap, *mCharacterMapEnd;
   TUint16 *mShadowMap;

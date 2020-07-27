@@ -2,9 +2,9 @@
 
 
 TInt64 CliTask::command_pwd(TInt ac, char **av) {
-  mWindow->WriteFormatted("pwd argc(%d)\n", ac);
-  for (TInt i = 0; i < ac; i++) {
-    mWindow->WriteFormatted("argv[%d] = (%s)\n", i, av[i]);
+  if (ac > 1) {
+    return Error("%s too many arguments", av[0]);
   }
+  mWindow->WriteFormatted("%s\n", mCurrentDirectory);
   return 0;
 }

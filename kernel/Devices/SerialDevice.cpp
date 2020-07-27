@@ -1,5 +1,5 @@
 #include <Exec/ExecBase.h>
-#include <Exec/x86/cpu.h>
+#include <Exec/x86/cpu_utils.hh>
 #include <Devices/SerialDevice.h>
 #include <Exec/BTask.h>
 

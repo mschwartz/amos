@@ -2,7 +2,7 @@
 // #undef DEBUGME
 
 #include <Exec/x86/idt.h>
-#include <Exec/x86/cpu.h>
+#include <Exec/x86/cpu_utils.hh>
 #include <Exec/x86/pic.h>
 
 // 8259 PIC Interrupt Controller

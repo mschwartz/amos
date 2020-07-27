@@ -30,6 +30,8 @@ class PIC;
 class PS2;
 class ACPI;
 class PCI;
+class CPU;
+class CPUList;
 class InspirationBase;
 
 class IdleTask;
@@ -183,6 +185,12 @@ public:
 protected:
   PCI *mPci;
 
+public:
+  void AddCpu(CPU *aCPU);
+
+protected:
+  CPUList *mCpuList;
+  
 public:
   PS2 *GetPS2() { return mPS2; }
 

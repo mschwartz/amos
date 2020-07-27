@@ -93,9 +93,7 @@ TInt64 CliTask::Run() {
   for (;;) {
     // print prompt and read command
     ReadCommand();
-    mWindow->BeginPaint();
     ExecuteCommand(mCommand);
-    mWindow->EndPaint();
     // execute command
   }
   return 0;

@@ -4,12 +4,13 @@
 #include <Exec/ExecBase.h>
 #include <Inspiration/InspirationBase.h>
 #include <stdint.h>
+#include <Exec/x86/cpu_utils.hh>
 
 #include <Exec/x86/mmu.h>
+#include <Exec/x86/cpu.h>
 #include <Exec/x86/idt.h>
 #include <Exec/x86/tss.h>
 #include <Exec/x86/gdt.h>
-#include <Exec/x86/cpu.h>
 #include <Exec/x86/pic.h>
 #include <Exec/x86/ps2.h>
 #include <Exec/x86/pci.h>
@@ -95,6 +96,9 @@ ExecBase::ExecBase() {
   dlog("\n\nDisplay Mode:\n");
   modes->mDisplayMode.Dump();
 
+  mCpuList = new CPUList;
+  AddCpu(new CPU());
+  
   // set up paging
   mMMU = new MMU;
   dlog("  initialized MMU\n");
@@ -145,6 +149,9 @@ ExecBase::~ExecBase() {
   dlog("ExecBase destructor called\n");
 }
 
+void ExecBase::AddCpu(CPU *aCPU) {
+  mCpuList->AddTail(*aCPU);
+}
 void ExecBase::SetInspirationBase(InspirationBase *aInspirationBase) {
   mInspirationBase = aInspirationBase;
   mInspirationBase->Init();

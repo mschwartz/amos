@@ -1,5 +1,5 @@
 #include <Exec/ExecBase.h>
-#include <Exec/x86/cpu.h>
+#include <Exec/x86/cpu_utils.hh>
 #include <Exec/x86/ps2.h>
 #include <Devices/MouseDevice.h>
 

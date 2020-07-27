@@ -1,8 +1,8 @@
-#include <Types/BList.h>
-#include <Exec/Memory.h>
+#include <Types/BList.hpp>
+#include <Exec/Memory.hpp>
 
 #ifdef KERNEL
-#include <Exec/ExecBase.h>
+#include <Exec/ExecBase.hpp>
 #else
 #include <stdio.h>
 #include <stdlib.h>

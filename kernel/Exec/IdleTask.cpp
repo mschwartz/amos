@@ -1,6 +1,6 @@
-#include "IdleTask.hh"
-#include "InitTask.hh"
-#include <Exec/ExecBase.h>
+#include "IdleTask.hpp"
+#include "InitTask.hpp"
+#include <Exec/ExecBase.hpp>
 
 TInt64 IdleTask::Run() {
   dprint("\n");

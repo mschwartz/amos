@@ -1,5 +1,4 @@
-#include <Examples/ConsoleWindowTest.h>
-// #include <Inspiration/BConsoleWindow.h>
+#include <Examples/ConsoleWindowTest.hpp>
 
 class ConWindow : public BConsoleWindow {
 public:

@@ -1,6 +1,6 @@
-#include <Graphics/BViewPort.h>
-#include <Graphics/BFont.h>
-#include <Graphics/BBitmap.h>
+#include <Graphics/BViewPort.hpp>
+#include <Graphics/BFont.hpp>
+#include <Graphics/BBitmap.hpp>
 
 /********************************************************************************
  ********************************************************************************

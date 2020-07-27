@@ -1,4 +1,4 @@
-#include "commands.hh"
+#include "commands.hpp"
 
 TInt64 CliTask::command_ps(TInt ac, char **av) {
   mWindow->WriteFormatted("ps argc(%d)\n", ac);

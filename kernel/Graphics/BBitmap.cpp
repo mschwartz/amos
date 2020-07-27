@@ -1,6 +1,6 @@
-#include <Types/TRGB.h>
-#include <Graphics/BBitmap.h>
-#include <Exec/Memory.h>
+#include <Types/TRGB.hpp>
+#include <Graphics/BBitmap.hpp>
+#include <Exec/Memory.hpp>
 
 //#include <Exec/Memory.h>
 

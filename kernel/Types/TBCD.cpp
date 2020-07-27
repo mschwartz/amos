@@ -1,4 +1,4 @@
-#include <Types/TBCD.h>
+#include <Types/TBCD.hpp>
 
 TBCD::TBCD(TUint32 aValue) {
   mValue = aValue;

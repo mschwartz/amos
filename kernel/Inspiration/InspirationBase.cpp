@@ -1,12 +1,12 @@
-#include <Inspiration/InspirationBase.h>
-#include <Exec/ExecBase.h>
-#include <Exec/BTask.h>
-#include <Exec/MessagePort.h>
-#include <Devices/MouseDevice.h>
-#include <Inspiration/WindowManager/MousePointerTask.h>
-#include <Inspiration/WindowManager/KeyboardTask.h>
-#include <Inspiration/BTheme.h>
-#include <Examples/Examples.h>
+#include <Inspiration/InspirationBase.hpp>
+#include <Exec/ExecBase.hpp>
+#include <Exec/BTask.hpp>
+#include <Exec/MessagePort.hpp>
+#include <Devices/MouseDevice.hpp>
+#include <Inspiration/WindowManager/MousePointerTask.hpp>
+#include <Inspiration/WindowManager/KeyboardTask.hpp>
+#include <Inspiration/BTheme.hpp>
+#include <Examples/Examples.hpp>
 
 /********************************************************************************
  ********************************************************************************

@@ -1,10 +1,10 @@
 #include <stdarg.h>
-#include <Exec/x86/bochs.h>
+#include <Exec/x86/bochs.hpp>
 //#include <Exec/x86/kprint.h>
 #include <posix/itoa.h>
 #include <posix/sprintf.h>
-#include <Exec/ExecBase.h>
-#include <Devices/SerialDevice.h>
+#include <Exec/ExecBase.hpp>
+#include <Devices/SerialDevice.hpp>
 //#include <Screen.h>
 
 extern "C" TUint8 bochs_present;

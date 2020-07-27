@@ -1,7 +1,7 @@
-#include <Exec/ExecBase.h>
-#include <Exec/x86/cpu_utils.hh>
-#include <Devices/SerialDevice.h>
-#include <Exec/BTask.h>
+#include <Exec/ExecBase.hpp>
+#include <Exec/x86/cpu_utils.hpp>
+#include <Devices/SerialDevice.hpp>
+#include <Exec/BTask.hpp>
 
 /**
   * TODO: There really should be two devices, com1 and com2.

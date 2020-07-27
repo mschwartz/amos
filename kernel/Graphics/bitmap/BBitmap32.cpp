@@ -1,6 +1,6 @@
-#include <Exec/ExecBase.h>
-#include <Graphics/bitmap/BBitmap32.h>
-#include <Graphics/font/BConsoleFont.h>
+#include <Exec/ExecBase.hpp>
+#include <Graphics/bitmap/BBitmap32.hpp>
+#include <Graphics/font/BConsoleFont.hpp>
 
 //BBitmap *BBitmap::CreateBitmap(TInt aWidth, TInt aHeight, TInt aDepth, TInt aPitch, TAny *aMemory) {
 //  if (aDepth == 32 || aDepth == 24) {

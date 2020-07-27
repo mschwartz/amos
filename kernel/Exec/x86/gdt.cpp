@@ -1,7 +1,7 @@
-#include <Exec/x86/cpu_utils.hh>
-#include <Exec/x86/tss.h>
-#include <Exec/x86/gdt.h>
-#include <Exec/Memory.h>
+#include <Exec/x86/cpu_utils.hpp>
+#include <Exec/x86/tss.hpp>
+#include <Exec/x86/gdt.hpp>
+#include <Exec/Memory.hpp>
 
 /*
 GDT Entry:

@@ -1,7 +1,7 @@
-#include <Exec/BBase.h>
+#include <Exec/BBase.hpp>
 
 #ifdef KERNEL
-#include <Exec/Memory.h>
+#include <Exec/Memory.hpp>
 #endif
 
 BBase::BBase() {

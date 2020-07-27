@@ -1,8 +1,8 @@
-#include <Inspiration/InspirationBase.h>
-#include <Inspiration/WindowManager/MousePointerTask.h>
-#include <Exec/ExecBase.h>
-#include <Devices/MouseDevice.h>
-#include <Inspiration/NewWindow.h>
+#include <Inspiration/InspirationBase.hpp>
+#include <Inspiration/WindowManager/MousePointerTask.hpp>
+#include <Exec/ExecBase.hpp>
+#include <Devices/MouseDevice.hpp>
+#include <Inspiration/NewWindow.hpp>
 
 MousePointerTask::MousePointerTask()
     : BTask("MousePointer", TASK_PRI_URGENT), mDisplay(mInspirationBase.GetDisplay()) {

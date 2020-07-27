@@ -1,8 +1,8 @@
-#include <Examples/TestTask.h>
-#include <Examples/ConsoleWindowTest.h>
-#include <Examples/TestIdcmp.h>
-#include <Examples/ExitTest.hh>
-#include <Applications/cli/cli.hh>
+#include <Examples/TestTask.hpp>
+#include <Examples/ConsoleWindowTest.hpp>
+#include <Examples/TestIdcmp.hpp>
+#include <Examples/ExitTest.hpp>
+#include <Applications/cli/cli.hpp>
 
 extern "C" void StartExamples() {
   dlog("------- Construct TestIdcmp\n");

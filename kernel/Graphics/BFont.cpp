@@ -1,7 +1,7 @@
-#include <Graphics/Graphics.h>
-#include <Graphics/BFont.h>
+#include <Graphics/Graphics.hpp>
+#include <Graphics/BFont.hpp>
 // #include <Graphics/font/BVectorFont.h>
-#include <Graphics/font/BConsoleFont.h>
+#include <Graphics/font/BConsoleFont.hpp>
 
 #include <posix/string.h>
 #include <stdarg.h>

@@ -1,7 +1,7 @@
-#include <Exec/BFileSystem.h>
-#include <Devices/AtaDevice.h>
-#include <Exec/BTask.h>
-#include <Exec/ExecBase.h>
+#include <Exec/BFileSystem.hpp>
+#include <Devices/AtaDevice.hpp>
+#include <Exec/BTask.hpp>
+#include <Exec/ExecBase.hpp>
 
 BFileSystem::BFileSystem(const char *aName) : BNode(aName) {
   //

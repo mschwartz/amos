@@ -1,4 +1,4 @@
-#include <Exec/x86/pci.h>
+#include <Exec/x86/pci.hpp>
 
 // https : //github.com/nickwanninger/chariot/blob/cc3649af22126d21e3ff77296f73ec73157b1b8c/kernel/dev/pci.cpp
 

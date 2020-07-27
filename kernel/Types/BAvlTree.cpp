@@ -1,4 +1,4 @@
-#include <Types/BAvlTree.h>
+#include <Types/BAvlTree.hpp>
 
 static int getHeight(BAvlNode *aRoot) {
   if (aRoot == ENull) { //height of leaf = 0

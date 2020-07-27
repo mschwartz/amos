@@ -1,5 +1,5 @@
-#include <Exec/ExecBase.h>
-#include <Exec/Random.h>
+#include <Exec/ExecBase.hpp>
+#include <Exec/Random.hpp>
 #include <stdint.h>
 
 /*

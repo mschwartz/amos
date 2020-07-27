@@ -1,4 +1,4 @@
-#include <Types/BSymbolTable.h>
+#include <Types/BSymbolTable.hpp>
 
 // hash a string to a value between 0-255
 static TInt16 hash(const char *s) {

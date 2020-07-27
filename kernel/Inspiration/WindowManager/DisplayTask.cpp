@@ -1,9 +1,9 @@
 #define DEBUGME
 // #undef DEBUGME
 
-#include <Inspiration/WindowManager/DisplayTask.h>
-#include <Inspiration/BScreen.h>
-#include <Exec/ExecBase.h>
+#include <Inspiration/WindowManager/DisplayTask.hpp>
+#include <Inspiration/BScreen.hpp>
+#include <Exec/ExecBase.hpp>
 
 DisplayTask::DisplayTask(Display &aDisplay)
     // : BTask("DisplayTask", TASK_PRI_URGENT), mDisplay(aDisplay) {

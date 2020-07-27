@@ -1,5 +1,5 @@
-#include <Graphics/Graphics.h>
-#include <Graphics/font/BConsoleFont.h>
+#include <Graphics/Graphics.hpp>
+#include <Graphics/font/BConsoleFont.hpp>
 #include <posix/sprintf.h>
 #include <limits.h>
 

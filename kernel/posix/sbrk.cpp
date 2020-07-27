@@ -1,6 +1,6 @@
 #include <unistd.h>
 #ifdef KERNEL
-#include <Exec/ExecBase.h>
+#include <Exec/ExecBase.hpp>
 #endif
 
 extern void *kernel_end;

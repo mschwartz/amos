@@ -1,6 +1,6 @@
-#include "commands.hh"
-#include <Exec/ExecBase.h>
-#include <Exec/BFileSystem.h>
+#include "commands.hpp"
+#include <Exec/ExecBase.hpp>
+#include <Exec/BFileSystem.hpp>
 
 static void FormatNumber(char *aBuffer, TUint64 aNumber, TBool aHuman) {
   if (aHuman) {

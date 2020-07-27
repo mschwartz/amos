@@ -1,8 +1,8 @@
-#include <Examples/TestTask.h>
-#include <Graphics/BViewPort.h>
-#include <Graphics/font/BConsoleFont.h>
-#include <Exec/Random.h>
-#include <Inspiration/BScreen.h>
+#include <Examples/TestTask.hpp>
+#include <Graphics/BViewPort.hpp>
+#include <Graphics/font/BConsoleFont.hpp>
+#include <Exec/Random.hpp>
+#include <Inspiration/BScreen.hpp>
 
 TestTask::TestTask() : BProcess("Test Process") {
 }

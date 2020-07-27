@@ -1,4 +1,4 @@
-#include "cpu.h"
+#include "cpu.hpp"
 
 extern "C" TUint64 cpuid(TUint32 *eax, TUint32 *ebx, TUint32 *ecx, TUint32 *edx);
 

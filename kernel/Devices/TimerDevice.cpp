@@ -1,6 +1,6 @@
-#include <Types.h>
-#include <Exec/ExecBase.h>
-#include <Devices/TimerDevice.h>
+#include <Types.hpp>
+#include <Exec/ExecBase.hpp>
+#include <Devices/TimerDevice.hpp>
 
 #define PIT_TICKS_PER_DAY 0x1800b0
 

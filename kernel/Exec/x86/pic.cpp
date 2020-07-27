@@ -1,9 +1,9 @@
 #define DEBUGME
 // #undef DEBUGME
 
-#include <Exec/x86/idt.h>
-#include <Exec/x86/cpu_utils.hh>
-#include <Exec/x86/pic.h>
+#include <Exec/x86/idt.hpp>
+#include <Exec/x86/cpu_utils.hpp>
+#include <Exec/x86/pic.hpp>
 
 // 8259 PIC Interrupt Controller
 

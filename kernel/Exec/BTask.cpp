@@ -1,7 +1,7 @@
-#include <Exec/ExecBase.h>
-#include <Exec/BTask.h>
-#include <Devices/TimerDevice.h>
-#include <Devices/RtcDevice.h>
+#include <Exec/ExecBase.hpp>
+#include <Exec/BTask.hpp>
+#include <Devices/TimerDevice.hpp>
+#include <Devices/RtcDevice.hpp>
 
 #define DEBUGME
 #undef DEBUGME

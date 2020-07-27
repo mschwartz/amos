@@ -280,6 +280,7 @@ TInt64 SimpleFileSystemTask::Run() {
   dlog("  mAtaMessage created %x\n", mAtaMessage);
 
   CopyMemory(&this->mRootSector, Sector(0), 512);
+  mFileSystem->mRootSector = &this->mRootSector;
 
   this->mRootSector.Dump();
 

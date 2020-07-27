@@ -61,6 +61,19 @@ typedef float TFloat;
 #define UINT32_MAX      ((TUint32)(4294967295U))
 #endif
 
+#ifndef KILOBYTE
+const TUint64 KILOBYTE = 1024;
+#endif
+#ifndef MEGABYTE
+const TUint64 MEGABYTE = KILOBYTE * 1024;
+#endif
+#ifndef GIGABYTE
+const TUint64 GIGABYTE = MEGABYTE * 1024;
+#endif
+#ifndef TERRABYTE
+const TUint64 TERRABYTE = GIGABYTE * 1024;
+#endif
+
 #ifndef LOBYTEM
 #define LOBYTE(x) TUint8((x)&0xff)
 #endif

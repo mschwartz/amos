@@ -275,6 +275,9 @@ protected:
 public:
   void AddFileSystem(BFileSystem *aFileSystem);
   BFileSystem *FindFileSystem(const char *aName);
+  BFileSystem *FirstFileSystem() { return (BFileSystem *)mFileSystemList.First(); }
+  BFileSystem *NextFileSystem(BFileSystem *aFileSystem) { return (BFileSystem *)mFileSystemList.Next(aFileSystem); }
+  TBool EndFileSystems(BFileSystem *aFileSystem) { return mFileSystemList.End(aFileSystem); }
 
 protected:
   BFileSystemList mFileSystemList;

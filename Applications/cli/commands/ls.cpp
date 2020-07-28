@@ -16,9 +16,7 @@ TInt64 CliTask::command_ls(TInt ac, char **av) {
     char buf[512];
     const DirectoryStat *s = fd->Stat();
     DirectoryStat::Dump(s, fd->Filename(), buf);
-    mWindow->BeginPaint();
     mWindow->WriteFormatted("%s", buf);
-    mWindow->EndPaint();
   }
   CloseDirectory(fd);
   return 0;

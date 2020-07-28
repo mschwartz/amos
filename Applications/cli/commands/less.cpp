@@ -21,9 +21,7 @@ TInt64 CliTask::command_less(TInt ac, char **av) {
       // TODO: count lines, use mWindow console height (rows)
       for (TUint64 x = 0; x < actual; x++) {
         if (buf[x] == '\n') {
-          mWindow->BeginPaint();
           mWindow->Write(buf[x]);
-          mWindow->EndPaint();
 	  count++;
           if (count >= mWindow->Rows()) {
 	    count = 0;

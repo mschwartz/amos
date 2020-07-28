@@ -97,3 +97,20 @@ void BScreen::UpdateDirtyRects() {
     delete r;
   }
 }
+
+void BScreen::UpdateWindows() {
+  // render windows back to front
+  for (BWindow *win = mWindowList.Last(); !mWindowList.End((BNode *)win); win = (BWindow *)mWindowList.Prev(win)) {
+    TBool hidden = EFalse;
+    for (BWindow *other = (BWindow *)mWindowList.First(); other != win; other = (BWindow *)mWindowList.Next(other)) {
+      if (win->Obscured(other)) {
+        hidden = ETrue;
+        break;
+      }
+    }
+    if (!hidden) {
+      win->Repaint();
+      UpdateWindow(win);
+    }
+  }
+}

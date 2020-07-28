@@ -6,12 +6,34 @@
 
 #define LOCALSIZE 0x1000
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 class CPU  : public BNode {
 public:
   CPU();
 public:
   char mManufacturer[16];
+  TUint32 mMaxFunction;
+  TUint32 mProcessorVersionInformation;
+  TUint32 mProcessorAdditionalInformation;
+  TUint32 mProcessorFeatureInformation1;
+  TUint32 mProcessorFeatureInformation2;
+  TUint32 mFeatures1;
+  TUint32 mFeatures2;
+  TUint32 mFeatures3;
+  //
+  TUint32 mMaxExtendedFunction;
+  TUint32 mExtendedFeatures1;
+  TUint32 mExtendedFeatures2;
+  //
+  TUint32 mBrand[64];
 };
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 class CPUList : public BList {
 public:

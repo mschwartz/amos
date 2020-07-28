@@ -96,9 +96,6 @@ ExecBase::ExecBase() {
   dlog("\n\nDisplay Mode:\n");
   modes->mDisplayMode.Dump();
 
-  mCpuList = new CPUList;
-  AddCpu(new CPU());
-  
   // set up paging
   mMMU = new MMU;
   dlog("  initialized MMU\n");
@@ -120,6 +117,9 @@ ExecBase::ExecBase() {
   mACPI = new ACPI();
   dlog("  initialized ACPI\n");
 
+  mCpuList = new CPUList;
+  AddCpu(new CPU());
+  
   InitInterrupts();
 
   // set up 8259 PIC

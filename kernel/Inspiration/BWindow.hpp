@@ -42,6 +42,8 @@ public:
 
   void MoveTo(TInt32 aX, TInt32 aY);
 
+  TBool Obscured(BWindow *aOther);
+
 protected:
   virtual void Repaint();
 
@@ -51,13 +53,7 @@ protected:
   void PaintDecorations();
 
 public:
-  void BeginPaint() {}
-  void EndPaint() {
-    Repaint();
-  }
-
   void Clear(TUint32 aColor) {
-    // mViewPort->Dump();
     mViewPort->Clear(aColor);
   }
 
@@ -151,12 +147,6 @@ public:
     dlog("       mouse: %d,%d\n", mMouseX, mMouseY);
     dlog("     mWindow: %s\n", mWindow->Title());
   }
-};
-
-enum EIdcmpCommand {
-  EIdcmpSubscribe,
-  EIdcmpUnsubscribe,
-  EIdcmpUpdateFlags,
 };
 
 #endif

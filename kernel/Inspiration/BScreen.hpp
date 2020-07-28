@@ -49,6 +49,8 @@ public:
   // returns ETrue if another window is activated:
   TBool ActivateWindow(TInt32 aX, TInt32 aY);
 
+  void UpdateWindows();
+
 public:
   TInt32 Width() { return mBitmap->Width(); }
   TInt32 Height() { return mBitmap->Height(); }

@@ -22,11 +22,6 @@ struct cli_commands  gCommands[] = {
 };
 
 TInt64 CliTask::ExecuteCommand(char *aCommand) {
-  // mWindow->BeginPaint();
-  // mWindow->WriteFormatted("Execute(%s)\n", aCommand);
-  // mWindow->EndPaint();
-  // dlog("Command(%s)\n", aCommand);
-
   const int MAXARGS = 64;
   TInt ac = 0;
   char *av[MAXARGS];

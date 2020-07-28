@@ -15,14 +15,14 @@ class TestWindow : public BWindow {
 public:
   // TestWindow() : BWindow("Test Window", 10, 10, 640, 480) {}
   TestWindow()
-    : BWindow(TNewWindow{
-			 .mLeft = 10,
-			 .mTop = 10,
-			 .mWidth = 640,
-			 .mHeight = 400,
-			 .mTitle = "Test Window",
-			 .mIdcmpFlags = IDCMP_MOUSEMOVE,
-      }) {
+      : BWindow(TNewWindow{
+          .mLeft = 10,
+          .mTop = 10,
+          .mWidth = 640,
+          .mHeight = 400,
+          .mTitle = "Test Window",
+          .mIdcmpFlags = IDCMP_MOUSEMOVE,
+        }) {
   }
 
 public:
@@ -47,11 +47,7 @@ TInt64 TestTask::Run() {
   screen->AddWindow(win);
 
   for (;;) {
-    win->BeginPaint();
-    for (TInt i = 0; i < 10; i++) {
-      win->RandomBox();
-    }
-    win->EndPaint();
+    win->RandomBox();
 
     while (IdcmpMessage *m = win->GetMessage()) {
       dlog("MouseMove %d,%d buttons(%x)\n", m->mMouseX, m->mMouseY, m->mCode);

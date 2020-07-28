@@ -7,7 +7,7 @@
 
 DisplayTask::DisplayTask(Display &aDisplay)
     // : BTask("DisplayTask", TASK_PRI_URGENT), mDisplay(aDisplay) {
-    : BTask("DisplayTask", TASK_PRI_DEFAULT), mDisplay(aDisplay) {
+    : BTask("DisplayTask", TASK_PRI_URGENT), mDisplay(aDisplay) {
   //
 }
 static inline void start_vbl() {
@@ -36,14 +36,14 @@ static inline TUint64 time_vbl() {
   TUint64 start = gExecBase.SystemTicks();
   start_vbl(); // wait for in vblank
   TUint64 end = gExecBase.SystemTicks();
-  dlog("  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> start(%d) end(%d) vbl_time(%d)\n", start, end, end - start);
+  DLOG("  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> start(%d) end(%d) vbl_time(%d)\n", start, end, end - start);
   return end - start;
 }
 
 TInt64 DisplayTask::Run() {
-  dprint("\n\n");
-  dprint("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
-  dlog("DisplayTask Run %x\n", inb(0x3da));
+  DSPACE();
+  DPRINT("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+  DLOG("DisplayTask Run %x\n", inb(0x3da));
   Sleep(1);
 
   TUint64 vbl_time = time_vbl();
@@ -53,9 +53,9 @@ TInt64 DisplayTask::Run() {
     vbl_time = 16;
   }
 
-  dlog("  vbl_time %d\n", vbl_time);
+  DLOG("  vbl_time %d\n", vbl_time);
 
-  TUint64 elapsed = 0, start = 0, end = 0;
+  TUint64 elapsed = 0, start = 0, end = 0, now = 0;
 
   // Wait for vbl in a loop and update screen via DirtyRects
   for (;;) {
@@ -75,6 +75,8 @@ TInt64 DisplayTask::Run() {
     // Forbid();
     // update dirty rects and mouse pointer
     start = gExecBase.SystemTicks();
+    // DSPACE();
+    // DLOG("Start: %d\n", start);
 
     // Cursor saved pristine screen pixels after all dirty rects were rendered last frame
     // so we need to restore those saved pixels so the screen is pristine again before
@@ -90,8 +92,13 @@ TInt64 DisplayTask::Run() {
     mDisplay.SaveCursor();
     mDisplay.RenderCursor();
 
+    now = gExecBase.SystemTicks();
+    // DLOG("update dirty rects: now: %d elapsed: %d\n", now, now - start);
+    screen->UpdateWindows();
     end = gExecBase.SystemTicks();
+    // DLOG("Update Windows end: %d elapsed: %d\n", end, end - now);
     elapsed = end - start;
+    // DLOG("Elapsed %d\n", elapsed);
     // Permit();
   }
 }

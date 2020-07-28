@@ -29,8 +29,6 @@ BWindow::BWindow(const TNewWindow &aNewWindow)
   mWindowViewPort = new BViewPort32(mNodeName, mBitmap);
   mWindowViewPort->SetFont(new BConsoleFont32());
 
-  // mWindowViewPort->SetColors(TITLE_COLOR, BORDER_COLOR);
-
   // ViewPort for client to render to the client area only
   mViewPort = new BViewPort32(aNewWindow.mTitle, mBitmap);
 
@@ -76,6 +74,16 @@ BWindow::~BWindow() {
   delete mViewPort;
   delete mWindowViewPort;
   delete mBitmap;
+}
+
+TBool BWindow::Obscured(BWindow *aOther) {
+  if (aOther->mWindowRect.x1 > mWindowRect.x1 || aOther->mWindowRect.x2 < mWindowRect.x2) {
+    return EFalse;
+  }
+  if (aOther->mWindowRect.y1 > mWindowRect.y1 || aOther->mWindowRect.y2 < mWindowRect.y2) {
+    return EFalse;
+  }
+  return ETrue;
 }
 
 void BWindow::MoveTo(TInt32 aX, TInt32 aY) {
@@ -143,9 +151,15 @@ void BWindow::PaintDecorations() {
   TUint32 title_fg_color = active ? theme->mActiveTitleColor : theme->mInactiveTitleColor;
   vp->FillRect(title_bg_color, x1, y1, x2, y1 + FONT_HEIGHT + 2);
   vp->DrawTextTransparent(1, 1, title_fg_color, Title());
-  Repaint();
+
+  // render close box
+  if (mWindowFlags & WFLAG_CLOSEGADGET) {
+    vp->FillRect(0x00ff00, x2 - 16, y1 + 2, x2 - 2, y1 + FONT_HEIGHT - 4);
+  }
+  if (mWindowFlags & WFLAG_DEPTHGADGET) {
+    vp->FillRect(0xff0000, x2 - 32, y1 + 2, x2 - 18, y1 + FONT_HEIGHT - 4);
+  }
 }
 
 void BWindow::Repaint() {
-  mScreen->UpdateWindow(this);
 }

@@ -19,9 +19,7 @@ TInt64 CliTask::command_cat(TInt ac, char **av) {
       // dhexdump(buf, 32);
       for (TUint64 x = 0; x < actual; x++) {
         if (buf[x] == '\n') {
-          mWindow->BeginPaint();
           mWindow->Write(buf[x]);
-          mWindow->EndPaint();
         }
         else {
           mWindow->Write(buf[x]);

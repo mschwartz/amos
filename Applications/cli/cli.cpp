@@ -28,9 +28,7 @@ TInt64 CliTask::Error(const char *fmt, ...) {
   dputs(buf);
   va_end(args);
 
-  mWindow->BeginPaint();
   mWindow->WriteFormatted("*** Error: %s\n", buf);
-  mWindow->EndPaint();
   return -1;
 }
 /********************************************************************************
@@ -40,9 +38,7 @@ TInt64 CliTask::Error(const char *fmt, ...) {
 // repl
 
 void CliTask::PrintPrompt() {
-  mWindow->BeginPaint();
   mWindow->WriteFormatted(mPrompt, mCurrentDirectory);
-  mWindow->EndPaint();
 }
 
 void CliTask::ReadCommand() {
@@ -56,26 +52,20 @@ void CliTask::ReadCommand() {
       case 8: // backspace
         if (ptr != &mCommand[0]) {
           *ptr-- = ' ';
-          mWindow->BeginPaint();
           mWindow->Left();
           mWindow->Write(" ");
           mWindow->Left();
-          mWindow->EndPaint();
         }
         break;
       case 13:
       case 10:
         *ptr = '\0';
-        mWindow->BeginPaint();
         mWindow->Write("\n");
-        mWindow->EndPaint();
         return;
       default:
         if (c >= 0x20 && c <= 0x7f) {
           *ptr++ = c;
-          mWindow->BeginPaint();
           mWindow->Write(c);
-          mWindow->EndPaint();
         }
         else {
           dlog("key: %02x\n", c);

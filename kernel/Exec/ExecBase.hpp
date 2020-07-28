@@ -9,6 +9,7 @@
 #include <Exec/BTask.hpp>
 #include <Exec/BProcess.hpp>
 #include <Exec/Random.hpp>
+#include <Exec/CPU.hpp>
 
 extern "C" TUint64 GetFlags();
 extern "C" void SetFlags(TUint64 aFlags);
@@ -25,13 +26,12 @@ class RtcDevice;
 class TSS;
 class GDT;
 class MMU;
-class IDT;
+// class IDT;
 class PIC;
 class PS2;
 class ACPI;
 class PCI;
 class CPU;
-class CPUList;
 class InspirationBase;
 
 class IdleTask;
@@ -139,6 +139,7 @@ class ExecBase : public BBase {
   friend RtcDevice;
   friend IdleTask;
   friend InitTask;
+  friend CPU;
 
 protected:
   TUint64 Tick() {
@@ -187,9 +188,12 @@ protected:
 
 public:
   void AddCpu(CPU *aCPU);
+  CPU *FirstCpu() { return (CPU *)mCpuList.First(); }
+  TBool EndCpus(CPU *aCpu) { return mCpuList.End(aCpu); }
+  CPU *NextCpu(CPU *aCpu) { return (CPU *)mCpuList.Next(aCpu); }
 
 protected:
-  CPUList *mCpuList;
+  CPUList mCpuList;
   
 public:
   PS2 *GetPS2() { return mPS2; }

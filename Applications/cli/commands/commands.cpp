@@ -7,6 +7,7 @@ struct cli_commands  gCommands[] = {
   "lsahci", &CliTask::command_lsahci, "list ahci table",
   "lspci", &CliTask::command_lspci, "list pci devices",
   "sysinfo", &CliTask::command_sysinfo, "print system information",
+  "cpu", &CliTask::command_cpu, "print CPU information",
   "date", &CliTask::command_date, "print date and time",
   "uptime", &CliTask::command_uptime, "ptime - print uptime",
   "df", &CliTask::command_df, "print disk infomration about devices",

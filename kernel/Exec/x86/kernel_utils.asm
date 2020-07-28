@@ -337,12 +337,54 @@ CopyRect:
 
 	ret
 
+global cpu_brand
+;; rdi = buffer to receive brand
+cpu_brand:
+	push rax
+	push rbx
+	push rcx
+	push rdx
+
+	mov eax, 80000002h
+	cpuid
+	mov [rdi + 0x0], eax
+	mov [rdi + 0x4], ebx
+	mov [rdi + 0x8], ecx
+	mov [rdi + 0xc], edx
+
+	mov eax, 80000003h
+	cpuid
+	mov [rdi + 0x10], eax
+	mov [rdi + 0x14], ebx
+	mov [rdi + 0x18], ecx
+	mov [rdi + 0x1c], edx
+
+	mov eax, 80000004h
+	cpuid
+	mov [rdi + 0x20], eax
+	mov [rdi + 0x24], ebx
+	mov [rdi + 0x28], ecx
+	mov [rdi + 0x2c], edx
+
+	mov dword [rdi + 0x30], 0
+
+	pop rdx
+	pop rcx
+	pop rbx
+	pop rax
+	ret
+	
 global cpuid
 ;; rdi = eax
 ;; rsi = ebx
 ;; rdx = ecx
 ;; rcx = edx
 cpuid:
+	push rdi
+	push rsi
+	push rdx
+	push rcx
+	
 	mov [cpuid_rax], rdi	; address of caller's eax
 	mov [cpuid_rbx], rsi 	; address of caller's ebx
 	mov [cpuid_rcx], rdx	; address of caller's ecx
@@ -373,6 +415,11 @@ cpuid:
 
 	mov rdi, [cpuid_rax]
 	mov [rdi],eax
+
+	pop rcx
+	pop rdx
+	pop rsi
+	pop rdi
 
 	ret
 

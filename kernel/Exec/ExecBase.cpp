@@ -4,10 +4,9 @@
 #include <Exec/ExecBase.hpp>
 #include <Inspiration/InspirationBase.hpp>
 #include <stdint.h>
-#include <Exec/x86/cpu_utils.hpp>
 
+#include <Exec/CPU.hpp>
 #include <Exec/x86/mmu.hpp>
-#include <Exec/x86/cpu.hpp>
 #include <Exec/x86/idt.hpp>
 #include <Exec/x86/tss.hpp>
 #include <Exec/x86/gdt.hpp>
@@ -96,7 +95,6 @@ ExecBase::ExecBase() {
   dlog("\n\nDisplay Mode:\n");
   modes->mDisplayMode.Dump();
 
-  mCpuList = new CPUList;
   AddCpu(new CPU());
   
   // set up paging
@@ -150,7 +148,7 @@ ExecBase::~ExecBase() {
 }
 
 void ExecBase::AddCpu(CPU *aCPU) {
-  mCpuList->AddTail(*aCPU);
+  mCpuList.AddTail(*aCPU);
 }
 void ExecBase::SetInspirationBase(InspirationBase *aInspirationBase) {
   mInspirationBase = aInspirationBase;

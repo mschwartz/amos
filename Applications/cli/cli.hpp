@@ -26,6 +26,7 @@ public:
   TInt64 command_lsahci(TInt ac, char *av[]);
   TInt64 command_lspci(TInt ac, char *av[]);
   TInt64 command_sysinfo(TInt ac, char *av[]);
+  TInt64 command_cpu(TInt ac, char *av[]);
   TInt64 command_date(TInt ac, char *av[]);
   TInt64 command_uptime(TInt ac, char *av[]);
   TInt64 command_df(TInt ac, char *av[]);

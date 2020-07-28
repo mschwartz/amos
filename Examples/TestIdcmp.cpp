@@ -14,6 +14,7 @@ public:
                     .mHeight = 500,
                     .mTitle = "IDCMP Test Window",
                     .mIdcmpFlags = IDCMP_MOUSEMOVE | IDCMP_MOUSEBUTTONS | IDCMP_VANILLAKEY,
+		    .mWindowFlags = WFLAG_DRAGBAR | WFLAG_DEPTHGADGET | WFLAG_CLOSEGADGET,
                   }) {
   }
 
@@ -45,9 +46,7 @@ TInt64 TestIdcmpTask::Run() {
 
         case IDCMP_MOUSEMOVE:
           sprintf(buf, "MouseMove %d,%d buttons(%x)", m->mMouseX, m->mMouseY, m->mCode);
-          win->BeginPaint();
           win->Print(0, 0, buf);
-          win->EndPaint();
           break;
 
         case IDCMP_MOUSEBUTTONS:
@@ -72,16 +71,12 @@ TInt64 TestIdcmpTask::Run() {
               break;
           }
           // dlog("%s\n", buf);
-          win->BeginPaint();
           win->Print(0, 20, buf);
-          win->EndPaint();
           break;
 
         case IDCMP_VANILLAKEY:
           sprintf(buf, "VANILLAKEY (%02x) %c", m->mCode & 0x7f, m->mCode & 0x7f);
-          win->BeginPaint();
           win->Print(0, 40, buf);
-          win->EndPaint();
       }
       m->Reply();
     }

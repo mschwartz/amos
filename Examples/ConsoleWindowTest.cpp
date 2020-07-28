@@ -19,17 +19,13 @@ TInt64 ConsoleWindowTestTask::Run() {
   FileDescriptor *fd;
   for (;;) {
 
-    con->BeginPaint();
     con->Write("> ");
-    con->EndPaint();
 
     HandleKeys(con);
 
     wait(4, con);
-    con->BeginPaint();
     con->Write("ls /fonts\n");
     dlog("ls /fonts\n");
-    con->EndPaint();
 
     fd = OpenDirectory("/fonts");
     if (!fd) {
@@ -47,23 +43,17 @@ TInt64 ConsoleWindowTestTask::Run() {
         char buf[512];
         const DirectoryStat *s = fd->Stat();
         DirectoryStat::Dump(s, fd->Filename(), buf);
-        con->BeginPaint();
 	// dlog("%s\n", buf);
         con->Write(buf);
-        con->EndPaint();
       }
     }
     CloseDirectory(fd);
 
-    con->BeginPaint();
     con->Write("\n\n> ");
-    con->EndPaint();
     HandleKeys(con);
 
     wait(4, con);
-    con->BeginPaint();
     con->Write("cat /fonts/README.psfu\n");
-    con->EndPaint();
 
     fd = OpenFile("/fonts/README.psfu");
     if (!fd) {
@@ -82,9 +72,7 @@ TInt64 ConsoleWindowTestTask::Run() {
         // dhexdump(buf, 32);
         for (TUint64 x = 0; x < actual; x++) {
           if (buf[x] == '\n') {
-            con->BeginPaint();
             con->Write(buf[x]);
-            con->EndPaint();
           }
           else {
             con->Write(buf[x]);

@@ -1,10 +1,10 @@
 #define DEBUGME
 #undef DEBUGME
 
-#include <Inspiration/BConsoleWindow.h>
+#include <Inspiration/BConsoleWindow.hpp>
+#include <Exec/ExecBase.hpp>
 #include <posix/sprintf.h>
 #include <stdarg.h>
-#include <Exec/ExecBase.h>
 
 const TInt NOKEY_DELAY = 1;
 

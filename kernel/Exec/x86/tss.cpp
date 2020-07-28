@@ -1,4 +1,4 @@
-#include <Exec/x86/tss.h>
+#include <Exec/x86/tss.hpp>
 
 TSS::TSS() {
   mTss.io_mba = sizeof(struct tss);

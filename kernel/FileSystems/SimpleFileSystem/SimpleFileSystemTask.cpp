@@ -1,5 +1,5 @@
-#include <FileSystems/SimpleFileSystem/SimpleFileSystem.h>
-#include <FileSystems/SimpleFileSystem/SimpleFileSystemTask.h>
+#include <FileSystems/SimpleFileSystem/SimpleFileSystem.hpp>
+#include <FileSystems/SimpleFileSystem/SimpleFileSystemTask.hpp>
 
 #define DEBUGME
 #undef DEBUGME

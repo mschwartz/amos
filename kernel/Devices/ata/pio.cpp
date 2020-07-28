@@ -1,9 +1,9 @@
 #define DEBUGME
 #undef DEBUGME
 
-#include "ata.h"
-#include "pio.h"
-#include "task.h"
+#include "ata.hpp"
+#include "pio.hpp"
+#include "task.hpp"
 
 static void delay400ms(TUint16 aBase) {
   inb(aBase + 7); // 1000ms

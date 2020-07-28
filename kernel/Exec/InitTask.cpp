@@ -1,17 +1,17 @@
-#include "InitTask.hh"
-#include <Exec/ExecBase.h>
-#include <Exec/x86/pci.h>
+#include "InitTask.hpp"
+#include <Exec/ExecBase.hpp>
+#include <Exec/x86/pci.hpp>
 
-#include <Devices/AtaDevice.h>
-#include <Devices/SerialDevice.h>
-#include <Devices/KeyboardDevice.h>
-#include <Devices/TimerDevice.h>
-#include <Devices/RtcDevice.h>
-#include <Devices/MouseDevice.h>
+#include <Devices/AtaDevice.hpp>
+#include <Devices/SerialDevice.hpp>
+#include <Devices/KeyboardDevice.hpp>
+#include <Devices/TimerDevice.hpp>
+#include <Devices/RtcDevice.hpp>
+#include <Devices/MouseDevice.hpp>
 
-#include <Inspiration/InspirationBase.h>
-#include <FileSystems/SimpleFileSystem/SimpleFileSystem.h>
-#include "IdleTask.hh"
+#include <Inspiration/InspirationBase.hpp>
+#include <FileSystems/SimpleFileSystem/SimpleFileSystem.hpp>
+#include "IdleTask.hpp"
 // #include <Examples/Examples.h>
 
 TInt64 InitTask::Run() {

@@ -1,6 +1,6 @@
-#include <Devices/RtcDevice.h>
-#include <Exec/ExecBase.h>
-#include <Exec/BTask.h>
+#include <Devices/RtcDevice.hpp>
+#include <Exec/ExecBase.hpp>
+#include <Exec/BTask.hpp>
 
 const TUint8 SELECT = 0x70;
 const TUint8 DATA = 0x71;

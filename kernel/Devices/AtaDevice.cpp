@@ -1,14 +1,14 @@
 #define DEBUGME
 // #undef DEBUGME
 
-#include <Exec/ExecBase.h>
-#include <Devices/AtaDevice.h>
-#include <Exec/BTask.h>
-#include <Exec/x86/cpu_utils.hh>
-#include <Exec/x86/pci.h>
-#include "ata/ata.h"
-#include "ata/task.h"
-#include "ata/interrupt.h"
+#include <Exec/ExecBase.hpp>
+#include <Devices/AtaDevice.hpp>
+#include <Exec/BTask.hpp>
+#include <Exec/x86/cpu_utils.hpp>
+#include <Exec/x86/pci.hpp>
+#include "ata/ata.hpp"
+#include "ata/task.hpp"
+#include "ata/interrupt.hpp"
 
 /********************************************************************************
  ********************************************************************************

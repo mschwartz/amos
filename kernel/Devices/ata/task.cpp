@@ -1,8 +1,8 @@
 #define DEBUGME
 #undef DEBUGME
 
-#include <Exec/ExecBase.h>
-#include "task.h"
+#include <Exec/ExecBase.hpp>
+#include "task.hpp"
 
 extern "C" TUint8 bochs_present;
 inline static void wait_io() {

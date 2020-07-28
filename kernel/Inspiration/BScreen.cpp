@@ -1,10 +1,10 @@
-#include <Inspiration/InspirationBase.h>
-#include <Exec/ExecBase.h>
-#include <Inspiration/BScreen.h>
-#include <Inspiration/Display.h>
-#include <Inspiration/Cursor.h>
+#include <Inspiration/InspirationBase.hpp>
+#include <Exec/ExecBase.hpp>
+#include <Inspiration/BScreen.hpp>
+#include <Inspiration/Display.hpp>
+#include <Inspiration/Cursor.hpp>
 
-#include <Graphics/bitmap/BBitmap32.h>
+#include <Graphics/bitmap/BBitmap32.hpp>
 
 BScreen::BScreen(const char *aTitle) : BNode(aTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
   mDisplay = mInspirationBase.GetDisplay();

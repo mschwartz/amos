@@ -3,7 +3,7 @@
 #include <posix/sprintf.h>
 
 #ifdef KERNEL
-#include <Types.h>
+#include <Types.hpp>
 #endif
 
 

@@ -1,8 +1,8 @@
-#include <Exec/ExecBase.h>
-#include <Exec/x86/cpu_utils.hh>
-#include <Exec/x86/ps2.h>
-#include <Devices/KeyboardDevice.h>
-#include <Exec/BTask.h>
+#include <Exec/ExecBase.hpp>
+#include <Exec/x86/cpu_utils.hpp>
+#include <Exec/x86/ps2.hpp>
+#include <Devices/KeyboardDevice.hpp>
+#include <Exec/BTask.hpp>
 
 const TUint16 KEYB_DR = 0x60; /* data register */
 const TUint16 KEYB_SR = 0x64; /* status register */

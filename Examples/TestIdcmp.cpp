@@ -1,8 +1,8 @@
-#include <Examples/TestIdcmp.h>
-#include <Graphics/BViewPort.h>
-#include <Graphics/font/BConsoleFont.h>
-#include <Exec/Random.h>
-#include <Inspiration/BScreen.h>
+#include <Examples/TestIdcmp.hpp>
+#include <Graphics/BViewPort.hpp>
+#include <Graphics/font/BConsoleFont.hpp>
+#include <Exec/Random.hpp>
+#include <Inspiration/BScreen.hpp>
 #include <posix/sprintf.h>
 
 class IdcmpWindow : public BWindow {

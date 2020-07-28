@@ -1,9 +1,9 @@
-#include <Exec/ExecBase.h>
-#include <Inspiration/Display.h>
-#include <Inspiration/BScreen.h>
-#include <Inspiration/Cursor.h>
-#include <Inspiration/WindowManager/DisplayTask.h>
-#include <Inspiration/WindowManager/KeyboardTask.h>
+#include <Exec/ExecBase.hpp>
+#include <Inspiration/Display.hpp>
+#include <Inspiration/BScreen.hpp>
+#include <Inspiration/Cursor.hpp>
+#include <Inspiration/WindowManager/DisplayTask.hpp>
+#include <Inspiration/WindowManager/KeyboardTask.hpp>
 
 void Display::Init() {
   dlog("Display::Init\n");

@@ -1,6 +1,6 @@
-#include <Exec/ExecBase.h>
-#include <Inspiration/InspirationBase.h>
-#include <Inspiration/BWindow.h>
+#include <Exec/ExecBase.hpp>
+#include <Inspiration/InspirationBase.hpp>
+#include <Inspiration/BWindow.hpp>
 
 const TInt FONT_HEIGHT = 16;
 

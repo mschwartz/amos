@@ -1,6 +1,6 @@
-#include <Inspiration/BTheme.h>
-#include <Graphics/BFont.h>
-#include <Graphics/font/BConsoleFont.h>
+#include <Inspiration/BTheme.hpp>
+#include <Graphics/BFont.hpp>
+#include <Graphics/font/BConsoleFont.hpp>
 
 BTheme::BTheme(const char *aName) : BNode(aName) {
   DefaultValues();

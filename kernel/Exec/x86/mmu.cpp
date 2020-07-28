@@ -1,5 +1,5 @@
-#include <Exec/x86/mmu.h>
-#include <Exec/x86/kernel_memory.h>
+#include <Exec/x86/mmu.hpp>
+#include <Exec/x86/kernel_memory.hpp>
 
 #define DEBUGME
 #undef DEBUGME

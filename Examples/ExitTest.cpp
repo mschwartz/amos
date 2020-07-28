@@ -1,4 +1,4 @@
-#include "ExitTest.hh"
+#include "ExitTest.hpp"
 
 ExitTestTask::ExitTestTask(EExitTestType aType, const char *aName, TInt64 aDelay) : BTask(aName) {
   mType = aType;

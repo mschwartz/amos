@@ -1,4 +1,4 @@
-#include "commands.hh"
+#include "commands.hpp"
 
 struct cli_commands  gCommands[] = {
   "help", &CliTask::command_help, "print help (for command)",

@@ -1,9 +1,9 @@
 #define DEBUGME
 // #undef DEBUGME
 
-#include "interrupt.h"
-#include <Exec/ExecBase.h>
-#include "task.h"
+#include "interrupt.hpp"
+#include <Exec/ExecBase.hpp>
+#include "task.hpp"
 
 AtaInterrupt::AtaInterrupt(AtaTask *aTask, TUint8 aSignalBit, TInt64 aDevice)
       : BInterrupt("ata.device", LIST_PRI_MAX, (TAny *)aDevice) {

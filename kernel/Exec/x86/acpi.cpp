@@ -1,6 +1,6 @@
-#include <Exec/x86/acpi.h>
-#include <Exec/ExecBase.h>
-#include <Exec/Memory.h>
+#include <Exec/x86/acpi.hpp>
+#include <Exec/ExecBase.hpp>
+#include <Exec/Memory.hpp>
 
 #define RSDP_SIGNATURE "RSD PTR "
 #define MADT_SIGNATURE "APIC"

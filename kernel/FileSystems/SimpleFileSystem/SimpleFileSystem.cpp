@@ -1,6 +1,6 @@
-#include <FileSystems/SimpleFileSystem/SimpleFileSystem.h>
-#include <FileSystems/SimpleFileSystem/SimpleFileSystemTask.h>
-#include <Exec/ExecBase.h>
+#include <FileSystems/SimpleFileSystem/SimpleFileSystem.hpp>
+#include <FileSystems/SimpleFileSystem/SimpleFileSystemTask.hpp>
+#include <Exec/ExecBase.hpp>
 
 SimpleFileSystem::SimpleFileSystem(const char *aDiskDevice, TUint64 aUnit, TUint64 aRootLba)
     : BFileSystem("SimpleFileSystem"),

@@ -1,4 +1,4 @@
-#include <Inspiration/Desktop.h>
+#include <Inspiration/Desktop.hpp>
 
 Desktop::Desktop() : BScreen("Desktop") {
   dprint("\n\n");

@@ -1,4 +1,4 @@
-#include <Types/BHashTable.h>
+#include <Types/BHashTable.hpp>
 
 TInt64 BHashNode::Hash(const char *aKey) {
   TInt64 sum = 0;

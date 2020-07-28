@@ -1,4 +1,4 @@
-#include <Exec/BDevice.h>
+#include <Exec/BDevice.hpp>
 
 #define MAX_DEVICES 64
 

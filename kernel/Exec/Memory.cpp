@@ -1,14 +1,14 @@
 #define DEBUGME
 #undef DEBUGME
 
-#include <Types.h>
-#include <Exec/Memory.h>
-#include <Exec/BBase.h>
+#include <Types.hpp>
+#include <Exec/Memory.hpp>
+#include <Exec/BBase.hpp>
 
 // #include <posix/malloc.h>
 
 #ifdef KERNEL
-#include <Exec/x86/bochs.h>
+#include <Exec/x86/bochs.hpp>
 #else
 #include <stdlib.h>
 #endif
@@ -18,7 +18,7 @@
 
 #ifdef KERNEL
 #ifdef LOCKMEM
-#include <Exec/ExecBase.h>
+#include <Exec/ExecBase.hpp>
 #endif
 #endif
 

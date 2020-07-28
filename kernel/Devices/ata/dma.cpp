@@ -1,9 +1,9 @@
 #define DEBUGME
 #undef DEBUGME
 
-#include "ata.h"
-#include "dma.h"
-#include "task.h"
+#include "ata.hpp"
+#include "dma.hpp"
+#include "task.hpp"
 
 // reference: https://github.com/klange/toaruos/blob/96fe218d2f79998bcfcdc3c6d51444a209b5c279/modules/ata.c
 

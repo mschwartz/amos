@@ -1,7 +1,7 @@
-#include <Inspiration/Cursor.h>
-#include <Inspiration/Display.h>
-#include <Inspiration/BScreen.h>
-#include <Graphics/bitmap/BBitmap32.h>
+#include <Inspiration/Cursor.hpp>
+#include <Inspiration/Display.hpp>
+#include <Inspiration/BScreen.hpp>
+#include <Graphics/bitmap/BBitmap32.hpp>
 
 static const char *cursor_image[] = {
   "Booooooooooo",

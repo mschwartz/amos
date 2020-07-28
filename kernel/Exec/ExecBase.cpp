@@ -1,34 +1,34 @@
 #define DEBUGME
 #undef DEBUGME
 
-#include <Exec/ExecBase.h>
-#include <Inspiration/InspirationBase.h>
+#include <Exec/ExecBase.hpp>
+#include <Inspiration/InspirationBase.hpp>
 #include <stdint.h>
-#include <Exec/x86/cpu_utils.hh>
+#include <Exec/x86/cpu_utils.hpp>
 
-#include <Exec/x86/mmu.h>
-#include <Exec/x86/cpu.h>
-#include <Exec/x86/idt.h>
-#include <Exec/x86/tss.h>
-#include <Exec/x86/gdt.h>
-#include <Exec/x86/pic.h>
-#include <Exec/x86/ps2.h>
-#include <Exec/x86/pci.h>
-#include <Exec/x86/acpi.h>
+#include <Exec/x86/mmu.hpp>
+#include <Exec/x86/cpu.hpp>
+#include <Exec/x86/idt.hpp>
+#include <Exec/x86/tss.hpp>
+#include <Exec/x86/gdt.hpp>
+#include <Exec/x86/pic.hpp>
+#include <Exec/x86/ps2.hpp>
+#include <Exec/x86/pci.hpp>
+#include <Exec/x86/acpi.hpp>
 
-#include <Devices/AtaDevice.h>
-#include <Devices/SerialDevice.h>
-#include <Devices/KeyboardDevice.h>
-#include <Devices/TimerDevice.h>
-#include <Devices/RtcDevice.h>
-#include <Devices/MouseDevice.h>
+#include <Devices/AtaDevice.hpp>
+#include <Devices/SerialDevice.hpp>
+#include <Devices/KeyboardDevice.hpp>
+#include <Devices/TimerDevice.hpp>
+#include <Devices/RtcDevice.hpp>
+#include <Devices/MouseDevice.hpp>
 
-#include <FileSystems/SimpleFileSystem/SimpleFileSystem.h>
+#include <FileSystems/SimpleFileSystem/SimpleFileSystem.hpp>
 
 #include <posix/sprintf.h>
-#include <Exec/Random.h>
-#include <Exec/IdleTask.hh>
-#include <Exec/InitTask.hh>
+#include <Exec/Random.hpp>
+#include <Exec/IdleTask.hpp>
+#include <Exec/InitTask.hpp>
 
 ExecBase gExecBase;
 

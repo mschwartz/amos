@@ -1,5 +1,5 @@
-#include <Types.h>
-#include <Exec/x86/ps2.h>
+#include <Types.hpp>
+#include <Exec/x86/ps2.hpp>
 
 #ifdef ENABLE_PS2
 static TBool ps2_can_read() {

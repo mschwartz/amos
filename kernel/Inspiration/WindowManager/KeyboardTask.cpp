@@ -1,7 +1,7 @@
-#include <Inspiration/WindowManager/KeyboardTask.h>
-#include <Inspiration/InspirationBase.h>
-#include <Exec/ExecBase.h>
-#include <Devices/KeyboardDevice.h>
+#include <Inspiration/WindowManager/KeyboardTask.hpp>
+#include <Inspiration/InspirationBase.hpp>
+#include <Exec/ExecBase.hpp>
+#include <Devices/KeyboardDevice.hpp>
 
 KeyboardTask::KeyboardTask() : BTask("inspiration-keyboard.task", TASK_PRI_DEFAULT) {
   //

@@ -1,9 +1,9 @@
 #define DEBUGME
 #undef DEBUGME
 
-#include "commands.hh"
-#include <Exec/ExecBase.h>
-#include <Devices/RtcDevice.h>
+#include "commands.hpp"
+#include <Exec/ExecBase.hpp>
+#include <Devices/RtcDevice.hpp>
 
 const TBool utc = EFalse;
 const TBool dst = ETrue;

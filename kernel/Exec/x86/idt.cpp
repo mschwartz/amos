@@ -1,8 +1,8 @@
-#include <Exec/ExecBase.h>
-#include <Exec/x86/idt.h>
+#include <Exec/ExecBase.hpp>
+#include <Exec/x86/idt.hpp>
 #include <posix/string.h>
-#include <Exec/x86/tasking.h>
-#include <Exec/x86/kernel_memory.h>
+#include <Exec/x86/tasking.hpp>
+#include <Exec/x86/kernel_memory.hpp>
 
 extern "C" void set_vector(void *idt_vector, void (*offset)(), TUint16 selector, uint8_t flags);
 extern "C" void load_idtr(void *ptr);

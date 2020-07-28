@@ -1,5 +1,5 @@
-#include <Exec/MessagePort.h>
-#include <Exec/ExecBase.h>
+#include <Exec/MessagePort.hpp>
+#include <Exec/ExecBase.hpp>
 
 /********************************************************************************
  ********************************************************************************

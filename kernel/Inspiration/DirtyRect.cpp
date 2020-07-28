@@ -1,4 +1,4 @@
-#include <Inspiration/DirtyRect.h>
+#include <Inspiration/DirtyRect.hpp>
 
 DirtyRect::DirtyRect(TRect &aRect) : BNode("dirty rect") {
   mRect.Set(aRect);

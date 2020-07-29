@@ -19,7 +19,7 @@ public:
 
 protected:
   TInt mDisplayWidth, mDisplayHeight;
-  TInt64 mX, mY;
+  TInt32 mX, mY;
   TUint8 mButtons;
 };
 

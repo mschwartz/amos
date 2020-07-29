@@ -81,8 +81,8 @@ protected:
   TUint32 mMaxX, mMaxY;
 
 protected:
-  TInt64 mX, mY;
-  TUint64 mState;
+  TInt32 mX, mY;
+  TUint32 mState;
   TUint8 mButtons;
   TInt8 mPacket[3];
 };
@@ -155,24 +155,35 @@ TBool MouseInterrupt::Run(TAny *aData) {
 	// ignore overflow
 	break;
       }
+
       TInt32 x = mPacket[1];
       if (mPacket[0] & (1 << 4)) {
 	x |= 0xffffff00;
       }
       mX += x;
-      CLAMP(mX, 0, mMaxX);
+      if (mX < 0) {
+	mX = 0;
+      }
+      if (mX > mMaxX) {
+	mX = mMaxX;
+      }
 
       TInt32 y = mPacket[2];
       if (mPacket[0] & (1 << 5)) {
 	y |= 0xffffff00;
       }
       mY -= y;
-      CLAMP(mY, 0, mMaxY);
+      if (mY < 0) {
+	mY = 0;
+      }
+      if (mY > mMaxY) {
+	mY = mMaxY;
+      }
 
       // dlog("Int dx(%02x) dy(%02x)\n", mPacket[1], mPacket[2]);
 
       // send message to Mouse Task
-      {
+      if (x || y) { // only if position changed
         MouseMessage *m = new MouseMessage(ENull, EMouseUpdate);
         m->mMouseX = mX;
         m->mMouseY = mY;
@@ -199,8 +210,6 @@ TBool MouseInterrupt::Run(TAny *aData) {
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
-
-extern "C" void mouse_trap();
 
 TInt64 MouseTask::Run() {
   dprint("\n");

@@ -34,10 +34,10 @@ void MousePointerTask::HandleButtons(MouseMessage *aMessage) {
 
   // LEFT BUTTON
   if (mCurrentButtons & MOUSE_LEFT_BUTTON) {
-    // dlog("mCurrentButtons(%x / %x)\n", mCurrentButtons, aMessage->mButtons);
     // SELECT IS JUST DOWN
     if (!(mLastButtons & MOUSE_LEFT_BUTTON)) {
       if (mInspirationBase.ActivateWindow(mMouseX, mMouseY) == EFalse) {
+	// click didn't activate a window, send idcmp message to whatever window is active
         SendIdcmpMessage(IDCMP_MOUSEBUTTONS, SELECTDOWN, aMessage);
       }
     }

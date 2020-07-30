@@ -50,7 +50,7 @@ void MousePointerTask::HandleButtons(MouseMessage *aMessage) {
     else {
       // button being held down
       if (mDraggable.mWindow) {
-	dlog("dragging %d,%d\n", mMouseX - mDraggable.mDx, mMouseY - mDraggable.mDy);
+	// dlog("dragging %d,%d\n", mMouseX - mDraggable.mDx, mMouseY - mDraggable.mDy);
 	mDraggable.mWindow->MoveTo(mMouseX - mDraggable.mDx, mMouseY - mDraggable.mDy);
       }
     }

@@ -89,8 +89,11 @@ TBool BWindow::Obscured(BWindow *aOther) {
 }
 
 void BWindow::MoveTo(TCoordinate aX, TCoordinate aY) {
+  DISABLE;
   mScreen->EraseWindow(this);
   mWindowRect.Offset(aX - WindowLeft(), aY - WindowTop());
+  mScreen->UpdateWindow(this);
+  ENABLE;
   //
 }
 

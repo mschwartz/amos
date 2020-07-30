@@ -4,6 +4,8 @@
 #include <Types.hpp>
 #include <Exec/BBase.hpp>
 
+typedef TUint32 TRgbColor;
+
 struct TRGB {
   TInt16 r, g, b;
 
@@ -16,7 +18,7 @@ public:
     r = g = b = aVal;
   }
 
-  TRGB(TUint32 aColor) {
+  TRGB(TRgbColor aColor) {
     r = TUint8((aColor >> 16) & 0xff);
     g = TUint8((aColor >> 8) & 0xff);
     b = TUint8((aColor >> 0) & 0xff);
@@ -47,7 +49,7 @@ public:
     b = aOther.b;
   }
 
-  void Set(TUint32 aColor) {
+  void Set(TRgbColor aColor) {
     r = TUint8((aColor >> 16) & 0xff);
     g = TUint8((aColor >> 8) & 0xff);
     b = TUint8((aColor >> 0) & 0xff);
@@ -66,7 +68,7 @@ public:
   }
 
 public:
-  TUint32 rgb888() const { return (TUint8(r) << 16) | (TUint8(g) << 8) | (TUint8(b) << 0); }
+  TRgbColor rgb888() const { return (TUint8(r) << 16) | (TUint8(g) << 8) | (TUint8(b) << 0); }
 
   TUint16 rgb565() const {
     return ((TUint16(r & 0b11111000) << 8)) | ((TUint16(g & 0b11111100) << 3)) | (TUint16(b) >> 3);

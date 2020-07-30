@@ -140,7 +140,12 @@ TBool InspirationBase::SendIdcmpMessage(IdcmpMessage *aMessage) {
   return EFalse;
 }
 
-TBool InspirationBase::ActivateWindow(TInt32 aX, TInt32 aY) {
+TBool InspirationBase::ActivateWindow(TCoordinate aX, TCoordinate aY) {
   BScreen *s = mDisplay->TopScreen();
   return s->ActivateWindow(aX, aY);
+}
+
+BWindow *InspirationBase::DragWindow(TCoordinate aX, TCoordinate aY) {
+  BScreen *s = mDisplay->TopScreen();
+  return s->DragWindow(aX, aY);
 }

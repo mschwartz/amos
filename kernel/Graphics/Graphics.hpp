@@ -14,4 +14,16 @@
 
 #include <Graphics/BFont.hpp>
 
+///////// Assembly helpers
+
+/**
+ * Copy aCount RGB pixels from aSource to aDestination
+ */
+extern "C" void CopyRGB(TAny *aDestination, TAny *aSource, TInt64 aCount);
+
+/**
+ * Copy aCount RGB pixels from aSource to aDestination, two pixels at a time
+ */
+extern "C" void CopyRGB64(TAny *aDestination, TAny *aSource, TInt64 aCount);
+
 #endif

@@ -14,6 +14,8 @@ const TUint32 MOUSE_STATUS = 0x64;
 #define MOUSE_F_BIT 0x20
 #define MOUSE_V_BIT 0x08
 
+#define MOUSE_ALWAYS_SET (1<<3)
+
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
@@ -79,8 +81,8 @@ protected:
   TUint32 mMaxX, mMaxY;
 
 protected:
-  TInt64 mX, mY;
-  TUint64 mState;
+  TInt32 mX, mY;
+  TUint32 mState;
   TUint8 mButtons;
   TInt8 mPacket[3];
 };
@@ -112,7 +114,7 @@ TBool MouseInterrupt::Run(TAny *aData) {
     case 0:
       mPacket[0] = in_byte;
 
-      if (!(in_byte & MOUSE_V_BIT)) {
+      if (!(in_byte & MOUSE_ALWAYS_SET)) {
         break;
       }
 
@@ -149,16 +151,39 @@ TBool MouseInterrupt::Run(TAny *aData) {
       mPacket[2] = in_byte;
       mState++;
 
-      mX += mPacket[1];
-      CLAMP(mX, 0, mMaxX);
+      if (mPacket[0] & (1 << 7) || mPacket[0] & (1 << 6)) {
+	// ignore overflow
+	break;
+      }
 
-      mY -= mPacket[2];
-      CLAMP(mY, 0, mMaxY);
+      TInt32 x = mPacket[1];
+      if (mPacket[0] & (1 << 4)) {
+	x |= 0xffffff00;
+      }
+      mX += x;
+      if (mX < 0) {
+	mX = 0;
+      }
+      if (mX > mMaxX) {
+	mX = mMaxX;
+      }
+
+      TInt32 y = mPacket[2];
+      if (mPacket[0] & (1 << 5)) {
+	y |= 0xffffff00;
+      }
+      mY -= y;
+      if (mY < 0) {
+	mY = 0;
+      }
+      if (mY > mMaxY) {
+	mY = mMaxY;
+      }
 
       // dlog("Int dx(%02x) dy(%02x)\n", mPacket[1], mPacket[2]);
 
       // send message to Mouse Task
-      {
+      if (x || y) { // only if position changed
         MouseMessage *m = new MouseMessage(ENull, EMouseUpdate);
         m->mMouseX = mX;
         m->mMouseY = mY;
@@ -185,8 +210,6 @@ TBool MouseInterrupt::Run(TAny *aData) {
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
-
-extern "C" void mouse_trap();
 
 TInt64 MouseTask::Run() {
   dprint("\n");

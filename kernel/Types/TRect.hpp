@@ -3,15 +3,17 @@
 
 #include <Types.hpp>
 
+typedef TInt32 TCoordinate;
+
 struct TPoint {
-  TInt32 x, y;
+  TCoordinate x, y;
 
   TPoint() {
     x = 0.0;
     y = 0.0;
   }
 
-  TPoint(TInt32 aX, TInt32 aY) {
+  TPoint(TCoordinate aX, TCoordinate aY) {
     x = aX;
     y = aY;
   }
@@ -21,7 +23,7 @@ struct TPoint {
     y = aOther.y;
   }
 
-  void Set(TInt32 aX, TInt32 aY) {
+  void Set(TCoordinate aX, TCoordinate aY) {
     x = aX;
     y = aY;
   }
@@ -31,7 +33,7 @@ struct TPoint {
     y = aOther.y;
   }
 
-  void Offset(TInt32 aX, TInt32 aY) {
+  void Offset(TCoordinate aX, TCoordinate aY) {
     x += aX;
     y += aY;
   }
@@ -43,7 +45,7 @@ struct TPoint {
 } PACKED;
 
 struct TRect {
-  TInt32 x1, y1, x2, y2;
+  TCoordinate x1, y1, x2, y2;
 
   // Constructors
 public:
@@ -54,7 +56,7 @@ public:
     this->y2 = 0;
   }
 
-  TRect(TInt32 aX1, TInt32 aY1, TInt32 aX2, TInt32 aY2) {
+  TRect(TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2) {
     this->x1 = aX1;
     this->y1 = aY1;
     this->x2 = aX2;
@@ -75,7 +77,7 @@ public:
     this->y2 = aOther.y2;
   }
 
-  void Set(TInt32 aX1, TInt32 aY1, TInt32 aX2, TInt32 aY2) {
+  void Set(TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2) {
     this->x1 = aX1;
     this->y1 = aY1;
     this->x2 = aX2;
@@ -97,15 +99,15 @@ public:
   }
 
 public:
-  TInt32 Width() { return (x2 - x1) + 1; }
+  TCoordinate Width() { return (x2 - x1) + 1; }
 
-  TInt32 Height() { return (y2 - y1) + 1; }
+  TCoordinate Height() { return (y2 - y1) + 1; }
 
-  void Width(TInt32 aWidth) { x2 = x1 + aWidth - 1; }
+  void Width(TCoordinate aWidth) { x2 = x1 + aWidth - 1; }
 
-  void Height(TInt32 aHeight) { y2 = y1 + aHeight - 1; }
+  void Height(TCoordinate aHeight) { y2 = y1 + aHeight - 1; }
 
-  TInt32 Area() { return Width() * Height(); }
+  TCoordinate Area() { return Width() * Height(); }
 
   void Dump(const char *aArgs = ENull) {
 #ifdef KERNEL
@@ -127,7 +129,7 @@ public:
   }
 
 public:
-//  TBool Overlaps(TInt32 aX1, TInt32 aY1, TInt32 aX2, TInt32 aY2);
+//  TBool Overlaps(TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2);
 
 //  TBool Overlaps(const TPoint &aUpperLeft, const TPoint);
 
@@ -150,7 +152,7 @@ public:
   TBool PointInRect(TPoint p) { return PointInRect(p.x, p.y); }
 
 public:
-  void Center(TInt32 aX, TInt32 aY);
+  void Center(TCoordinate aX, TCoordinate aY);
 
   void Center(TPoint &aPoint) { Center(aPoint.x, aPoint.y); }
 
@@ -158,11 +160,11 @@ public:
     Center(MID(aRect.x1, aRect.x2), MID(aRect.y1, aRect.y2));
   }
 
-  void CenterX(TInt32 aX);
+  void CenterX(TCoordinate aX);
 
   void CenterX(TRect &aRect) { CenterX(MID(aRect.x1, aRect.x2)); }
 
-  void CenterY(TInt32 aY);
+  void CenterY(TCoordinate aY);
 
   void CenterY(TRect &aRect) { CenterY(MID(aRect.y1, aRect.y2)); }
 

@@ -15,20 +15,27 @@ class BTheme : public BNode {
 public:
   BTheme(const char *aName);
   BTheme(BTheme *aOther);
+  ~BTheme();
 
 public:
   void DefaultValues();
 
 public:
-  TInt16 mActiveBorderWidth,           // width of border of active window
-    mInactiveBorderWidth;              // width of border of inactive window
-  TUint32 mActiveBorderColor,          // color of active window border
-    mInactiveBorderColor;              // color of inactive window border
-  TUint32 mActiveTitleBackgroundColor, // color of window titlebar when active
-    mInactiveTitleBackroundColor;      // color of window titlebar when inactive
-  TUint32 mActiveTitleColor,           // color of titlebar text when active
-    mInactiveTitleColor;               // color of titlebar text when inactive
-  BConsoleFont32 *mTitleFont;          // window title font
+  // window themes
+  TInt16 mActiveBorderWidth = 2,                  // width of border of active window
+    mInactiveBorderWidth = 1;                     // width of border of inactive window
+  TUint32 mActiveBorderColor = 0xffffff,          // color of active window border
+    mInactiveBorderColor = 0x7f7f7f;              // color of inactive window border
+  TUint32 mActiveTitleBackgroundColor = 0xffffff, // color of window titlebar when active
+    mInactiveTitleBackroundColor = 0x7f7f7f;      // color of window titlebar when inactive
+  TUint32 mActiveTitleColor = 0x000000,           // color of titlebar text when active
+    mInactiveTitleColor = 0xffffff;               // color of titlebar text when inactive
+  BConsoleFont32 *mTitleFont;                     // window title font
+  // screen themes
+  TUint32 mScreenBackgroundColor = 0x4f4fff;      // screen/desktop background color
+  TUint32 mScreenTitleBackgroundColor = 0x000000, // screen titlebar background color
+    mScreenTitleColor = 0xffffff;                 // screen titlebar font color
+  BConsoleFont32 *mScreenFont;                    // screen title font
 
 public:
   void Dump() {

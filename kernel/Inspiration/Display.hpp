@@ -67,7 +67,7 @@ public:
 
   // copy aOther bitmap to screen at aDestX,aDestY (as in a window)
   void BltBitmap(BBitmap32 *aOther, TInt32 aDestX, TInt32 aDestY) {
-    mBitmap->BltBitmap(aOther, aDestX, aDestY);
+    mBitmap->BltCopy(aOther, aDestX, aDestY);
   }
 
 public:

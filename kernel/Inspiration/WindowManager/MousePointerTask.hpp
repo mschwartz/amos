@@ -1,10 +1,17 @@
 #ifndef INSPIRATION_MOUSEPOINTERTASK_H
 #define INSPIRATION_MOUSEPOINTERTASK_H
 
+#include <Inspiration/BWindow.hpp>
 #include <Exec/BTask.hpp>
+#include <Types/TRect.hpp>
 
 class Display;
 class MouseMessage;
+
+typedef struct {
+  BWindow *mWindow = ENull;
+  TCoordinate mDx, mDy;
+} Draggable;
 
 class MousePointerTask : public BTask {
 public:
@@ -23,6 +30,9 @@ protected:
 protected:
   TInt32 mMouseX, mMouseY;
   TInt32 mLastMouseX, mLastMouseY;
+
+protected:
+  Draggable mDraggable;
   
 public:
   TInt64 Run();

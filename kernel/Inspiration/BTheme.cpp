@@ -3,12 +3,15 @@
 #include <Graphics/font/BConsoleFont.hpp>
 
 BTheme::BTheme(const char *aName) : BNode(aName) {
+  mTitleFont = new BConsoleFont32();
+  mScreenFont = new BConsoleFont32();
   DefaultValues();
 }
 
 BTheme::BTheme(BTheme *aOther) : BNode(aOther->mNodeName) {
   *this = *aOther;
   mTitleFont = new BConsoleFont32;
+  mScreenFont = new BConsoleFont32();
   *mTitleFont = *aOther->mTitleFont;
 }
 
@@ -22,4 +25,5 @@ void BTheme::DefaultValues() {
   mActiveTitleColor = 0x000000;                        // black
   mInactiveTitleColor = 0x000000;                      // black
   mTitleFont = new BConsoleFont32();
+
 }

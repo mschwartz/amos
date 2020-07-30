@@ -389,6 +389,14 @@ void CopyMemory(TAny *aDestination, TAny *aSource, TInt64 aCount) {
   }
 }
 
+void CopyMemory32(TAny *aDestination, TAny *aSource, TInt64 aCount) {
+  TUint32 *src = (TUint32 *)aSource,
+          *dst = (TUint32 *)aDestination;
+  for (TInt64 i = 0; i < aCount; i++) {
+    *dst++ = *src++;
+  }
+}
+
 void CopyMemory64(TAny *aDestination, TAny *aSource, TInt64 aCount) {
   TUint64 *src = (TUint64 *)aSource,
           *dst = (TUint64 *)aDestination;

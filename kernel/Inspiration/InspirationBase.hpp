@@ -40,7 +40,12 @@ public:
   /**
    * Activate window that the point aX,aY is within.
    */
-  TBool ActivateWindow(TInt32 aX, TInt32 aY);
+  TBool ActivateWindow(TCoordinate aX, TCoordinate aY);
+
+  /**
+   * Return window whose drag bar is below aX, aY (or ENull)
+   */
+  BWindow *DragWindow(TCoordinate aX, TCoordinate aY);
 
   /**
    * Send IdcmpMessage to active window.

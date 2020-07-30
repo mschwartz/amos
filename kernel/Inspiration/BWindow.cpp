@@ -2,7 +2,7 @@
 #include <Inspiration/InspirationBase.hpp>
 #include <Inspiration/BWindow.hpp>
 
-const TInt FONT_HEIGHT = 16;
+const TCoordinate FONT_HEIGHT = 16;
 
 BWindow::BWindow(const TNewWindow &aNewWindow)
     : BNode(aNewWindow.mTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
@@ -25,6 +25,8 @@ BWindow::BWindow(const TNewWindow &aNewWindow)
   //
   mBitmap->GetRect(mWindowRect);
   mWindowRect.Offset(aNewWindow.mLeft, aNewWindow.mTop);
+
+  dlog("mWindowRect %s\n", Title()); mWindowRect.Dump();
 
   mWindowViewPort = new BViewPort32(mNodeName, mBitmap);
   mWindowViewPort->SetFont(new BConsoleFont32());
@@ -86,7 +88,9 @@ TBool BWindow::Obscured(BWindow *aOther) {
   return ETrue;
 }
 
-void BWindow::MoveTo(TInt32 aX, TInt32 aY) {
+void BWindow::MoveTo(TCoordinate aX, TCoordinate aY) {
+  mScreen->EraseWindow(this);
+  mWindowRect.Offset(aX - WindowLeft(), aY - WindowTop());
   //
 }
 
@@ -116,15 +120,15 @@ void BWindow::PaintDecorations() {
   BTheme *theme = mScreen->GetTheme();
 
   BViewPort32 *vp = mWindowViewPort;
-  TInt x1 = 0,
+  TCoordinate x1 = 0,
        y1 = 0,
        x2 = vp->Width() - 1,
        y2 = vp->Height() - 1;
 
   // erase old window border, new one might be different width
-  TInt max_bw = MAX(theme->mActiveBorderWidth, theme->mInactiveBorderWidth);
+  TCoordinate max_bw = MAX(theme->mActiveBorderWidth, theme->mInactiveBorderWidth);
   TUint32 bg_color = mBackgroundColor;
-  for (TInt w = 0; w < max_bw; w++) {
+  for (TCoordinate w = 0; w < max_bw; w++) {
     // right side
     vp->FastLineVertical(bg_color, x2 - w, y1, vp->Height());
     // left side
@@ -134,10 +138,10 @@ void BWindow::PaintDecorations() {
   }
 
   // render new window border
-  TInt border_width = active ? theme->mActiveBorderWidth : theme->mInactiveBorderWidth;
+  TCoordinate border_width = active ? theme->mActiveBorderWidth : theme->mInactiveBorderWidth;
   TUint32 border_color = active ? theme->mActiveBorderColor : theme->mInactiveBorderColor;
 
-  for (TInt w = 0; w < border_width; w++) {
+  for (TCoordinate w = 0; w < border_width; w++) {
     // right side
     vp->FastLineVertical(border_color, x2 - w, y1, vp->Height());
     // left side
@@ -159,6 +163,11 @@ void BWindow::PaintDecorations() {
   if (mWindowFlags & WFLAG_DEPTHGADGET) {
     vp->FillRect(0xff0000, x2 - 32, y1 + 2, x2 - 18, y1 + FONT_HEIGHT - 4);
   }
+}
+
+TBool BWindow::OverDragBar(TCoordinate aX, TCoordinate aY) {
+  TRect r(mWindowRect.x1, mWindowRect.y1, mWindowRect.x2, mWindowRect.y1 + FONT_HEIGHT + 2);
+  return r.PointInRect(aX, aY);
 }
 
 void BWindow::Repaint() {

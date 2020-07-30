@@ -10,13 +10,16 @@ BScreen::BScreen(const char *aTitle) : BNode(aTitle), mInspirationBase(*gExecBas
   mDisplay = mInspirationBase.GetDisplay();
   mDisplay->Dump();
   mBitmap = new BBitmap32(mDisplay->Width(), mDisplay->Height());
+  mBackground = new BBitmap32(mDisplay->Width(), mDisplay->Height());
   mTopY = 0;
   mTheme = new BTheme("Default Theme");
   mTheme->Dump();
+  mBackground->Clear(mTheme->mScreenBackgroundColor);
 }
 
 BScreen::~BScreen() {
   // remove and destroy windows ?
+  delete[] mBackground;
   delete[] mBitmap;
 }
 
@@ -28,19 +31,31 @@ void BScreen::AddWindow(BWindow *aWindow) {
 
 extern "C" TUint64 GetRSP();
 
-void BScreen::AddDirtyRect(TInt32 aX1, TInt32 aY1, TInt32 aX2, TInt32 aY2) {
+void BScreen::AddDirtyRect(TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2) {
   TRect rect(aX1, aY1, aX2, aY2);
   mDirtyRects.Add(rect);
 }
 
 void BScreen::Clear(const TUint32 aColor) {
-  mBitmap->Clear(aColor);
+  // copy mBackground to mBitmap
+  CopyMemory32(mBitmap->GetPixels(), mBackground->GetPixels(), Width() * Height());
+  // TInt count = Width() * Height();
+
+  // mBitmap->Clear(aColor);
   AddDirtyRect(0, 0, Width() - 1, Height() - 1);
+}
+
+void BScreen::EraseWindow(BWindow *aWindow) {
+  TCoordinate x = aWindow->WindowLeft(),
+    y = aWindow->WindowTop();
+
+  mBitmap->BltRect(mBackground, x, y, x, y, aWindow->WindowWidth(), aWindow->WindowHeight());
+  AddDirtyRect(aWindow->mWindowRect);
 }
 
 void BScreen::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
   TRect &rect = aWindow->mWindowRect;
-  mBitmap->BltBitmap(aWindow->mBitmap, rect.x1, rect.y1);
+  mBitmap->BltCopy(aWindow->mBitmap, rect.x1, rect.y1);
   AddDirtyRect(rect.x1, rect.y1, rect.x2, rect.y2);
 }
 
@@ -56,17 +71,34 @@ void BScreen::ActivateWindow(BWindow *aWindow) {
   aWindow->PaintDecorations();
 }
 
-TBool BScreen::ActivateWindow(TInt32 aX, TInt32 aY) {
+BWindow *BScreen::DragWindow(TCoordinate aX, TCoordinate aY) {
+  BWindow *selected = ENull;
+
+  DISABLE;
+  for (BWindow *w = mWindowList.Last(); !mWindowList.End(w); w = (BWindow *)mWindowList.Prev(w)) {
+    // dlog("DragWindow, trying %x(%s) %d,%d %d\n", w, w->Title(), aX, aY, w->mTitlebarRect.PointInRect(aX, aY));
+    if (w->OverDragBar(aX, aY)) {
+      selected = w;
+    }
+  }
+  ENABLE;
+
+  return selected;
+}
+
+TBool BScreen::ActivateWindow(TCoordinate aX, TCoordinate aY) {
   BWindow *selected = ENull;
 
   DISABLE;
   for (BWindow *w = mWindowList.Last(); !mWindowList.End(w); w = (BWindow *)mWindowList.Prev(w)) {
     // dlog("ActivateWindow, trying %x(%s) %d,%d %d\n", w, w->Title(), aX, aY, w->mWindowRect.PointInRect(aX, aY));
+
     if (w->mWindowRect.PointInRect(aX, aY)) {
       selected = w;
     }
   }
   ENABLE;
+
   if (selected) {
     if (selected != ActiveWindow()) {
       ActivateWindow(selected);

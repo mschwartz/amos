@@ -14,18 +14,16 @@ MousePointerTask::MousePointerTask()
 }
 
 void MousePointerTask::SendIdcmpMessage(TUint64 aClass, TUint64 aButtons, MouseMessage *aMessage) {
-  IdcmpMessage *im = new IdcmpMessage;
-  if (im) { // paranoia
-    im->mClass = aClass;
-    im->mCode = aButtons;
-    im->mQualifier = 0;
-    im->mAddress = ENull;
-    im->mMouseX = aMessage->mMouseX;
-    im->mMouseY = aMessage->mMouseY;
-    im->mLastMouseX = mLastMouseX;
-    im->mLastMouseY = mLastMouseY;
-    mInspirationBase.SendIdcmpMessage(im);
-  }
+  IdcmpMessage im;
+  im.mClass = aClass;
+  im.mCode = aButtons;
+  im.mQualifier = 0;
+  im.mAddress = ENull;
+  im.mMouseX = aMessage->mMouseX;
+  im.mMouseY = aMessage->mMouseY;
+  im.mLastMouseX = mLastMouseX;
+  im.mLastMouseY = mLastMouseY;
+  mInspirationBase.SendIdcmpMessage(&im);
 }
 
 void MousePointerTask::HandleButtons(MouseMessage *aMessage) {
@@ -34,11 +32,26 @@ void MousePointerTask::HandleButtons(MouseMessage *aMessage) {
 
   // LEFT BUTTON
   if (mCurrentButtons & MOUSE_LEFT_BUTTON) {
-    // SELECT IS JUST DOWN
     if (!(mLastButtons & MOUSE_LEFT_BUTTON)) {
+      // SELECT IS JUST DOWN
       if (mInspirationBase.ActivateWindow(mMouseX, mMouseY) == EFalse) {
-	// click didn't activate a window, send idcmp message to whatever window is active
+        // click didn't activate a window, send idcmp message to whatever window is active
         SendIdcmpMessage(IDCMP_MOUSEBUTTONS, SELECTDOWN, aMessage);
+      }
+      else {
+	dlog("Activated window\n");
+      }
+      if ((mDraggable.mWindow = mInspirationBase.DragWindow(mMouseX, mMouseY)) != ENull) {
+	mDraggable.mDx = mMouseX - mDraggable.mWindow->WindowLeft();
+	mDraggable.mDy = mMouseY - mDraggable.mWindow->WindowTop();
+	dlog("Start Drag (%s) dx(%d) dy(%d)\n", mDraggable.mWindow->Title(), mDraggable.mDx, mDraggable.mDy);
+      }
+    }
+    else {
+      // button being held down
+      if (mDraggable.mWindow) {
+	dlog("dragging %d,%d\n", mMouseX - mDraggable.mDx, mMouseY - mDraggable.mDy);
+	mDraggable.mWindow->MoveTo(mMouseX - mDraggable.mDx, mMouseY - mDraggable.mDy);
       }
     }
   }
@@ -108,9 +121,15 @@ TInt64 MousePointerTask::Run() {
         // dlog("Move Cursor %d,%d\n", mMouseX, mMouseY);
         mDisplay->MoveCursor(mMouseX, mMouseY);
 
-        SendIdcmpMessage(IDCMP_MOUSEMOVE, m->mButtons, m);
-
         HandleButtons(m);
+
+        if (mDraggable.mWindow) {
+          //
+          bochs;
+        }
+        else {
+          SendIdcmpMessage(IDCMP_MOUSEMOVE, m->mButtons, m);
+        }
 
         move_message->mReplyPort = replyPort;
         move_message->Send(mousePort);

@@ -1,4 +1,5 @@
 #include <Exec/ExecBase.hpp>
+#include <Graphics/Graphics.hpp>
 #include <Graphics/bitmap/BBitmap32.hpp>
 #include <Graphics/font/BConsoleFont.hpp>
 
@@ -9,7 +10,7 @@
 //  return ENull;
 //}
 
-BBitmap32::BBitmap32(TInt aWidth, TInt aHeight, TInt aPitch, TAny *aMemory) {
+BBitmap32::BBitmap32(TCoordinate aWidth, TCoordinate aHeight, TCoordinate aPitch, TAny *aMemory) {
   mWidth = aWidth;
   mHeight = aHeight;
   mDepth = 32;
@@ -20,13 +21,13 @@ BBitmap32::BBitmap32(TInt aWidth, TInt aHeight, TInt aPitch, TAny *aMemory) {
 
   mFont = ENull;
   if (aMemory) {
-    mPixels = (TUint32 *)aMemory;
+    mPixels = (TRgbColor *)aMemory;
     mFreePixels = EFalse;
     mPitch /= 4;
   }
   else {
-    // dlog("Allocating pixels (%d)\n", aWidth * aHeight * sizeof(TUint32));
-    mPixels = (TUint32 *)AllocMem(aWidth * aHeight * sizeof(TUint32));
+    // dlog("Allocating pixels (%d)\n", aWidth * aHeight * sizeof(TRgbColor));
+    mPixels = (TRgbColor *)AllocMem(aWidth * aHeight * sizeof(TRgbColor));
     mFreePixels = ETrue;
   }
   mRect.Set(0, 0, mWidth - 1, mHeight - 1);
@@ -40,7 +41,7 @@ BBitmap32::~BBitmap32() {
   mFreePixels = false;
 }
 
-void BBitmap32::Clear(TUint32 aColor) {
+void BBitmap32::Clear(TRgbColor aColor) {
   for (TInt y = 0; y < mHeight; y++) {
     for (TInt x = 0; x < mWidth; x++) {
       PlotPixel(aColor, x, y);
@@ -54,38 +55,66 @@ void BBitmap32::CopyPixels(BBitmap32 *aOther) {
 
   for (TInt32 y = 0; y < h; y++) {
     for (TInt32 x = 0; x < h; x++) {
-      TUint32 color = aOther->ReadPixel(x, y);
+      TRgbColor color = aOther->ReadPixel(x, y);
     }
   }
 }
 
-static void CopyPixels32(TUint32 *dst, TUint32 *src, TUint32 len) {
-  // rsi = e000 0000 (dst)
-  // rdx = src
-  // rcx = len
-  dlog("dst(%x) src(%x) len(%d)\n", dst, src, len);
+void BBitmap32::BltRect(BBitmap32 *aOther, TCoordinate aDstX, TCoordinate aDstY, TCoordinate aSrcX, TCoordinate aSrxY, TCoordinate aSrcWidth, TCoordinate aSrcHeight) {
+  TRgbColor *dst = &mPixels[aDstY * mPitch + aDstX],
+            *src = &aOther->mPixels[aSrxY * aOther->mPitch + aSrcX];
+
+  TCoordinate dd = mPitch,
+              ds = aOther->mPitch,
+              width = aSrcWidth,
+              height = aSrcHeight;
+
+  if (width & 1) {
+    for (TCoordinate i = 0; i < height; i++) {
+      CopyRGB(dst, src, width);
+      dst += dd;
+      src += ds;
+    }
+  }
+  else {
+    width /= 2;
+    for (TCoordinate i = 0; i < height; i++) {
+      CopyRGB64(dst, src, width);
+      dst += dd;
+      src += ds;
+    }
+  }
 }
 
-extern "C" void CopyRect(TUint32 *dst, TUint32 *src, TUint32 w, TUint32 h, TUint64 d1, TUint64 d2);
+void BBitmap32::BltCopy(BBitmap32 *aOther, TCoordinate aDstX, TCoordinate aDstY) {
+  TRgbColor *dst = &mPixels[aDstY * mWidth + aDstX],
+            *src = &aOther->mPixels[0];
 
-void BBitmap32::BltBitmap(BBitmap32 *aOther, TInt aDestX, TInt aDestY) {
-  TInt w = aOther->Width(),
-       h = aOther->Height();
+  TCoordinate dd = mPitch,
+              ds = aOther->mPitch,
+              width = aOther->mWidth,
+              height = aOther->mHeight;
 
-  if (aDestX + w > mWidth) {
-    w = mWidth - aDestX;
+  if (width & 1) {
+    // odd, do 1 pixel at a time
+    for (TCoordinate y = 0; y < height; y++) {
+      CopyRGB(dst, src, width);
+      dst += dd;
+      src += ds;
+    }
   }
-  if (aDestY + h > mHeight) {
-    h = mHeight - aDestY;
+  else {
+    // even, do 2 pixels at a time
+    width /= 2;
+    for (TCoordinate y = 0; y < height; y++) {
+      CopyRGB64(dst, src, width);
+      dst += dd;
+      src += ds;
+    }
   }
-
-  TUint32 *src = &aOther->mPixels[0],
-          *dst = &mPixels[aDestY * mPitch + aDestX];
-
-  CopyRect(dst, src, w, h, mPitch * 4, aOther->mPitch * 4);
 }
 
-void BBitmap32::FastLineHorizontal(TUint32 aColor, TInt aX, TInt aY, TUint aW) {
+void BBitmap32::FastLineHorizontal(TRgbColor aColor, TCoordinate aX, TCoordinate aY, TCoordinate aW) {
   TInt xmax = aX + aW - 1;
   for (TInt x = aX; x < xmax; x++) {
     if (mRect.PointInRect(x, aY)) {
@@ -94,7 +123,7 @@ void BBitmap32::FastLineHorizontal(TUint32 aColor, TInt aX, TInt aY, TUint aW) {
   }
 }
 
-void BBitmap32::FastLineVertical(TUint32 aColor, TInt aX, TInt aY, TUint aH) {
+void BBitmap32::FastLineVertical(TRgbColor aColor, TCoordinate aX, TCoordinate aY, TCoordinate aH) {
   //  TInt ymax = aY + aH - 1;
   dprintf("\n\n");
   for (TInt y = 0; y < aH; y++) {
@@ -105,7 +134,7 @@ void BBitmap32::FastLineVertical(TUint32 aColor, TInt aX, TInt aY, TUint aH) {
   dprintf("\n\n");
 }
 
-void BBitmap32::DrawLine(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2) {
+void BBitmap32::DrawLine(TRgbColor aColor, TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2) {
   TInt dx, dy, p, x, y;
   dx = aX2 - aX1;
   dy = aY2 - aY1;
@@ -127,7 +156,7 @@ void BBitmap32::DrawLine(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2)
   }
 }
 
-void BBitmap32::DrawRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2) {
+void BBitmap32::DrawRect(TRgbColor aColor, TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2) {
   const TInt width = aX2 - aX1 + 1;
   const TInt height = aY2 - aY1 + 1;
   FastLineHorizontal(aColor, aX1, aY1, width);
@@ -136,7 +165,7 @@ void BBitmap32::DrawRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2)
   FastLineVertical(aColor, aX2, aY1, height);
 }
 
-void BBitmap32::FillRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2) {
+void BBitmap32::FillRect(TRgbColor aColor, TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2) {
   const TInt width = ABS(aX2 - aX1),
              height = ABS(aY2 - aY1);
 
@@ -152,7 +181,7 @@ void BBitmap32::FillRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2)
   }
 }
 
-void BBitmap32::DrawText(TInt16 aX, TInt16 aY, const char *aString) {
+void BBitmap32::DrawText(TCoordinate aX, TCoordinate aY, const char *aString) {
   if (!mFont) {
     return;
   }
@@ -161,9 +190,9 @@ void BBitmap32::DrawText(TInt16 aX, TInt16 aY, const char *aString) {
 }
 
 #if 0
-void BBitmap32::DrawCircle(TUint32 aColor, TInt aX, TInt aY, TUint aRadius) {
+void BBitmap32::DrawCircle(TRgbColor aColor, TInt aX, TInt aY, TUint aRadius) {
 }
 
-void BBitmap32::FillCircle(TUint32 aColor, TInt aX, TInt aY, TUint aRadius) {
+void BBitmap32::FillCircle(TRgbColor aColor, TInt aX, TInt aY, TUint aRadius) {
 }
 #endif

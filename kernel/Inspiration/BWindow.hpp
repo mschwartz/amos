@@ -34,15 +34,20 @@ public:
 public:
   const char *Title() { return mNodeName; }
 
-  TInt32 WindowLeft() { return mWindowRect.x1; }
-  TInt32 WindowTop() { return mWindowRect.y1; }
+  TCoordinate WindowLeft() { return mWindowRect.x1; }
+  TCoordinate WindowTop() { return mWindowRect.y1; }
+  TCoordinate WindowWidth() { return mWindowRect.Width(); }
+  TCoordinate WindowHeight() { return mWindowRect.Height(); }
 
-  TInt32 ClientLeft() { return mClientRect.x1; }
-  TInt32 ClientTop() { return mClientRect.y1; }
+  TCoordinate ClientLeft() { return mClientRect.x1; }
+  TCoordinate ClientTop() { return mClientRect.y1; }
+  TCoordinate ClientWidth() { return mClientRect.Width(); }
+  TCoordinate ClientHeight() { return mClientRect.Height(); }
 
-  void MoveTo(TInt32 aX, TInt32 aY);
+  void MoveTo(TCoordinate aX, TCoordinate aY);
 
   TBool Obscured(BWindow *aOther);
+  TBool OverDragBar(TCoordinate aX, TCoordinate aY);
 
 protected:
   virtual void Repaint();
@@ -96,8 +101,8 @@ protected:
   BViewPort32 *mWindowViewPort, // entire window
     *mViewPort;                 // client area
 
-  TInt32 mMinWidth, mMinHeight;
-  TInt32 mMaxWidth, mMaxHeight;
+  TCoordinate mMinWidth, mMinHeight;
+  TCoordinate mMaxWidth, mMaxHeight;
 
   TUint32 mForegroundColor,
     mBackgroundColor;
@@ -131,8 +136,8 @@ struct IdcmpMessage : public BMessage {
   TUint64 mCode;
   TUint64 mQualifier;
   TAny *mAddress;
-  TInt32 mMouseX, mMouseY;
-  TInt32 mLastMouseX, mLastMouseY;
+  TCoordinate mMouseX, mMouseY;
+  TCoordinate mLastMouseX, mLastMouseY;
   TUint64 mTime; // milliseconds
   BWindow *mWindow;
 

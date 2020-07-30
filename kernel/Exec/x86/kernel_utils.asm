@@ -305,38 +305,6 @@ rdtsc:
 	pop rdx
 	ret
 	
-global task_switch
-task_switch:
-        ret
-
-;; rdi = destination
-;; rsi = src
-;; rdx = width
-;; rcx = height
-;; r8 = dst pitch
-;; r9 = src pitch
-
-global CopyRect
-CopyRect:
-	push rcx 		; save height
-	mov rcx, rdx		; load width
-
-	push rsi		; save src
-	push rdi		; save dst
-
-	rep movsd		; copy row of pixels
-
-	pop rdi			; restore dst
-	add rdi, r8		; next row
-
-	pop rsi			; restore src
-	add rsi, r9		; next row
-
-	pop rcx			; restore height
-	loop CopyRect
-
-	ret
-
 global cpu_brand
 ;; rdi = buffer to receive brand
 cpu_brand:
@@ -405,16 +373,16 @@ cpuid:
 	cpuid
 
 	mov rdi, [cpuid_rdx]
-	mov [rdi],edx
+	mov [rdi], edx
 	
 	mov rdi, [cpuid_rcx]
-	mov [rdi],ecx
+	mov [rdi], ecx
 
 	mov rdi, [cpuid_rbx]
-	mov [rdi],ebx
+	mov [rdi], ebx
 
 	mov rdi, [cpuid_rax]
-	mov [rdi],eax
+	mov [rdi], eax
 
 	pop rcx
 	pop rdx

@@ -42,34 +42,41 @@ public:
 public:
   void AddWindow(BWindow *aWindow);
   void UpdateWindow(BWindow *aWindow, TBool mDecorations = EFalse);
+  void EraseWindow(BWindow *aWindow);
   BWindow *ActiveWindow() { return (BWindow *)mWindowList.First(); }
 
   void ActivateWindow(BWindow *aWindow);
 
   // returns ETrue if another window is activated:
-  TBool ActivateWindow(TInt32 aX, TInt32 aY);
+  TBool ActivateWindow(TCoordinate aX, TCoordinate aY);
+  BWindow *DragWindow(TCoordinate aX, TCoordinate aY);
 
   void UpdateWindows();
 
 public:
-  TInt32 Width() { return mBitmap->Width(); }
-  TInt32 Height() { return mBitmap->Height(); }
+  TCoordinate Width() { return mBitmap->Width(); }
+  TCoordinate Height() { return mBitmap->Height(); }
 
 protected:
   InspirationBase &mInspirationBase;
   Display *mDisplay;
   BBitmap32 *mBitmap; // offscreen bitmap, size of screen
+  // the background bitmap is used to erase windows and other things to the background image
+  BBitmap32 *mBackground; // offscreen background bitmap
   BWindowList mWindowList;
-  TInt32 mTopY;
+  TCoordinate mTopY;
 
 public:
-  BTheme *GetTheme(){ return mTheme; }
-  // void RenderCursor(Cursor *aCursor, TInt32 aX, TInt32 aY) ;
+  BTheme *GetTheme() { return mTheme; }
+  // void RenderCursor(Cursor *aCursor, TCoordinate aX, TCoordinate aY) ;
 protected:
   BTheme *mTheme;
 
 public:
-  void AddDirtyRect(TInt32 aX1, TInt32 aT1, TInt32 aX2, TInt32 aY2);
+  void AddDirtyRect(TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2);
+  void AddDirtyRect(TRect &aRect) {
+    AddDirtyRect(aRect.x1, aRect.y1, aRect.x2, aRect.y2);
+  }
   void UpdateDirtyRects();
 
 protected:

@@ -6,71 +6,77 @@
 
 class BConsoleFont32;
 
+extern "C" void CopyRect(TRgbColor *dst, TRgbColor *src, TCoordinate w, TCoordinate h, TCoordinate d1, TCoordinate d2);
+
 class BBitmap32 : public BBase {
 public:
-  BBitmap32(TInt32 aWidth, TInt32 aHeight, TInt32 aPitch = 0, TAny *aMemory = nullptr);
+  BBitmap32(TCoordinate aWidth, TCoordinate aHeight, TCoordinate aPitch = 0, TAny *aMemory = nullptr);
   ~BBitmap32();
 
 public:
-  TBool PointInRect(TInt aX, TInt aY) { return mRect.PointInRect(aX, aY); }
+  TBool PointInRect(TCoordinate aX, TCoordinate aY) { return mRect.PointInRect(aX, aY); }
 
 public:
-  inline void INLINE PlotPixel(TRGB &aColor, TInt32 aX, TInt32 aY) {
+  inline void INLINE PlotPixel(TRGB &aColor, TCoordinate aX, TCoordinate aY) {
     mPixels[aY * mPitch + aX] = aColor.rgb888();
   }
 
-  inline void INLINE PlotPixel(TUint32 aColor, TInt32 aX, TInt32 aY) {
+  inline void INLINE PlotPixel(TRgbColor aColor, TCoordinate aX, TCoordinate aY) {
     mPixels[aY * mPitch + aX] = aColor;
   }
 
-  inline void INLINE SafePlotPixel(TRGB &aColor, TInt32 aX, TInt32 aY) {
+  inline void INLINE SafePlotPixel(TRGB &aColor, TCoordinate aX, TCoordinate aY) {
     if (mRect.PointInRect(aX, aY)) {
       mPixels[aY * mPitch + aX] = aColor.rgb888();
     }
   }
 
-  inline void INLINE SafePlotPixel(TUint32 aColor, TInt32 aX, TInt32 aY) {
+  inline void INLINE SafePlotPixel(TRgbColor aColor, TCoordinate aX, TCoordinate aY) {
     if (mRect.PointInRect(aX, aY)) {
       mPixels[aY * mPitch + aX] = aColor;
     }
   }
 
-  inline TUint32 INLINE ReadPixel(TInt32 aX, TInt32 aY) {
+  inline TRgbColor INLINE ReadPixel(TCoordinate aX, TCoordinate aY) {
     return mPixels[aY * mPitch + aX];
   }
 
 public:
-  void Clear(const TUint32 aColor);
+  void Clear(const TRgbColor aColor);
   void Clear(TRGB &aColor) { return Clear(aColor.rgb888()); }
   void CopyPixels(BBitmap32 *aOther);
-  TUint32 *GetPixels() { return mPixels; }
+  TRgbColor *GetPixels() { return mPixels; }
 
-  // copy bitmap from aOther to screen at aDestX, aDesty
-  void BltBitmap(BBitmap32 *aOther, TInt aDestX, TInt aDestY);
+  // copy bitmap from aOther to screen at aDstX, aDsty
+  void BltCopy(BBitmap32 *aOther, TCoordinate aDstX, TCoordinate aDstY);
+  // copy rectangle (aSrcX, aSrcY, aWidth, aWidth)from aOther bitmap to screen at aDstX, aDsty
+  void BltRect(BBitmap32 *aOther, TCoordinate aDstX, TCoordinate aDstY,
+    TCoordinate aSrcX, TCoordinate aSrcY, TCoordinate aWidth, TCoordinate aHeight);
+
 public:
-  void FastLineHorizontal(TUint32 aColor, TInt aX, TInt aY, TUint aW);
+  void FastLineHorizontal(TRgbColor aColor, TCoordinate aX, TCoordinate aY, TCoordinate aW);
 
-  void FastLineVertical(TUint32 aColor, TInt aX, TInt aY, TUint aH);
+  void FastLineVertical(TRgbColor aColor, TCoordinate aX, TCoordinate aY, TCoordinate aH);
 
-  void DrawLine(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2);
+  void DrawLine(TRgbColor aColor, TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2);
   void DrawLine(TRGB &aColor, TRect &aRect) {
     DrawLine(aColor.rgb888(), aRect.x1, aRect.y1, aRect.x2, aRect.y2);
   }
 
-  void DrawRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2);
+  void DrawRect(TRgbColor aColor, TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2);
   void DrawRect(TRGB &aColor, TRect &aRect) {
     DrawRect(aColor.rgb888(), aRect.x1, aRect.y1, aRect.x2, aRect.y2);
   }
 
-  void FillRect(TUint32 aColor, TInt aX1, TInt aY1, TInt aX2, TInt aY2);
+  void FillRect(TRgbColor aColor, TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2);
   void FillRect(TRGB &aColor, TRect &aRect) {
     FillRect(aColor.rgb888(), aRect.x1, aRect.y1, aRect.x2, aRect.y2);
   }
 
 #if 0
-  void DrawCircle(TUint32 aColor, TInt aX, TInt aY, TUint r);
+  void DrawCircle(TRgbColor aColor, TCoordinate aX, TCoordinate aY, TCoordinate r);
 
-  void FillCircle(TUint32 aColor, TInt aX, TInt aY, TUint r);
+  void FillCircle(TRgbColor aColor, TCoordinate aX, TCoordinate aY, TCoordinate r);
 #endif
 
 public:
@@ -83,7 +89,7 @@ public:
     aBackgroundColor.Set(mBackgroundColor);
   }
   void SetFont(BConsoleFont32 *aFont) { mFont = aFont; }
-  void DrawText(TInt16 aX, TInt16 aY, const char *aString);
+  void DrawText(TCoordinate aX, TCoordinate aY, const char *aString);
 
 public:
   void GetRect(TRect &aRect) {
@@ -93,9 +99,9 @@ public:
     aRect.y2 = mRect.y2;
   }
 
-  TInt Width() { return mWidth; }
-  TInt Height() { return mHeight; }
-  TInt Depth() { return mDepth; }
+  TCoordinate Width() { return mWidth; }
+  TCoordinate Height() { return mHeight; }
+  TCoordinate Depth() { return mDepth; }
 
 public:
   void Dump() {
@@ -108,9 +114,9 @@ public:
   }
 
 protected:
-  TInt mWidth, mHeight, mDepth, mPitch;
+  TCoordinate mWidth, mHeight, mDepth, mPitch;
   BConsoleFont32 *mFont;
-  TUint32 *mPixels;
+  TRgbColor *mPixels;
   TRGB mForegroundColor, mBackgroundColor;
   TBool mFreePixels;
   TRect mRect;

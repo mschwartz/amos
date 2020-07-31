@@ -1,6 +1,12 @@
 # AMOS - 64 bit OS written in C++ with a definite AmigaOS flavor.
 
+AMOS is MIT license.  Use it as you wish, steal the code for your own hobby OS.
+
+## Introduction
+
 It seems that many/most hobby OS efforts are attempting to reinvent Linux.  AmigaOS was/is a multitasking OS with a very distinct feel of its own, unlike Linux.
+
+## AmigaOS
 
 The original AmigaOS came out in 1985, at a time when 256 color graphics cards were very expensive and PCs were running DOS with a 640K memory limit.  
 
@@ -26,49 +32,21 @@ struct MessagePort : public Node {
 
 While AMOS is written in C++, it is written using an Object Based style vs. OOP.  The C++ code in AMOS does not use namespaces or templates or other advanced C++ features.  The concept of Object Based C++ is that instead of defining a struct and then several functions that perform operations on that struct (funcitons with awkward names!), we can simply use a Class and bind the methods that way.  Outside of classes, the code is very C-like.
 
-## Coding conventions.
+## Requirements
 
-* Base classes begin with B.  BNode, BBase, BMessage, and so on.  These are meant to be inherited from!
-* Public class methods are UpperCase style.  Like SendMessage() and so on.
-* class variables are mUpperCase style.  The m prefix means "member".  The reason we do this is to avoid name overrides caused by member and function argument being the same text.
-* Arguments to functions are aUpperCase style.  With m and a prefixes, variables within functions are obvious.
-* Variables within functions are up to the programmer.  Using i for loops, s for strings, and so on - whatever the programmer feels comfortable using.
-* Global variables begin with a g prefix.  Like gExecBase.
-* Types begin with a T prefix.  Like TInt, or TRGB.
-* AMOS uses a different kind of variable typing than AmigaOS.  AmigaOS uses INT whlie AMOS uses TInt.
+The build system uses Docker so you don't need to install a cross compiler or anything else in your enviromnent to build AMOS.
 
-## Basic Types
-* TInt - int
-* TInt8 - 8-bit int
-* TInt16 - 16-bit int
-* TInt32 - 32-bit int
-* TInt64 - 64 bit int
+The build.sh script uses a customized Docker gcc container (we add nasm) to compile and assembly everything.
 
-* TUint - unsigned int
-* TUint8 - unsigned 8-bit int
-* TUint16 - unsigned 16-bit int
-* TUint32 - unsigned 32-bit int
-* TUint64 - unsigned 64-bit int
+You do need to have qemu/kvm (to run in emulator on linux/mac) and bochs installed for development.
 
-* char - same as TInt8, but used for strings
-
-* TAny - same as void.  For example, TAny *foo (void *foo)
-
-## TODO
-- [ ] Multicore
-- [ ] Better ACPI
-- [ ] Better PCI
-- [ ] Sound
-- [ ] Overlapping windows
-- [ ] AmigaOS style .library methods
-- [ ] Higher half kernel
-- [ ] VMM and protected Task space (and threads)
-- [ ] Mutexes
+For Windows, the build environment uses Linux under WSL2.  You need an X server installed (there are free options), and Docker Desktop.  You also need VirtualBox with a machine named bare created and its boot drive as our c.img.  Yes, we run in VirtualBox!
 
 
 ## Useful links
+* OSDEV.org wiki - https://wiki.osdev.org/
+* AmigaOS Documentation Wiki - https://wiki.amigaos.net/wiki/Main_Page
 * http://www.independent-software.com/operating-system-development.html  
-* https://wiki.osdev.org/PCI_IDE_Controller
 
 ## useful pragmas
 #pragma GCC target("no-sse2")

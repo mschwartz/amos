@@ -2,16 +2,16 @@ TOPDIR=		$(shell git rev-parse --show-toplevel)
 
 include $(TOPDIR)/mk/tools.mk
 
-OBJ=	main.o RawDisk.o
+OBJ=		build-img.o
 PROGRAM=	build-img
 
 .cpp.o:
-	$(GCC) -c $(INCLUDE_PATH) -O2 -g $(INCLUDE_PATH) -o $*.o $*.cpp
+	$(GCC) -c -O2 -g $(INCLUDE_PATH) -o $*.o $*.cpp
 
-$(PROGRAM): $(OBJ)
+disk-tool: $(OBJ)
 	gcc -o $(PROGRAM) $(OBJ) -lstdc++
 
-all: 	$(PROGRAM)
+all: 	disk-tool
 
 clean:
 	rm -f *.o $(PROGRAM)

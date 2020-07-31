@@ -16,7 +16,6 @@
 
 BNode::BNode(const char *aNodeName) : BBase() {
   mNodeName = DuplicateString(aNodeName);
-  mNext = mPrev = ENull;
 }
 
 BNode::~BNode() {
@@ -38,7 +37,6 @@ void BNode::SetName(const char *aName) {
 
 BNodePri::BNodePri(const char *aNodeName, TInt aPri) : BBase(), mPri(aPri) {
   mNodeName = DuplicateString(aNodeName);
-  mNext = mPrev = ENull;
 }
 
 BNodePri::~BNodePri() {}
@@ -103,7 +101,6 @@ BNode *BList::RemHead() {
   if (n == (BNode *)this)
     return ENull;
   n->Remove();
-  n->mNext = n->mPrev = ENull;
   return n;
 }
 
@@ -116,7 +113,6 @@ BNode *BList::RemTail() {
   if (n == (BNode *)this)
     return NULL;
   n->Remove();
-  n->mNext = n->mPrev = ENull;
   return n;
 }
 
@@ -126,7 +122,6 @@ BNode *BList::RemTail() {
  */
 void BList::RemoveNode(BNode *aNode) { 
   aNode->Remove(); 
-  aNode->mNext = aNode->mPrev = ENull;
 }
 
 BNode *BList::Find(const char *aNodeName) {
@@ -205,7 +200,6 @@ BNodePri *BListPri::RemHead() {
     return NULL;
   }
   n->Remove();
-  n->mNext = n->mPrev = ENull;
   return n;
 }
 
@@ -219,7 +213,6 @@ BNodePri *BListPri::RemTail() {
     return NULL;
   }
   n->Remove();
-  n->mNext = n->mPrev = ENull;
   return n;
 }
 
@@ -229,7 +222,6 @@ BNodePri *BListPri::RemTail() {
  */
 void BListPri::RemoveNode(BNodePri *aNode) { 
   aNode->Remove(); 
-  aNode->mNext = aNode->mPrev = ENull;
 }
 
 void BListPri::Add(BNodePri &aNode) {

@@ -2,6 +2,7 @@
 #define EXAMPLES_EXITTEST_HH
 
 #include <Exec/BTask.hpp>
+#include <Exec/Semaphore.hpp>
 
 enum EExitTestType {
   EExitTestReturn,

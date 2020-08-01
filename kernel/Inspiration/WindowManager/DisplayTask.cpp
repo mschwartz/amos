@@ -66,7 +66,7 @@ TInt64 DisplayTask::Run() {
       MilliSleep(vbl_time - elapsed);
     }
     else {
-      dlog("overrun\n");
+      // dlog("overrun\n");
     }
     start_vbl(); // wait for in vblank
 

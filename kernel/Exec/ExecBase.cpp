@@ -1,9 +1,11 @@
 #define DEBUGME
 #undef DEBUGME
 
+#include <stdint.h>
+
 #include <Exec/ExecBase.hpp>
 #include <Inspiration/InspirationBase.hpp>
-#include <stdint.h>
+#include <Graphics/TModeInfo.hpp>
 
 #include <Exec/CPU.hpp>
 #include <Exec/x86/mmu.hpp>
@@ -36,46 +38,12 @@ extern "C" void eputs(const char *s);
 
 extern "C" void enter_tasking();
 
-typedef struct {
-  //  TUint16 mPad0;
-  TUint32 mMode;
-  TUint32 mFrameBuffer;
-  TUint32 mWidth;
-  TUint32 mHeight;
-  TUint32 mPitch;
-  TUint32 mDepth;
-  TUint32 mPlanes;
-  TUint32 mBanks;
-  TUint32 mBankSize;
-  TUint32 mMemoryModel;
-  TUint32 mFrameBufferOffset;
-  TUint32 mFrameBufferSize;
-  TUint32 mPad2;
-  void Dump() {
-    dlog("Mode(%x) mode(%x) dimensions(%dx%d) depth(%d)  pitch(%d) lfb(0x%x)\n",
-      this, mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
-  }
-} PACKED TModeInfo;
-
-typedef struct {
-  TInt32 mCount;          // number of modes found
-  TModeInfo mDisplayMode; // chosen display mode
-  TModeInfo mModes[];
-  void Dump() {
-    dlog("Found %d %x modes\n", mCount, mCount);
-    for (TInt16 i = 0; i < mCount; i++) {
-      mModes[i].Dump();
-    }
-  }
-} PACKED TModes;
-
 extern "C" TUint64 rdrand();
 
 // ExecBase constructor
 ExecBase::ExecBase() {
   dlog("ExecBase constructor called\n");
 
-  TModes *modes = (TModes *)0xa000;
   // TModeInfo &i = modes->mDisplayMode;
 
   // TSystemInfo *bootInfo = (TSystemInfo *)0x5000;
@@ -92,11 +60,11 @@ ExecBase::ExecBase() {
   //  SeedRandom(rdrand());
   SeedRandom64(1);
 
-  dlog("\n\nDisplay Mode:\n");
-  modes->mDisplayMode.Dump();
+  dlog("\n\nDisplay Mode table at(0x%x).  Current Mode:\n", gGraphicsModes);
+  gGraphicsModes->mDisplayMode.Dump();
 
   AddCpu(new CPU());
-  
+
   // set up paging
   mMMU = new MMU;
   dlog("  initialized MMU\n");
@@ -249,15 +217,22 @@ void ExecBase::Wake(BTask *aTask) {
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
   DISABLE;
+  if (aTask == ENull) {
+    aTask = mWaitingTasks.First();
+    dlog("Wake %s\n", aTask->TaskName());
+  }
   aTask->Remove();
   mActiveTasks.Add(*aTask);
   aTask->mTaskState = ETaskRunning;
-  //  dlog("Wake %s\n", aTask->TaskName());
   ENABLE;
   //  DumpTasks();
 }
 
 void ExecBase::Schedule() {
+  if (!mCurrentTask) {
+    mCurrentTask = mActiveTasks.First();
+    current_task = &mCurrentTask->mRegisters;
+  }
   schedule_trap();
 }
 
@@ -296,6 +271,28 @@ void ExecBase::RescheduleIRQ() {
   //    t->Dump();
   //    dprint("\n\n\n");
   //  }
+}
+
+TBool ExecBase::AddSemaphore(Semaphore *aSemaphore) {
+  mSemaphoreList.Add(*aSemaphore);
+  return ETrue;
+}
+
+TBool ExecBase::RemoveSemaphore(Semaphore *aSemaphore) {
+  if (aSemaphore->mNext && aSemaphore->mPrev) {
+    aSemaphore->Remove();
+    return ETrue;
+  }
+  else {
+    return EFalse;
+  }
+}
+
+Semaphore *ExecBase::FindSemaphore(const char *aName) {
+  DISABLE;
+  Semaphore *s = (Semaphore *)mSemaphoreList.Find(aName);
+  ENABLE;
+  return s;
 }
 
 void ExecBase::AddMessagePort(MessagePort &aMessagePort) {

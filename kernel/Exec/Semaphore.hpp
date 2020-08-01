@@ -13,8 +13,8 @@ public:
   void Obtain(TBool aExclusive = ETrue);
   // attempt obtain the semaphore, shared if aExclusive is false, returns ETrue if the lock was obtained (does snot put the task to sleep)
   TBool Attempt(TBool aExclusive = ETrue);
-  // release the semaphore
-  void Release();
+  // release the semaphore - return false if we don't have the semaphore locked
+  TBool Release();
 
 protected:
   TInt32 mWaitingCount;    // number of tasks waiting
@@ -26,7 +26,9 @@ protected:
 
 class SemaphoreList : public BListPri {
 public:
-  SemaphoreList() : BListPri("SempahoreList") {}
+  SemaphoreList() : BListPri("SempahoreList") {
+    dlog("Construct SemaphoreList\n");
+  }
   ~SemaphoreList() {}
 };
 

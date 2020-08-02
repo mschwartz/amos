@@ -17,6 +17,15 @@ public:
   // release the semaphore - return false if we don't have the semaphore locked
   TBool Release();
 
+public:
+  void Dump() {
+    dlog("Semaphore(%s) at %x\n", mNodeName, this);
+    dlog("     mNestCount: %d\n", mNestCount);
+    dlog("   mSharedCount: %d\n", mSharedCount);
+    dlog("  mWaitingCount: %d\n", mWaitingCount);
+    mWaitingTasks->Dump();
+  }
+
 protected:
   TInt32 mWaitingCount;     // number of tasks waiting
   TInt32 mNestCount;        // number of locks current task has on this semaphore

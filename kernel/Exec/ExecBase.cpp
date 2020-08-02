@@ -215,6 +215,7 @@ void ExecBase::WaitSemaphore(BTask *aTask, Semaphore *aSemaphore) {
   aSemaphore->mWaitingCount++;
   aTask->mTaskState = ETaskBlocked;
   aSemaphore->mWaitingTasks->AddTail(*aTask);
+  aSemaphore->Dump();
   Schedule();
   ENABLE;
 }

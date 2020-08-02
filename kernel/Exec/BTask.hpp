@@ -17,15 +17,18 @@ const TUint64 default_task_stack_size = 2 * 1024 * 1024;
 class MessagePort;
 
 class ExecBase;
+class Semaphore;
 class InspirationBase;
 
 enum ETaskState {
   ETaskRunning,
   ETaskWaiting,
+  ETaskBlocked,
 };
 
 class BTask : public BNodePri {
   friend ExecBase;
+  friend Semaphore;
 
 public:
   BTask(const char *aName, TInt64 aPri = 0, TUint64 aStackSize = default_task_stack_size);

@@ -4,6 +4,7 @@
 #include <Exec/BTask.hpp>
 
 class Semaphore : public BNodePri {
+  friend ExecBase;
 public:
   Semaphore(const char *aName, TInt64 aPriority = 0);
   ~Semaphore();
@@ -17,11 +18,11 @@ public:
   TBool Release();
 
 protected:
-  TInt32 mWaitingCount;    // number of tasks waiting
-  TInt32 mNestCount;       // number of locks current task has on this semaphore
-  TInt32 mSharedCount;     // number of tasks sharing this semaphore
-  BTaskList mWaitingTasks; // list of tasks waiting for this semaphore
-  BTask *mOwner;           // task that owns this semaphore
+  TInt32 mWaitingCount;     // number of tasks waiting
+  TInt32 mNestCount;        // number of locks current task has on this semaphore
+  TInt32 mSharedCount;      // number of tasks sharing this semaphore
+  BTaskList *mWaitingTasks; // list of tasks waiting for this semaphore
+  BTask *mOwner;            // task that owns this semaphore
 };
 
 class SemaphoreList : public BListPri {

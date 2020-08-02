@@ -67,6 +67,7 @@ class ExecBase : public BBase {
   friend IdleTask;
   friend InitTask;
   friend CPU;
+  friend Semaphore; // Semaphore needs to manipulate current task and task list information
 
 protected:
   TUint64 Tick() {
@@ -193,6 +194,7 @@ public:
   TBool AddSemaphore(Semaphore *aSemaphore);
   TBool RemoveSemaphore(Semaphore *aSemaphore);
   Semaphore *FindSemaphore(const char *aName);
+  void WaitSemaphore(BTask *aTask, Semaphore *aSemaphore);
 
 protected:
   SemaphoreList mSemaphoreList;

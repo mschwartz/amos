@@ -111,7 +111,7 @@ BNode *BList::RemHead() {
 BNode *BList::RemTail() {
   BNode *n = mPrev;
   if (n == (BNode *)this)
-    return NULL;
+    return ENull;
   n->Remove();
   return n;
 }
@@ -173,8 +173,9 @@ BListPri::~BListPri() {
 
 void BListPri::Dump(BNodePri *aStop) {
 #ifdef KERNEL
+  dlog("BListPri(%s) at %x\n", this->mNodeName, this);
   for (auto *s = First(); !End(s); s = Next(s)) {
-    dprint("Node %s mPri(%d)\n", s->mNodeName, s->mPri);
+    dlog("  Node %s mPri(%d)\n", s->mNodeName, s->mPri);
     if (aStop && s == aStop) {
       break;
     }
@@ -197,7 +198,7 @@ void BListPri::AddHead(BNodePri &aNode) {
 BNodePri *BListPri::RemHead() {
   BNodePri *n = mNext;
   if (n == (BNodePri *)this) {
-    return NULL;
+    return ENull;
   }
   n->Remove();
   return n;
@@ -210,7 +211,7 @@ BNodePri *BListPri::RemHead() {
 BNodePri *BListPri::RemTail() {
   BNodePri *n = mPrev;
   if (n == (BNodePri *)this) {
-    return NULL;
+    return ENull;
   }
   n->Remove();
   return n;

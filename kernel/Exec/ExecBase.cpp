@@ -185,11 +185,11 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 }
 
 void ExecBase::DumpTasks() {
-  dprint("\n\nActive Tasks\n");
+  dlog("\n\nActive Tasks\n");
   mActiveTasks.Dump();
-  dprint("Waiting Tasks\n");
+  dlog("Waiting Tasks\n");
   mWaitingTasks.Dump();
-  dprint("\n\n");
+  dlog("\n\n");
 }
 
 void ExecBase::WaitSignal(BTask *aTask) {
@@ -205,6 +205,16 @@ void ExecBase::WaitSignal(BTask *aTask) {
     mWaitingTasks.Add(*aTask);
     aTask->mTaskState = ETaskWaiting;
   }
+  Schedule();
+  ENABLE;
+}
+
+void ExecBase::WaitSemaphore(BTask *aTask, Semaphore *aSemaphore) {
+  DISABLE;
+  aTask->Remove();
+  aSemaphore->mWaitingCount++;
+  aTask->mTaskState = ETaskBlocked;
+  aSemaphore->mWaitingTasks->AddTail(*aTask);
   Schedule();
   ENABLE;
 }
@@ -250,7 +260,7 @@ void ExecBase::RescheduleIRQ() {
   if (mCurrentTask) {
     if (mCurrentTask->mForbidNestCount == 0) {
       mCurrentTask->Remove();
-      if (mCurrentTask->mTaskState == ETaskWaiting) {
+      if (mCurrentTask->mTaskState == ETaskWaiting || mCurrentTask->mTaskState == ETaskBlocked) {
         mWaitingTasks.Add(*mCurrentTask);
       }
       else {
@@ -273,6 +283,10 @@ void ExecBase::RescheduleIRQ() {
   //  }
 }
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 TBool ExecBase::AddSemaphore(Semaphore *aSemaphore) {
   mSemaphoreList.Add(*aSemaphore);
   return ETrue;
@@ -294,6 +308,10 @@ Semaphore *ExecBase::FindSemaphore(const char *aName) {
   ENABLE;
   return s;
 }
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
   DISABLE;
@@ -318,6 +336,41 @@ MessagePort *ExecBase::FindMessagePort(const char *aName) {
   return mp;
 }
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
+void ExecBase::AddDevice(BDevice *aDevice) {
+  DISABLE;
+  mDeviceList.Add(*aDevice);
+  ENABLE;
+}
+
+BDevice *ExecBase::FindDevice(const char *aName) {
+  DISABLE;
+  BDevice *d = mDeviceList.FindDevice(aName);
+  ENABLE;
+  return d;
+}
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
+void ExecBase::AddFileSystem(BFileSystem *aFileSystem) {
+  DISABLE;
+  mFileSystemList.AddHead(*aFileSystem);
+  ENABLE;
+}
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 void ExecBase::GuruMeditation(const char *aFormat, ...) {
   cli();
   bochs;
@@ -340,24 +393,9 @@ void ExecBase::GuruMeditation(const char *aFormat, ...) {
   }
 }
 
-void ExecBase::AddDevice(BDevice *aDevice) {
-  DISABLE;
-  mDeviceList.Add(*aDevice);
-  ENABLE;
-}
-
-BDevice *ExecBase::FindDevice(const char *aName) {
-  DISABLE;
-  BDevice *d = mDeviceList.FindDevice(aName);
-  ENABLE;
-  return d;
-}
-
-void ExecBase::AddFileSystem(BFileSystem *aFileSystem) {
-  DISABLE;
-  mFileSystemList.AddHead(*aFileSystem);
-  ENABLE;
-}
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 class DefaultException : public BInterrupt {
 public:

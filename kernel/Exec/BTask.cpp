@@ -73,12 +73,12 @@ static void print_flag(TUint64 flags, TInt bit, const char *m) {
 void BTask::DumpRegisters(TTaskRegisters *regs) {
   DISABLE;
 
-  dprint("   ===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
-  dprint("   rip: %016x cs: %08x\n", regs->rip, regs->cs);
+  dlog("   ===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
+  dlog("   rip: %016x cs: %08x\n", regs->rip, regs->cs);
 
   // print flags
   TUint64 f = regs->rflags;
-  dprint(" flags: %016x ", f);
+  dlog(" flags: %016x ", f);
   print_flag(f, 21, "ID ");
   print_flag(f, 20, "VIP ");
   print_flag(f, 19, "VIF ");
@@ -99,14 +99,14 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   dprint("\n");
 
   // general purpose registeers
-  dprint("   rax: %016x\n", regs->rax);
-  dprint("   rbx: %016x\n", regs->rbx);
-  dprint("   rcx: %016x\n", regs->rcx);
-  dprint("   rdx: %016x\n", regs->rdx);
-  dprint("   rsi: %016x\n", regs->rsi);
-  dprint("   rdi: %016x\n", regs->rdi);
-  dprint("    ds: %08x es: %08x fs: %08x gs: %08x\n", regs->ds, regs->es, regs->fs, regs->gs);
-  dprint("    ss %08x rsp %016x rbp %016x\n", regs->ss, regs->rsp, regs->rbp);
+  dlog("   rax: %016x\n", regs->rax);
+  dlog("   rbx: %016x\n", regs->rbx);
+  dlog("   rcx: %016x\n", regs->rcx);
+  dlog("   rdx: %016x\n", regs->rdx);
+  dlog("   rsi: %016x\n", regs->rsi);
+  dlog("   rdi: %016x\n", regs->rdi);
+  dlog("    ds: %08x es: %08x fs: %08x gs: %08x\n", regs->ds, regs->es, regs->fs, regs->gs);
+  dlog("    ss %08x rsp %016x rbp %016x\n", regs->ss, regs->rsp, regs->rbp);
 
   ENABLE;
 }
@@ -114,15 +114,15 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
 void BTask::Dump() {
   DISABLE;
   TTaskRegisters *regs = &mRegisters;
-  dprint("\nTask Dump %016x regs(%x)--- %s ---\n", this, &this->mRegisters, mNodeName);
+  dlog("\nTask Dump %016x regs(%x)--- %s ---\n", this, &this->mRegisters, mNodeName);
   DumpRegisters(regs);
-  dprint("  STACK:\n");
+  dlog("  STACK:\n");
   TUint64 *addr = (TUint64 *)regs->rsp;
   for (TInt i = 0; i < 8; i++) {
     if ((TUint64)addr > mRegisters.upper_sp) {
       break;
     }
-    dprint("  %016x: %016x\n", addr, *addr);
+    dlog("  %016x: %016x\n", addr, *addr);
     addr++;
   }
   dprint("\n\n");

@@ -7,6 +7,10 @@
 Semaphore::Semaphore(const char *aName, TInt64 aPriority) : BNodePri(aName, aPriority) {
   //
   mNext = mPrev = ENull;
+  mSharedCount = 0;
+  mWaitingCount = 0;
+  mOwner = ENull;
+  mWaitingTasks = new BTaskList("Semaphore Task List");
 }
 
 Semaphore::~Semaphore() {
@@ -24,32 +28,27 @@ TBool Semaphore::Attempt(TBool aExclusive) {
   BTask *t = gExecBase.GetCurrentTask();
   if (t == mOwner) {
     // nested attempts
-    DLOG("Semaphore::Attempt Nested attempts\n");
+    DLOG("Semaphore::Attempt nested succeeded\n");
     mNestCount++;
     ENABLE;
     return ETrue;
   }
-  else if (mOwner) {
+
+  if (mOwner) {
     // someone else has the lock
-    DLOG("Semaphore::Attempt Semaphore In Use mOwner (%s)\n", mOwner->TaskName());
+    DLOG("Semaphore::Attempt Semaphore in use mOwner (%s)\n", mOwner->TaskName());
     ENABLE;
     return EFalse;
   }
   else if (aExclusive) {
-    if (mOwner) {
-      // someone else has the lock
-      DLOG("Semaphore::Attempt Semaphore In Use mOwner(%s)\n", mOwner->TaskName());
-      ENABLE;
-      return EFalse;
-    }
     if (mSharedCount) {
       // one or more tasks have a shared lock
-      DLOG("Semaphore::Attempt Shared Semaphore In Use\n");
+      DLOG("Semaphore::Attempt Shared Semaphore in use\n");
       ENABLE;
       return EFalse;
     }
     // grab the lock, it's ours!
-    DLOG("Semaphore::Attempt Smaphore obtained by(%s)\n", t->TaskName());
+    DLOG("Semaphore::Attempt Smaphore success - obtained by(%s)\n", t->TaskName());
     mOwner = t;
     mNestCount = 1;
     mSharedCount = 0;
@@ -66,33 +65,17 @@ TBool Semaphore::Attempt(TBool aExclusive) {
 }
 
 void Semaphore::Obtain(TBool aExclusive) {
-  DISABLE;
+  BTask *t = gExecBase.GetCurrentTask();
+
   if (!Attempt(aExclusive)) {
-    BTask *t = gExecBase.GetCurrentTask();
-    DLOG("Attempt failed currentTask(%s)\n", t);
-    // block the task until lock is released
-    // We're adding the task to our waiting tasks list in priority order
-    // so high priority tasks get the lock over lower priority ones.
-    t->Remove();
-    mWaitingTasks.AddTail(*t);
-    mWaitingCount++;
-    DLOG("******** block %s, DUMP mWaitingTasks(%x)\n", t->TaskName(), this);
-    mWaitingTasks.Dump();
-    DLOG("Schedule (%s)\n", t->TaskName());
-    gExecBase.Wake(); // this should work! :)
-    ENABLE;
-    DLOG("after block(%s) HALT\n", gExecBase.GetCurrentTask()->TaskName());
-    mWaitingTasks.Dump();
-    halt();
-    // should get here after unblocked
-    DLOG("after block(%s)\n", gExecBase.GetCurrentTask()->TaskName());
+    DLOG("Semaphore in use (about to block) currentTask(%s) this(%x)\n", t, this);
+    gExecBase.WaitSemaphore(t, this);
   }
   // else got the lock (Attempt got it)
-  ENABLE;
+  DLOG("%s got semapnore\n", t->TaskName());
 }
 
 TBool Semaphore::Release() {
-  DISABLE;
   DLOG("Semaphore::Release()\n");
   BTask *t = gExecBase.GetCurrentTask();
   if (mOwner == t) {
@@ -103,42 +86,32 @@ TBool Semaphore::Release() {
     mNestCount = 0;
 
     // wake up first task that's waiting for the lock
-    DLOG("Wake waiting task DUMP(%x)\n", this);
-    t = mWaitingTasks.RemHead();
-    if (t) {
-      gExecBase.AddTask(t);
-      mWaitingCount--;
-      DLOG("Schedule (%s)\n", t->TaskName());
-      gExecBase.Wake(); // this should work! :)
-      ENABLE;
-      mWaitingTasks.Dump();
-      halt();
+    t = mWaitingTasks->First();
+    if (!mWaitingTasks->End(t)) {
+      DLOG("Wake waiting task DUMP(%x)\n", this);
+      gExecBase.Wake(t);
+    }
+    else {
+      DLOG("*** No tasks waiting for this semaphore\n");
     }
   }
   else if (mSharedCount) {
     mSharedCount--;
     if (mSharedCount <= 0) {
       // wake up first task that's waiting for the lock
-      t = mWaitingTasks.RemHead();
-      if (t) {
-        DLOG("******** unblock %s\n", t->TaskName());
-        gExecBase.AddTask(t);
-        mWaitingCount--;
-        DLOG("Schedule (%s)\n", t->TaskName());
-        gExecBase.Wake(); // this should work! :)
-        ENABLE;
-        mWaitingTasks.Dump();
-        halt();
+      t = mWaitingTasks->First();
+      if (!mWaitingTasks->End(t)) {
+        DLOG("******** unblock Wake(%s)\n", t->TaskName());
+        gExecBase.Wake(t);
       }
       else {
-        DLOG("no task waiting on semaphore\n");
+        DLOG("*** No tasks waiting for this semaphore\n");
       }
     }
   }
   else {
-    ENABLE;
+    DLOG("*** can't unlock Semaphore not owned by (%s)\n", t->TaskName());
     return EFalse;
   }
-  ENABLE;
   return ETrue;
 }

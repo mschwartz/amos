@@ -110,17 +110,20 @@ void ACPI::ParseMADT(TAny *aMadt, TInt32 aLen) {
 
   MADTEntry *e = (MADTEntry *)madt->data;
 
-  dlog("    Local Interrupt Controller: %x\n", madt->lic_address);
+  dlog("      Local Interrupt Controller: %x\n", madt->lic_address);
 
   while ((TAny *)e < end) {
     TInt i;
     switch (e->type) {
       case MADT_CPU: // APIC descriptor (corresponds to unique cpu core)
+	dlog("      CPU lapic.id(%x)  ", e->lapic.id);
         // Check if cpu is enabled
         if (!(e->lapic.id & 1)) {
+	  dprint(" not enabled\n");
           break;
         }
         // Add to list
+	  dprint(" added\n");
         i = mAcpiInfo.mNumCpus;
         mAcpiInfo.mCpus[i].mId = e->lapic.id;
         mAcpiInfo.mCpus[i].mApicId = e->lapic.apic;
@@ -129,6 +132,7 @@ void ACPI::ParseMADT(TAny *aMadt, TInt32 aLen) {
 
       case MADT_IOAPIC: // IOAPIC descriptor
         i = mAcpiInfo.mNumIoApics;
+	dlog("      ADD IOAPIC(%d)\n", e->ioapic.id);
         mAcpiInfo.mIoApics[i].mId = e->ioapic.id;
         mAcpiInfo.mIoApics[i].mAddr = e->ioapic.addr;
         mAcpiInfo.mIoApics[i].mBase = e->ioapic.base;
@@ -165,8 +169,8 @@ void ACPI::ParseSDT(TAny *aSdt, TUint8 revision) {
     SDT *table = (SDT *)(revision ? p64[i] : p32[i]);
 
     dlog("    Found table: (%4s), at %016x table->len (%d)\n", (char *)table->signature, table, table->len);
-
     if (CompareMemory(table->signature, MADT_SIGNATURE, 4) == 0) {
+      dlog("             MADT\n");
       ParseMADT(table->data, table->len);
     }
   }
@@ -215,6 +219,7 @@ ACPI::ACPI() {
   SDT *s = (SDT *)(rsdp->revision ? rsdp->xsdt : rsdp->rsdt);
   ParseSDT(s, rsdp->revision);
   mAcpiInfo.Dump();
+  bochs;
   dprint("\n\n");
 }
 

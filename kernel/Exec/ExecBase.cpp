@@ -50,6 +50,9 @@ ExecBase::ExecBase() {
   dlog("\n\nDisplay Mode table at(0x%x).  Current Mode:\n", gGraphicsModes);
   gGraphicsModes->mDisplayMode.Dump();
 
+  mACPI = new ACPI();
+  dlog("  initialized ACPI\n");
+
   AddCpu(new CPU());
 
   // set up paging
@@ -69,9 +72,6 @@ ExecBase::ExecBase() {
 
   mPci = new PCI();
   dlog("  initialized PCI\n");
-
-  mACPI = new ACPI();
-  dlog("  initialized ACPI\n");
 
   InitInterrupts();
 

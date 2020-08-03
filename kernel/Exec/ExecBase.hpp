@@ -195,6 +195,7 @@ public:
   TBool RemoveSemaphore(Semaphore *aSemaphore);
   Semaphore *FindSemaphore(const char *aName);
   void WaitSemaphore(BTask *aTask, Semaphore *aSemaphore);
+  void ReleaseSemaphore(Semaphore *aSemaphore);
 
 protected:
   SemaphoreList mSemaphoreList;
@@ -237,13 +238,12 @@ protected:
 public:
   TUint64 SystemTicks() { return gSystemInfo.mMillis; }
 
-  // protected:
-  //   TSystemInfo mSystemInfo;
-
 public:
   void GetSystemInfo(TSystemInfo *aSystemInfo) {
     *aSystemInfo = gSystemInfo;
   }
+public:
+  TBool mDebugSwitch;
 };
 
 extern ExecBase gExecBase;

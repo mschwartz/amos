@@ -12,8 +12,6 @@ const TInt64 TASK_PRI_URGENT = TASK_PRI_DEFAULT - 1;
 
 const TUint64 default_task_stack_size = 2 * 1024 * 1024;
 
-//const TUint64 default_task_stack_size = 64 * 1024;
-
 class MessagePort;
 
 class ExecBase;

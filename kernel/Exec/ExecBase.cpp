@@ -43,21 +43,8 @@ extern "C" TUint64 rdrand();
 // ExecBase constructor
 ExecBase::ExecBase() {
   dlog("ExecBase constructor called\n");
+  mDebugSwitch = EFalse;
 
-  // TModeInfo &i = modes->mDisplayMode;
-
-  // TSystemInfo *bootInfo = (TSystemInfo *)0x5000;
-
-  // // set up SystemInfo
-  // mSystemInfo.mScreenWidth = i.mWidth;
-  // mSystemInfo.mScreenHeight = i.mHeight;
-  // mSystemInfo.mScreenDepth = i.mDepth;
-  // mSystemInfo.mScreenPitch = i.mPitch;
-  // TUint64 fb = (TUint64)i.mFrameBuffer;
-  // mSystemInfo.mScreenFrameBuffer = (TAny *)fb;
-  // mSystemInfo.mMillis = 0;
-
-  //  SeedRandom(rdrand());
   SeedRandom64(1);
 
   dlog("\n\nDisplay Mode table at(0x%x).  Current Mode:\n", gGraphicsModes);
@@ -141,8 +128,7 @@ void ExecBase::Enable() {
 //}
 
 void ExecBase::AddTask(BTask *aTask) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
 
   aTask->mRegisters.tss = (TUint64)&mTSS->mTss;
   dlog("    Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
@@ -151,7 +137,7 @@ void ExecBase::AddTask(BTask *aTask) {
   //  mActiveTasks.Dump();
   //  dlog("x\n");
 
-  SetFlags(flags);
+  ENABLE;
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
@@ -212,11 +198,31 @@ void ExecBase::WaitSignal(BTask *aTask) {
 void ExecBase::WaitSemaphore(BTask *aTask, Semaphore *aSemaphore) {
   DISABLE;
   aTask->Remove();
-  aSemaphore->mWaitingCount++;
   aTask->mTaskState = ETaskBlocked;
   aSemaphore->mWaitingTasks->AddTail(*aTask);
+  aSemaphore->mWaitingCount++;
   aSemaphore->Dump();
   Schedule();
+  ENABLE;
+}
+
+void ExecBase::ReleaseSemaphore(Semaphore *aSemaphore) {
+  DISABLE;
+  aSemaphore->mWaitingTasks->Dump();
+  BTask *t = aSemaphore->mWaitingTasks->RemHead();
+  if (t) {
+    aSemaphore->mWaitingCount--;
+    aSemaphore->mOwner = t;
+    aSemaphore->mNestCount = 1;
+    aSemaphore->mSharedCount = 0;
+    t->mTaskState = ETaskRunning;
+    mActiveTasks.Add(*t);
+  }
+  else {
+    aSemaphore->mOwner = ENull;
+    aSemaphore->mNestCount = 0;
+    aSemaphore->mSharedCount = 0;
+  }
   ENABLE;
 }
 
@@ -240,10 +246,6 @@ void ExecBase::Wake(BTask *aTask) {
 }
 
 void ExecBase::Schedule() {
-  if (!mCurrentTask) {
-    mCurrentTask = mActiveTasks.First();
-    current_task = &mCurrentTask->mRegisters;
-  }
   schedule_trap();
 }
 
@@ -255,13 +257,12 @@ void ExecBase::Kickstart() {
  * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
  */
 void ExecBase::RescheduleIRQ() {
-//  BTask *t = mCurrentTask;
-//  cli();
-#if 1
-  if (mCurrentTask) {
+  BTask *t = mCurrentTask;
+
+  if (mCurrentTask && mCurrentTask->mTaskState != ETaskBlocked) {
     if (mCurrentTask->mForbidNestCount == 0) {
       mCurrentTask->Remove();
-      if (mCurrentTask->mTaskState == ETaskWaiting || mCurrentTask->mTaskState == ETaskBlocked) {
+      if (mCurrentTask->mTaskState == ETaskWaiting) {
         mWaitingTasks.Add(*mCurrentTask);
       }
       else {
@@ -272,16 +273,15 @@ void ExecBase::RescheduleIRQ() {
     //   dlog("FORBID\n");
     // }
   }
-#endif
+
   mCurrentTask = mActiveTasks.First();
   current_task = &mCurrentTask->mRegisters;
-  //  if (t != mCurrentTask) {
-  //    dprint("Reschedule %s(%x) %016x %x\n", mCurrentTask->TaskName(), mCurrentTask, current_task->rip, current_task->rflags);
-  //    mCurrentTask->Dump();
-  //    dprint("Previous task\n");
-  //    t->Dump();
-  //    dprint("\n\n\n");
-  //  }
+  if (t != mCurrentTask && mDebugSwitch) {
+    dprint("  Reschedule %s\n", mCurrentTask->TaskName());
+    dprint("Previous task\n");
+    dprint("  Previous Task %s\n", t->TaskName());
+    dprint("\n\n\n");
+  }
 }
 
 /********************************************************************************

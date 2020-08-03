@@ -5,6 +5,7 @@
 
 class Semaphore : public BNodePri {
   friend ExecBase;
+
 public:
   Semaphore(const char *aName, TInt64 aPriority = 0);
   ~Semaphore();
@@ -20,6 +21,7 @@ public:
 public:
   void Dump() {
     dlog("Semaphore(%s) at %x\n", mNodeName, this);
+    dlog("         mOwner: %s\n", mOwner ? mOwner->TaskName() : "NONE");
     dlog("     mNestCount: %d\n", mNestCount);
     dlog("   mSharedCount: %d\n", mSharedCount);
     dlog("  mWaitingCount: %d\n", mWaitingCount);

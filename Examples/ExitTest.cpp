@@ -15,38 +15,34 @@ ExitTestTask::~ExitTestTask() {
   dlog("ExitTestTask(%s) destructor\n", TaskName());
 }
 
-static Semaphore *sem;
-
 TInt64 ExitTestTask::Run() {
   dlog("ExitTestTask(%s) mType(%d) mDelay(%d)\n", TaskName(), mType, mDelay);
   dlog("ExitTestTask(%s) slept\n", TaskName());
 
+  Semaphore *s;
   if (CompareStrings(TaskName(), "SUICIDE") == 0) {
-    sem = new Semaphore(SEMAPHORE_NAME);
+    s = new Semaphore(SEMAPHORE_NAME);
     DISABLE;
-    gExecBase.AddSemaphore(sem);
+    gExecBase.AddSemaphore(s);
     ENABLE;
     DLOG("Created Semaphore (%s)\n", SEMAPHORE_NAME);
   }
   else {
-    Sleep(mDelay);
+    Sleep(2);
+    for (;;) {
+      s = gExecBase.FindSemaphore(SEMAPHORE_NAME);
+      if (s) {
+        break;
+      }
+      Sleep(mDelay);
+    }
+    DLOG("%s Found Semaphore(%s) %x\n", TaskName(), SEMAPHORE_NAME, s);
   }
 
-  Semaphore *s;
-  DLOG("%s finding Semaphore(%s)\n", TaskName(), SEMAPHORE_NAME);
-  for (;;) {
-    s = gExecBase.FindSemaphore(SEMAPHORE_NAME);
-    if (s) {
-      break;
-    }
-    Sleep(mDelay);
-  }
-  DLOG("%s Found Semaphore(%s) %x\n", TaskName(), SEMAPHORE_NAME, s);
-  // Sleep(mDelay);
   // obtain exclusive semaphore
   s->Obtain(ETrue);
-  DLOG("Obtained semaphore! Holding for %d seconds\n", mDelay * 2);
-  Sleep(mDelay * 2);
+  DLOG("Obtained semaphore! Holding for 5 seconds\n");
+  Sleep(5);
   DLOG("Releasing semaphore\n");
   s->Release();
   DLOG("Semaphore relased\n");
@@ -55,6 +51,8 @@ TInt64 ExitTestTask::Run() {
     Sleep(mDelay);
     switch (mType) {
       case EExitTestReturn:
+	gExecBase.RemoveSemaphore(s);
+	delete s;
         return 0;
       case EExitTestSuicide:
         Suicide(0);

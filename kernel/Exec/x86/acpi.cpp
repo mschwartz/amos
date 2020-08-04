@@ -81,6 +81,33 @@ typedef struct {
 typedef struct {
   TUint8 type;
   TUint8 len;
+  TUint8 data[0];
+} PACKED TMadtEntry;
+
+typedef struct {
+  TUint8 id;
+  TUint8 apic;
+  TUint32 flags;
+} PACKED TLApic;
+
+typedef struct {
+  TUint8 id;
+  TUint8 pad;
+  TUint32 addr;
+  TUint32 base;
+} PACKED TIoApic;
+
+typedef struct {
+  TUint8 bus;
+  TUint8 source;
+  TUint32 target;
+  uint16_t flags;
+} PACKED TInterrupt;
+
+#if 0
+typedef struct {
+  TUint8 type;
+  TUint8 len;
   union {
     struct {
       TUint8 id;
@@ -101,6 +128,7 @@ typedef struct {
     } PACKED interrupt;
   };
 } PACKED MADTEntry;
+#endif
 
 #define incptr(p, n) (TUint64(p) + n)
 
@@ -108,40 +136,45 @@ void ACPI::ParseMADT(TAny *aMadt, TInt32 aLen) {
   MADT *madt = (MADT *)aMadt;
   TAny *end = (TAny *)(madt + aLen);
 
-  MADTEntry *e = (MADTEntry *)madt->data;
+  TMadtEntry *e = (TMadtEntry *)madt->data;
 
   dlog("      Local Interrupt Controller: %x\n", madt->lic_address);
 
   while ((TAny *)e < end) {
     TInt i;
     switch (e->type) {
-      case MADT_CPU: // APIC descriptor (corresponds to unique cpu core)
-	dlog("      CPU lapic.id(%x)  ", e->lapic.id);
+      case MADT_CPU: {
+        // APIC descriptor (corresponds to unique cpu core)
         // Check if cpu is enabled
-        if (!(e->lapic.id & 1)) {
-	  dprint(" not enabled\n");
+        TLApic *lapic = (TLApic *)&e->data[0];
+        dlog("      CPU lapic.id(%x)  ", lapic->id);
+        if (!(lapic->id & 1)) {
+          dprint(" not enabled\n");
           break;
         }
         // Add to list
-	  dprint(" added\n");
+        dprint(" added\n");
         i = mAcpiInfo.mNumCpus;
-        mAcpiInfo.mCpus[i].mId = e->lapic.id;
-        mAcpiInfo.mCpus[i].mApicId = e->lapic.apic;
+        mAcpiInfo.mCpus[i].mId = lapic->id;
+        mAcpiInfo.mCpus[i].mApicId = lapic->apic;
         mAcpiInfo.mNumCpus++;
-        break;
+      } break;
 
-      case MADT_IOAPIC: // IOAPIC descriptor
+      case MADT_IOAPIC: { // IOAPIC descriptor
         i = mAcpiInfo.mNumIoApics;
-	dlog("      ADD IOAPIC(%d)\n", e->ioapic.id);
-        mAcpiInfo.mIoApics[i].mId = e->ioapic.id;
-        mAcpiInfo.mIoApics[i].mAddr = e->ioapic.addr;
-        mAcpiInfo.mIoApics[i].mBase = e->ioapic.base;
+        TIoApic *ioapic = (TIoApic *)&e->data[0];
+        dlog("      ADD IOAPIC(%d)\n", ioapic->id);
+        mAcpiInfo.mIoApics[i].mId = ioapic->id;
+        mAcpiInfo.mIoApics[i].mAddr = ioapic->addr;
+        mAcpiInfo.mIoApics[i].mBase = ioapic->base;
         mAcpiInfo.mNumIoApics++;
-        break;
+      } break;
 
-      case MADT_INT: // Interrupt remap
-        mAcpiInfo.mIrqMap[e->interrupt.source] = e->interrupt.target;
-        break;
+      case MADT_INT: { // Interrupt remap
+        TInterrupt *interrupt = (TInterrupt *)&e->data[0];
+        mAcpiInfo.mIrqMap[interrupt->source] = interrupt->target;
+      } break;
+
       default:
         dlog("******************** %x\n", e);
         bochs;
@@ -153,20 +186,20 @@ void ACPI::ParseMADT(TAny *aMadt, TInt32 aLen) {
 
     TUint8 *xx = (TUint8 *)e;
     xx += e->len;
-    e = (MADTEntry *)xx;
+    e = (TMadtEntry *)xx;
   }
 }
 
-void ACPI::ParseSDT(TAny *aSdt, TUint8 revision) {
+void ACPI::ParseSDT(TAny *aSdt, TUint8 aRevision) {
   SDT *sdt = (SDT *)aSdt;
 
   // sdt->Dump(revision);
 
   TUint32 *p32 = (TUint32 *)sdt->data;
   TUint64 *p64 = (TUint64 *)sdt->data;
-  int entries = (sdt->len - sizeof(SDT)) / (revision ? 8 : 4);
+  int entries = (sdt->len - sizeof(SDT)) / (aRevision ? 8 : 4);
   for (int i = 0; i < entries; i++) {
-    SDT *table = (SDT *)(revision ? p64[i] : p32[i]);
+    SDT *table = (SDT *)(aRevision ? p64[i] : p32[i]);
 
     dlog("    Found table: (%4s), at %016x table->len (%d)\n", (char *)table->signature, table, table->len);
     if (CompareMemory(table->signature, MADT_SIGNATURE, 4) == 0) {

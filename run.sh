@@ -10,12 +10,17 @@ set -e
 
 #./build.sh && qemu-system-x86_64 -d int -overcommit cpu-pm=on -m 8192  -enable-kvm c.img
 if [ "$WSL" != "" ]; then
-    if [ -e "/mnt/c/dev/bare.log" ]; then
-	mv /mnt/c/dev/bare.log /mnt/c/dev/bare.log.1
-    fi
-    "$VBOX/VBoxManage.exe" \
-	startvm  \
-	bare
+	sudo qemu-system-x86_64 \
+	     -serial stdio  \
+	     -m 8192  \
+	     -smp 4 \
+	     -drive  format=raw,media=disk,file=c.img
+#    if [ -e "/mnt/c/dev/bare.log" ]; then
+#  mv /mnt/c/dev/bare.log /mnt/c/dev/bare.log.1
+#    fi
+#    "$VBOX/VBoxManage.exe" \
+#  startvm  \
+#  bare
     #  tail -f /mnt/c/dev/bare.log
 else
     if [ $platform = "macos" ]; then

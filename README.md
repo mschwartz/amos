@@ -6,7 +6,7 @@ AMOS is MIT license.  Use it as you wish, steal the code for your own hobby OS.
 
 It seems that many/most hobby OS efforts are attempting to reinvent Linux.  AmigaOS was/is a multitasking OS with a very distinct feel of its own, unlike Linux.
 
-I (Mike Sxhwartz) work for Modus Create and designed a classic game style video game application framework for Modus that we call Creative Engine: https://github.com/ModusCreateOrg/creative-engine/.
+I (Mike Schwartz) work for Modus Create and designed a classic game style video game application framework for Modus that we call Creative Engine: https://github.com/ModusCreateOrg/creative-engine/.
 
 AMOS borrows many of the concepts, C++ classes, algorithms, and spirit from Createive Engine.
 

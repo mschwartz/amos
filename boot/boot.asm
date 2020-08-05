@@ -14,7 +14,6 @@
 
 BITS 16
 
-	; %define SERIAL
 COM1:   equ 0x3f8
 
 %include "memory.inc"

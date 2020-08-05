@@ -1,9 +1,11 @@
 #define DEBUGME
 #undef DEBUGME
 
+#include <stdint.h>
+
 #include <Exec/ExecBase.hpp>
 #include <Inspiration/InspirationBase.hpp>
-#include <stdint.h>
+#include <Graphics/TModeInfo.hpp>
 
 #include <Exec/CPU.hpp>
 #include <Exec/x86/mmu.hpp>
@@ -36,67 +38,20 @@ extern "C" void eputs(const char *s);
 
 extern "C" void enter_tasking();
 
-typedef struct {
-  //  TUint16 mPad0;
-  TUint32 mMode;
-  TUint32 mFrameBuffer;
-  TUint32 mWidth;
-  TUint32 mHeight;
-  TUint32 mPitch;
-  TUint32 mDepth;
-  TUint32 mPlanes;
-  TUint32 mBanks;
-  TUint32 mBankSize;
-  TUint32 mMemoryModel;
-  TUint32 mFrameBufferOffset;
-  TUint32 mFrameBufferSize;
-  TUint32 mPad2;
-  void Dump() {
-    dlog("Mode(%x) mode(%x) dimensions(%dx%d) depth(%d)  pitch(%d) lfb(0x%x)\n",
-      this, mMode, mWidth, mHeight, mDepth, mPitch, mFrameBuffer);
-  }
-} PACKED TModeInfo;
-
-typedef struct {
-  TInt32 mCount;          // number of modes found
-  TModeInfo mDisplayMode; // chosen display mode
-  TModeInfo mModes[];
-  void Dump() {
-    dlog("Found %d %x modes\n", mCount, mCount);
-    for (TInt16 i = 0; i < mCount; i++) {
-      mModes[i].Dump();
-    }
-  }
-} PACKED TModes;
-
 extern "C" TUint64 rdrand();
 
 // ExecBase constructor
 ExecBase::ExecBase() {
   dlog("ExecBase constructor called\n");
+  mDebugSwitch = EFalse;
 
-  TModes *modes = (TModes *)0xa000;
-  // TModeInfo &i = modes->mDisplayMode;
-
-  // TSystemInfo *bootInfo = (TSystemInfo *)0x5000;
-
-  // // set up SystemInfo
-  // mSystemInfo.mScreenWidth = i.mWidth;
-  // mSystemInfo.mScreenHeight = i.mHeight;
-  // mSystemInfo.mScreenDepth = i.mDepth;
-  // mSystemInfo.mScreenPitch = i.mPitch;
-  // TUint64 fb = (TUint64)i.mFrameBuffer;
-  // mSystemInfo.mScreenFrameBuffer = (TAny *)fb;
-  // mSystemInfo.mMillis = 0;
-
-  //  SeedRandom(rdrand());
   SeedRandom64(1);
 
-  dlog("\n\nDisplay Mode:\n");
-  modes->mDisplayMode.Dump();
+  dlog("\n\nDisplay Mode table at(0x%x).  Current Mode:\n", gGraphicsModes);
+  gGraphicsModes->mDisplayMode.Dump();
 
   AddCpu(new CPU());
-  
+
   // set up paging
   mMMU = new MMU;
   dlog("  initialized MMU\n");
@@ -173,8 +128,7 @@ void ExecBase::Enable() {
 //}
 
 void ExecBase::AddTask(BTask *aTask) {
-  TUint64 flags = GetFlags();
-  cli();
+  DISABLE;
 
   aTask->mRegisters.tss = (TUint64)&mTSS->mTss;
   dlog("    Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
@@ -183,7 +137,7 @@ void ExecBase::AddTask(BTask *aTask) {
   //  mActiveTasks.Dump();
   //  dlog("x\n");
 
-  SetFlags(flags);
+  ENABLE;
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
@@ -217,11 +171,11 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 }
 
 void ExecBase::DumpTasks() {
-  dprint("\n\nActive Tasks\n");
+  dlog("\n\nActive Tasks\n");
   mActiveTasks.Dump();
-  dprint("Waiting Tasks\n");
+  dlog("Waiting Tasks\n");
   mWaitingTasks.Dump();
-  dprint("\n\n");
+  dlog("\n\n");
 }
 
 void ExecBase::WaitSignal(BTask *aTask) {
@@ -241,6 +195,37 @@ void ExecBase::WaitSignal(BTask *aTask) {
   ENABLE;
 }
 
+void ExecBase::WaitSemaphore(BTask *aTask, Semaphore *aSemaphore) {
+  DISABLE;
+  aTask->Remove();
+  aTask->mTaskState = ETaskBlocked;
+  aSemaphore->mWaitingTasks->AddTail(*aTask);
+  aSemaphore->mWaitingCount++;
+  aSemaphore->Dump();
+  Schedule();
+  ENABLE;
+}
+
+void ExecBase::ReleaseSemaphore(Semaphore *aSemaphore) {
+  DISABLE;
+  aSemaphore->mWaitingTasks->Dump();
+  BTask *t = aSemaphore->mWaitingTasks->RemHead();
+  if (t) {
+    aSemaphore->mWaitingCount--;
+    aSemaphore->mOwner = t;
+    aSemaphore->mNestCount = 1;
+    aSemaphore->mSharedCount = 0;
+    t->mTaskState = ETaskRunning;
+    mActiveTasks.Add(*t);
+  }
+  else {
+    aSemaphore->mOwner = ENull;
+    aSemaphore->mNestCount = 0;
+    aSemaphore->mSharedCount = 0;
+  }
+  ENABLE;
+}
+
 /**
   * Wake() - if task is on Wait list, move it to active list.  If already on active list, re-add it.
   * Note that Add() will sort the task into the list, effecting round-robin order.
@@ -249,10 +234,13 @@ void ExecBase::Wake(BTask *aTask) {
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
   DISABLE;
+  if (aTask == ENull) {
+    aTask = mWaitingTasks.First();
+    dlog("Wake %s\n", aTask->TaskName());
+  }
   aTask->Remove();
   mActiveTasks.Add(*aTask);
   aTask->mTaskState = ETaskRunning;
-  //  dlog("Wake %s\n", aTask->TaskName());
   ENABLE;
   //  DumpTasks();
 }
@@ -269,10 +257,9 @@ void ExecBase::Kickstart() {
  * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
  */
 void ExecBase::RescheduleIRQ() {
-//  BTask *t = mCurrentTask;
-//  cli();
-#if 1
-  if (mCurrentTask) {
+  BTask *t = mCurrentTask;
+
+  if (mCurrentTask && mCurrentTask->mTaskState != ETaskBlocked) {
     if (mCurrentTask->mForbidNestCount == 0) {
       mCurrentTask->Remove();
       if (mCurrentTask->mTaskState == ETaskWaiting) {
@@ -286,17 +273,46 @@ void ExecBase::RescheduleIRQ() {
     //   dlog("FORBID\n");
     // }
   }
-#endif
+
   mCurrentTask = mActiveTasks.First();
   current_task = &mCurrentTask->mRegisters;
-  //  if (t != mCurrentTask) {
-  //    dprint("Reschedule %s(%x) %016x %x\n", mCurrentTask->TaskName(), mCurrentTask, current_task->rip, current_task->rflags);
-  //    mCurrentTask->Dump();
-  //    dprint("Previous task\n");
-  //    t->Dump();
-  //    dprint("\n\n\n");
-  //  }
+  if (t != mCurrentTask && mDebugSwitch) {
+    dprint("  Reschedule %s\n", mCurrentTask->TaskName());
+    dprint("Previous task\n");
+    dprint("  Previous Task %s\n", t->TaskName());
+    dprint("\n\n\n");
+  }
 }
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
+TBool ExecBase::AddSemaphore(Semaphore *aSemaphore) {
+  mSemaphoreList.Add(*aSemaphore);
+  return ETrue;
+}
+
+TBool ExecBase::RemoveSemaphore(Semaphore *aSemaphore) {
+  if (aSemaphore->mNext && aSemaphore->mPrev) {
+    aSemaphore->Remove();
+    return ETrue;
+  }
+  else {
+    return EFalse;
+  }
+}
+
+Semaphore *ExecBase::FindSemaphore(const char *aName) {
+  DISABLE;
+  Semaphore *s = (Semaphore *)mSemaphoreList.Find(aName);
+  ENABLE;
+  return s;
+}
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
   DISABLE;
@@ -321,6 +337,41 @@ MessagePort *ExecBase::FindMessagePort(const char *aName) {
   return mp;
 }
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
+void ExecBase::AddDevice(BDevice *aDevice) {
+  DISABLE;
+  mDeviceList.Add(*aDevice);
+  ENABLE;
+}
+
+BDevice *ExecBase::FindDevice(const char *aName) {
+  DISABLE;
+  BDevice *d = mDeviceList.FindDevice(aName);
+  ENABLE;
+  return d;
+}
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
+void ExecBase::AddFileSystem(BFileSystem *aFileSystem) {
+  DISABLE;
+  mFileSystemList.AddHead(*aFileSystem);
+  ENABLE;
+}
+
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 void ExecBase::GuruMeditation(const char *aFormat, ...) {
   cli();
   bochs;
@@ -343,24 +394,9 @@ void ExecBase::GuruMeditation(const char *aFormat, ...) {
   }
 }
 
-void ExecBase::AddDevice(BDevice *aDevice) {
-  DISABLE;
-  mDeviceList.Add(*aDevice);
-  ENABLE;
-}
-
-BDevice *ExecBase::FindDevice(const char *aName) {
-  DISABLE;
-  BDevice *d = mDeviceList.FindDevice(aName);
-  ENABLE;
-  return d;
-}
-
-void ExecBase::AddFileSystem(BFileSystem *aFileSystem) {
-  DISABLE;
-  mFileSystemList.AddHead(*aFileSystem);
-  ENABLE;
-}
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
 
 class DefaultException : public BInterrupt {
 public:

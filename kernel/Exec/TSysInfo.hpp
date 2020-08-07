@@ -29,8 +29,19 @@ typedef struct {
   TUint64 mDiskCX;
 
   TUint64 mCpuMhz;
-  TUint64 mCpuCores;
   TUint64 mBochs;
+
+  // acpi
+  TUint64 mNumCpus;
+  TUint64 mNumIoApics;
+  TUint64 mHpet;
+  TUint64 mXRsdt;
+  TUint64 mLapic;
+  TUint8 mApicIds[64];
+  TUint64 mIoApicAddresses[64];
+  TUint64 mIoApicVectors[64];
+  TUint64 mX2Apics[64];
+  
   TUint64 mInitStart, mInitEnd;
   TUint64 mTextStart, mTextEnd;
   TUint64 mRoDataStart, mRoDataEnd;
@@ -44,6 +55,7 @@ typedef struct {
     // dlog("TSystemInfo(%x)\n", this);
     dlog("%s %s\n", mVersion, mBochs ? "BOCHS ENABLED" : "NO BOCHS");
     dlog("     CPU Speed: %0d Mhz\n", mCpuMhz);
+    dlog("      Num Cpus: %0d\n", mNumCpus);
     dlog("          init: %016x - %016x\n", mInitStart, mInitEnd);
     dlog("          text: %016x - %016x\n", mTextStart, mTextEnd);
     dlog("        rodata: %016x - %016x\n", mRoDataStart, mRoDataEnd);

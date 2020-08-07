@@ -4,7 +4,7 @@
 
 gigabyte:            equ 0x40000000
 
-misc_buffer:         equ 0x6000          ; 512 byte buffer for misc. use
+misc_buffer:         equ 0x2000          ; 512 byte buffer for misc. use
 
 sys_info:            equ 0x5000
 BOOTSTRAP_ORG:       equ 0x7c00
@@ -60,9 +60,19 @@ struc SYSINFO
 .disk_cx resq 1
 
 .cpu_mhz resq 1
-.cpu_cores resq 1
 
 .bochs resq 1
+
+	; acpi
+.acpi_numcpu resq 1
+.acpi_numioapic resq 1
+.acpi_hpet resq 1
+.acpi_xrsdt resq 1
+.acpi_lapic resq 1
+.acpi_apicids resb 64		        ; up to 64 CPUs
+.acpi_ioapicaddrs resq 64		; up to 64 ioapics
+.acpi_ioapicvecs resq 64		; up to 64 ioapics
+.acpi_x2apics resq 64		        ; up to 64 ioapics
 
 .init_start resq 1
 .init_end resq 1

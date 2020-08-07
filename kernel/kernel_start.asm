@@ -1,8 +1,7 @@
 	;                    org 0x9000
 [bits 64]
 
-	;%define SERIAL
-	COM1                equ 0x3f8
+COM1:  equ 0x3f8
 
 %macro BOCHS 0
         xchg bx,bx
@@ -17,12 +16,13 @@ _start:
 %include "../boot/memory.inc"
 
 extern kernel_main
+extern ap_main
 
 start_msg:
 	db 13, 10, 'kernel_start', 13, 10, 0
 global bochs_present
-bochs_present:
-	db 0
+bochs_present: db 0
+ap_flag: db 0
 	
 align 8
 
@@ -39,6 +39,7 @@ extern bss_end
 extern kernel_end
 	
 boot:
+	mov [ap_flag], ah
 	mov [bochs_present], al
 
 	; mov rax, kstack_end
@@ -88,12 +89,20 @@ boot:
 	mov rax, kernel_end
 	mov [rdi + SYSINFO.kernel_end], rax
 
+	mov al, [ap_flag]
+	test al, al
+	jne .ap
+	
         mov rsi, start_msg
         call puts64
 
         call kernel_main
         ret
 
+.ap:
+	call ap_main
+	jmp $
+	
 global sputc
 sputc:
 	pushf

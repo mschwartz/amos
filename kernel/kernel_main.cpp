@@ -24,6 +24,13 @@ static void call_global_constructors(void) {
 
 extern "C" TUint64 rdtsc();
 
+extern "C" int ap_main(TSystemInfo *aSystemInfo) {
+  dlog("AP started\n");
+  while (1) {
+    halt();
+  }
+}
+
 extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   InitAllocMem();
   CopyString(&gSystemInfo.mVersion[0], "AMOS v1.0");

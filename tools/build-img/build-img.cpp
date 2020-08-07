@@ -102,7 +102,7 @@ int main(int ac, char *av[]) {
   memcpy(&raw[bootsize + kernel_size], fs.bytes, fs_size);
 
   // patch boot.img with block # and num blocks for boot sector and kernel
-  uint16_t *ptr = (uint16_t *)&raw[8];
+  uint16_t *ptr = (uint16_t *)&raw[12];
   ptr[0] = 2; // boot_sector
   printf("\n  boot_sector: %d\n", 2);
 

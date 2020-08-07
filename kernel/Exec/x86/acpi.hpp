@@ -71,13 +71,16 @@ public:
   }
 } PACKED TAcpiInfo;
 
+class ExecBase;
+
 class ACPI : public BBase {
+  friend ExecBase;
 public:
   ACPI();
   ~ACPI();
 
 protected:
-  void ParseSDT(TAny *sdt, TUint8 revision);
+  void ParseSDT(TAny *aSdt, TUint8 aRevision);
   void ParseMADT(TAny *aMadt, TInt32 aLen);
 
 protected:

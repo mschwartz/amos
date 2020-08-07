@@ -32,7 +32,7 @@ optramimage4: file=none
 pci: enabled=1, chipset=i440fx
 vga: extension=vbe, update_freq=60, realtime=1
 #cpu: model=bx_generic, count=1, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="msrs.def"
-cpu: model=corei7_haswell_4770, count=1, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="msrs.def"
+cpu: model=corei7_haswell_4770, count=4, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="msrs.def"
 cpuid: level=6, stepping=3, model=3, family=6, vendor_string="AuthenticAMD", brand_string="AMD Athlon(tm) processor"
 cpuid: mmx=1, apic=xapic, simd=sse2, sse4a=0, misaligned_sse=0, sep=1, movbe=0, adx=0
 cpuid: aes=0, sha=0, xsave=0, xsaveopt=0, avx_f16c=0, avx_fma=0, bmi=0, xop=0, fma4=0

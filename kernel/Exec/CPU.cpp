@@ -4,8 +4,12 @@
 extern "C" TUint64 cpuid(TUint32 *eax, TUint32 *ebx, TUint32 *ecx, TUint32 *edx);
 extern "C" void cpu_brand(char *buf);
 
-CPU::CPU(TUint32 aProcessor) : BNode("CPU") {
+CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId)
+    : BNode("CPU") {
   mProcessor = aProcessor;
+  mProcessorId = aProcessorId;
+  mApicId = aApicId;
+  
   TUint32 eax, ebx, edx, ecx;
 
   mIdt = gExecBase.mIDT;

@@ -34,7 +34,7 @@ COM1:   equ 0x3f8
 ;; ---------------------------------------------------------------------------------------------
 ;; ---------------------------------------------------------------------------------------------
 
-;; THis is the first instruction in the boot sector.  THe very first sector on the boot drive is
+;; This is the first instruction in the boot sector.  THe very first sector on the boot drive is
 ;; loaded at 0x7c00.  Since a sector is only 512 bytes, we're very limited to how much
 ;; code we can fit in and run.  Not a problem because we're going to use the BIOS
 ;; call to read in additional sectors.  So this file starts with the boot sector and
@@ -61,7 +61,6 @@ serial_initialized: db 0
 	
 ;; Variables
 BOOT_DRIVE:         db 0	; boot sector is entered with the drive number of the boot device in dl
-
 loading_msg:        db 'Loading... ', 0
 
 ;; ---------------------------------------------------------------------------------------------
@@ -71,6 +70,7 @@ loading_msg:        db 'Loading... ', 0
 align 4
 global main
 main:
+	cli
         xor ax, ax
         mov ss, ax
         mov sp, SP16
@@ -970,6 +970,8 @@ call_main:
 	mov ax, [ebda]
 	shl rax, 4
 	mov [rdi + SYSINFO.ebda], rax
+
+	; start other CPUs
 
 	; call kernel with SYSINFO as argument
 	mov al, [bochs_present]

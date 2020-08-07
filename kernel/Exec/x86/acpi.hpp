@@ -71,7 +71,10 @@ public:
   }
 } PACKED TAcpiInfo;
 
+class ExecBase;
+
 class ACPI : public BBase {
+  friend ExecBase;
 public:
   ACPI();
   ~ACPI();

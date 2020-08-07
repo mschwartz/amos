@@ -50,14 +50,20 @@ ExecBase::ExecBase() {
   dlog("\n\nDisplay Mode table at(0x%x).  Current Mode:\n", gGraphicsModes);
   gGraphicsModes->mDisplayMode.Dump();
 
-  mACPI = new ACPI();
-  dlog("  initialized ACPI\n");
-
-  AddCpu(new CPU());
-
   // set up paging
   mMMU = new MMU;
   dlog("  initialized MMU\n");
+
+  mACPI = new ACPI();
+  dlog("  initialized ACPI\n");
+
+  // set up CPUs
+
+  {
+    for (TInt c = 0; c < mACPI->mAcpiInfo.mNumCpus; c++) {
+      AddCpu(new CPU(c, mACPI->mAcpiInfo.mCpus[c].mId, mACPI->mAcpiInfo.mCpus[c].mApicId));
+    }
+  }
 
   mMessagePortList = new MessagePortList("ExecBase MessagePort List");
 

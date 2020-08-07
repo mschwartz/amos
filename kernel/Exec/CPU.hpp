@@ -21,8 +21,12 @@
 
 class CPU : public BNode {
 public:
-  CPU(TUint32 aProcessor = 0);
+  CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId);
 
+public:
+  TUint32 mProcessorId;
+  TUint32 mApicId;
+  
 public:
   TUint32 mProcessor; // which core 0-n
   TUint32 mMaxFunction;
@@ -51,6 +55,7 @@ public:
 
 public:
   void Dump() {
+    dprint("\n\n");
     dlog("CPU %2d (%x) mMaxFunction(0x%x) mMaxExtendedFunction(0x%x)\n", mProcessor, this, mMaxFunction, mMaxExtendedFunction);
     dlog("  Manufacturer / Model: %s / %s %d cores\n", mManufacturer, mBrand, mCores);
     dlog("    Number of address bits: Physical(%d) Linear(%d)\n", mPhysicalAddressBits, mLinearAddressBits);

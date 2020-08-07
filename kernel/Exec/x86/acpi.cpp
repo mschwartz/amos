@@ -104,33 +104,6 @@ typedef struct {
   uint16_t flags;
 } PACKED TInterrupt;
 
-#if 0
-typedef struct {
-  TUint8 type;
-  TUint8 len;
-  union {
-    struct {
-      TUint8 id;
-      TUint8 apic;
-      TUint32 flags;
-    } PACKED lapic;
-    struct {
-      TUint8 id;
-      TUint8 _;
-      TUint32 addr;
-      TUint32 base;
-    } PACKED ioapic;
-    struct {
-      TUint8 bus;
-      TUint8 source;
-      TUint32 target;
-      uint16_t flags;
-    } PACKED interrupt;
-  };
-} PACKED MADTEntry;
-#endif
-
-#define incptr(p, n) (TUint64(p) + n)
 
 void ACPI::ParseMADT(TAny *aMadt, TInt32 aLen) {
   MADT *madt = (MADT *)aMadt;
@@ -147,8 +120,8 @@ void ACPI::ParseMADT(TAny *aMadt, TInt32 aLen) {
         // APIC descriptor (corresponds to unique cpu core)
         // Check if cpu is enabled
         TLApic *lapic = (TLApic *)&e->data[0];
-        dlog("      CPU lapic.id(%x)  ", lapic->id);
-        if (!(lapic->id & 1)) {
+        dlog("      CPU lapic.id(%x) flags(%x)  ", lapic->id, lapic->flags);
+        if (!(lapic->flags & 1)) {
           dprint(" not enabled\n");
           break;
         }

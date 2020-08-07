@@ -15,6 +15,14 @@ if [ "$WSL" != "" ]; then
 	     -m 8192  \
 	     -smp 4 \
 	     -drive  format=raw,media=disk,file=c.img
+
+#  sudo qemu-system-x86_64 \
+#       -serial stdio  \
+#       -m 8192  \
+#       -enable-kvm \
+#       -smp 4 \
+#       -cpu host,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time \
+#       -drive  format=raw,media=disk,file=c.img
 #    if [ -e "/mnt/c/dev/bare.log" ]; then
 #  mv /mnt/c/dev/bare.log /mnt/c/dev/bare.log.1
 #    fi

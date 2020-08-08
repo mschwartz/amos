@@ -24,6 +24,9 @@ public:
     return *(volatile TUint32 *)(mAddress + 0x10); // IOWIN
   }
 
+public:
+  void SetIRQ(TUint8 aIrq, TUint64 aApicId, TUint8 aVector);
+
 protected:
   TUint64 mAddress;
 };

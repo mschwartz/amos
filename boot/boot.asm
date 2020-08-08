@@ -43,7 +43,9 @@ COM1:   equ 0x3f8
 org BOOTSTRAP_ORG
 
 start:
-        jmp  0:main		; this jmp instruction causes CS register to be 0
+        jmp 0:main		; this jmp instruction causes CS register to be 0
+patch_end:
+	jmp 0:ap_boot        	; this will be executed by the APs because the initial jmp will be overwritten with NOP
 
 ;; these filled in by build-img tool - do not MOVE or add variables before these.  The fixed offset
 ;; in the boot sector binary image matters.
@@ -70,7 +72,6 @@ loading_msg:        db 'Loading... ', 0
 align 4
 global main
 main:
-	cli
         xor ax, ax
         mov ss, ax
         mov sp, SP16
@@ -81,7 +82,7 @@ main:
         mov gs, ax
 
         mov [BOOT_DRIVE], dl
-	mov ax, [040ex]
+	mov ax, [040eh]
 	mov [ebda], ax
 
         ; detect running in bochs
@@ -175,7 +176,9 @@ load:
 ;; ---------------------------------------------------------------------------------------------
 ;; ---------------------------------------------------------------------------------------------
 
-
+[bits 16]
+	
+;; Global Descriptor Table (32-bit).
 gdt_start:
         dd 0                ; null descriptor--just fill 8 bytes
         dd 0
@@ -201,9 +204,101 @@ gdtr:
         dw end_of_gdt - gdt_start - 1   ; limit (Size of GDT)
         dd gdt_start        ; base of GDT
 
-CODE_SEG:            equ gdt_code - gdt_start
-DATA_SEG:            equ gdt_data - gdt_start
+;; Global Descriptor Table (64-bit).
+gdt64:                           
+Null:   equ $ - gdt64                           ; The null descriptor.
+        dw 0xFFFF                               ; Limit (low).
+        dw 0                                    ; Base (low).
+        db 0                                    ; Base (middle)
+        db 0                                    ; Access.
+        db 1                                    ; Granularity.
+        db 0                                    ; Base (high).
+CODE:   equ $ - gdt64                           ; The code descriptor.
+        dw 0                                    ; Limit (low).
+        dw 0                                    ; Base (low).
+        db 0                                    ; Base (middle)
+        db 10011010b                            ; Access (exec/read).
+        db 10101111b                            ; Granularity, 64 bits flag, limit19:16.
+        db 0                                    ; Base (high).
+DATA:   equ $ - gdt64                           ; The data descriptor.
+        dw 0                                    ; Limit (low).
+        dw 0                                    ; Base (low).
+        db 0                                    ; Base (middle)
+        db 10010010b                            ; Access (read/write).
+        db 00000000b                            ; Granularity.
+        db 0                                    ; Base (high).
+gdtr64:                                         ; The GDT-pointer.
+        dw $ - gdt64 - 1                        ; Limit.
+        dq gdt64                                ; Base.
 
+CODE_SEG: equ gdt_code - gdt_start
+DATA_SEG: equ gdt_data - gdt_start
+
+;; APPLICATION PROCESSOR BOOT
+ap_boot:
+	; enable A20
+ap_set_a20:
+        in al, 0x64
+        test al, 0x02
+        jnz ap_set_a20
+        mov al, 0xd1
+        out 0x64, al
+ap_wait_a20:
+        in al, 0x64
+        test al, 0x02
+        jnz ap_wait_a20
+        mov al, 0xdf
+        out 0x60, al
+
+	; switch ap into 32-bit mode
+        lgdt [gdtr]
+	mov eax, cr0
+	or al, 1
+	mov cr0, eax
+	jmp 0:ap_start32
+	
+align 16
+ap_start32:
+	mov eax, 0x10
+	mov dx, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	mov ss, ax
+	xor eax, eax
+	xor ebx, ebx
+	xor ecx, ecx
+	xor edx, edx
+	xor esi, esi
+	xor edi, edi
+	xor ebp, ebp
+	mov esp, 0x7c000
+
+;; enter 64 bit mode
+	lgdt [gdtr64]
+	; extendd properties
+	mov eax, cr4
+	or eax, 0xb0 		; PGE, PAE, PSE
+	mov cr4, eax
+
+	; use PML4 for paging
+	mov eax, 0x2008
+	mov cr3, eax
+	
+        ; Enable long mode and SYSCALL/SYSRET
+	mov ecx, 0xC0000080		; EFER MSR number
+	rdmsr				; Read EFER
+	or eax, 0x00000101 		; LME (Bit 8)
+	wrmsr				; Write EFER
+
+        ; Enable paging to activate long mode
+	mov eax, cr0
+	or eax, 0x80000000		; PG (Bit 31)
+	mov cr0, eax
+
+	jmp CODE_SEG:ap_start64
+
+;; CONTINUE BOOT CPU PROGRAM
 boot2:
 	; copy EBDA to ebda_temp
 	; this needs to be done before loading kernel, which might overwrite this memory
@@ -751,33 +846,7 @@ b32:
 	; skip oer GDT, etc.
         jmp enter_long_mode
 
-;; Global Descriptor Table (64-bit).
-GDT64:                           
-Null:   equ $ - GDT64                           ; The null descriptor.
-        dw 0xFFFF                               ; Limit (low).
-        dw 0                                    ; Base (low).
-        db 0                                    ; Base (middle)
-        db 0                                    ; Access.
-        db 1                                    ; Granularity.
-        db 0                                    ; Base (high).
-CODE:   equ $ - GDT64                           ; The code descriptor.
-        dw 0                                    ; Limit (low).
-        dw 0                                    ; Base (low).
-        db 0                                    ; Base (middle)
-        db 10011010b                            ; Access (exec/read).
-        db 10101111b                            ; Granularity, 64 bits flag, limit19:16.
-        db 0                                    ; Base (high).
-DATA:   equ $ - GDT64                           ; The data descriptor.
-        dw 0                                    ; Limit (low).
-        dw 0                                    ; Base (low).
-        db 0                                    ; Base (middle)
-        db 10010010b                            ; Access (read/write).
-        db 00000000b                            ; Granularity.
-        db 0                                    ; Base (high).
-GDT64_Pointer:                                  ; The GDT-pointer.
-        dw $ - GDT64 - 1                        ; Limit.
-        dq GDT64                                ; Base.
-
+	
 align 4
 
 ;;
@@ -873,13 +942,12 @@ enter_long_mode:
 	mov cr0, eax
 
 
-        lgdt [GDT64_Pointer]
+        lgdt [gdtr64]
         jmp CODE_SEG:go64
 
 
 [bits 64]
 %include "debug64.inc"
-        ; %include 'screen.inc'
 
 	boot64msg           db 'Entered long mode', 13, 10, 0
 go64:
@@ -974,10 +1042,49 @@ call_main:
 	; start other CPUs
 
 	; call kernel with SYSINFO as argument
+	xor ah, ah
 	mov al, [bochs_present]
         call KERNEL_ORG
         cli
         jmp $
 
+ap_start64:
+	xor rax, rax
+	xor rbx, rbx
+	xor rcx, rcx
+	xor rdx, rdx
+	xor rsi, rsi
+	xor rdi, rdi
+	xor rbp, rbp
+	xor r8, r8
+	xor r9, r9
+	xor r10, r10
+	xor r11, r11
+	xor r12, r12
+	xor r13, r13
+	xor r14, r14
+	xor r15, r15
+
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
+	mov fs, ax
+	mov gs, ax
+
+	; NOP out the initial jmp instruction
+	mov al, 0x90		;NOP instruction
+	mov [BOOTSTRAP_ORG+0], al
+	mov [BOOTSTRAP_ORG+1], al
+	mov [BOOTSTRAP_ORG+2], al
+	mov [BOOTSTRAP_ORG+3], al
+	mov [BOOTSTRAP_ORG+4], al
+
+	mov rdi, [sys_info]
+	mov ah, 1
+	mov al, [bochs_present]
+	call KERNEL_ORG
+	cli
+	jmp $
+	
 .call_message       db 'calling KERNEL_ORG ', 0
 

@@ -4,9 +4,10 @@
 
 IoApic::IoApic(TUint64 aAddress) {
   mAddress = aAddress;
+  MapIRQ(2, 0, 0);
 }
 
-void IoApic::SetIRQ(TUint8 aIrq, TUint64 aApicId, TUint8 aVector) {
+void IoApic::MapIRQ(TUint8 aIrq, TUint64 aApicId, TUint8 aVector) {
   const TUint32 low_index = 0x10 + aIrq * 2;
   const TUint32 high_index = 0x10 + aIrq * 2 + 1;
 

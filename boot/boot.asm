@@ -61,6 +61,7 @@ serial_initialized: db 0
 	
 ;; Variables
 BOOT_DRIVE:         db 0	; boot sector is entered with the drive number of the boot device in dl
+CPU_NUM:            db 0
 loading_msg:        db 'Loading... ', 0
 
 ;; ---------------------------------------------------------------------------------------------
@@ -236,6 +237,12 @@ DATA_SEG: equ gdt_data - gdt_start
 
 ;; APPLICATION PROCESSOR BOOT
 ap_boot:
+	mov al, [CPU_NUM]
+	inc al
+	mov [CPU_NUM], al
+
+	BOCHS
+	
 	; enable A20
 ap_set_a20:
         in al, 0x64
@@ -1073,19 +1080,20 @@ ap_start64:
 	mov gs, ax
 
 	; NOP out the initial jmp instruction
-	mov al, 0x90		;NOP instruction
-	mov [BOOTSTRAP_ORG+0], al
-	mov [BOOTSTRAP_ORG+1], al
-	mov [BOOTSTRAP_ORG+2], al
-	mov [BOOTSTRAP_ORG+3], al
-	mov [BOOTSTRAP_ORG+4], al
+	; mov al, 0x90		;NOP instruction
+	; mov [BOOTSTRAP_ORG+0], al
+	; mov [BOOTSTRAP_ORG+1], al
+	; mov [BOOTSTRAP_ORG+2], al
+	; mov [BOOTSTRAP_ORG+3], al
+	; mov [BOOTSTRAP_ORG+4], al
 
 	mov rdi, [sys_info]
-	mov ah, 1
+	mov ah, [CPU_NUM]
 	mov al, [bochs_present]
 	call KERNEL_ORG
 	cli
 	jmp $
 	
-.call_message       db 'calling KERNEL_ORG ', 0
+.call_message:
+	db 'calling KERNEL_ORG ', 0
 

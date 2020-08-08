@@ -26,6 +26,10 @@ public:
   TUint32 ApicId() { return ReadRegister(APIC_ID); }
   void EOI() { WriteRegister(APIC_EOI, 1); }
 
+public:
+  void SendIPI(TUint8 aApicId, TUint8 aVector);
+  void SendSIPI(TUint8 aApicId, TUint8 aVector);
+
 protected:
   TUint64 mAddress;
 };

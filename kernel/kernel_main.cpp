@@ -24,6 +24,13 @@ static void call_global_constructors(void) {
 
 extern "C" TUint64 rdtsc();
 
+extern "C" int ap_main(TSystemInfo *aSystemInfo) {
+  dlog("ap_start\n");
+  while (1) {
+    halt();
+  }
+  return 0;
+}
 extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   cli();
   InitAllocMem();
@@ -48,12 +55,8 @@ extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   gSystemInfo.mDiskSize = gSystemInfo.mNumHeads * gSystemInfo.mNumSectors * gSystemInfo.mNumCylinders * 512;
 
   call_global_constructors();
-  // gSystemInfo.Dump();
-  // dlog("EBDA\n");
-  // dhexdump((TAny *)gSystemInfo.mEBDA, 32);
-
-  gExecBase.Kickstart(); // does not return
 
   // it should NEVER get here!
+  bochs;
   return 0;
 }

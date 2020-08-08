@@ -19,6 +19,7 @@ inline static void wait_io() {
 
 PIC::PIC() {
   EnablePIC();
+  // DisablePIC();
 }
 
 PIC::~PIC() {

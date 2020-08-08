@@ -95,13 +95,15 @@ void CPU::StartAP() {
 
   // TODO: actually start application processor
   // IPI
+  // mApic->SendIPI(mApicId, 8);
   // delay 10ms
+  // MilliSleep(10);
   // SIPI
   // wait for CPU to boot
   // send second SIPI if it didn't boot
   // give up if second SIPI didn't work
   // TODO: this needs to be done from ap_start() in kernel_main.cpp;
-  enter_tasking(); // just enter next task
+  // enter_tasking(); // just enter next task
 }
 
 void CPU::AddTask(BTask *aTask) {

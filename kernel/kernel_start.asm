@@ -17,11 +17,14 @@ _start:
 %include "../boot/memory.inc"
 
 extern kernel_main
+extern ap_main
 
 start_msg:
 	db 13, 10, 'kernel_start', 13, 10, 0
 global bochs_present
 bochs_present:
+	db 0
+cpu_num:
 	db 0
 	
 align 8
@@ -40,7 +43,7 @@ extern kernel_end
 	
 boot:
 	mov [bochs_present], al
-
+	mov [cpu_num], ah
 	; mov rax, kstack_end
 	mov rsp, kstack_end
 	
@@ -91,6 +94,13 @@ boot:
         mov rsi, start_msg
         call puts64
 
+	mov al, [cpu_num]
+	test al, al
+	je .main
+
+	call ap_main
+	ret
+.main:
         call kernel_main
         ret
 

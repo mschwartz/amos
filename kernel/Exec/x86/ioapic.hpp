@@ -25,7 +25,7 @@ public:
   }
 
 public:
-  void SetIRQ(TUint8 aIrq, TUint64 aApicId, TUint8 aVector);
+  void MapIRQ(TUint8 aIrq, TUint64 aApicId, TUint8 aVector);
 
 protected:
   TUint64 mAddress;

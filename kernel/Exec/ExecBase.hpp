@@ -116,6 +116,7 @@ public:
   void AddCpu(CPU *aCPU);
   CPU *CurrentCpu();
   CPU *GetCpu(TInt aNum) { return mCpus[aNum]; }
+  void InterruptOthers(TUint8 aVector);
 
 protected:
   TInt mNumCpus;

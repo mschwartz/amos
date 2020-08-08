@@ -86,7 +86,10 @@ static TIsrHandler interrupt_handlers[INTERRUPTS];
 extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
   cli();
 
-  // dlog("kernel_isr %d\n", aIsrNumber);
+  // CPU *cpu = GetCPU();
+  // if (cpu != ENull && cpu->mProcessor != 0) {
+  //   dlog("%x kernel_isr %d\n", cpu, aIsrNumber);
+  // }
   TTaskRegisters *current_task = GetCurrentTask();
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {

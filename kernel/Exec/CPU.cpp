@@ -7,9 +7,15 @@ extern "C" TUint64 cpuid(TUint32 *eax, TUint32 *ebx, TUint32 *ecx, TUint32 *edx)
 extern "C" void cpu_brand(char *buf);
 extern "C" void enter_tasking();
 
+void SetMSR(TUint32 msr, TUint32 lo, TUint32 hi) {
+  asm volatile("wrmsr"
+               :
+               : "a"(lo), "d"(hi), "c"(msr));
+}
+
 CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic) {
   dlog("CONSTRUCT CPU %d\n", aProcessor);
-  mGS.mCurrentCpu = aProcessor;
+  mGS.mCurrentCpu = this;
   mProcessor = aProcessor;
   mProcessorId = aProcessorId;
   mApicId = aApicId;
@@ -24,9 +30,13 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
   dlog("CPU %d initialized IDT\n", mProcessor);
 
   if (mProcessor == 0) {
-    SetGS(&this->mGS);
+    TUint64 v = (TUint64)&mGS;
+    // SetMSR(0xc0000101, v>>32, v&0xffffffff);
     mGdt->Install();
     mIdt->Install();
+    dlog("SetGS(%x)\n", &this->mGS);
+    SetGS(&this->mGS);
+    SetCPU(this);
   }
 
   // TODO move this code into a routine that is running in the CPU
@@ -82,10 +92,6 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
 
 // This function must run in the CPU!
 void CPU::EnterAP() {
-  this->mGS.mCurrentCpu = this->mProcessor;
-  SetGS(&this->mGS);
-  // SetCPU(this->mProcessor);
-
   if (mProcessorId == 0) { // no need to start the boot processsor
     // Before enabling interrupts, we need to have the idle task set up
     InitTask *task = new InitTask();
@@ -101,6 +107,11 @@ void CPU::EnterAP() {
 
   mGdt->Install();
   mIdt->Install();
+
+  this->mGS.mCurrentCpu = this;
+  dlog("SetGS(%x)\n", &this->mGS);
+  SetGS(&this->mGS);
+  SetCPU(this);
 
   IdleTask *task = new IdleTask();
   task->mCpu = this;

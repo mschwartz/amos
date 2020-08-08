@@ -75,10 +75,9 @@ endstruc
 ;; 
 
 ;; This is the per CPU local data
-struc TGS
-.current_task resq 0
-.current_cpu resq 0
-endstruc
+CURRENT_TASK: equ 0
+CURRENT_CPU: equ 8
+	
 
 ;; this is callable from C/C++ to set the GS register value
 global SetGS
@@ -90,12 +89,18 @@ SetGS:
 	mov al, 1
 	mov [gs_flag], al
 
-	mov rcx, 0xC0000101
-	xor rdx, rdx
+	mov rdx, rdi
+	shr rdx, 32
 	mov rax, rdi
+	mov rcx, 0xc0000101
 	wrmsr
 
+	mov rcx, 0xc0000102
+	wrmsr
+	
 	swapgs
+	mov rax, [gs:0]
+	mov rdx, [gs:8]
 
 	pop rdx
 	pop rcx
@@ -113,7 +118,7 @@ GetGS:
 
 global SetCPU
 SetCPU:
-	mov [gs:TGS.current_cpu], rdi
+	mov [gs:CURRENT_CPU], rdi
 	ret
 	
 global GetCPU
@@ -125,17 +130,17 @@ GetCPU:
 	ret
 	
 .initialized:
-	mov rax, [gs:TGS.current_cpu]
+	mov rax, [gs:CURRENT_CPU]
 	ret
 	
 global SetCurrentTask
 SetCurrentTask:
-	mov [gs:TGS.current_task], rdi
+	mov [gs:CURRENT_TASK], rdi
 	ret
 
 global GetCurrentTask
 GetCurrentTask:
-	mov rax, [gs:TGS.current_task]
+	mov rax, [gs:CURRENT_TASK]
 	ret
 
 	
@@ -156,7 +161,7 @@ isr_common:
 	; bochs
 	push rdi            ; save rdi so we don't clobber it
 
-        mov rdi, [gs:TGS.current_task]
+        mov rdi, [gs:CURRENT_TASK]
         mov [rdi + TASK.isrnum], rax            ; isrnum was pushed on stack by xisr
 
         ; set default value for task_error_code
@@ -261,7 +266,7 @@ isr_common:
 global restore_task_state
 restore_task_state:
         ; restore task state
-        mov rdi, [gs:TGS.current_task]
+        mov rdi, [gs:CURRENT_TASK]
 
         mov rax, cr4
         bts rax, 9
@@ -393,7 +398,7 @@ enter_tasking:
 %if 0
         cli
         ; restore task state
-        mov rdi, [gs:TGS.current_task]
+        mov rdi, [gs:CURRENT_TASK]
 
         ; set up the return stack using the task's stack memory
 	;                    mov ss, [rdi + TASK.ss]
@@ -424,7 +429,7 @@ save_rsp:
         cli
         push rdi
 
-        mov rdi, [gs:TGS.current_task]
+        mov rdi, [gs:CURRENT_TASK]
         test rdi, rdi
         jne .save
         pop rdi

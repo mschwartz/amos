@@ -59,9 +59,7 @@ void BTask::Suicide(TInt64 aCode) {
 void BTask::RunWrapper(BTask *aTask) {
   CPU *c = (CPU *)aTask->mCpu;
   BTask *t = ((CPU *)c)->CurrentTask();
-  dlog("RunWrapper Task: %x\n", t->TaskName());
-  // t->Dump();
-  
+
   TInt64 code = t->Run();
 
   // if task returns it is removed from the active list and deleted.

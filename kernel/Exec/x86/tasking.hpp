@@ -84,9 +84,10 @@ typedef struct Task {
   }
 } PACKED TTaskRegisters;
 
+class CPU;
 typedef struct {
   TUint64 mCurrentTask;
-  TUint64 mCurrentCpu;
+  CPU *mCurrentCpu;
 } PACKED TGS;
 
 class CPU;
@@ -97,7 +98,7 @@ extern "C" TTaskRegisters *GetCurrentTask();
 extern "C" void SetGS(TGS *aGsValue);
 extern "C" TGS *GetGS();
 
-extern "C" void SetCPU(TUint64 aCpu);
-extern "C" TUint64 GetCPU();
+extern "C" void SetCPU(CPU *aCpu);
+extern "C" CPU *GetCPU();
 
 #endif

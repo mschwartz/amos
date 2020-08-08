@@ -100,22 +100,21 @@ void ExecBase::AddCpu(CPU *aCpu) {
 }
 
 CPU *ExecBase::CurrentCpu() {
-  if (mCpus[0]) {
-    TUint64 cpu = GetCPU();
-    if (cpu > mNumCpus) {
-      return mCpus[0];
-    }
-    else {
-      dlog("CurrentCpu = %d\n", cpu);
-      return mCpus[cpu];
-    }
-  }
-  return mCpus[0];
+  CPU *cpu = GetCPU();
+  // dlog("CurrentCPU(%x)]n", cpu);
+  return cpu;
 }
 
 void ExecBase::SetInspirationBase(InspirationBase *aInspirationBase) {
   mInspirationBase = aInspirationBase;
   mInspirationBase->Init();
+}
+
+void ExecBase::InterruptOthers(TUint8 aVector) {
+  // CPU *cpu = mCpus[0];
+  // if (cpu != ENull) {
+  //   cpu->mApic->InterruptOthers(aVector);
+  // }
 }
 
 void ExecBase::Disable() {

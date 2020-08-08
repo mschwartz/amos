@@ -17,8 +17,11 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
   TUint32 eax, ebx, edx, ecx;
 
   mTss = new TSS();
+  dlog("CPU %d initialized TSS\n", mProcessor);
   mGdt = new GDT(mTss);
+  dlog("CPU %d initialized GDT\n", mProcessor);
   mIdt = new IDT();
+  dlog("CPU %d initialized IDT\n", mProcessor);
 
   eax = 0;
   cpuid(&eax, &ebx, &ecx, &edx);
@@ -71,30 +74,43 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
 
 void CPU::StartAP() {
   dlog("CPU %d StartAP\n", mProcessor);
-  InitTask *task = new InitTask();
-  task->mCpu = this;
-  mActiveTasks.Add(*task);
-  mCurrentTask = mActiveTasks.First();
-  current_task = &mCurrentTask->mRegisters;
   if (mProcessorId == 0) { // no need to start the boot processsor
-    return;
+    // Before enabling interrupts, we need to have the idle task set up
+    InitTask *task = new InitTask();
+    task->mCpu = this;
+    mActiveTasks.Add(*task);
+    mCurrentTask = mActiveTasks.First();
+    current_task = &mCurrentTask->mRegisters;
+    // TODO: this needs to be done from ap_start() in kernel_main.cpp;
+    sti();
+    enter_tasking(); // just enter next task
   }
-  sti();
+  else {
+    IdleTask *task = new IdleTask();
+    task->mCpu = this;
+    mActiveTasks.Add(*task);
+    mCurrentTask = mActiveTasks.First();
+    current_task = &mCurrentTask->mRegisters;
+  }
+
+  // TODO: actually start application processor
   // IPI
   // delay 10ms
   // SIPI
   // wait for CPU to boot
   // send second SIPI if it didn't boot
   // give up if second SIPI didn't work
+  // TODO: this needs to be done from ap_start() in kernel_main.cpp;
+  enter_tasking(); // just enter next task
 }
 
 void CPU::AddTask(BTask *aTask) {
   DISABLE;
   aTask->mRegisters.tss = (TUint64)mTss;
   aTask->mCpu = this;
+  mActiveTasks.Add(*aTask);
   dlog("    CPU(%d) Add Task %016x --- %s --- rip=%016x rsp=%016x\n",
     mProcessor, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
-  mActiveTasks.Add(*aTask);
   ENABLE;
 }
 
@@ -140,9 +156,9 @@ void CPU::RescheduleIRQ() {
         mActiveTasks.Add(*mCurrentTask);
       }
     }
-    // else {
-    //   dlog("FORBID\n");
-    // }
+    else {
+      dlog("FORBID\n");
+    }
   }
 
   mCurrentTask = mActiveTasks.First();

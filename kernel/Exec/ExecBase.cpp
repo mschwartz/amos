@@ -137,14 +137,14 @@ void ExecBase::AddTask(BTask *aTask) {
   // TODO: this should figure out which CPU to assign task to
   CPU *c = CurrentCpu();
   c->AddTask(aTask);
-
+#if 0
   aTask->mRegisters.tss = (TUint64)c->mTss;
   dlog("    Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
   //  aTask->Dump();
   mActiveTasks.Add(*aTask);
   //  mActiveTasks.Dump();
   //  dlog("x\n");
-
+#endif
   ENABLE;
 }
 
@@ -178,7 +178,9 @@ void ExecBase::WaitSignal(BTask *aTask) {
   // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
   // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
   if (aTask->mSigWait & aTask->mSigReceived) {
-    mActiveTasks.Add(*aTask);
+    // TODO: assign task to a CPU
+    CPU *cpu = CurrentCpu();
+    cpu->AddActiveTask(*aTask);
     aTask->mTaskState = ETaskRunning;
   }
   else {
@@ -210,7 +212,8 @@ void ExecBase::ReleaseSemaphore(Semaphore *aSemaphore) {
     aSemaphore->mNestCount = 1;
     aSemaphore->mSharedCount = 0;
     t->mTaskState = ETaskRunning;
-    mActiveTasks.Add(*t);
+    CurrentCpu()->AddActiveTask(*t);
+    // mActiveTasks.Add(*t);
   }
   else {
     aSemaphore->mOwner = ENull;
@@ -233,7 +236,7 @@ void ExecBase::Wake(BTask *aTask) {
     dlog("Wake %s\n", aTask->TaskName());
   }
   aTask->Remove();
-  mActiveTasks.Add(*aTask);
+  CurrentCpu()->AddActiveTask(*aTask);
   aTask->mTaskState = ETaskRunning;
   ENABLE;
   //  DumpTasks();
@@ -248,7 +251,7 @@ void ExecBase::Kickstart() {
 }
 
 void ExecBase::AddWaitingList(BTask &aTask) {
-  mWaitingTasks.Add(*mCurrentTask);
+  mWaitingTasks.Add(aTask);
 }
 
 /**
@@ -387,7 +390,7 @@ void ExecBase::GuruMeditation(const char *aFormat, ...) {
   dprint(buf);
   dprint("\n");
 
-  mCurrentTask->Dump();
+  GetCurrentTask()->Dump();
   va_end(args);
   dprint("***********************\n\n\nHalted.\n");
 

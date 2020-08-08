@@ -60,6 +60,7 @@ public:
   BTask *CurrentTask() { return mCurrentTask; }
   void DumpTasks();
 
+  void AddActiveTask(BTask &aTask) { mActiveTasks.Add(aTask); }
   void RescheduleIRQ();
   
 protected:

@@ -199,8 +199,7 @@ public:
   void Schedule();
 
 protected:
-  BTaskList mActiveTasks, mWaitingTasks;
-  BTask *mCurrentTask;
+  BTaskList mWaitingTasks;
 
   //
   // Semaphores

@@ -44,8 +44,6 @@ org BOOTSTRAP_ORG
 
 start:
         jmp 0:main		; this jmp instruction causes CS register to be 0
-patch_end:
-	jmp 0:ap_boot        	; this will be executed by the APs because the initial jmp will be overwritten with NOP
 
 ;; these filled in by build-img tool - do not MOVE or add variables before these.  The fixed offset
 ;; in the boot sector binary image matters.
@@ -177,6 +175,8 @@ load:
 ;; ---------------------------------------------------------------------------------------------
 
 [bits 16]
+	; ORG 0x8000
+	jmp 0:ap_boot
 	
 ;; Global Descriptor Table (32-bit).
 gdt_start:

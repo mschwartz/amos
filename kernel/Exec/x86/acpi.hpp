@@ -3,6 +3,7 @@
 
 #include <Types.hpp>
 #include <Exec/BBase.hpp>
+#include <Exec/x86/ioapic.hpp>
 
 const TInt MAX_CPUS = 128; // 128 cores max
 const TInt MAX_IOAPIC = 4;
@@ -84,6 +85,7 @@ protected:
   void ParseMADT(TAny *aMadt, TInt32 aLen);
 
 protected:
+  IoApic *mIoApic;
   TAcpiInfo mAcpiInfo;
 };
 

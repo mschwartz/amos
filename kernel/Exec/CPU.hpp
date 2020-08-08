@@ -1,8 +1,14 @@
 #ifndef KERNEL_X86_CPU_H
 #define KERNEL_X86_CPU_H
 
+// https://ethv.net/workshops/osdev/notes-notes-3
+
+// TODO GS register points to this CPU's info area
+
 #include <Types.hpp>
 #include <Types/BList.hpp>
+#include <Exec/x86/ioapic.hpp>
+#include <Exec/x86/apic.hpp>
 #include <Exec/x86/idt.hpp>
 #include <Exec/x86/gdt.hpp>
 
@@ -11,6 +17,13 @@
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
+
+enum {
+  ECpuUninitialized,
+  ECpuInitialized,
+  ECpuRuning,
+  ECpuHalted,
+} ECpuState;
 
 #define CPU_STEPPING_ID(x) (x & 0x0f)
 #define CPU_MODEL_ID(x) ((x >> 4) & 0x0f)
@@ -21,13 +34,23 @@
 
 class CPU : public BNode {
 public:
-  CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId);
+  // constructor
+  CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic);
 
+public:
+  void StartAP(); // perform SIPI to start AP
+
+public:
+  TUint64 mCpuState;
+  
 public:
   TUint32 mProcessorId;
   TUint32 mApicId;
-  
+  IoApic *mIoApic;
+  Apic *mApic;
+
 public:
+  // Data gathered via CPUID
   TUint32 mProcessor; // which core 0-n
   TUint32 mMaxFunction;
   TUint32 mProcessorVersionInformation;
@@ -56,9 +79,12 @@ public:
 public:
   void Dump() {
     dprint("\n\n");
-    dlog("CPU %2d (%x) mMaxFunction(0x%x) mMaxExtendedFunction(0x%x)\n", mProcessor, this, mMaxFunction, mMaxExtendedFunction);
+    dlog("CPU %2d mProcessorId(%d) mApicId(%d) mIoApic(0x%x) this(%x)\n",
+      mProcessor, mProcessorId, mApicId, mIoApic, this);
     dlog("  Manufacturer / Model: %s / %s %d cores\n", mManufacturer, mBrand, mCores);
-    dlog("    Number of address bits: Physical(%d) Linear(%d)\n", mPhysicalAddressBits, mLinearAddressBits);
+    dlog("    Number of address bits: Physical(%d) Linear(%d)\n",
+      mPhysicalAddressBits, mLinearAddressBits);
+    dlog("    mMaxFunction: (0x%x) mMaxExtendedFunction(0x%x)\n", mMaxFunction, mMaxExtendedFunction);
     dlog("    CPU Stepping ID: %x\n", CPU_STEPPING_ID(mProcessorVersionInformation));
     dlog("    CPU Model ID: %x\n", CPU_MODEL_ID(mProcessorVersionInformation));
     dlog("    CPU Family ID: %x\n", CPU_FAMILY_ID(mProcessorVersionInformation));

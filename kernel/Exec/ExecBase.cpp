@@ -61,7 +61,7 @@ ExecBase::ExecBase() {
 
   {
     for (TInt c = 0; c < mACPI->mAcpiInfo.mNumCpus; c++) {
-      AddCpu(new CPU(c, mACPI->mAcpiInfo.mCpus[c].mId, mACPI->mAcpiInfo.mCpus[c].mApicId));
+      AddCpu(new CPU(c, mACPI->mAcpiInfo.mCpus[c].mId, mACPI->mAcpiInfo.mCpus[c].mApicId, mACPI->mIoApic));
     }
   }
 

@@ -4,11 +4,14 @@
 extern "C" TUint64 cpuid(TUint32 *eax, TUint32 *ebx, TUint32 *ecx, TUint32 *edx);
 extern "C" void cpu_brand(char *buf);
 
-CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId)
+CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic)
     : BNode("CPU") {
+
   mProcessor = aProcessor;
   mProcessorId = aProcessorId;
   mApicId = aApicId;
+  mIoApic = aIoApic;
+  mApic = new Apic(aIoApic->Address() + mApicId * 0x10);
   
   TUint32 eax, ebx, edx, ecx;
 
@@ -62,4 +65,16 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId)
   }
 
   Dump();
+}
+
+void CPU::StartAP() {
+  if (mProcessorId == 0) { // no need to start the boot processsor
+    return;
+  }
+  // IPI
+  // delay 10ms
+  // SIPI
+  // wait for CPU to boot
+  // send second SIPI if it didn't boot
+  // give up if second SIPI didn't work
 }

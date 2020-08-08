@@ -113,6 +113,7 @@ TInt64 TimerTask::Run() {
 }
 
 TBool TimerInterrupt::Run(TAny *g) {
+  dlog("Timer\n");
   mTask->Signal(1 << mTask->mSignalBit);
 
   gExecBase.RescheduleIRQ(); // maybe wake up new task

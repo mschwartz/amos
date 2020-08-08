@@ -1,22 +1,24 @@
 #include <Exec/CPU.hpp>
 #include <Exec/ExecBase.hpp>
+#include <Exec/IdleTask.hpp>
+#include <Exec/InitTask.hpp>
 
 extern "C" TUint64 cpuid(TUint32 *eax, TUint32 *ebx, TUint32 *ecx, TUint32 *edx);
 extern "C" void cpu_brand(char *buf);
+extern "C" void enter_tasking();
 
-CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic)
-    : BNode("CPU") {
-
+CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic) {
   mProcessor = aProcessor;
   mProcessorId = aProcessorId;
   mApicId = aApicId;
   mIoApic = aIoApic;
   mApic = new Apic(aIoApic->Address() + mApicId * 0x10);
-  
+
   TUint32 eax, ebx, edx, ecx;
 
-  mIdt = gExecBase.mIDT;
-  mGdt = gExecBase.mGDT;
+  mTss = new TSS();
+  mGdt = new GDT(mTss);
+  mIdt = new IDT();
 
   eax = 0;
   cpuid(&eax, &ebx, &ecx, &edx);
@@ -68,13 +70,87 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
 }
 
 void CPU::StartAP() {
+  dlog("CPU %d StartAP\n", mProcessor);
+  InitTask *task = new InitTask();
+  task->mCpu = this;
+  mActiveTasks.Add(*task);
+  mCurrentTask = mActiveTasks.First();
+  current_task = &mCurrentTask->mRegisters;
   if (mProcessorId == 0) { // no need to start the boot processsor
     return;
   }
+  sti();
   // IPI
   // delay 10ms
   // SIPI
   // wait for CPU to boot
   // send second SIPI if it didn't boot
   // give up if second SIPI didn't work
+}
+
+void CPU::AddTask(BTask *aTask) {
+  DISABLE;
+  aTask->mRegisters.tss = (TUint64)mTss;
+  aTask->mCpu = this;
+  dlog("    CPU(%d) Add Task %016x --- %s --- rip=%016x rsp=%016x\n",
+    mProcessor, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
+  mActiveTasks.Add(*aTask);
+  ENABLE;
+}
+
+TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
+  DISABLE;
+  aTask->Remove();
+  TBool isCurrentTask = aTask == mCurrentTask;
+  if (isCurrentTask) {
+    dlog("CPU %d RemoveTask(%s) code(%d) CURRENT TASK\n", mProcessor, aTask->TaskName(), aExitCode);
+  }
+  else {
+    dlog("CPU %d RemoveTask(%s) code(%d)\n", mProcessor, aTask->TaskName(), aExitCode);
+  }
+
+  if (isCurrentTask) {
+    mCurrentTask = mActiveTasks.First();
+    current_task = &mCurrentTask->mRegisters;
+    enter_tasking(); // just enter next task
+  }
+  ENABLE;
+  return aExitCode;
+}
+
+void CPU::DumpTasks() {
+  dlog("\n\nActive Tasks\n");
+  mActiveTasks.Dump();
+  // dlog("Waiting Tasks\n");
+  // mWaitingTasks.Dump();
+  dlog("\n\n");
+}
+
+void CPU::RescheduleIRQ() {
+  BTask *t = mCurrentTask;
+
+  if (mCurrentTask && mCurrentTask->mTaskState != ETaskBlocked) {
+    if (mCurrentTask->mForbidNestCount == 0) {
+      mCurrentTask->Remove();
+      if (mCurrentTask->mTaskState == ETaskWaiting) {
+        gExecBase.AddWaitingList(*t);
+        // mWaitingTasks.Add(*mCurrentTask);
+      }
+      else {
+        mActiveTasks.Add(*mCurrentTask);
+      }
+    }
+    // else {
+    //   dlog("FORBID\n");
+    // }
+  }
+
+  mCurrentTask = mActiveTasks.First();
+  current_task = &mCurrentTask->mRegisters;
+  if (t != mCurrentTask && gExecBase.mDebugSwitch) {
+    dprint("  CPU %d Reschedule %s\n", mProcessor, mCurrentTask->TaskName());
+    dprint("Previous task\n");
+    dprint("  Previous Task %s\n", t->TaskName());
+    dprint("\n\n\n");
+  }
 }

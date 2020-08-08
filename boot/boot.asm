@@ -410,6 +410,7 @@ load_kernel:
         ; pusha
         ; call .print_loading
         ; popa
+
 	xor bx, bx
 	push cx
 	push si
@@ -493,10 +494,10 @@ align 4
         popa
 
         ret
-.msg                db 'loading sector ', 0
 
+.msg:   db 'loading sector ', 0
+.done_msg: db 'Loading completed', 13, 10, 0
 
-.done_msg           db 'Loading completed', 13, 10, 0
 .done:
 	;                    mov si, .done_msg
 	;                    call puts16

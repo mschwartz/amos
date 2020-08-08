@@ -25,8 +25,8 @@ extern "C" void SetFlags(TUint64 aFlags);
 //#include <Exec/x86/cpu.h>
 
 class RtcDevice;
-class TSS;
-class GDT;
+// class TSS;
+// class GDT;
 class MMU;
 // class IDT;
 class PIC;
@@ -97,10 +97,7 @@ protected:
   InspirationBase *mInspirationBase;
 
 protected:
-  TSS *mTSS;
-  GDT *mGDT;
   MMU *mMMU;
-  IDT *mIDT;
   PIC *mPIC;
   ACPI *mACPI;
 
@@ -115,14 +112,15 @@ protected:
   PCI *mPci;
 
 public:
+  TInt NumCpus() { return mNumCpus; }
   void AddCpu(CPU *aCPU);
-  CPU *FirstCpu() { return (CPU *)mCpuList.First(); }
-  TBool EndCpus(CPU *aCpu) { return mCpuList.End(aCpu); }
-  CPU *NextCpu(CPU *aCpu) { return (CPU *)mCpuList.Next(aCpu); }
+  CPU *CurrentCpu();
+  CPU *GetCpu(TInt aNum) { return mCpus[aNum]; }
 
 protected:
-  CPUList mCpuList;
-  
+  TInt mNumCpus;
+  CPU *mCpus[MAX_CPUS];
+
 public:
   PS2 *GetPS2() { return mPS2; }
 
@@ -167,10 +165,27 @@ public:
   // suicide/exit/kill task
   TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete = ETrue);
 
-  void DumpTasks();
-  void DumpCurrentTask() { mCurrentTask->Dump(); }
-  BTask *GetCurrentTask() { return mCurrentTask; }
-  const char *CurrentTaskName() { return mCurrentTask ? mCurrentTask->mNodeName : "NO TASK"; }
+  // void DumpTasks();
+  // void DumpCurrentTask() { mCurrentTask->Dump(); }
+  void AddWaitingList(BTask &aTask);
+
+  BTask *GetCurrentTask() {
+    CPU *cpu = CurrentCpu();
+    if (cpu) {
+      return cpu->CurrentTask();
+    }
+    return ENull;
+  }
+  const char *CurrentTaskName() {
+    BTask *t = GetCurrentTask();
+    if (t) {
+      return t->mNodeName;
+    }
+    else {
+      return "NO TASWK";
+    }
+  }
+
   /**
     * Put task to sleep until any of its sigwait signals are set.
     */
@@ -199,7 +214,7 @@ public:
 
 protected:
   SemaphoreList mSemaphoreList;
-  
+
   //
   // Message Ports
   //
@@ -242,6 +257,7 @@ public:
   void GetSystemInfo(TSystemInfo *aSystemInfo) {
     *aSystemInfo = gSystemInfo;
   }
+
 public:
   TBool mDebugSwitch;
 };

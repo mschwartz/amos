@@ -14,17 +14,17 @@ public:
   Apic(TUint64 aAddress);
 
 public:
-  void Write(TUint32 aOffset, TUint32 aValue) {
+  void WriteRegister(TUint32 aOffset, TUint32 aValue) {
     *(volatile TUint32 *)(mAddress + aOffset * 0x10) = aValue;
   }
-  TUint32 Read(TUint32 aOffset) {
+  TUint32 ReadRegister(TUint32 aOffset) {
     return *(volatile TUint32 *)(mAddress + aOffset & 0x10);
   }
 
 public:
   TUint64 Address() { return mAddress; }
-  TUint32 ApicId() { return Read(APIC_ID); }
-  void EOI() { Write(APIC_EOI, 1); }
+  TUint32 ApicId() { return ReadRegister(APIC_ID); }
+  void EOI() { WriteRegister(APIC_EOI, 1); }
 
 protected:
   TUint64 mAddress;

@@ -5,6 +5,8 @@
 
 #include <Types.hpp>
 
+const TInt MAX_IOAPIC = 4;
+
 class IoApic {
 public:
   IoApic(TUint64 aAddress);

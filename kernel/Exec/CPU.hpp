@@ -6,17 +6,18 @@
 // TODO GS register points to this CPU's info area
 
 #include <Types.hpp>
-#include <Types/BList.hpp>
 #include <Exec/x86/ioapic.hpp>
 #include <Exec/x86/apic.hpp>
 #include <Exec/x86/idt.hpp>
 #include <Exec/x86/gdt.hpp>
-
-#define LOCALSIZE 0x1000
+#include <Exec/x86/tss.hpp>
+#include <Exec/BTask.hpp>
 
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
+
+const TInt MAX_CPUS = 64;
 
 enum {
   ECpuUninitialized,
@@ -32,7 +33,10 @@ enum {
 #define CPU_EXTENDED_MODEL_ID(x) ((x >> 16) & 0x0f)
 #define CPU_EXTENDED_FAMILY_ID(x) ((x >> 20) & 0xff)
 
-class CPU : public BNode {
+class ExecBase;
+class CPU : public BBase {
+  friend ExecBase;
+
 public:
   // constructor
   CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic);
@@ -41,8 +45,30 @@ public:
   void StartAP(); // perform SIPI to start AP
 
 public:
-  TUint64 mCpuState;
+  void EnableIRQ(TUint16 aIRQ);
+  void DisableIRQ(TUint16 aIRQ);
+  void AckIRQ(TUint16 aIRQ);
+
+protected:
+  GDT *mGdt;
+  TSS *mTss;
+  IDT *mIdt;
+
+public:
+  void AddTask(BTask *aTask);
+  TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode);
+  BTask *CurrentTask() { return mCurrentTask; }
+  void DumpTasks();
+
+  void RescheduleIRQ();
   
+protected:
+  BTaskList mActiveTasks;
+  BTask *mCurrentTask;
+
+public:
+  TUint64 mCpuState;
+
 public:
   TUint32 mProcessorId;
   TUint32 mApicId;
@@ -73,8 +99,6 @@ public:
   char mManufacturer[16];
   char mBrand[64];
   //
-  IDT *mIdt;
-  GDT *mGdt;
 
 public:
   void Dump() {

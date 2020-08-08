@@ -17,6 +17,7 @@ class MessagePort;
 class ExecBase;
 class Semaphore;
 class InspirationBase;
+class CPU;
 
 enum ETaskState {
   ETaskRunning,
@@ -27,6 +28,7 @@ enum ETaskState {
 class BTask : public BNodePri {
   friend ExecBase;
   friend Semaphore;
+  friend CPU;
 
 public:
   BTask(const char *aName, TInt64 aPri = 0, TUint64 aStackSize = default_task_stack_size);
@@ -37,6 +39,7 @@ public:
 
 protected:
   volatile ETaskState mTaskState;
+  CPU *mCpu;
 
 public:
   /**

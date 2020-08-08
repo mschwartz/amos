@@ -3,10 +3,8 @@
 
 #include <Types.hpp>
 #include <Exec/BBase.hpp>
+#include <Exec/CPU.hpp>
 #include <Exec/x86/ioapic.hpp>
-
-const TInt MAX_CPUS = 128; // 128 cores max
-const TInt MAX_IOAPIC = 4;
 
 typedef struct _acpi_ {
 

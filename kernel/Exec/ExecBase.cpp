@@ -7,11 +7,7 @@
 #include <Inspiration/InspirationBase.hpp>
 #include <Graphics/TModeInfo.hpp>
 
-#include <Exec/CPU.hpp>
 #include <Exec/x86/mmu.hpp>
-#include <Exec/x86/idt.hpp>
-#include <Exec/x86/tss.hpp>
-#include <Exec/x86/gdt.hpp>
 #include <Exec/x86/pic.hpp>
 #include <Exec/x86/ps2.hpp>
 #include <Exec/x86/pci.hpp>
@@ -50,6 +46,11 @@ ExecBase::ExecBase() {
   dlog("\n\nDisplay Mode table at(0x%x).  Current Mode:\n", gGraphicsModes);
   gGraphicsModes->mDisplayMode.Dump();
 
+  mNumCpus = 0;
+  for (TInt i = 0; i < MAX_CPUS; i++) {
+    mCpus[i] = ENull;
+  }
+
   // set up paging
   mMMU = new MMU;
   dlog("  initialized MMU\n");
@@ -66,15 +67,6 @@ ExecBase::ExecBase() {
   }
 
   mMessagePortList = new MessagePortList("ExecBase MessagePort List");
-
-  mTSS = new TSS;
-
-  mGDT = new GDT(mTSS);
-  // mGDT = new GDT();
-  dlog("  initialized GDT\n");
-
-  mIDT = new IDT;
-  dlog("  initialized IDT\n");
 
   mPci = new PCI();
   dlog("  initialized PCI\n");
@@ -96,11 +88,12 @@ ExecBase::ExecBase() {
 #endif
 
   // Before enabling interrupts, we need to have the idle task set up
-  InitTask *task = new InitTask();
-  mActiveTasks.Add(*task);
-  mCurrentTask = mActiveTasks.First();
-  current_task = &mCurrentTask->mRegisters;
+  // InitTask *task = new InitTask();
+  // mActiveTasks.Add(*task);
+  // mCurrentTask = mActiveTasks.First();
+  // current_task = &mCurrentTask->mRegisters;
 
+  mCpus[0]->StartAP();
   Enable();
 }
 
@@ -108,9 +101,14 @@ ExecBase::~ExecBase() {
   dlog("ExecBase destructor called\n");
 }
 
-void ExecBase::AddCpu(CPU *aCPU) {
-  mCpuList.AddTail(*aCPU);
+void ExecBase::AddCpu(CPU *aCpu) {
+  mCpus[mNumCpus++] = aCpu;
 }
+
+CPU *ExecBase::CurrentCpu() {
+  return mCpus[0];
+}
+
 void ExecBase::SetInspirationBase(InspirationBase *aInspirationBase) {
   mInspirationBase = aInspirationBase;
   mInspirationBase->Init();
@@ -136,7 +134,11 @@ void ExecBase::Enable() {
 void ExecBase::AddTask(BTask *aTask) {
   DISABLE;
 
-  aTask->mRegisters.tss = (TUint64)&mTSS->mTss;
+  // TODO: this should figure out which CPU to assign task to
+  CPU *c = CurrentCpu();
+  c->AddTask(aTask);
+
+  aTask->mRegisters.tss = (TUint64)c->mTss;
   dlog("    Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
   //  aTask->Dump();
   mActiveTasks.Add(*aTask);
@@ -147,35 +149,20 @@ void ExecBase::AddTask(BTask *aTask) {
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
-  DISABLE;
 
-  aTask->Remove();
-  TBool isCurrentTask = aTask == mCurrentTask;
-  if (isCurrentTask) {
-    dlog("RemoveTask(%s) code(%d) delete(%d) CURRENT TASK\n", aTask->TaskName(), aExitCode, aDelete);
-  }
-  else {
-    dlog("RemoveTask(%s) code(%d) delete(%d)\n", aTask->TaskName(), aExitCode, aDelete);
-  }
+  DISABLE;
+  CPU *c = CurrentCpu();
+  c->RemoveTask(aTask, aExitCode);
+  ENABLE;
 
   if (aDelete) {
     delete aTask;
   }
 
-  if (isCurrentTask) {
-    mCurrentTask = mActiveTasks.First();
-    current_task = &mCurrentTask->mRegisters;
-    Kickstart();
-
-    //   // need to do this with interrupts disabled so there can be no task struct access for the deleted task
-    //   // RescheduleIRQ();
-    //   Kickstart();
-    //   // Schedule();
-  }
-  ENABLE;
   return aExitCode;
 }
 
+#if 0
 void ExecBase::DumpTasks() {
   dlog("\n\nActive Tasks\n");
   mActiveTasks.Dump();
@@ -183,6 +170,7 @@ void ExecBase::DumpTasks() {
   mWaitingTasks.Dump();
   dlog("\n\n");
 }
+#endif
 
 void ExecBase::WaitSignal(BTask *aTask) {
   DISABLE;
@@ -259,10 +247,17 @@ void ExecBase::Kickstart() {
   enter_tasking(); // just enter next task
 }
 
+void ExecBase::AddWaitingList(BTask &aTask) {
+  mWaitingTasks.Add(*mCurrentTask);
+}
+
 /**
  * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
  */
 void ExecBase::RescheduleIRQ() {
+  CPU *c = CurrentCpu();
+  c->RescheduleIRQ();
+#if 0
   BTask *t = mCurrentTask;
 
   if (mCurrentTask && mCurrentTask->mTaskState != ETaskBlocked) {
@@ -288,6 +283,7 @@ void ExecBase::RescheduleIRQ() {
     dprint("  Previous Task %s\n", t->TaskName());
     dprint("\n\n\n");
   }
+#endif
 }
 
 /********************************************************************************

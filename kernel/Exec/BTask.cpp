@@ -1,5 +1,6 @@
 #include <Exec/ExecBase.hpp>
 #include <Exec/BTask.hpp>
+#include <Exec/CPU.hpp>
 #include <Devices/TimerDevice.hpp>
 #include <Devices/RtcDevice.hpp>
 
@@ -56,7 +57,7 @@ void BTask::Suicide(TInt64 aCode) {
 }
 
 void BTask::RunWrapper(BTask *aTask) {
-  BTask *t = gExecBase.GetCurrentTask();
+  BTask *t = aTask->mCpu->CurrentTask();
   TInt64 code = t->Run();
 
   // if task returns it is removed from the active list and deleted.

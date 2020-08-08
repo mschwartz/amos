@@ -83,11 +83,10 @@ static TIsrHandler interrupt_handlers[INTERRUPTS];
   *
   * This method is called from the assembly ISR handler(s) and Exception handlers.
   */
-extern "C" bool kernel_isr(TInt64 aIsrNumber) {
+extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
   cli();
 
   // dlog("kernel_isr %d\n", aIsrNumber);
-
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {
     const char *desc = IDT::InterruptDescription(current_task->isr_num);
@@ -97,6 +96,8 @@ extern "C" bool kernel_isr(TInt64 aIsrNumber) {
 
   bool ret = info->mHandler(info->mInterruptNumber, info->mData);
   return ret;
+  // CPU *cpu = gExecBase.CurrentCpu();
+  // return cpu->ProcessIrq(aIsrNumber);
 };
 
 #pragma pack(1)

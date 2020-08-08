@@ -3,9 +3,8 @@
 
 #include <Types.hpp>
 #include <Exec/BBase.hpp>
-
-const TInt MAX_CPUS = 128; // 128 cores max
-const TInt MAX_IOAPIC = 4;
+#include <Exec/CPU.hpp>
+#include <Exec/x86/ioapic.hpp>
 
 typedef struct _acpi_ {
 
@@ -84,6 +83,7 @@ protected:
   void ParseMADT(TAny *aMadt, TInt32 aLen);
 
 protected:
+  IoApic *mIoApic;
   TAcpiInfo mAcpiInfo;
 };
 

@@ -35,8 +35,8 @@ RW      0x02 R/W 1 = read access for code selector, 1 = write access for data se
 AC      0x01 Accessed (set to 0) CPU sets this when segment is accessed (e.g. busy)
  */
 
-extern "C" void gdt_flush(TAny *gp, TUint16 cs);        // ASM function
-extern "C" void tss_flush(TUint32 segment); // ASM funct
+extern "C" void gdt_flush(TAny *gp, TUint16 cs); // ASM function
+extern "C" void tss_flush(TUint32 segment);      // ASM funct
 
 struct gdtp {
   TUint16 len;
@@ -92,7 +92,7 @@ GDT::GDT(TSS *aTss) {
 
   // TUint64 addr = tss_base;
   gGdt[SEG_TSS] = (0x0067) | ((tss_base & 0xFFFFFF) << 16) | (0x00E9LL << 40) |
-                 (((tss_base >> 24) & 0xFF) << 56);
+                  (((tss_base >> 24) & 0xFF) << 56);
   gGdt[SEG_TSS_HIGH] = (tss_limit >> 32L);
 
   gGdtp.len = 7 * 8 - 1;

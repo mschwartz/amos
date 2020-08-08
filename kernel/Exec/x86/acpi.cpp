@@ -9,50 +9,50 @@
 #define MADT_INT 2
 
 typedef struct {
-  TUint8 signature[8];
-  TUint8 checksum;
-  TUint8 OEMID[6];
-  TUint8 revision;
-  TUint32 rsdt;
-  TUint32 length;
-  TUint64 xsdt;
-  TUint8 checksum2;
-  TUint8 _[3];
+  TUint8 mSignature[8];
+  TUint8 mChecksum;
+  TUint8 mOEMID[6];
+  TUint8 mRevision;
+  TUint32 mRsdt;
+  TUint32 mLength;
+  TUint64 mXsdt;
+  TUint8 mChecksum2;
+  TUint8 mReserved[3];
   void Dump() {
     dprint("\n\n");
     dlog("RSDP at %x\n", this);
-    dlog("  signature: %8s \n", signature);
-    dlog("   checksum: %x\n", checksum);
-    dlog("   revision: %d\n", revision);
-    dlog("       rsdt: %x\n", rsdt);
-    dlog("     length: %d\n", length);
-    dlog("       xsdt: %x\n", xsdt);
-    dlog("  checksum2: %x\n", checksum2);
+    dlog(" mSignature: %8s \n", mSignature);
+    dlog("  mChecksum: %x\n", mChecksum);
+    dlog("  mRevision: %d\n", mRevision);
+    dlog("      mRsdt: %x\n", mRsdt);
+    dlog("    mLength: %d\n", mLength);
+    dlog("      mXsdt: %x\n", mXsdt);
+    dlog(" mChecksum2: %x\n", mChecksum2);
     dprint("\n\n");
   }
 } PACKED RSDP;
 
 typedef struct {
-  TUint8 signature[4];
+  TUint8 mSignature[4];
   TUint32 len;
-  TUint8 revision;
-  TUint8 checksum;
-  TUint8 OEMID[6];
+  TUint8 mRevision;
+  TUint8 mChecksum;
+  TUint8 mOEMID[6];
   TUint8 table_ID[8];
-  TUint32 OEM_revision;
+  TUint32 mOemRevision;
   TUint32 creator;
   TUint32 creator_rev;
   TUint8 data[];
   void Dump(TUint8 aRevision) {
     dprint("\n\n");
     dlog("SDT at %x\n", this);
-    dlog("      signature: %4s\n", signature);
+    dlog("     mSignature: %4s\n", mSignature);
     dlog("            len: %d\n", len);
-    dlog("       revision: %d\n", revision);
-    dlog("       checksum: %x\n", checksum);
-    dlog("          OEMID: %6s\n", OEMID);
+    dlog("       mRevision: %d\n", mRevision);
+    dlog("      mChecksum: %x\n", mChecksum);
+    dlog("          mOEMID: %6s\n", mOEMID);
     dlog("       table_ID: %8s\n", table_ID);
-    dlog("   OEM_revision: %d\n", OEM_revision);
+    dlog("   mOemRevision: %d\n", mOemRevision);
     dlog("        creator: %x\n", creator);
     dlog("     creator_rev: %d\n", creator_rev);
 
@@ -73,7 +73,7 @@ typedef struct {
 } PACKED SDT;
 
 typedef struct {
-  TUint32 lic_address;
+  TUint32 mIoApic;
   TUint32 flags;
   TUint8 data[];
 } PACKED MADT;
@@ -104,14 +104,14 @@ typedef struct {
   uint16_t flags;
 } PACKED TInterrupt;
 
-
 void ACPI::ParseMADT(TAny *aMadt, TInt32 aLen) {
   MADT *madt = (MADT *)aMadt;
   TAny *end = (TAny *)(madt + aLen);
 
   TMadtEntry *e = (TMadtEntry *)madt->data;
 
-  dlog("      Local Interrupt Controller: %x\n", madt->lic_address);
+  mIoApic = new IoApic((TUint64)madt->mIoApic);
+  dlog("      IO APIC: %x\n", madt->mIoApic);
 
   while ((TAny *)e < end) {
     TInt i;
@@ -174,8 +174,8 @@ void ACPI::ParseSDT(TAny *aSdt, TUint8 aRevision) {
   for (int i = 0; i < entries; i++) {
     SDT *table = (SDT *)(aRevision ? p64[i] : p32[i]);
 
-    dlog("    Found table: (%4s), at %016x table->len (%d)\n", (char *)table->signature, table, table->len);
-    if (CompareMemory(table->signature, MADT_SIGNATURE, 4) == 0) {
+    dlog("    Found table: (%4s), at %016x table->len (%d)\n", (char *)table->mSignature, table, table->len);
+    if (CompareMemory(table->mSignature, MADT_SIGNATURE, 4) == 0) {
       dlog("             MADT\n");
       ParseMADT(table->data, table->len);
     }
@@ -222,8 +222,8 @@ ACPI::ACPI() {
   }
   // rsdp->Dump();
 
-  SDT *s = (SDT *)(rsdp->revision ? rsdp->xsdt : rsdp->rsdt);
-  ParseSDT(s, rsdp->revision);
+  SDT *s = (SDT *)(rsdp->mRevision ? rsdp->mXsdt : rsdp->mRsdt);
+  ParseSDT(s, rsdp->mRevision);
   mAcpiInfo.Dump();
   bochs;
   dprint("\n\n");

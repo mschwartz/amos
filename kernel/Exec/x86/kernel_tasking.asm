@@ -83,9 +83,29 @@ endstruc
 ;; this is callable from C/C++ to set the GS register value
 global SetGS
 SetGS:
-	mov gs, rdi
+	push rax
+	push rcx
+	push rdx
+
+	mov al, 1
+	mov [gs_flag], al
+
+	mov rcx, 0xC0000101
+	xor rdx, rdx
+	mov rax, rdi
+	wrmsr
+
+	swapgs
+
+	pop rdx
+	pop rcx
+	pop rax
 	ret
 
+gs_flag:
+	db 0
+align 16
+	
 global GetGS
 GetGS:
 	mov rax, gs
@@ -98,6 +118,13 @@ SetCPU:
 	
 global GetCPU
 GetCPU:
+	mov al, [gs_flag]
+	test al, al
+	jne .initialized
+	xor rax, rax
+	ret
+	
+.initialized:
 	mov rax, [gs:TGS.current_cpu]
 	ret
 	

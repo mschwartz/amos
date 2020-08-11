@@ -19,8 +19,11 @@ _start:
 extern kernel_main
 extern ap_main
 
-start_msg:
+kernel_start_message:
 	db 13, 10, 'kernel_start', 13, 10, 0
+ap_start_message:
+	db 13, 10, 'ap_start', 13, 10, 0
+
 global bochs_present
 bochs_present:
 	db 0
@@ -91,16 +94,23 @@ boot:
 	mov rax, kernel_end
 	mov [rdi + SYSINFO.kernel_end], rax
 
-        mov rsi, start_msg
-        call puts64
-
+	xor rax, rax
 	mov al, [cpu_num]
 	test al, al
 	je .main
 
+	push rax
+        mov rsi, ap_start_message
+        call puts64
+	pop rax
+
+	mov rdi, rax
 	call ap_main
 	ret
 .main:
+        mov rsi, kernel_start_message
+        call puts64
+
 	push rdi
 	push rcx
 	push rax

@@ -65,13 +65,13 @@ public:
 
 public:
   void WriteRegister(TUint32 aOffset, TUint32 aValue) {
-    dlog("    > WriteRegister mAddress(%x) %x (%x) <= %x\n", mAddress, mAddress + aOffset, aOffset, aValue);
+    // dlog("    > WriteRegister mAddress(%x) %x (%x) <= %x\n", mAddress, mAddress + aOffset, aOffset, aValue);
     *(volatile TUint32 *)(mAddress + aOffset) = aValue;
   }
 
   TUint32 ReadRegister(TUint32 aOffset) {
     TUint32 val = *(volatile TUint32 *)(mAddress + aOffset);
-    dlog("    < ReadRegister %x (%x) = %x\n", mAddress + aOffset, aOffset, val);
+    // dlog("    < ReadRegister %x (%x) = %x\n", mAddress + aOffset, aOffset, val);
     return val;
   }
 

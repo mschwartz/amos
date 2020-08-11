@@ -24,13 +24,17 @@ static void call_global_constructors(void) {
 
 extern "C" TUint64 rdtsc();
 
-extern "C" int ap_main(TSystemInfo *aSystemInfo) {
-  dlog("ap_start\n");
+extern "C" int ap_main(TInt64 aCpuNumber) {
+  dlog("ap_start %d\n", aCpuNumber);
+  CPU *cpu = gExecBase.GetCpu(aCpuNumber);
+  cpu->mCpuState = ECpuRunning;
+  cpu->EnterAP();
   while (1) {
     halt();
   }
   return 0;
 }
+
 extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   cli();
   dhexdump((TAny *)0x8000, 10);

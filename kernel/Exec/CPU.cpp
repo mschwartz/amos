@@ -8,15 +8,13 @@ extern "C" void cpu_brand(char *buf);
 extern "C" void enter_tasking();
 
 CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic) {
+  dlog("CONSTRUCT CPU %d\n", aProcessor);
+  mGS.mCurrentCpu = aProcessor;
   mProcessor = aProcessor;
   mProcessorId = aProcessorId;
   mApicId = aApicId;
   mIoApic = aIoApic;
-  // mApic = new Apic(aIoApic->Address() + mApicId * 0x10);
   mApic = new Apic(aIoApic->Address(), mApicId);
-
-  // TODO move this code into a routine that is running in the CPU
-  TUint32 eax, ebx, edx, ecx;
 
   mTss = new TSS();
   dlog("CPU %d initialized TSS\n", mProcessor);
@@ -25,6 +23,14 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
   mIdt = new IDT();
   dlog("CPU %d initialized IDT\n", mProcessor);
 
+  if (mProcessor == 0) {
+    SetGS(&this->mGS);
+    mGdt->Install();
+    mIdt->Install();
+  }
+
+  // TODO move this code into a routine that is running in the CPU
+  TUint32 eax, ebx, edx, ecx;
   eax = 0;
   cpuid(&eax, &ebx, &ecx, &edx);
   CopyMemory(mManufacturer, (char *)&ebx, 12);
@@ -74,20 +80,12 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
   Dump();
 }
 
+// This function must run in the CPU!
 void CPU::EnterAP() {
+  this->mGS.mCurrentCpu = this->mProcessor;
   SetGS(&this->mGS);
-  SetCPU(this);
+  // SetCPU(this->mProcessor);
 
-  IdleTask *task = new IdleTask();
-  task->mCpu = this;
-  mActiveTasks.Add(*task);
-  mCurrentTask = mActiveTasks.First();
-  SetCurrentTask(&mCurrentTask->mRegisters);
-  enter_tasking(); // just enter next task
-}
-
-void CPU::StartAP(BTask *aTask) {
-  dlog("CPU %d StartAP\n", mProcessor);
   if (mProcessorId == 0) { // no need to start the boot processsor
     // Before enabling interrupts, we need to have the idle task set up
     InitTask *task = new InitTask();
@@ -101,12 +99,23 @@ void CPU::StartAP(BTask *aTask) {
     return;
   }
 
+  mGdt->Install();
+  mIdt->Install();
+
+  IdleTask *task = new IdleTask();
+  task->mCpu = this;
+  mActiveTasks.Add(*task);
+  mCurrentTask = mActiveTasks.First();
+  SetCurrentTask(&mCurrentTask->mRegisters);
+  enter_tasking(); // just enter next task
+}
+
+void CPU::StartAP(BTask *aTask) {
+  dlog("CPU %d StartAP\n", mProcessor);
+
   Apic *apic = mApic;
-  apic->Dump();
   aTask->Sleep(2);
 
-  dhexdump((TAny *)0x8000, 10);
-  
   if (!apic->SendIPI(mProcessor, 0x8000)) {
     dlog("*** COULD NOT IPI (%d)\n", mProcessor);
     bochs;
@@ -140,6 +149,9 @@ void CPU::StartAP(BTask *aTask) {
   }
   if (mCpuState != ECpuRunning) {
     dlog("*** COULD NOT START %d\n", mProcessor);
+  }
+  else {
+    dlog("--> CPU %d running\n", mProcessor);
   }
 }
 

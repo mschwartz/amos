@@ -57,7 +57,8 @@ void BTask::Suicide(TInt64 aCode) {
 }
 
 void BTask::RunWrapper(BTask *aTask) {
-  BTask *t = aTask->mCpu->CurrentTask();
+  CPU *c = (CPU *)aTask->mCpu;
+  BTask *t = ((CPU *)c)->CurrentTask();
   dlog("RunWrapper Task: %x\n", t->TaskName());
   // t->Dump();
   

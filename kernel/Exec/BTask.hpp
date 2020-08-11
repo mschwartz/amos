@@ -39,7 +39,7 @@ public:
 
 protected:
   volatile ETaskState mTaskState;
-  CPU *mCpu;
+  volatile CPU *mCpu;
 
 public:
   /**

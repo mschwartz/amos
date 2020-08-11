@@ -87,7 +87,7 @@ ExecBase::ExecBase() {
   mPS2 = ENull;
 #endif
 
-  mCpus[0]->StartAP(ENull);
+  mCpus[0]->EnterAP();
   Enable();
 }
 
@@ -100,6 +100,16 @@ void ExecBase::AddCpu(CPU *aCpu) {
 }
 
 CPU *ExecBase::CurrentCpu() {
+  if (mCpus[0]) {
+    TUint64 cpu = GetCPU();
+    if (cpu > mNumCpus) {
+      return mCpus[0];
+    }
+    else {
+      dlog("CurrentCpu = %d\n", cpu);
+      return mCpus[cpu];
+    }
+  }
   return mCpus[0];
 }
 

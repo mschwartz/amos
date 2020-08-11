@@ -237,7 +237,7 @@ DATA_SEG: equ gdt_data - gdt_start
 
 ;; APPLICATION PROCESSOR BOOT
 ap_message:
-	db 'AP BOOT!', 13, 10, 0
+	db 'AP BOOT ', 0
 	ALIGN 4
 ap_boot:
 	cli
@@ -254,13 +254,10 @@ ap_boot:
         ; mov fs, ax
         ; mov gs, ax
 
-	call newline16
-	call newline16
-	call newline16
 	mov si, ap_message
 	call puts16
-	call newline16
-	call newline16
+	mov al, [CPU_NUM]
+	call hexbyte16
 	call newline16
 
 	; enable A20
@@ -281,7 +278,6 @@ ap_wait_a20:
         cli
         lgdt [gdtr]
 
-	BOCHS
 	mov eax, cr0
 	or al, 1
 	mov cr0, eax

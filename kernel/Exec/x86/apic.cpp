@@ -17,7 +17,8 @@ Apic::Apic(TUint64 aAddress, TUint64 aApicId) {
 TBool Apic::WaitForIdle() {
   TInt timeout = 10;
 
-  while (ReadRegister(APIC_ICR_LOW) & APIC_DELIVERY_BUSY && --timeout > 0) {
+  while (ReadRegister(APIC_ICR_LOW) & APIC_DELIVERY_BUSY && timeout > 0) {
+    --timeout;
   }
 
   return timeout > 0;
@@ -40,10 +41,9 @@ TBool Apic::InterruptOthers(TUint8 aVector) {
 
 TBool Apic::SendIPI(TUint8 aApicId, TUint64 aAddress) {
   DISABLE;
-  dprint("\n\n");
-  dlog("SendIPI(%d, %x)\n", aApicId, aAddress);
+  // dlog("SendIPI(%d, %x)\n", aApicId, aAddress);
   if (!WaitForIdle()) {
-    dlog("SendIPI %d not idle\n", aApicId);
+    // dlog("SendIPI %d not idle\n", aApicId);
     ENABLE;
     return EFalse;
   }
@@ -52,17 +52,17 @@ TBool Apic::SendIPI(TUint8 aApicId, TUint64 aAddress) {
   WriteRegister(APIC_ICR_LOW, APIC_DELIVERY_MODE(APIC_MODE_INIT) | APIC_LEVEL_ASSERT | APIC_DESTINATION_PHYSICAL);
 
   TBool status = WaitForIdle();
-  dlog("SendIPI (%d, %x) returns %d\n", aApicId, aAddress, status);
+  // dlog("SendIPI (%d, %x) returns %d\n", aApicId, aAddress, status);
   ENABLE;
   return status;
 }
 
 TBool Apic::SendSIPI(TUint8 aApicId, TUint64 aAddress) {
   DISABLE;
-  dprint("\n\n");
-  dlog("SendSIPI(%d, %x)\n", aApicId, aAddress);
+  // dprint("\n\n");
+  // dlog("SendSIPI(%d, %x)\n", aApicId, aAddress);
   if (!WaitForIdle()) {
-    dlog("SendSIPI %d not idle\n", aApicId);
+    // dlog("SendSIPI %d not idle\n", aApicId);
     ENABLE;
     return EFalse;
   }
@@ -70,7 +70,7 @@ TBool Apic::SendSIPI(TUint8 aApicId, TUint64 aAddress) {
   WriteRegister(APIC_ICR_HIGH, APIC_DESTINATION(aApicId));
   WriteRegister(APIC_ICR_LOW, APIC_DELIVERY_MODE(APIC_MODE_SIPI) | APIC_LEVEL_ASSERT | APIC_DESTINATION_PHYSICAL | (aAddress>>12));
   TBool status = WaitForIdle();
-  dlog("SendSIPI (%d, %x) returns %d\n", aApicId, aAddress, status);
+  // dlog("SendSIPI (%d, %x) returns %d\n", aApicId, aAddress, status);
   ENABLE;
   return status;
 }

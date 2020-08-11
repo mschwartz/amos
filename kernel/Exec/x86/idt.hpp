@@ -36,6 +36,8 @@ public:
 
   TBool Alive() { return mAlive; }
 
+  void Install();
+  
 public:
   static const char *InterruptDescription(TUint16 n);
 

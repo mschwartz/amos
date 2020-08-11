@@ -42,6 +42,8 @@ public:
   CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic);
 
 public:
+  // Initialize must be called from the actual running CPU (e.g. not the BSP)
+  // void Initialize();
   void StartAP(BTask *aTask); // perform SIPI to start AP
   void EnterAP(); // entry point for AP, running in the AP's CORE!
 

@@ -225,7 +225,6 @@ ACPI::ACPI() {
   SDT *s = (SDT *)(rsdp->mRevision ? rsdp->mXsdt : rsdp->mRsdt);
   ParseSDT(s, rsdp->mRevision);
   mAcpiInfo.Dump();
-  bochs;
   dprint("\n\n");
 }
 

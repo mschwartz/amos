@@ -182,7 +182,7 @@ public:
       return t->mNodeName;
     }
     else {
-      return "NO TASWK";
+      return "NO TASK";
     }
   }
 

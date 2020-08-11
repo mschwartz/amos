@@ -24,8 +24,21 @@ static void call_global_constructors(void) {
 
 extern "C" TUint64 rdtsc();
 
+extern "C" int ap_main(TInt64 aCpuNumber) {
+  dlog("ap_start %d\n", aCpuNumber);
+  CPU *cpu = gExecBase.GetCpu(aCpuNumber);
+  cpu->mCpuState = ECpuRunning;
+  cpu->EnterAP();
+  while (1) {
+    halt();
+  }
+  return 0;
+}
+
 extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   cli();
+  dhexdump((TAny *)0x8000, 10);
+  
   InitAllocMem();
   CopyString(&gSystemInfo.mVersion[0], "AMOS v1.0");
   // in_bochs = *((TUint8 *)0x7c10);
@@ -48,12 +61,8 @@ extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   gSystemInfo.mDiskSize = gSystemInfo.mNumHeads * gSystemInfo.mNumSectors * gSystemInfo.mNumCylinders * 512;
 
   call_global_constructors();
-  // gSystemInfo.Dump();
-  // dlog("EBDA\n");
-  // dhexdump((TAny *)gSystemInfo.mEBDA, 32);
-
-  gExecBase.Kickstart(); // does not return
 
   // it should NEVER get here!
+  bochs;
   return 0;
 }

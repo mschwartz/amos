@@ -53,6 +53,10 @@ class RtcTask : public BTask {
 public:
   RtcTask(RtcDevice *aRtcDevice) : BTask("Rtc Task", LIST_PRI_MAX) {
     mRtcDevice = aRtcDevice;
+    mSignalBit = AllocSignal(-1);
+    mMessagePort = CreatePort("rtc.device");
+    gExecBase.AddMessagePort(*mMessagePort);
+
   }
 
 public:
@@ -82,10 +86,6 @@ public:
 
     gExecBase.SetIntVector(ERtcClockIRQ, new RtcInterrupt(this));
     gExecBase.EnableIRQ(IRQ_RTC);
-
-    mSignalBit = AllocSignal(-1);
-    mMessagePort = CreatePort("rtc.device");
-    gExecBase.AddMessagePort(*mMessagePort);
 
     BMessageList rtcQueue("rtc.device queue");
     ENABLE;

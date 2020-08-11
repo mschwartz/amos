@@ -42,8 +42,8 @@ typedef struct Task {
   volatile TUint64 cs;
   volatile TUint64 ds;
   volatile TUint64 es;
-  volatile TUint64 fs;
-  volatile TUint64 gs;
+  // volatile TUint64 fs;
+  // volatile TUint64 gs;
   volatile TUint64 ss;
 
   volatile TUint8 fxsave[512+16];
@@ -84,7 +84,20 @@ typedef struct Task {
   }
 } PACKED TTaskRegisters;
 
-extern "C" TTaskRegisters *current_task;
-extern "C" TTaskRegisters *next_task;
+typedef struct {
+  TUint64 mCurrentTask;
+  TUint64 mCurrentCpu;
+} PACKED TGS;
+
+class CPU;
+
+extern "C" void SetCurrentTask(TTaskRegisters *aTask);
+extern "C" TTaskRegisters *GetCurrentTask();
+
+extern "C" void SetGS(TGS *aGsValue);
+extern "C" TGS *GetGS();
+
+extern "C" void SetCPU(TUint64 aCpu);
+extern "C" TUint64 GetCPU();
 
 #endif

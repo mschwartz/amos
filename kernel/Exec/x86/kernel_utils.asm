@@ -106,12 +106,6 @@ GetFS:
         mov ax, fs
         ret
 
-global GetGS
-GetGS:
-        xor rax, rax
-        mov ax, gs
-        ret
-
 global GetRSP
 GetRSP:
 	mov rax, rsp

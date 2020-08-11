@@ -17,11 +17,17 @@ _start:
 %include "../boot/memory.inc"
 
 extern kernel_main
+extern ap_main
 
-start_msg:
+kernel_start_message:
 	db 13, 10, 'kernel_start', 13, 10, 0
+ap_start_message:
+	db 13, 10, 'ap_start', 13, 10, 0
+
 global bochs_present
 bochs_present:
+	db 0
+cpu_num:
 	db 0
 	
 align 8
@@ -40,7 +46,7 @@ extern kernel_end
 	
 boot:
 	mov [bochs_present], al
-
+	mov [cpu_num], ah
 	; mov rax, kstack_end
 	mov rsp, kstack_end
 	
@@ -88,9 +94,38 @@ boot:
 	mov rax, kernel_end
 	mov [rdi + SYSINFO.kernel_end], rax
 
-        mov rsi, start_msg
+	xor rax, rax
+	mov al, [cpu_num]
+	test al, al
+	je .main
+
+	push rax
+        mov rsi, ap_start_message
+        call puts64
+	pop rax
+
+	mov rdi, rax
+	call ap_main
+	ret
+.main:
+        mov rsi, kernel_start_message
         call puts64
 
+	push rdi
+	push rcx
+	push rax
+	mov rdi, bss_start
+	mov rcx, bss_end
+	xor rax, rax
+
+.clear_bss:
+	stosb
+	cmp rdi, rcx
+	jl .clear_bss
+	pop rax
+	pop rcx
+	pop rdi
+	
         call kernel_main
         ret
 

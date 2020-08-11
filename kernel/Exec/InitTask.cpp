@@ -18,15 +18,39 @@ TInt64 InitTask::Run() {
   dprint("\n");
   dlog("InitTask Run\n");
 
-  // initialize devices
+  gExecBase.AddTask(new IdleTask());
   dlog("  initialize timer\n");
   gExecBase.AddDevice(new TimerDevice());
 
-  // dlog("  initialize serial\n");
-  // AddDevice(new SerialDevice());
-
   dlog("  initialize rtc \n");
   gExecBase.AddDevice(new RtcDevice());
+
+  dlog("  STARTING APs\n");
+  for (TInt i = 1; i < gExecBase.NumCpus(); i++) {
+    CPU *cpu = gExecBase.GetCpu(i);
+    // Apic *apic = cpu->mApic;
+    cpu->StartAP(this); // initialize tasking for AP
+    // TODO: actually start application processor
+    // IPI
+    // dlog("CPU %d SendIPI\n", i);
+    // apic->SendIPI(cpu->mApicId, 8);
+    // delay 10ms
+    // MilliSleep(10);
+    // SIPI
+    // dlog("CPU %d SendSIPI\n", i);
+    // apic->SendSIPI(cpu->mApicId, 8);
+    // wait for CPU to boot
+    // send second SIPI if it didn't boot
+    // give up if second SIPI didn't work
+    // TODO: this needs to be done from ap_start() in kernel_main.cpp;
+    // enter_tasking(); // just enter next task
+  }
+  // initialize devices
+
+  Sleep(3);
+  
+  // dlog("  initialize serial\n");
+  // AddDevice(new SerialDevice());
 
   dlog("  initialize keyboard \n");
   gExecBase.AddDevice(new KeyboardDevice);
@@ -34,7 +58,6 @@ TInt64 InitTask::Run() {
   dlog("  initialize mouse \n");
   gExecBase.AddDevice(new MouseDevice());
 
-  gExecBase.AddTask(new IdleTask());
   // Initialize PCI Devices
   dprint("\n\n");
   dlog("  initialze PCI Devices\n");
@@ -138,11 +161,12 @@ TInt64 InitTask::Run() {
 
   dlog("  initialize Inspiration\n");
   gExecBase.SetInspirationBase(new InspirationBase());
+
   return 0;
   // gExecBase.mInspirationBase->Init();
 
   // Sleep(5);
-  
+
   // StartExamples();
   // for (;;) {
   //   dlog("InitTask Looping\n");

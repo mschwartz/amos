@@ -42,6 +42,9 @@ public:
     SetFrequency(QUANTUM);
     gExecBase.SetIntVector(ETimerIRQ, new TimerInterrupt(this));
     gExecBase.EnableIRQ(IRQ_TIMER);
+    mSignalBit = AllocSignal(-1);
+    mMessagePort = CreatePort("timer.device");
+    gExecBase.AddMessagePort(*mMessagePort);
   }
 
   void SetFrequency(TInt hz) {
@@ -65,13 +68,9 @@ TInt64 TimerTask::Run() {
 
   BMessageList timerQueue("timer.device queue");
 
-  mSignalBit = AllocSignal(-1);
-  mMessagePort = CreatePort("timer.device");
-  gExecBase.AddMessagePort(*mMessagePort);
+  TUint64 port_mask = 1 << mMessagePort->SignalNumber();
+  TUint64 tick_mask = 1 << mSignalBit;
 
-  TUint64 port_mask = 1<<mMessagePort->SignalNumber();
-  TUint64 tick_mask = 1<<mSignalBit;
-  
   for (;;) {
     TUint64 sigs = Wait(port_mask | tick_mask);
     if (sigs & port_mask) {

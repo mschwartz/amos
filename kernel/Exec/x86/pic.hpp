@@ -24,6 +24,11 @@ public:
   void EnableIRQ(TUint16 aIRQ);
   void DisableIRQ(TUint16 aIRQ);
   void AckIRQ(TUint16 aIRQ);
+
+protected:
+  void EnablePIC();
+  void DisablePIC();
+
 protected:
   TUint8 mMasterMask, mSlaveMask;
 };

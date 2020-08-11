@@ -39,7 +39,7 @@ public:
 
 protected:
   volatile ETaskState mTaskState;
-  CPU *mCpu;
+  volatile CPU *mCpu;
 
 public:
   /**
@@ -93,6 +93,11 @@ public:
 
 protected:
   void FreePort(MessagePort *aMessagePort);
+  
+  /**
+   * Wait for message port to be created.
+   */
+  void WaitForPort(const char *aName);
 
   /**
    * Wait for message port signal bit as well as any optional other signal bits.

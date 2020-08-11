@@ -18,6 +18,14 @@ inline static void wait_io() {
 }
 
 PIC::PIC() {
+  EnablePIC();
+  // DisablePIC();
+}
+
+PIC::~PIC() {
+}
+
+void PIC::EnablePIC() {
   // remap PIC IRQs
   outb(PIC1_CMD, 0x11); /* starting initialization  */
   wait_io();
@@ -47,7 +55,38 @@ PIC::PIC() {
   // sti();
 }
 
-PIC::~PIC() {
+void PIC::DisablePIC() {
+  // ICW1
+  outb(PIC1_CMD, 0x11);
+  wait_io();
+  outb(PIC2_CMD, 0x11);
+  wait_io();
+
+  // ICW2
+  outb(PIC1_DATA, 0xe0);
+  wait_io();
+  outb(PIC2_DATA, 0xe8);
+  wait_io();
+
+  // ICW3
+  outb(PIC1_DATA, 4);
+  wait_io();
+  outb(PIC2_DATA, 4);
+  wait_io();
+
+  // ICW4
+  outb(PIC1_DATA, 1);
+  wait_io();
+  outb(PIC2_DATA, 1);
+  wait_io();
+
+  // ICW4
+  outb(PIC1_DATA, 0xff);
+  wait_io();
+  outb(PIC2_DATA, 0xff);
+  wait_io();
+
+  mMasterMask = mSlaveMask = 0xff;
 }
 
 void PIC::EnableIRQ(TUint16 aIRQ) {

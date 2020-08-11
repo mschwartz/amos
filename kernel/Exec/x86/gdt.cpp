@@ -38,11 +38,6 @@ AC      0x01 Accessed (set to 0) CPU sets this when segment is accessed (e.g. bu
 extern "C" void gdt_flush(TAny *gp, TUint16 cs); // ASM function
 extern "C" void tss_flush(TUint32 segment);      // ASM funct
 
-struct gdtp {
-  TUint16 len;
-  TUint64 *gdt;
-} PACKED;
-
 const int SEG_NULL = 0;
 const int SEG_KCODE = 1;
 const int SEG_KDATA = 2;
@@ -58,12 +53,12 @@ const int SEG_TSS_HIGH = 6;
 #define GDT_PRESENT (1L << 15)
 #define GDT_LONG (1L << 21)
 
-TUint64 gGdt[8] ALIGN16;
-struct gdtp gGdtp = { sizeof(gGdt), gGdt };
+// TUint64 gGdt[8] ALIGN16;
+// struct gdtp gGdtp = { sizeof(gGdt), gGdt };
 
-#define KSTACK_SIZE (2 * 1024 * 1024)
+// #define KSTACK_SIZE (2 * 1024 * 1024)
 
-TUint8 gKStack1[KSTACK_SIZE] ALIGN16;
+// TUint8 gKStack1[KSTACK_SIZE] ALIGN16;
 
 static void PrintSelector(TUint64 aSelector) {
   dprint("Selector %016x\n", aSelector);
@@ -72,32 +67,31 @@ static void PrintSelector(TUint64 aSelector) {
 }
 
 GDT::GDT(TSS *aTss) {
+  mTss = aTss;
+}
+
+void GDT::Install() {
   // kernel segments
-  gGdt[SEG_NULL] = 0;
-  gGdt[SEG_KCODE] = (GDT_PRESENT | GDT_DPL(0) | GDT_CODE | GDT_LONG) << 32; // 8
-  gGdt[SEG_KDATA] = (GDT_PRESENT | GDT_DPL(0) | GDT_DATA) << 32;            // 0x10
-  gGdt[SEG_UCODE] = (GDT_PRESENT | GDT_DPL(3) | GDT_CODE | GDT_LONG) << 32; // 0x18
-  gGdt[SEG_UDATA] = (GDT_PRESENT | GDT_DPL(3) | GDT_DATA) << 32;            // 0x20
+  mGdt[SEG_NULL] = 0;
+  mGdt[SEG_KCODE] = (GDT_PRESENT | GDT_DPL(0) | GDT_CODE | GDT_LONG) << 32; // 8
+  mGdt[SEG_KDATA] = (GDT_PRESENT | GDT_DPL(0) | GDT_DATA) << 32;            // 0x10
+  mGdt[SEG_UCODE] = (GDT_PRESENT | GDT_DPL(3) | GDT_CODE | GDT_LONG) << 32; // 0x18
+  mGdt[SEG_UDATA] = (GDT_PRESENT | GDT_DPL(3) | GDT_DATA) << 32;            // 0x20
 
   // TSS
-  struct tss *tss = (struct tss *)&aTss->mTss;
-  // SetMemory8(tss, 0, sizeof(struct tss));
-  // tss->io_mba = sizeof(struct tss);
-  // tss->rsp0 = (TUint64)&gKStack1[KSTACK_SIZE];
-  // tss->Dump();
-  // dlog("tss rsp0: %016x\n", tss->rsp0);
+  struct tss *tss = (struct tss *)&mTss->mTss;
 
   TUint64 tss_limit = sizeof(struct tss);
   TUint64 tss_base = (TUint64)tss;
 
   // TUint64 addr = tss_base;
-  gGdt[SEG_TSS] = (0x0067) | ((tss_base & 0xFFFFFF) << 16) | (0x00E9LL << 40) |
+  mGdt[SEG_TSS] = (0x0067) | ((tss_base & 0xFFFFFF) << 16) | (0x00E9LL << 40) |
                   (((tss_base >> 24) & 0xFF) << 56);
-  gGdt[SEG_TSS_HIGH] = (tss_limit >> 32L);
+  mGdt[SEG_TSS_HIGH] = (tss_limit >> 32L);
 
-  gGdtp.len = 7 * 8 - 1;
-  gGdtp.gdt = gGdt;
+  mGdtp.len = 7 * 8 - 1;
+  mGdtp.gdt = mGdt;
 
-  gdt_flush(&gGdtp, SEG_KDATA << 3); //0x10);
+  gdt_flush(&mGdtp, SEG_KDATA << 3); //0x10);
   tss_flush(SEG_TSS << 3);
 }

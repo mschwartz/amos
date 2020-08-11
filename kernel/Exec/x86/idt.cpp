@@ -87,6 +87,7 @@ extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
   cli();
 
   // dlog("kernel_isr %d\n", aIsrNumber);
+  TTaskRegisters *current_task = GetCurrentTask();
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {
     const char *desc = IDT::InterruptDescription(current_task->isr_num);
@@ -209,11 +210,14 @@ IDT::IDT() {
   set_entry(128, isr128);
   set_entry(130, isr130);
 
+  mAlive = ETrue;
+  ENABLE;
+}
+
+void IDT::Install() {
   idt_ptr.limit = sizeof(TIdtEntry) * IDT_SIZE - 1;
   idt_ptr.base = &idt_entries[0];
   load_idtr(&idt_ptr);
-  mAlive = ETrue;
-  ENABLE;
 }
 
 IDT::~IDT() {

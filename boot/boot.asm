@@ -251,13 +251,18 @@ ap_boot:
 
         mov ds, ax
         mov es, ax
-        mov fs, ax
-        mov gs, ax
+        ; mov fs, ax
+        ; mov gs, ax
 
+	call newline16
+	call newline16
+	call newline16
 	mov si, ap_message
 	call puts16
+	call newline16
+	call newline16
+	call newline16
 
-	bochs	
 	; enable A20
 ap_set_a20:
         in al, 0x64
@@ -273,15 +278,19 @@ ap_wait_a20:
         out 0x60, al
 
 	; switch ap into 32-bit mode
+        cli
         lgdt [gdtr]
+
+	BOCHS
 	mov eax, cr0
 	or al, 1
 	mov cr0, eax
-	jmp 0:ap_start32
-	
+	jmp 8:ap_start32
+
+	[bits 32]
 align 16
 ap_start32:
-	mov eax, 0x10
+	mov ax, 0x10
 	mov dx, ax
 	mov es, ax
 	mov fs, ax
@@ -321,13 +330,8 @@ ap_start32:
 	jmp CODE_SEG:ap_start64
 
 ;; CONTINUE BOOT CPU PROGRAM
+	[bits 16]
 boot2:
-	mov esi, 0x8000
-	mov ecx, 10
-	call hexdump16
-	call newline16
-
-
 	; copy EBDA to ebda_temp
 	; this needs to be done before loading kernel, which might overwrite this memory
 	mov esi, 0x80000

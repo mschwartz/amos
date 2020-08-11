@@ -57,18 +57,64 @@ struc TASK
 .cs                 resq 1
 .ds                 resq 1
 .es                 resq 1
-.fs                 resq 1
-.gs                 resq 1
+	; .fs                 resq 1
+	; .gs                 resq 1
 .ss                 resq 1
 .fxsave             resb 512 + 16
 endstruc
 
-global current_task
-	current_task        dq 0
 
-	; each of the isr handlers pushes a word of it's IRQ number and jumps here
-	; this code puashes all the registers on the stack, and calls our single C IRQ handler
-	; the C IRQ handler expects this specific order of items on the stack!  See the ISR_REGISTERS struct.
+;;
+;; GS Register details
+;;
+;; The gs register value is unique per CPU (each CPU has its own registers!)
+;; The CPU instance is stored in gs:TGS.current_cpu
+;; The current_task variable is stored in gs:TGS.current_task
+;;
+;; We can't use the global current_task variable that we used to because each CPU has its own current task!
+;; 
+
+;; This is the per CPU local data
+struc TGS
+.current_task resq 0
+.current_cpu resq 0
+endstruc
+
+;; this is callable from C/C++ to set the GS register value
+global SetGS
+SetGS:
+	mov gs, rdi
+	ret
+
+global GetGS
+GetGS:
+	mov rax, gs
+	ret
+
+global SetCPU
+SetCPU:
+	mov [gs:TGS.current_cpu], rdi
+	ret
+	
+global GetCPU
+GetCPU:
+	mov rax, [gs:TGS.current_cpu]
+	ret
+	
+global SetCurrentTask
+SetCurrentTask:
+	mov [gs:TGS.current_task], rdi
+	ret
+
+global GetCurrentTask
+GetCurrentTask:
+	mov rax, [gs:TGS.current_task]
+	ret
+
+	
+;; each of the isr handlers pushes a word of it's IRQ number and jumps here
+;; this code puashes all the registers on the stack, and calls our single C IRQ handler
+;; the C IRQ handler expects this specific order of items on the stack!  See the ISR_REGISTERS struct.
 global isr_common
 extern hexquadn64
 extern hexquads64
@@ -83,7 +129,7 @@ isr_common:
 	; bochs
 	push rdi            ; save rdi so we don't clobber it
 
-        mov rdi, [current_task]
+        mov rdi, [gs:TGS.current_task]
         mov [rdi + TASK.isrnum], rax            ; isrnum was pushed on stack by xisr
 
         ; set default value for task_error_code
@@ -120,10 +166,10 @@ isr_common:
 	mov [rdi + TASK.ds], rax
 	mov ax, es
 	mov [rdi + TASK.es], rax
-	mov ax, fs
-	mov [rdi + TASK.fs], rax
-	mov ax, gs
-	mov [rdi + TASK.gs], rax
+	; mov ax, fs
+	; mov [rdi + TASK.fs], rax
+	; mov ax, gs
+	; mov [rdi + TASK.gs], rax
 
 	; save coprocessor registers, if CPU has them
         mov rax, cr4
@@ -188,7 +234,7 @@ isr_common:
 global restore_task_state
 restore_task_state:
         ; restore task state
-        mov rdi, [current_task]
+        mov rdi, [gs:TGS.current_task]
 
         mov rax, cr4
         bts rax, 9
@@ -226,10 +272,10 @@ restore_task_state:
 	mov ds, ax
 	mov rax, [rdi + TASK.es]
 	mov es, ax
-	mov rax, [rdi + TASK.fs]
-	mov fs, ax
-	mov rax, [rdi + TASK.gs]
-	mov gs, ax
+	; mov rax, [rdi + TASK.fs]
+	; mov fs, ax
+	; mov rax, [rdi + TASK.gs]
+	; mov gs, ax
 
 	; restore general purpose registers
 	mov rbp, [rdi + TASK.rbp]
@@ -320,7 +366,7 @@ enter_tasking:
 %if 0
         cli
         ; restore task state
-        mov rdi, [current_task]
+        mov rdi, [gs:TGS.current_task]
 
         ; set up the return stack using the task's stack memory
 	;                    mov ss, [rdi + TASK.ss]
@@ -351,7 +397,7 @@ save_rsp:
         cli
         push rdi
 
-        mov rdi, [current_task]
+        mov rdi, [gs:TGS.current_task]
         test rdi, rdi
         jne .save
         pop rdi

@@ -22,7 +22,7 @@ const TInt MAX_CPUS = 64;
 enum {
   ECpuUninitialized,
   ECpuInitialized,
-  ECpuRuning,
+  ECpuRunning,
   ECpuHalted,
 } ECpuState;
 
@@ -42,7 +42,8 @@ public:
   CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic);
 
 public:
-  void StartAP(); // perform SIPI to start AP
+  void StartAP(BTask *aTask); // perform SIPI to start AP
+  void EnterAP(); // entry point for AP, running in the AP's CORE!
 
 public:
   void EnableIRQ(TUint16 aIRQ);
@@ -53,6 +54,7 @@ protected:
   GDT *mGdt;
   TSS *mTss;
   IDT *mIdt;
+  TGS mGS;
 
 public:
   void AddTask(BTask *aTask);

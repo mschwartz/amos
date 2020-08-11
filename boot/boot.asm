@@ -176,7 +176,7 @@ load:
 ;; ---------------------------------------------------------------------------------------------
 
 [bits 16]
-	; ORG 0x8000
+	times 512 db 90
 	jmp 0:ap_boot
 	
 ;; Global Descriptor Table (32-bit).
@@ -236,13 +236,28 @@ CODE_SEG: equ gdt_code - gdt_start
 DATA_SEG: equ gdt_data - gdt_start
 
 ;; APPLICATION PROCESSOR BOOT
+ap_message:
+	db 'AP BOOT!', 13, 10, 0
+	ALIGN 4
 ap_boot:
+	cli
 	mov al, [CPU_NUM]
 	inc al
 	mov [CPU_NUM], al
 
-	BOCHS
-	
+        xor ax, ax
+        mov ss, ax
+        mov sp, SP16
+
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+
+	mov si, ap_message
+	call puts16
+
+	bochs	
 	; enable A20
 ap_set_a20:
         in al, 0x64
@@ -307,6 +322,12 @@ ap_start32:
 
 ;; CONTINUE BOOT CPU PROGRAM
 boot2:
+	mov esi, 0x8000
+	mov ecx, 10
+	call hexdump16
+	call newline16
+
+
 	; copy EBDA to ebda_temp
 	; this needs to be done before loading kernel, which might overwrite this memory
 	mov esi, 0x80000

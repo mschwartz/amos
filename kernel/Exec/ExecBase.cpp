@@ -87,13 +87,7 @@ ExecBase::ExecBase() {
   mPS2 = ENull;
 #endif
 
-  // Before enabling interrupts, we need to have the idle task set up
-  // InitTask *task = new InitTask();
-  // mActiveTasks.Add(*task);
-  // mCurrentTask = mActiveTasks.First();
-  // current_task = &mCurrentTask->mRegisters;
-
-  mCpus[0]->StartAP();
+  mCpus[0]->StartAP(ENull);
   Enable();
 }
 
@@ -260,33 +254,6 @@ void ExecBase::AddWaitingList(BTask &aTask) {
 void ExecBase::RescheduleIRQ() {
   CPU *c = CurrentCpu();
   c->RescheduleIRQ();
-#if 0
-  BTask *t = mCurrentTask;
-
-  if (mCurrentTask && mCurrentTask->mTaskState != ETaskBlocked) {
-    if (mCurrentTask->mForbidNestCount == 0) {
-      mCurrentTask->Remove();
-      if (mCurrentTask->mTaskState == ETaskWaiting) {
-        mWaitingTasks.Add(*mCurrentTask);
-      }
-      else {
-        mActiveTasks.Add(*mCurrentTask);
-      }
-    }
-    // else {
-    //   dlog("FORBID\n");
-    // }
-  }
-
-  mCurrentTask = mActiveTasks.First();
-  current_task = &mCurrentTask->mRegisters;
-  if (t != mCurrentTask && mDebugSwitch) {
-    dprint("  Reschedule %s\n", mCurrentTask->TaskName());
-    dprint("Previous task\n");
-    dprint("  Previous Task %s\n", t->TaskName());
-    dprint("\n\n\n");
-  }
-#endif
 }
 
 /********************************************************************************

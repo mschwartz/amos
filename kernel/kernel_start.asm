@@ -101,6 +101,21 @@ boot:
 	call ap_main
 	ret
 .main:
+	push rdi
+	push rcx
+	push rax
+	mov rdi, bss_start
+	mov rcx, bss_end
+	xor rax, rax
+
+.clear_bss:
+	stosb
+	cmp rdi, rcx
+	jl .clear_bss
+	pop rax
+	pop rcx
+	pop rdi
+	
         call kernel_main
         ret
 

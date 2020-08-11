@@ -7,7 +7,7 @@
 #define DEBUGME
 #undef DEBUGME
 
-extern "C" TUint32 GetCS(), GetDS(), GetES(), GetFS(), GetGS(), GetSS(), GetRFLAGS();
+extern "C" TUint32 GetCS(), GetDS(), GetES(), GetSS(), GetRFLAGS();
 extern "C" void init_task_state(TTaskRegisters *t);
 
 BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize)
@@ -41,8 +41,8 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize)
   regs->cs = GetCS();
   regs->ds = GetDS();
   regs->es = GetES();
-  regs->fs = GetFS();
-  regs->gs = GetGS();
+  // regs->fs = GetFS();
+  // regs->gs = GetGS();
   regs->rflags = 0x202;
   init_task_state(regs);
 }
@@ -109,7 +109,7 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   dlog("   rdx: %016x\n", regs->rdx);
   dlog("   rsi: %016x\n", regs->rsi);
   dlog("   rdi: %016x\n", regs->rdi);
-  dlog("    ds: %08x es: %08x fs: %08x gs: %08x\n", regs->ds, regs->es, regs->fs, regs->gs);
+  dlog("    ds: %08x es: %08x \n", regs->ds, regs->es);
   dlog("    ss %08x rsp %016x rbp %016x\n", regs->ss, regs->rsp, regs->rbp);
 
   ENABLE;
@@ -228,6 +228,15 @@ void BTask::FreePort(MessagePort *aMessagePort) {
   delete aMessagePort;
 }
 
+void BTask::WaitForPort(const char *aName) {
+  for (;;) {
+    MessagePort *p = gExecBase.FindMessagePort(aName);
+    if (p) {
+      return;
+    }
+  }
+  
+}
 TUint64 BTask::WaitPorts(TUint64 aSigMask, ...) {
   va_list args;
   va_start(args, aSigMask);

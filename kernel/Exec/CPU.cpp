@@ -12,8 +12,10 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
   mProcessorId = aProcessorId;
   mApicId = aApicId;
   mIoApic = aIoApic;
-  mApic = new Apic(aIoApic->Address() + mApicId * 0x10);
+  // mApic = new Apic(aIoApic->Address() + mApicId * 0x10);
+  mApic = new Apic(aIoApic->Address(), mApicId);
 
+  // TODO move this code into a routine that is running in the CPU
   TUint32 eax, ebx, edx, ecx;
 
   mTss = new TSS();
@@ -72,7 +74,19 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
   Dump();
 }
 
-void CPU::StartAP() {
+void CPU::EnterAP() {
+  SetGS(&this->mGS);
+  SetCPU(this);
+
+  IdleTask *task = new IdleTask();
+  task->mCpu = this;
+  mActiveTasks.Add(*task);
+  mCurrentTask = mActiveTasks.First();
+  SetCurrentTask(&mCurrentTask->mRegisters);
+  enter_tasking(); // just enter next task
+}
+
+void CPU::StartAP(BTask *aTask) {
   dlog("CPU %d StartAP\n", mProcessor);
   if (mProcessorId == 0) { // no need to start the boot processsor
     // Before enabling interrupts, we need to have the idle task set up
@@ -80,30 +94,53 @@ void CPU::StartAP() {
     task->mCpu = this;
     mActiveTasks.Add(*task);
     mCurrentTask = mActiveTasks.First();
-    current_task = &mCurrentTask->mRegisters;
+    SetCurrentTask(&mCurrentTask->mRegisters);
     // TODO: this needs to be done from ap_start() in kernel_main.cpp;
     sti();
     enter_tasking(); // just enter next task
-  }
-  else {
-    IdleTask *task = new IdleTask();
-    task->mCpu = this;
-    mActiveTasks.Add(*task);
-    mCurrentTask = mActiveTasks.First();
-    current_task = &mCurrentTask->mRegisters;
+    return;
   }
 
-  // TODO: actually start application processor
-  // IPI
-  // mApic->SendIPI(mApicId, 8);
-  // delay 10ms
-  // MilliSleep(10);
-  // SIPI
-  // wait for CPU to boot
-  // send second SIPI if it didn't boot
-  // give up if second SIPI didn't work
-  // TODO: this needs to be done from ap_start() in kernel_main.cpp;
-  // enter_tasking(); // just enter next task
+  Apic *apic = mApic;
+  apic->Dump();
+  aTask->Sleep(2);
+
+  dhexdump((TAny *)0x8000, 10);
+  
+  if (!apic->SendIPI(mProcessor, 0x8000)) {
+    dlog("*** COULD NOT IPI (%d)\n", mProcessor);
+    bochs;
+    return;
+  }
+  aTask->MilliSleep(10);
+
+  if (!apic->SendSIPI(mProcessor, 0x8000)) {
+    dlog("*** COULD NOT SIPI (%d)\n", mProcessor);
+    bochs;
+    return;
+  }
+
+  TInt timeout = 10;
+  while (mCpuState != ECpuRunning && timeout--) {
+    aTask->MilliSleep(5);
+  }
+
+  if (mCpuState != ECpuRunning) {
+    // do another SIPI
+    if (!apic->SendSIPI(mProcessor, 0x8000)) {
+      dlog("*** COULD NOT SIPI (%d)\n", mProcessor);
+      bochs;
+      return;
+    }
+  }
+
+  timeout = 10;
+  while (mCpuState != ECpuRunning && timeout--) {
+    aTask->MilliSleep(5);
+  }
+  if (mCpuState != ECpuRunning) {
+    dlog("*** COULD NOT START %d\n", mProcessor);
+  }
 }
 
 void CPU::AddTask(BTask *aTask) {
@@ -129,7 +166,7 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
 
   if (isCurrentTask) {
     mCurrentTask = mActiveTasks.First();
-    current_task = &mCurrentTask->mRegisters;
+    SetCurrentTask(&mCurrentTask->mRegisters);
     enter_tasking(); // just enter next task
   }
   ENABLE;
@@ -164,7 +201,7 @@ void CPU::RescheduleIRQ() {
   }
 
   mCurrentTask = mActiveTasks.First();
-  current_task = &mCurrentTask->mRegisters;
+  SetCurrentTask(&mCurrentTask->mRegisters);
   if (t != mCurrentTask && gExecBase.mDebugSwitch) {
     dprint("  CPU %d Reschedule %s\n", mProcessor, mCurrentTask->TaskName());
     dprint("Previous task\n");

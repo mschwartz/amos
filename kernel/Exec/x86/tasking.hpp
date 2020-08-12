@@ -85,12 +85,21 @@ typedef struct Task {
 } PACKED TTaskRegisters;
 
 class CPU;
+class BTask;
+
 typedef struct {
-  TUint64 mCurrentTask;
+  TUint64 mCurrentGs;
+  BTask *mCurrentTask;
   CPU *mCurrentCpu;
 } PACKED TGS;
 
-class CPU;
+
+#define USER_GS_BASE   0xc0000101
+#define KERNEL_GS_BASE 0xc0000102
+
+
+extern "C" void write_msr(TUint64 aRegister, TUint64 aValue);
+extern "C" void swapgs();
 
 extern "C" void SetCurrentTask(TTaskRegisters *aTask);
 extern "C" TTaskRegisters *GetCurrentTask();

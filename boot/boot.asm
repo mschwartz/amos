@@ -17,7 +17,6 @@ BITS 16
 COM1:   equ 0x3f8
 
 %include "memory.inc"
-%include "cga.inc"
 
 ;; when running in the bochs emulator, the xchg bx,bx command causes the emulator to stop
 ;; as if at a breakpoint.  When not in the emulator, xchg bx,bx is a noop, so
@@ -251,8 +250,8 @@ ap_boot:
 
         mov ds, ax
         mov es, ax
-        ; mov fs, ax
-        ; mov gs, ax
+        mov fs, ax
+        mov gs, ax
 
 	mov si, ap_message
 	call puts16

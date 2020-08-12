@@ -38,9 +38,9 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize)
   regs->rdi = (TUint64)this;
   regs->rip = (TUint64)this->RunWrapper;
   regs->rax = (TUint64)this;
-  regs->cs = GetCS();
-  regs->ds = GetDS();
-  regs->es = GetES();
+  regs->cs = 0x8;
+  regs->ds = 0x10;
+  regs->es = 0x10;
   // regs->fs = GetFS();
   // regs->gs = GetGS();
   regs->rflags = 0x202;
@@ -60,10 +60,10 @@ void BTask::RunWrapper(BTask *aTask) {
   CPU *c = (CPU *)aTask->mCpu;
   BTask *t = ((CPU *)c)->CurrentTask();
 
-  TInt64 code = t->Run();
+  TInt64 code = aTask->Run();
 
   // if task returns it is removed from the active list and deleted.
-  dlog("*** Task %s exited code(%d)\n", t->TaskName(), code);
+  dlog("*** Task %s exited code(%d)\n", aTask->TaskName(), code);
   aTask->Suicide(code);
 }
 

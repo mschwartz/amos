@@ -4,11 +4,16 @@
 
 TInt64 IdleTask::Run() {
   CPU *cpu = (CPU *)mCpu;
+  // TGS *gs = GetGS();
+  // TInt n = mCpu->mProcessor;
   dprint("\n");
   dlog("IdleTask Run CPU(%d)\n", cpu->mProcessor);
 
+  // if (mCpu->mProcessor != 0) {
+  //   bochs;
+  // }
   for (;;) {
-    CPU *cpu = gExecBase.CurrentCpu();
+    CPU *cpu = (CPU *)mCpu;
     dlog("IdleTask Looping CPU(%d)\n", cpu->mProcessor);
     halt();
   }

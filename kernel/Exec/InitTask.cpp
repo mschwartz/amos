@@ -18,13 +18,17 @@ TInt64 InitTask::Run() {
   dprint("\n");
   dlog("InitTask Run\n");
 
-  gExecBase.AddTask(new IdleTask());
+  if (mCpu->mProcessor != 0) {
+    return 0;
+  }
+
   dlog("  initialize timer\n");
   gExecBase.AddDevice(new TimerDevice());
 
   dlog("  initialize rtc \n");
   gExecBase.AddDevice(new RtcDevice());
 
+  gExecBase.AddTask(new IdleTask());
   dlog("  STARTING APs\n");
   for (TInt i = 1; i < gExecBase.NumCpus(); i++) {
     CPU *cpu = gExecBase.GetCpu(i);
@@ -48,7 +52,7 @@ TInt64 InitTask::Run() {
   // initialize devices
 
   Sleep(3);
-  
+
   // dlog("  initialize serial\n");
   // AddDevice(new SerialDevice());
 
@@ -159,18 +163,9 @@ TInt64 InitTask::Run() {
   dlog("  initialize file system\n");
   gExecBase.AddFileSystem(new SimpleFileSystem("ata.device", 0, gSystemInfo.mRootSector));
 
+  bochs
   dlog("  initialize Inspiration\n");
   gExecBase.SetInspirationBase(new InspirationBase());
 
   return 0;
-  // gExecBase.mInspirationBase->Init();
-
-  // Sleep(5);
-
-  // StartExamples();
-  // for (;;) {
-  //   dlog("InitTask Looping\n");
-  //   halt();
-  // }
-  // exit!
 }

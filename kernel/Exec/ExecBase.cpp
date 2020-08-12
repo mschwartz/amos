@@ -38,6 +38,7 @@ extern "C" TUint64 rdrand();
 
 // ExecBase constructor
 ExecBase::ExecBase() {
+  CPU::ColdStart();
   dlog("ExecBase constructor called\n");
   mDebugSwitch = EFalse;
 
@@ -105,6 +106,11 @@ CPU *ExecBase::CurrentCpu() {
   return cpu;
 }
 
+TUint64 ExecBase::GetCurrentCpuNumber() {
+  CPU *cpu = GetCPU();
+  return cpu ? cpu->mProcessor : 0;
+}
+
 void ExecBase::SetInspirationBase(InspirationBase *aInspirationBase) {
   mInspirationBase = aInspirationBase;
   mInspirationBase->Init();
@@ -155,6 +161,10 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 
   DISABLE;
   CPU *c = CurrentCpu();
+  if (!c) {
+    c = CurrentCpu();
+    bochs;
+  }
   c->RemoveTask(aTask, aExitCode);
   ENABLE;
 

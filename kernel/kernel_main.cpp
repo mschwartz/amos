@@ -25,11 +25,12 @@ static void call_global_constructors(void) {
 extern "C" TUint64 rdtsc();
 
 extern "C" int ap_main(TInt64 aCpuNumber) {
-  bochs
-  dlog("ap_start %d\n", aCpuNumber);
+  // TInt64 a = aCpuNumber;
+  // dlog("ap_start %d\n", a);
   CPU *cpu = gExecBase.GetCpu(aCpuNumber);
   cpu->mCpuState = ECpuRunning;
   cpu->EnterAP();
+  bochs
   while (1) {
     halt();
   }

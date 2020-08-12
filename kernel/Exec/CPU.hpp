@@ -21,6 +21,7 @@ const TInt MAX_CPUS = 64;
 
 enum {
   ECpuUninitialized,
+  ECpuUnusable,
   ECpuInitialized,
   ECpuRunning,
   ECpuHalted,
@@ -42,10 +43,13 @@ public:
   CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic);
 
 public:
+  static void ColdStart();
+
+public:
   // Initialize must be called from the actual running CPU (e.g. not the BSP)
   // void Initialize();
   void StartAP(BTask *aTask); // perform SIPI to start AP
-  void EnterAP(); // entry point for AP, running in the AP's CORE!
+  void EnterAP();             // entry point for AP, running in the AP's CORE!
 
 public:
   void EnableIRQ(TUint16 aIRQ);
@@ -66,7 +70,7 @@ public:
 
   void AddActiveTask(BTask &aTask) { mActiveTasks.Add(aTask); }
   void RescheduleIRQ();
-  
+
 protected:
   BTaskList mActiveTasks;
   BTask *mCurrentTask;

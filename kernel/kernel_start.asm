@@ -29,7 +29,11 @@ bochs_present:
 	db 0
 cpu_num:
 	db 0
-	
+
+global default_gs
+default_gs:
+	dq 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
 align 8
 
 extern init_start
@@ -47,9 +51,24 @@ extern kernel_end
 boot:
 	mov [bochs_present], al
 	mov [cpu_num], ah
-	; mov rax, kstack_end
-	mov rsp, kstack_end
+
+%if 1
+	; set GS to a reasonable default
+	mov rdx, default_gs
+	shr rdx, 32
+	mov rax, rdi
+
+	mov rcx, 0xc0000101
+	wrmsr
+
+	mov rcx, 0xc0000102
+	wrmsr
+
+	swapgs
 	
+%endif	
+	; mov rax, kstack_end
+	; mov rsp, kstack_end
 	; SSE code copied from OSDEV SSE page
 	mov eax, 0x1
 	cpuid
@@ -107,6 +126,7 @@ boot:
 	mov rdi, rax
 	call ap_main
 	ret
+
 .main:
         mov rsi, kernel_start_message
         call puts64
@@ -211,10 +231,10 @@ __stack_chk_fail:
 	;BLOCKS              equ 16
 	;                    times BLOCKS-($-$$) db 0	; Pad remainder of boot sector with 0s
 
-; %if 0
+%if 0
 section .bss
 kstack:
 	resb 2 * 1024 * 1024
 kstack_end:
-; %endif
+%endif
 	

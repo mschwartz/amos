@@ -13,6 +13,17 @@ void SetMSR(TUint32 msr, TUint32 lo, TUint32 hi) {
                : "a"(lo), "d"(hi), "c"(msr));
 }
 
+void CPU::ColdStart() {
+  static TGS sGS;
+  sGS.mCurrentGs = (TUint64)&sGS;
+  sGS.mCurrentTask = ENull;
+  sGS.mCurrentCpu = ENull;
+  SetGS(&sGS);
+  // write_msr(USER_GS_BASE, (TUint64)(&sGS));
+  // write_msr(KERNEL_GS_BASE, (TUint64)(&sGS));
+  // swapgs();
+}
+
 CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic) {
   dlog("CONSTRUCT CPU %d\n", aProcessor);
   mGS.mCurrentCpu = this;
@@ -34,9 +45,17 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
     // SetMSR(0xc0000101, v>>32, v&0xffffffff);
     mGdt->Install();
     mIdt->Install();
-    dlog("SetGS(%x)\n", &this->mGS);
-    SetGS(&this->mGS);
+    mGS.mCurrentCpu = this;
+    // write_msr(KERNEL_GS_BASE, (TUint64)(&this->mGS));
+    // swapgs();
+    // write_msr(KERNEL_GS_BASE, (TUint64)(&this->mGS));
+    // swapgs();
+    write_msr(USER_GS_BASE, (TUint64)(&this->mGS));
+    // swapgs();
+    // write_msr(USER_GS_BASE, (TUint64)(&this->mGS));
+    // swapgs();
     SetCPU(this);
+    dlog("SetGS(%x)\n", &this->mGS);
   }
 
   // TODO move this code into a routine that is running in the CPU
@@ -92,33 +111,51 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
 
 // This function must run in the CPU!
 void CPU::EnterAP() {
+  sti();
+  mGS.mCurrentCpu = this;
+  SetGS(&mGS);
+  // write_msr(KERNEL_GS_BASE, (TUint64)(&this->mGS));
+  // swapgs();
+  // write_msr(KERNEL_GS_BASE, (TUint64)(&this->mGS));
+  // swapgs();
+  // write_msr(USER_GS_BASE, (TUint64)(&this->mGS));
+  // swapgs();
+  // write_msr(USER_GS_BASE, (TUint64)(&this->mGS));
+  // swapgs();
+  SetCPU(this);
+
+  dlog("EnterAP %d gs(%x) mGS(%x) CPU(%x %x)\n", mProcessorId, GetGS(), &mGS, this, GetCPU());
+
   if (mProcessorId == 0) { // no need to start the boot processsor
     // Before enabling interrupts, we need to have the idle task set up
+    // mCurrentTask = mActiveTasks.First();
+    // SetCurrentTask(&mCurrentTask->mRegisters);
     InitTask *task = new InitTask();
     task->mCpu = this;
     mActiveTasks.Add(*task);
     mCurrentTask = mActiveTasks.First();
     SetCurrentTask(&mCurrentTask->mRegisters);
-    // TODO: this needs to be done from ap_start() in kernel_main.cpp;
-    sti();
-    enter_tasking(); // just enter next task
-    return;
+  }
+  else {
+    mGdt->Install();
+    mIdt->Install();
+    IdleTask *task = new IdleTask();
+    task->mCpu = this;
+    mActiveTasks.Add(*task);
+    mCurrentTask = mActiveTasks.First();
+    SetCurrentTask(&mCurrentTask->mRegisters);
   }
 
-  mGdt->Install();
-  mIdt->Install();
-
-  this->mGS.mCurrentCpu = this;
-  dlog("SetGS(%x)\n", &this->mGS);
-  SetGS(&this->mGS);
-  SetCPU(this);
-
-  IdleTask *task = new IdleTask();
-  task->mCpu = this;
-  mActiveTasks.Add(*task);
-  mCurrentTask = mActiveTasks.First();
-  SetCurrentTask(&mCurrentTask->mRegisters);
   enter_tasking(); // just enter next task
+  dlog("BAD\n");
+  bochs;
+  // IdleTask *task = new IdleTask();
+  // task->mCpu = this;
+  // mActiveTasks.Add(*task);
+  // mCurrentTask = mActiveTasks.First();
+  // SetCurrentTask(&mCurrentTask->mRegisters);
+  // bochs;
+  // enter_tasking(); // just enter next task
 }
 
 void CPU::StartAP(BTask *aTask) {
@@ -129,14 +166,14 @@ void CPU::StartAP(BTask *aTask) {
 
   if (!apic->SendIPI(mProcessor, 0x8000)) {
     dlog("*** COULD NOT IPI (%d)\n", mProcessor);
-    bochs;
+    mCpuState = ECpuUnusable;
     return;
   }
   aTask->MilliSleep(10);
 
   if (!apic->SendSIPI(mProcessor, 0x8000)) {
     dlog("*** COULD NOT SIPI (%d)\n", mProcessor);
-    bochs;
+    mCpuState = ECpuUnusable;
     return;
   }
 
@@ -149,7 +186,7 @@ void CPU::StartAP(BTask *aTask) {
     // do another SIPI
     if (!apic->SendSIPI(mProcessor, 0x8000)) {
       dlog("*** COULD NOT SIPI (%d)\n", mProcessor);
-      bochs;
+      mCpuState = ECpuUnusable;
       return;
     }
   }

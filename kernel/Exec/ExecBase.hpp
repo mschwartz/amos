@@ -117,6 +117,7 @@ public:
   CPU *CurrentCpu();
   CPU *GetCpu(TInt aNum) { return mCpus[aNum]; }
   void InterruptOthers(TUint8 aVector);
+  TUint64 GetCurrentCpuNumber();
 
 protected:
   TInt mNumCpus;
@@ -177,6 +178,7 @@ public:
     }
     return ENull;
   }
+
   const char *CurrentTaskName() {
     BTask *t = GetCurrentTask();
     if (t) {

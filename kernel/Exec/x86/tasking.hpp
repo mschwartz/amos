@@ -99,6 +99,7 @@ typedef struct {
 
 
 extern "C" void write_msr(TUint64 aRegister, TUint64 aValue);
+extern "C" TUint64 read_msr(TUint64 aRegister);
 extern "C" void swapgs();
 
 extern "C" void SetCurrentTask(TTaskRegisters *aTask);

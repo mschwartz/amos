@@ -65,6 +65,6 @@ com4: enabled=0
 # 4096 = 4G, but makes bocks load slow
 #memory: guest=4096, host=250
 memory: guest=2048, host=250
-clock: sync_realtime, time0=local, rtc_sync=1
+clock: sync=realtime, time0=local, rtc_sync=1
 #clock: sync=both,time0=local
 #clock: sync=slowdown

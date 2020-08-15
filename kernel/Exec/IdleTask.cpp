@@ -7,14 +7,14 @@ TInt64 IdleTask::Run() {
   // TGS *gs = GetGS();
   // TInt n = mCpu->mProcessor;
   dprint("\n");
-  dlog("IdleTask Run CPU(%d)\n", cpu->mProcessor);
+  dlog("IdleTask Run CPU(%d)\n", cpu->mProcessorId);
 
   // if (mCpu->mProcessor != 0) {
   //   bochs;
   // }
   for (;;) {
     CPU *cpu = (CPU *)mCpu;
-    dlog("IdleTask Looping CPU(%d)\n", cpu->mProcessor);
+    dlog("IdleTask Looping CPU(%d)\n", cpu->mProcessorId);
     halt();
   }
 }

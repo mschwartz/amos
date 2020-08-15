@@ -18,7 +18,7 @@ TInt64 InitTask::Run() {
   dprint("\n");
   dlog("InitTask Run\n");
 
-  if (mCpu->mProcessor != 0) {
+  if (mCpu->mProcessorId != 0) {
     return 0;
   }
 
@@ -163,7 +163,6 @@ TInt64 InitTask::Run() {
   dlog("  initialize file system\n");
   gExecBase.AddFileSystem(new SimpleFileSystem("ata.device", 0, gSystemInfo.mRootSector));
 
-  bochs
   dlog("  initialize Inspiration\n");
   gExecBase.SetInspirationBase(new InspirationBase());
 

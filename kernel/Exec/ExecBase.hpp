@@ -39,29 +39,6 @@ class InspirationBase;
 class IdleTask;
 class InitTask;
 
-/* External interrupts */
-#define IRQ_OFFSET 0x20 /* Interrupt offset for external interrupts */
-enum {
-  IRQ_TIMER = IRQ_OFFSET, // 0
-  IRQ_KEYBOARD,           // 1
-  IRQ_SLAVE_PIC,          // 2
-  IRQ_COM2,               // 3
-  IRQ_COM1,               // 4
-  IRQ_LPT2,               // 5
-  IRQ_FLOPPY,             // 6
-  IRQ_LPT1,               // 7
-  IRQ_RTC,                // 8
-  IRQ_MASTER_PIC,         // 9
-  IRQ_RESERVED1,          // 10
-  IRQ_RESERVED2,          // 11
-  IRQ_MOUSE,              // 12
-  IRQ_COPROCESSOR,        // 13
-  IRQ_ATA1,               // 14
-  IRQ_ATA2,               // 15
-
-  HW_INTERRUPTS
-};
-
 class ExecBase : public BBase {
   friend RtcDevice;
   friend IdleTask;

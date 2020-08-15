@@ -81,13 +81,34 @@ CURRENT_CPU: equ 16
 ;; extern "C" void write_msr(TUint64 aRegister, TUint64 aValue);
 global write_msr
 write_msr:
+	push rcx
+	push rdx
+	
 	mov rcx, rdi
 	mov rax, rsi
 	mov rdx, rsi
 	shr rdx, 32
 	wrmsr
+
+	pop rdx
+	pop rcx
 	ret
 
+;; extern "C" TUint64 read_msr(TUint64 aRegister);
+global read_msr
+read_msr:
+	push rcx
+	push rdx
+
+	mov rcx, rdi
+	rdmsr
+	shl rdx, 32
+	or rax, rdx
+
+	pop rdx
+	pop rcx
+	ret
+	
 global swapgs
 swapgs:
 	swapgs

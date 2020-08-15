@@ -6,6 +6,7 @@
 // TODO GS register points to this CPU's info area
 
 #include <Types.hpp>
+#include <Exec/x86/acpi.hpp>
 #include <Exec/x86/ioapic.hpp>
 #include <Exec/x86/apic.hpp>
 #include <Exec/x86/idt.hpp>
@@ -16,8 +17,6 @@
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
-
-const TInt MAX_CPUS = 64;
 
 enum {
   ECpuUninitialized,
@@ -34,13 +33,15 @@ enum {
 #define CPU_EXTENDED_MODEL_ID(x) ((x >> 16) & 0x0f)
 #define CPU_EXTENDED_FAMILY_ID(x) ((x >> 20) & 0xff)
 
+class ACPI;
+
 class ExecBase;
 class CPU : public BBase {
   friend ExecBase;
 
 public:
   // constructor
-  CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic);
+  CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi);
 
 public:
   static void ColdStart();
@@ -52,8 +53,6 @@ public:
   void EnterAP();             // entry point for AP, running in the AP's CORE!
 
 public:
-  void EnableIRQ(TUint16 aIRQ);
-  void DisableIRQ(TUint16 aIRQ);
   void AckIRQ(TUint16 aIRQ);
 
 protected:
@@ -61,6 +60,9 @@ protected:
   TSS *mTss;
   IDT *mIdt;
   TGS mGS;
+
+public:
+  void GuruMeditation(const char *aFormat, ...);
 
 public:
   void AddTask(BTask *aTask);
@@ -81,12 +83,12 @@ public:
 public:
   TUint32 mProcessorId;
   TUint32 mApicId;
-  IoApic *mIoApic;
-  Apic *mApic;
+  // IoApic *mIoApic;
+  ACPI *mAcpi;
+  Apic *mApic; // local APIC
 
 public:
   // Data gathered via CPUID
-  TUint32 mProcessor; // which core 0-n
   TUint32 mMaxFunction;
   TUint32 mProcessorVersionInformation;
   TUint32 mProcessorAdditionalInformation;
@@ -112,8 +114,8 @@ public:
 public:
   void Dump() {
     dprint("\n\n");
-    dlog("CPU %2d mProcessorId(%d) mApicId(%d) mIoApic(0x%x) this(%x)\n",
-      mProcessor, mProcessorId, mApicId, mIoApic, this);
+    dlog("CPU mProcessorId(%d) mApicId(%d) mAcpi(0x%x) this(%x)\n",
+      mProcessorId, mApicId, mAcpi, this);
     dlog("  Manufacturer / Model: %s / %s %d cores\n", mManufacturer, mBrand, mCores);
     dlog("    Number of address bits: Physical(%d) Linear(%d)\n",
       mPhysicalAddressBits, mLinearAddressBits);

@@ -18,8 +18,8 @@ inline static void wait_io() {
 }
 
 PIC::PIC() {
-  EnablePIC();
-  // DisablePIC();
+  // EnablePIC();
+  DisablePIC();
 }
 
 PIC::~PIC() {
@@ -51,8 +51,6 @@ void PIC::EnablePIC() {
 
   outb(PIC1_DATA, mMasterMask);
   outb(PIC2_DATA, mSlaveMask);
-
-  // sti();
 }
 
 void PIC::DisablePIC() {
@@ -90,6 +88,8 @@ void PIC::DisablePIC() {
 }
 
 void PIC::EnableIRQ(TUint16 aIRQ) {
+  bochs;
+  return;
   aIRQ -= IRQ_OFFSET;
   if (aIRQ < 8) {
     mMasterMask &= ~(1 << aIRQ);
@@ -103,6 +103,8 @@ void PIC::EnableIRQ(TUint16 aIRQ) {
 }
 
 void PIC::DisableIRQ(TUint16 aIRQ) {
+  bochs;
+  return;
   aIRQ -= IRQ_OFFSET;
   if (aIRQ < 8) {
     mMasterMask |= (1 << aIRQ);
@@ -116,6 +118,8 @@ void PIC::DisableIRQ(TUint16 aIRQ) {
 }
 
 void PIC::AckIRQ(TUint16 aIRQ) {
+  bochs;
+  return;
   if (aIRQ >= IRQ_OFFSET && aIRQ < HW_INTERRUPTS) {
     if (aIRQ >= IRQ_OFFSET + 8)
       outb(PIC2_CMD, PIC_EOI);

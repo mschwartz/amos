@@ -24,23 +24,27 @@ void CPU::ColdStart() {
   // swapgs();
 }
 
-CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic) {
-  dlog("CONSTRUCT CPU %d\n", aProcessor);
+void CPU::AckIRQ(TUint16 aIRQ) {
+  mApic->EOI(aIRQ);
+}
+
+CPU::CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi) {
+  dlog("CONSTRUCT CPU %d\n", aProcessorId);
   mGS.mCurrentCpu = this;
-  mProcessor = aProcessor;
   mProcessorId = aProcessorId;
   mApicId = aApicId;
-  mIoApic = aIoApic;
-  mApic = new Apic(aIoApic->Address(), mApicId);
+  mAcpi = aAcpi;
+  // mIoApic = aIoApic;
+  mApic = new Apic(mAcpi->ApicAddress(), mApicId);
 
   mTss = new TSS();
-  dlog("CPU %d initialized TSS\n", mProcessor);
+  dlog("CPU %d initialized TSS\n", mProcessorId);
   mGdt = new GDT(mTss);
-  dlog("CPU %d initialized GDT\n", mProcessor);
+  dlog("CPU %d initialized GDT\n", mProcessorId);
   mIdt = new IDT();
-  dlog("CPU %d initialized IDT\n", mProcessor);
+  dlog("CPU %d initialized IDT\n", mProcessorId);
 
-  if (mProcessor == 0) {
+  if (mProcessorId == 0) {
     TUint64 v = (TUint64)&mGS;
     // SetMSR(0xc0000101, v>>32, v&0xffffffff);
     mGdt->Install();
@@ -109,27 +113,39 @@ CPU::CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoA
   Dump();
 }
 
+void CPU::GuruMeditation(const char *aFormat, ...) {
+  cli();
+  bochs;
+  char buf[512];
+  dprint("\n\n***********************\n");
+  dprint("GURU MEDITATION at %dms\n", gExecBase.SystemTicks());
+
+  va_list args;
+  va_start(args, aFormat);
+  vsprintf(buf, aFormat, args);
+  dprint(buf);
+  dprint("\n");
+
+  GetCurrentTask()->Dump();
+  va_end(args);
+  dprint("***********************\n\n\nHalted.\n");
+
+  for (;;) {
+    halt();
+  }
+}
+
 // This function must run in the CPU!
 void CPU::EnterAP() {
-  sti();
   mGS.mCurrentCpu = this;
   SetGS(&mGS);
-  // write_msr(KERNEL_GS_BASE, (TUint64)(&this->mGS));
-  // swapgs();
-  // write_msr(KERNEL_GS_BASE, (TUint64)(&this->mGS));
-  // swapgs();
-  // write_msr(USER_GS_BASE, (TUint64)(&this->mGS));
-  // swapgs();
-  // write_msr(USER_GS_BASE, (TUint64)(&this->mGS));
-  // swapgs();
+  mApic->Initialize();
   SetCPU(this);
 
   dlog("EnterAP %d gs(%x) mGS(%x) CPU(%x %x)\n", mProcessorId, GetGS(), &mGS, this, GetCPU());
 
+  // Before enabling interrupts, we need to have the idle or init task set up
   if (mProcessorId == 0) { // no need to start the boot processsor
-    // Before enabling interrupts, we need to have the idle task set up
-    // mCurrentTask = mActiveTasks.First();
-    // SetCurrentTask(&mCurrentTask->mRegisters);
     InitTask *task = new InitTask();
     task->mCpu = this;
     mActiveTasks.Add(*task);
@@ -146,33 +162,27 @@ void CPU::EnterAP() {
     SetCurrentTask(&mCurrentTask->mRegisters);
   }
 
+  sti();
   enter_tasking(); // just enter next task
   dlog("BAD\n");
   bochs;
-  // IdleTask *task = new IdleTask();
-  // task->mCpu = this;
-  // mActiveTasks.Add(*task);
-  // mCurrentTask = mActiveTasks.First();
-  // SetCurrentTask(&mCurrentTask->mRegisters);
-  // bochs;
-  // enter_tasking(); // just enter next task
 }
 
 void CPU::StartAP(BTask *aTask) {
-  dlog("CPU %d StartAP\n", mProcessor);
+  dlog("CPU %d StartAP\n", mProcessorId);
 
   Apic *apic = mApic;
   aTask->Sleep(2);
 
-  if (!apic->SendIPI(mProcessor, 0x8000)) {
-    dlog("*** COULD NOT IPI (%d)\n", mProcessor);
+  if (!apic->SendIPI(mProcessorId, 0x8000)) {
+    dlog("*** COULD NOT IPI (%d)\n", mProcessorId);
     mCpuState = ECpuUnusable;
     return;
   }
   aTask->MilliSleep(10);
 
-  if (!apic->SendSIPI(mProcessor, 0x8000)) {
-    dlog("*** COULD NOT SIPI (%d)\n", mProcessor);
+  if (!apic->SendSIPI(mProcessorId, 0x8000)) {
+    dlog("*** COULD NOT SIPI (%d)\n", mProcessorId);
     mCpuState = ECpuUnusable;
     return;
   }
@@ -184,8 +194,8 @@ void CPU::StartAP(BTask *aTask) {
 
   if (mCpuState != ECpuRunning) {
     // do another SIPI
-    if (!apic->SendSIPI(mProcessor, 0x8000)) {
-      dlog("*** COULD NOT SIPI (%d)\n", mProcessor);
+    if (!apic->SendSIPI(mProcessorId, 0x8000)) {
+      dlog("*** COULD NOT SIPI (%d)\n", mProcessorId);
       mCpuState = ECpuUnusable;
       return;
     }
@@ -193,13 +203,13 @@ void CPU::StartAP(BTask *aTask) {
 
   timeout = 10;
   while (mCpuState != ECpuRunning && timeout--) {
-    aTask->MilliSleep(5);
+    aTask->MilliSleep(1);
   }
   if (mCpuState != ECpuRunning) {
-    dlog("*** COULD NOT START %d\n", mProcessor);
+    dlog("*** COULD NOT START %d\n", mProcessorId);
   }
   else {
-    dlog("--> CPU %d running\n", mProcessor);
+    dlog("--> CPU %d running\n", mProcessorId);
   }
 }
 
@@ -209,7 +219,7 @@ void CPU::AddTask(BTask *aTask) {
   aTask->mCpu = this;
   mActiveTasks.Add(*aTask);
   dlog("    CPU(%d) Add Task %016x --- %s --- rip=%016x rsp=%016x\n",
-    mProcessor, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
+       mProcessorId, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
   ENABLE;
 }
 
@@ -218,10 +228,10 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   aTask->Remove();
   TBool isCurrentTask = aTask == mCurrentTask;
   if (isCurrentTask) {
-    dlog("CPU %d RemoveTask(%s) code(%d) CURRENT TASK\n", mProcessor, aTask->TaskName(), aExitCode);
+    dlog("CPU %d RemoveTask(%s) code(%d) CURRENT TASK\n", mProcessorId, aTask->TaskName(), aExitCode);
   }
   else {
-    dlog("CPU %d RemoveTask(%s) code(%d)\n", mProcessor, aTask->TaskName(), aExitCode);
+    dlog("CPU %d RemoveTask(%s) code(%d)\n", mProcessorId, aTask->TaskName(), aExitCode);
   }
 
   if (isCurrentTask) {
@@ -263,7 +273,7 @@ void CPU::RescheduleIRQ() {
   mCurrentTask = mActiveTasks.First();
   SetCurrentTask(&mCurrentTask->mRegisters);
   if (t != mCurrentTask && gExecBase.mDebugSwitch) {
-    dprint("  CPU %d Reschedule %s\n", mProcessor, mCurrentTask->TaskName());
+    dprint("  CPU %d Reschedule %s\n", mProcessorId, mCurrentTask->TaskName());
     dprint("Previous task\n");
     dprint("  Previous Task %s\n", t->TaskName());
     dprint("\n\n\n");

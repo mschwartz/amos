@@ -22,24 +22,25 @@ static void call_global_constructors(void) {
   }
 }
 
-extern "C" TUint64 rdtsc();
-
 extern "C" int ap_main(TInt64 aCpuNumber) {
+  cli();
   // TInt64 a = aCpuNumber;
   // dlog("ap_start %d\n", a);
   CPU *cpu = gExecBase.GetCpu(aCpuNumber);
+  // bochs
   cpu->mCpuState = ECpuRunning;
   cpu->EnterAP();
-  bochs
   while (1) {
     halt();
   }
   return 0;
 }
 
+extern "C" TUint64 rdtsc();
+
 extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   cli();
-  dhexdump((TAny *)0x8000, 10);
+  // dhexdump((TAny *)0x8000, 10);
   
   InitAllocMem();
   CopyString(&gSystemInfo.mVersion[0], "AMOS v1.0");

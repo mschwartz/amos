@@ -115,7 +115,7 @@ CPU::CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi) {
 
 void CPU::GuruMeditation(const char *aFormat, ...) {
   cli();
-  bochs;
+  // bochs;
   char buf[512];
   dprint("\n\n***********************\n");
   dprint("GURU MEDITATION at %dms\n", gExecBase.SystemTicks());
@@ -137,11 +137,14 @@ void CPU::GuruMeditation(const char *aFormat, ...) {
 
 // This function must run in the CPU!
 void CPU::EnterAP() {
+  cli();
   mGS.mCurrentCpu = this;
   SetGS(&mGS);
-  mApic->Initialize();
   SetCPU(this);
+  mApic->Initialize();
+  cli();
 
+  dprint("\n\n");
   dlog("EnterAP %d gs(%x) mGS(%x) CPU(%x %x)\n", mProcessorId, GetGS(), &mGS, this, GetCPU());
 
   // Before enabling interrupts, we need to have the idle or init task set up

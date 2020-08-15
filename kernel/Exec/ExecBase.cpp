@@ -131,7 +131,6 @@ void ExecBase::Enable() {
 
 void ExecBase::AddTask(BTask *aTask) {
   DISABLE;
-
   // TODO: this should figure out which CPU to assign task to
   CPU *c = CurrentCpu();
   c->AddTask(aTask);
@@ -336,20 +335,24 @@ void ExecBase::AddFileSystem(BFileSystem *aFileSystem) {
 
 void ExecBase::GuruMeditation(const char *aFormat, ...) {
   cli();
-  bochs;
-  char buf[512];
-  dprint("\n\n***********************\n");
-  dprint("GURU MEDITATION at %dms\n", SystemTicks());
-
+  CPU *c = GetCPU();
   va_list args;
   va_start(args, aFormat);
-  vsprintf(buf, aFormat, args);
-  dprint(buf);
-  dprint("\n");
+  c->GuruMeditation(aFormat, args);
+  // bochs;
+  // char buf[512];
+  // dprint("\n\n***********************\n");
+  // dprint("GURU MEDITATION at %dms\n", SystemTicks());
 
-  GetCurrentTask()->Dump();
-  va_end(args);
-  dprint("***********************\n\n\nHalted.\n");
+  // va_list args;
+  // va_start(args, aFormat);
+  // vsprintf(buf, aFormat, args);
+  // dprint(buf);
+  // dprint("\n");
+
+  // GetCurrentTask()->Dump();
+  // va_end(args);
+  // dprint("***********************\n\n\nHalted.\n");
 
   for (;;) {
     halt();

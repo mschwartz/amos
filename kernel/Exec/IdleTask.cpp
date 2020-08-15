@@ -8,6 +8,7 @@ TInt64 IdleTask::Run() {
   // TInt n = mCpu->mProcessor;
   dprint("\n");
   dlog("IdleTask Run CPU(%d)\n", cpu->mProcessorId);
+  mCpu->mCpuState = ECpuRunning;
 
   // if (mCpu->mProcessor != 0) {
   //   bochs;

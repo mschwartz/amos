@@ -124,8 +124,8 @@ TBool TimerInterrupt::Run(TAny *g) {
   }
 
   // dlog("Reschedule cpu(%d)\n", cpu->mProcessorId);
-  gExecBase.RescheduleIRQ(); // maybe wake up new task
-  gExecBase.AckIRQ(IRQ_TIMER);
+  cpu->RescheduleIRQ(); // maybe wake up new task
+  cpu->AckIRQ(IRQ_TIMER);
   return ETrue;
 }
 

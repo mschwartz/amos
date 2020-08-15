@@ -87,27 +87,17 @@ static TBool interrupt_enabled[256];
 extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
   cli();
 
-  // dlog("kernel_isr(%d)\n", aIsrNumber);
   if (!interrupt_enabled[aIsrNumber] && aIsrNumber != 48) {
-    // dlog("Interrupt Disabled(%d)\n", aIsrNumber);
     gExecBase.AckIRQ(aIsrNumber);
     return ETrue;
   }
 
-  // dlog("kernel_isr(%d)\n", aIsrNumber);
   CPU *cpu = GetCPU();
-  // if (!cpu) {
-  //   dlog("NO CPU IN TIMER IRQ\n");
-  //   bochs;
+  // if (cpu && cpu->mApicId) {
+  //   dlog("kernel_isr %d\n", aIsrNumber);
+  //   // bochs;
   // }
-  // if (!GetCurrentTask()) {
-  //   dlog("NO CURRENT TASK IN TIMER IRQ\n");
-  //   bochs;
-  // }
-  if (cpu && cpu->mApicId) {
-    dlog("%x kernel_isr %d\n", cpu, aIsrNumber);
-    // bochs;
-  }
+
   TTaskRegisters *current_task = GetCurrentTask();
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {

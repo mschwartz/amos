@@ -144,6 +144,13 @@ GetRSP:
 	mov rax, rsp
 	ret
 	
+global SetRSP
+SetRSP:
+	pop rax
+	mov rsp, rdi
+	push rax
+	ret
+	
 global GetRFLAGS
 GetRFLAGS:
         pushf

@@ -179,6 +179,7 @@ public:
   void Schedule();
 
 protected:
+  Mutex mWaitingTasksMutex;
   BTaskList mWaitingTasks;
 
   //

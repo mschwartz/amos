@@ -29,6 +29,7 @@ void CPU::AckIRQ(TUint16 aIRQ) {
 }
 
 CPU::CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi) {
+  mBootStack = (TUint8 *)AllocMem(BOOT_STACK_SIZE);
   dlog("CONSTRUCT CPU %d\n", aProcessorId);
   mGS.mCurrentCpu = this;
   mProcessorId = aProcessorId;
@@ -118,7 +119,7 @@ void CPU::GuruMeditation(const char *aFormat, ...) {
   // bochs;
   char buf[512];
   dprint("\n\n***********************\n");
-  dprint("GURU MEDITATION at %dms\n", gExecBase.SystemTicks());
+  dprint("GURU MEDITATION at %dms in CPU %d\n", gExecBase.SystemTicks(), mProcessorId);
 
   va_list args;
   va_start(args, aFormat);
@@ -126,7 +127,7 @@ void CPU::GuruMeditation(const char *aFormat, ...) {
   dprint(buf);
   dprint("\n");
 
-  GetCurrentTask()->Dump();
+  mCurrentTask->Dump();
   va_end(args);
   dprint("***********************\n\n\nHalted.\n");
 
@@ -147,25 +148,24 @@ void CPU::EnterAP() {
   dprint("\n\n");
   dlog("EnterAP %d gs(%x) mGS(%x) CPU(%x %x)\n", mProcessorId, GetGS(), &mGS, this, GetCPU());
 
+  mIdleTask = new IdleTask();
+  mIdleTask->mCpu = this;
+  mActiveTasks.Add(*mIdleTask);
   // Before enabling interrupts, we need to have the idle or init task set up
   if (mProcessorId == 0) { // no need to start the boot processsor
     InitTask *task = new InitTask();
     task->mCpu = this;
     mActiveTasks.Add(*task);
-    mCurrentTask = mActiveTasks.First();
-    SetCurrentTask(&mCurrentTask->mRegisters);
   }
   else {
     mGdt->Install();
     mIdt->Install();
-    IdleTask *task = new IdleTask();
-    task->mCpu = this;
-    mActiveTasks.Add(*task);
-    mCurrentTask = mActiveTasks.First();
-    SetCurrentTask(&mCurrentTask->mRegisters);
   }
+  mRunningTaskCount = 1;
+  mCurrentTask = mActiveTasks.First();
+  SetCurrentTask(&mCurrentTask->mRegisters);
 
-  sti();
+  // sti();
   enter_tasking(); // just enter next task
   dlog("BAD\n");
   bochs;
@@ -204,7 +204,7 @@ void CPU::StartAP(BTask *aTask) {
     }
   }
 
-  timeout = 10;
+  timeout = 100;
   while (mCpuState != ECpuRunning && timeout--) {
     aTask->MilliSleep(1);
   }
@@ -221,14 +221,16 @@ void CPU::AddTask(BTask *aTask) {
   aTask->mRegisters.tss = (TUint64)mTss;
   aTask->mCpu = this;
   mActiveTasks.Add(*aTask);
+  mRunningTaskCount++;
   dlog("    CPU(%d) Add Task %016x --- %s --- rip=%016x rsp=%016x\n",
-       mProcessorId, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
+    mProcessorId, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
   ENABLE;
 }
 
 TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   DISABLE;
   aTask->Remove();
+  mRunningTaskCount--;
   TBool isCurrentTask = aTask == mCurrentTask;
   if (isCurrentTask) {
     dlog("CPU %d RemoveTask(%s) code(%d) CURRENT TASK\n", mProcessorId, aTask->TaskName(), aExitCode);
@@ -257,19 +259,23 @@ void CPU::DumpTasks() {
 void CPU::RescheduleIRQ() {
   BTask *t = mCurrentTask;
 
-  if (mCurrentTask && mCurrentTask->mTaskState != ETaskBlocked) {
-    if (mCurrentTask->mForbidNestCount == 0) {
-      mCurrentTask->Remove();
-      if (mCurrentTask->mTaskState == ETaskWaiting) {
-        gExecBase.AddWaitingList(*t);
-        // mWaitingTasks.Add(*mCurrentTask);
+  if (mCurrentTask) {
+    // if task is blocked, it is not on the system waiting list
+    // it is potentially on a Sempahore's waiting list or some other waiting list
+    if (mCurrentTask->mTaskState != ETaskBlocked) {
+      // if Task has called Forbid(), we don't want to switch to another task
+      if (mCurrentTask->mForbidNestCount == 0) {
+        mCurrentTask->Remove();
+        if (mCurrentTask->mTaskState == ETaskWaiting) {
+          gExecBase.AddWaitingList(*t);
+        }
+        else {
+          mActiveTasks.Add(*mCurrentTask);
+        }
       }
       else {
-        mActiveTasks.Add(*mCurrentTask);
+        dlog("FORBID %d\n", mCurrentTask->mForbidNestCount);
       }
-    }
-    else {
-      dlog("FORBID\n");
     }
   }
 

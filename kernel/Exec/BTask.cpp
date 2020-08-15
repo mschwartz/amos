@@ -57,8 +57,8 @@ void BTask::Suicide(TInt64 aCode) {
 }
 
 void BTask::RunWrapper(BTask *aTask) {
-  CPU *c = (CPU *)aTask->mCpu;
-  BTask *t = ((CPU *)c)->CurrentTask();
+  // CPU *c = (CPU *)aTask->mCpu;
+  // BTask *t = ((CPU *)c)->CurrentTask();
 
   TInt64 code = aTask->Run();
 

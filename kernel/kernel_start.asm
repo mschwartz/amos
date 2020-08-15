@@ -7,6 +7,9 @@
 %macro BOCHS 0
         xchg bx,bx
 %endmacro
+%macro bochs 0
+        xchg bx,bx
+%endmacro
 
 section start
 global _start
@@ -36,6 +39,7 @@ default_gs:
 
 align 8
 
+extern boot_stacks
 extern init_start
 extern init_end
 extern text_start
@@ -49,11 +53,25 @@ extern bss_end
 extern kernel_end
 	
 boot:
+	cli
 	mov [bochs_present], al
 	mov [cpu_num], ah
 
+%if 0
+	; set up unique stack (8K) per CPU at start time.
+	xor rax, rax
+	mov al, [cpu_num]
+	mov rbx, boot_stacks
+	shl rax, 11
+	add rbx, rax
+	mov rsp, rbx
+%endif
+
 %if 1
 	; set GS to a reasonable default
+	xor ax, ax
+	mov gs, ax
+	
 	mov rdx, default_gs
 	shr rdx, 32
 	mov rax, rdi
@@ -128,6 +146,8 @@ boot:
 	ret
 
 .main:
+	mov rax, rsp
+	call hexwords64
         mov rsi, kernel_start_message
         call puts64
 

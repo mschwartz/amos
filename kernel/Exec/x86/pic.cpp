@@ -51,6 +51,7 @@ void PIC::EnablePIC() {
 
   outb(PIC1_DATA, mMasterMask);
   outb(PIC2_DATA, mSlaveMask);
+  dlog("->>> PIC ENABLED\n");
 }
 
 void PIC::DisablePIC() {
@@ -85,6 +86,7 @@ void PIC::DisablePIC() {
   wait_io();
 
   mMasterMask = mSlaveMask = 0xff;
+  dlog("->>> PIC DISABLED\n");
 }
 
 void PIC::EnableIRQ(TUint16 aIRQ) {

@@ -6,6 +6,7 @@
 
 #define KSTACK_SIZE (2 * 1024 * 1024)
 
+// This is the CPU's required format for TSS
 struct tss {
   TUint32 r1;
   TUint64 rsp0;

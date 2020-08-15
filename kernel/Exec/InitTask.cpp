@@ -28,30 +28,15 @@ TInt64 InitTask::Run() {
   dlog("  initialize rtc \n");
   gExecBase.AddDevice(new RtcDevice());
 
-  gExecBase.AddTask(new IdleTask());
+  // mCpu->mIdleTask = new IdleTask();
+  // gExecBase.AddTask(new IdleTask());
   dlog("  STARTING APs\n");
   for (TInt i = 1; i < gExecBase.NumCpus(); i++) {
     CPU *cpu = gExecBase.GetCpu(i);
-    // Apic *apic = cpu->mApic;
     cpu->StartAP(this); // initialize tasking for AP
-    // TODO: actually start application processor
-    // IPI
-    // dlog("CPU %d SendIPI\n", i);
-    // apic->SendIPI(cpu->mApicId, 8);
-    // delay 10ms
-    // MilliSleep(10);
-    // SIPI
-    // dlog("CPU %d SendSIPI\n", i);
-    // apic->SendSIPI(cpu->mApicId, 8);
-    // wait for CPU to boot
-    // send second SIPI if it didn't boot
-    // give up if second SIPI didn't work
-    // TODO: this needs to be done from ap_start() in kernel_main.cpp;
-    // enter_tasking(); // just enter next task
   }
-  // initialize devices
 
-  Sleep(3);
+  // Sleep(3);
 
   // dlog("  initialize serial\n");
   // AddDevice(new SerialDevice());

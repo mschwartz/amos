@@ -13,10 +13,13 @@
 #include <Exec/x86/gdt.hpp>
 #include <Exec/x86/tss.hpp>
 #include <Exec/BTask.hpp>
+#include <Exec/Mutex.hpp>
 
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
+
+const TInt BOOT_STACK_SIZE = 16384;
 
 enum {
   ECpuUninitialized,
@@ -24,6 +27,7 @@ enum {
   ECpuInitialized,
   ECpuRunning,
   ECpuHalted,
+  ECpuGuruMeditation,
 } ECpuState;
 
 #define CPU_STEPPING_ID(x) (x & 0x0f)
@@ -34,10 +38,13 @@ enum {
 #define CPU_EXTENDED_FAMILY_ID(x) ((x >> 20) & 0xff)
 
 class ACPI;
-
 class ExecBase;
+class IdleTask;
+class TimerInterrupt;
+
 class CPU : public BBase {
   friend ExecBase;
+  friend TimerInterrupt;
 
 public:
   // constructor
@@ -60,24 +67,32 @@ protected:
   TSS *mTss;
   IDT *mIdt;
   TGS mGS;
+  IdleTask *mIdleTask;
 
 public:
   void GuruMeditation(const char *aFormat, ...);
 
-public:
+protected:
   void AddTask(BTask *aTask);
   TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode);
   BTask *CurrentTask() { return mCurrentTask; }
   void DumpTasks();
 
-  void AddActiveTask(BTask &aTask) { mActiveTasks.Add(aTask); }
+  void AddActiveTask(BTask &aTask) {
+    mMutex.Acquire();
+    mActiveTasks.Add(aTask);
+    mMutex.Release();
+  }
   void RescheduleIRQ();
 
 protected:
+  Mutex mMutex;
+  TInt64 mRunningTaskCount;;
   BTaskList mActiveTasks;
   BTask *mCurrentTask;
 
 public:
+  TUint8 *mBootStack;
   TUint64 mCpuState;
 
 public:

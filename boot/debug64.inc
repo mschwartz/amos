@@ -178,35 +178,43 @@ hexquad64:
         ret
 
 global hexbytes64
-hexbytes64:         call hexbyte64
+hexbytes64:
+        call hexbyte64
         jmp space64
 
 global hexwords64
-hexwords64:         call hexword64
+hexwords64:
+        call hexword64
         jmp space64
 
 global hexlongs64
-hexlongs64:         call hexlong64
+hexlongs64:
+        call hexlong64
         jmp space64
 
 global hexquads64
-hexquads64:         call hexquad64
+hexquads64:
+        call hexquad64
         jmp space64
 
 global hexbyten64
-hexbyten64:         call hexbyte64
+hexbyten64:
+	call hexbyte64
         jmp newline64
 
 global hexwordn64
-hexwordn64:         call hexword64
+hexwordn64:
+	call hexword64
         jmp newline64
 
 global hexlongn64
-hexlongn64:         call hexlong64
+hexlongn64:
+	call hexlong64
         jmp newline64
 
 global hexquadn64
-hexquadn64:         call hexquad64
+hexquadn64:
+	call hexquad64
         jmp newline64
 
 global hexdump64

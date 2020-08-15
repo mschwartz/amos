@@ -112,12 +112,20 @@ TInt64 TimerTask::Run() {
 }
 
 TBool TimerInterrupt::Run(TAny *g) {
-  // dlog("Timer\n");
-  mTask->Signal(1 << mTask->mSignalBit);
+  CPU *cpu = GetCPU();
+  if (!cpu) {
+    gExecBase.InterruptOthers(IRQ_TIMER);
+    gExecBase.AckIRQ(IRQ_TIMER);
+    return ETrue;
+  }
+  if (cpu->mApicId == 0) {
+    mTask->Signal(1 << mTask->mSignalBit);
+    gExecBase.InterruptOthers(IRQ_TIMER);
+  }
 
-  gExecBase.RescheduleIRQ(); // maybe wake up new task
-  gExecBase.AckIRQ(IRQ_TIMER);
-
+  // dlog("Reschedule cpu(%d)\n", cpu->mProcessorId);
+  cpu->RescheduleIRQ(); // maybe wake up new task
+  cpu->AckIRQ(IRQ_TIMER);
   return ETrue;
 }
 

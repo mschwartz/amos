@@ -16,4 +16,4 @@ This information is potentially out of date.  See the memory.inc file for accura
 0x10000: MMU Paging Tables (through 0x5ffff)
 0x60000: This is where the kernel is loaded using BIOS int 13h.  It is later moved to KERNEL_ORG.
 0x80000-0x9ffff: this is the EBDA
-0x100000: This is where the kernel is copied and runs
+0x200000: This is where the kernel is copied and runs

@@ -57,8 +57,6 @@ struc TASK
 .cs                 resq 1
 .ds                 resq 1
 .es                 resq 1
-	; .fs                 resq 1
-	; .gs                 resq 1
 .ss                 resq 1
 .fxsave             resb 512 + 16
 endstruc
@@ -75,31 +73,81 @@ endstruc
 ;; 
 
 ;; This is the per CPU local data
-struc TGS
-.current_task resq 0
-.current_cpu resq 0
-endstruc
+CURRENT_GS: equ 0
+CURRENT_TASK: equ 8
+CURRENT_CPU: equ 16
+	
 
+;; extern "C" void write_msr(TUint64 aRegister, TUint64 aValue);
+global write_msr
+write_msr:
+	push rcx
+	push rdx
+	
+	mov rcx, rdi
+	mov rax, rsi
+	mov rdx, rsi
+	shr rdx, 32
+	wrmsr
+
+	pop rdx
+	pop rcx
+	ret
+
+;; extern "C" TUint64 read_msr(TUint64 aRegister);
+global read_msr
+read_msr:
+	push rcx
+	push rdx
+
+	mov rcx, rdi
+	rdmsr
+	shl rdx, 32
+	or rax, rdx
+
+	pop rdx
+	pop rcx
+	ret
+	
+global swapgs
+swapgs:
+	swapgs
+	ret
+	
 ;; this is callable from C/C++ to set the GS register value
 global SetGS
 SetGS:
+	pushf
+	cli
+	
 	push rax
 	push rcx
 	push rdx
 
-	mov al, 1
-	mov [gs_flag], al
-
-	mov rcx, 0xC0000101
-	xor rdx, rdx
 	mov rax, rdi
+	mov rdx, rdi
+	shr rdx, 32
+	mov rcx, 0xc0000101
 	wrmsr
 
+	mov [gs:CURRENT_GS], rdi
 	swapgs
+
+	; mov rcx, 0xc0000102
+	; wrmsr
+	
+	; swapgs
+
+	mov rax, [gs:CURRENT_GS]
+
+	; mov rcx, 0xc0000101
+	; rdmsr
 
 	pop rdx
 	pop rcx
 	pop rax
+	popf
+	
 	ret
 
 gs_flag:
@@ -108,34 +156,61 @@ align 16
 	
 global GetGS
 GetGS:
-	mov rax, gs
+	pushf
+	cli
+
+	swapgs
+	mov rax, [gs:CURRENT_GS]
+	swapgs
+
+	popf
 	ret
 
 global SetCPU
 SetCPU:
-	mov [gs:TGS.current_cpu], rdi
+	pushf
+	cli
+
+	swapgs
+	mov [gs:CURRENT_CPU], rdi
+	swapgs
+
+	popf
+	
 	ret
 	
 global GetCPU
 GetCPU:
-	mov al, [gs_flag]
-	test al, al
-	jne .initialized
-	xor rax, rax
-	ret
-	
-.initialized:
-	mov rax, [gs:TGS.current_cpu]
+	pushf
+	cli
+
+	swapgs
+	mov rax, [gs:CURRENT_CPU]
+	swapgs
+
+	popf
 	ret
 	
 global SetCurrentTask
 SetCurrentTask:
-	mov [gs:TGS.current_task], rdi
+	pushf
+	cli
+
+	swapgs
+	mov [gs:CURRENT_TASK], rdi
+	swapgs
+	
+	popf
 	ret
 
 global GetCurrentTask
 GetCurrentTask:
-	mov rax, [gs:TGS.current_task]
+	pushf
+	cli
+	swapgs
+	mov rax, [gs:CURRENT_TASK]
+	swapgs
+	popf
 	ret
 
 	
@@ -153,10 +228,12 @@ isr_common:
 	; +0x0018 RSP
 	; +0x0020 SS
 	; NOTE: rax pushed by ISR is at the very top, we must pop it
-	; bochs
 	push rdi            ; save rdi so we don't clobber it
 
-        mov rdi, [gs:TGS.current_task]
+	swapgs
+        mov rdi, [gs:CURRENT_TASK]
+	swapgs
+	
         mov [rdi + TASK.isrnum], rax            ; isrnum was pushed on stack by xisr
 
         ; set default value for task_error_code
@@ -193,10 +270,6 @@ isr_common:
 	mov [rdi + TASK.ds], rax
 	mov ax, es
 	mov [rdi + TASK.es], rax
-	; mov ax, fs
-	; mov [rdi + TASK.fs], rax
-	; mov ax, gs
-	; mov [rdi + TASK.gs], rax
 
 	; save coprocessor registers, if CPU has them
         mov rax, cr4
@@ -261,7 +334,9 @@ isr_common:
 global restore_task_state
 restore_task_state:
         ; restore task state
-        mov rdi, [gs:TGS.current_task]
+	swapgs
+        mov rdi, [gs:CURRENT_TASK]
+	swapgs
 
         mov rax, cr4
         bts rax, 9
@@ -299,10 +374,6 @@ restore_task_state:
 	mov ds, ax
 	mov rax, [rdi + TASK.es]
 	mov es, ax
-	; mov rax, [rdi + TASK.fs]
-	; mov fs, ax
-	; mov rax, [rdi + TASK.gs]
-	; mov gs, ax
 
 	; restore general purpose registers
 	mov rbp, [rdi + TASK.rbp]
@@ -393,7 +464,9 @@ enter_tasking:
 %if 0
         cli
         ; restore task state
-        mov rdi, [gs:TGS.current_task]
+	swapgs
+        mov rdi, [gs:CURRENT_TASK]
+	swapgs
 
         ; set up the return stack using the task's stack memory
 	;                    mov ss, [rdi + TASK.ss]
@@ -424,7 +497,9 @@ save_rsp:
         cli
         push rdi
 
-        mov rdi, [gs:TGS.current_task]
+	swapgs
+        mov rdi, [gs:CURRENT_TASK]
+	swapgs
         test rdi, rdi
         jne .save
         pop rdi

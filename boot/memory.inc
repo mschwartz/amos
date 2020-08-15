@@ -15,7 +15,7 @@ EBDA_ORG:            equ 0x80000
 ebda_temp:           equ 0x20000
 
 ;; kernel address (loaded here)
-KERNEL_ORG:          equ 0x100000
+KERNEL_ORG:          equ 0x200000
 KERNEL_LOAD:         equ 0x40000
 KERNEL_LOAD_SEG:     equ 0x4000
 
@@ -79,3 +79,9 @@ struc SYSINFO
 .version resb 64
 endstruc
 
+;; CGA Display
+
+VIDEO_MEMORY        equ CGA
+VIDEO_MEMORY_SEG    equ 0xb800
+WHITE_ON_BLACK      equ 0x0f
+GREEN_ON_BLACK      equ 0x1f

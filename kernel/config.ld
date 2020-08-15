@@ -3,12 +3,14 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x100000;
+    . = 0x200000;
 
-    /* MEMF_CHIP */
+    /* MEMF_CHIP (128K) */
     chip_memory     = 0x60000;
     chip_memory_end = 0x7ffff;
 
+    boot_stacks = 0x100000;
+    
     init_start = .;
     .init : {
 	    *(.init)

@@ -6,24 +6,28 @@
 // TODO GS register points to this CPU's info area
 
 #include <Types.hpp>
+#include <Exec/x86/acpi.hpp>
 #include <Exec/x86/ioapic.hpp>
 #include <Exec/x86/apic.hpp>
 #include <Exec/x86/idt.hpp>
 #include <Exec/x86/gdt.hpp>
 #include <Exec/x86/tss.hpp>
 #include <Exec/BTask.hpp>
+#include <Exec/Mutex.hpp>
 
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
-const TInt MAX_CPUS = 64;
+const TInt BOOT_STACK_SIZE = 16384;
 
 enum {
   ECpuUninitialized,
+  ECpuUnusable,
   ECpuInitialized,
   ECpuRunning,
   ECpuHalted,
+  ECpuGuruMeditation,
 } ECpuState;
 
 #define CPU_STEPPING_ID(x) (x & 0x0f)
@@ -33,23 +37,29 @@ enum {
 #define CPU_EXTENDED_MODEL_ID(x) ((x >> 16) & 0x0f)
 #define CPU_EXTENDED_FAMILY_ID(x) ((x >> 20) & 0xff)
 
+class ACPI;
 class ExecBase;
+class IdleTask;
+class TimerInterrupt;
+
 class CPU : public BBase {
   friend ExecBase;
+  friend TimerInterrupt;
 
 public:
   // constructor
-  CPU(TUint32 aProcessor, TUint32 aProcessorId, TUint32 aApicId, IoApic *aIoApic);
+  CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi);
+
+public:
+  static void ColdStart();
 
 public:
   // Initialize must be called from the actual running CPU (e.g. not the BSP)
   // void Initialize();
   void StartAP(BTask *aTask); // perform SIPI to start AP
-  void EnterAP(); // entry point for AP, running in the AP's CORE!
+  void EnterAP();             // entry point for AP, running in the AP's CORE!
 
 public:
-  void EnableIRQ(TUint16 aIRQ);
-  void DisableIRQ(TUint16 aIRQ);
   void AckIRQ(TUint16 aIRQ);
 
 protected:
@@ -57,32 +67,43 @@ protected:
   TSS *mTss;
   IDT *mIdt;
   TGS mGS;
+  IdleTask *mIdleTask;
 
 public:
+  void GuruMeditation(const char *aFormat, ...);
+
+protected:
   void AddTask(BTask *aTask);
   TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode);
   BTask *CurrentTask() { return mCurrentTask; }
   void DumpTasks();
 
-  void AddActiveTask(BTask &aTask) { mActiveTasks.Add(aTask); }
+  void AddActiveTask(BTask &aTask) {
+    mMutex.Acquire();
+    mActiveTasks.Add(aTask);
+    mMutex.Release();
+  }
   void RescheduleIRQ();
-  
+
 protected:
+  Mutex mMutex;
+  TInt64 mRunningTaskCount;;
   BTaskList mActiveTasks;
   BTask *mCurrentTask;
 
 public:
+  TUint8 *mBootStack;
   TUint64 mCpuState;
 
 public:
   TUint32 mProcessorId;
   TUint32 mApicId;
-  IoApic *mIoApic;
-  Apic *mApic;
+  // IoApic *mIoApic;
+  ACPI *mAcpi;
+  Apic *mApic; // local APIC
 
 public:
   // Data gathered via CPUID
-  TUint32 mProcessor; // which core 0-n
   TUint32 mMaxFunction;
   TUint32 mProcessorVersionInformation;
   TUint32 mProcessorAdditionalInformation;
@@ -108,8 +129,8 @@ public:
 public:
   void Dump() {
     dprint("\n\n");
-    dlog("CPU %2d mProcessorId(%d) mApicId(%d) mIoApic(0x%x) this(%x)\n",
-      mProcessor, mProcessorId, mApicId, mIoApic, this);
+    dlog("CPU mProcessorId(%d) mApicId(%d) mAcpi(0x%x) this(%x)\n",
+      mProcessorId, mApicId, mAcpi, this);
     dlog("  Manufacturer / Model: %s / %s %d cores\n", mManufacturer, mBrand, mCores);
     dlog("    Number of address bits: Physical(%d) Linear(%d)\n",
       mPhysicalAddressBits, mLinearAddressBits);

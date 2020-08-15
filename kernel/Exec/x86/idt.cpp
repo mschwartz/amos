@@ -77,29 +77,49 @@ extern "C" TUint64 isr128; // syscall (0x80, or 0x60 + 32)
 extern "C" TUint64 isr130; // interrupt scheduler
 
 static TIsrHandler interrupt_handlers[INTERRUPTS];
+static TBool interrupt_enabled[256];
 
 /**
-  * kernel_isr
-  *
-  * This method is called from the assembly ISR handler(s) and Exception handlers.
-  */
+ * kernel_isr
+ *
+ * This method is called from the assembly ISR handler(s) and Exception handlers.
+ */
 extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
   cli();
 
-  // dlog("kernel_isr %d\n", aIsrNumber);
+  if (!interrupt_enabled[aIsrNumber] && aIsrNumber != 48) {
+    gExecBase.AckIRQ(aIsrNumber);
+    return ETrue;
+  }
+
+  CPU *cpu = GetCPU();
+  // if (cpu && cpu->mApicId) {
+  //   dlog("kernel_isr %d\n", aIsrNumber);
+  //   // bochs;
+  // }
+
   TTaskRegisters *current_task = GetCurrentTask();
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {
     const char *desc = IDT::InterruptDescription(current_task->isr_num);
-    dlog("no handler: %d(%d) %s\n", aIsrNumber, current_task->isr_num, desc);
+    dlog("no handler: %d(%x) %s\n", aIsrNumber, current_task->isr_num, desc);
+    gExecBase.AckIRQ(aIsrNumber);
     return false;
   }
 
   bool ret = info->mHandler(info->mInterruptNumber, info->mData);
+  gExecBase.AckIRQ(aIsrNumber);
   return ret;
-  // CPU *cpu = gExecBase.CurrentCpu();
-  // return cpu->ProcessIrq(aIsrNumber);
 };
+
+void IDT::EnableInterrupt(TUint16 aInterruptNumber) {
+  dlog("IDT enable interrupt(%d)\n", aInterruptNumber);
+  interrupt_enabled[aInterruptNumber] = ETrue;
+}
+void IDT::DisableInterrupt(TUint16 aInterruptNumber) {
+  dlog("IDT disable interrupt(%d)\n", aInterruptNumber);
+  interrupt_enabled[aInterruptNumber] = EFalse;
+}
 
 #pragma pack(1)
 typedef struct {
@@ -146,8 +166,12 @@ static void set_entry(TInt aIndex, TUint64 aVec, TInt aIst = 0) {
 IDT::IDT() {
   DISABLE;
   // initialize C ISRs
-  for (int i = 0; i < INTERRUPTS; i++) {
+  for (TInt i = 0; i < INTERRUPTS; i++) {
     interrupt_handlers[i].Set(i, nullptr, nullptr, "Not installed");
+  }
+
+  for (TInt i = 0; i < 256; i++) {
+    mEnabled[i] = EFalse;
   }
 
   // EXCEPTIONS
@@ -266,9 +290,10 @@ static const char *int_desc[] = {
   "Intel reserved",
 
   /* External interrupts (generated outside processor) */
-  "IRQ_TIMER",
+  "IRQ_APIC_TIMER",
   "IRQ_KEYBOARD",
-  "IRQ_SLAVE_PIC",
+  // "IRQ_SLAVE_PIC",
+  "IRQ_TIMER",
   "IRQ_COM2",
   "IRQ_COM1",
   "IRQ_LPT2",

@@ -42,6 +42,9 @@ public:
   static const char *InterruptDescription(TUint16 n);
 
 public:
+  static void EnableInterrupt(TUint16 aInterruptNumber);
+  static void DisableInterrupt(TUint16 aInterruptNumber);
+
   static void DisableInterrupts() { asm volatile("cli\n\t"); }
   static void EnableInterrupts() { asm volatile("sti\n\t"); }
 
@@ -59,6 +62,7 @@ public:
 
 protected:
   TBool mAlive;
+  TBool mEnabled[256];
 };
 
 #endif

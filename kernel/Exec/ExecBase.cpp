@@ -38,6 +38,7 @@ extern "C" TUint64 rdrand();
 
 // ExecBase constructor
 ExecBase::ExecBase() {
+  CPU::ColdStart();
   dlog("ExecBase constructor called\n");
   mDebugSwitch = EFalse;
 
@@ -55,22 +56,16 @@ ExecBase::ExecBase() {
   mMMU = new MMU;
   dlog("  initialized MMU\n");
 
+  cli();
   mACPI = new ACPI();
   dlog("  initialized ACPI\n");
-
-  // set up CPUs
-
-  {
-    for (TInt c = 0; c < mACPI->mAcpiInfo.mNumCpus; c++) {
-      AddCpu(new CPU(c, mACPI->mAcpiInfo.mCpus[c].mId, mACPI->mAcpiInfo.mCpus[c].mApicId, mACPI->mIoApic));
-    }
-  }
 
   mMessagePortList = new MessagePortList("ExecBase MessagePort List");
 
   mPci = new PCI();
   dlog("  initialized PCI\n");
 
+  cli();
   InitInterrupts();
 
   // set up 8259 PIC
@@ -78,7 +73,7 @@ ExecBase::ExecBase() {
   mDisableNestCount = 0;
 
   //  sti();
-  Disable();
+  cli();
   dlog("  initialized 8259 PIC\n");
 
 #ifdef ENABLE_PS2
@@ -88,7 +83,6 @@ ExecBase::ExecBase() {
 #endif
 
   mCpus[0]->EnterAP();
-  Enable();
 }
 
 ExecBase::~ExecBase() {
@@ -100,22 +94,26 @@ void ExecBase::AddCpu(CPU *aCpu) {
 }
 
 CPU *ExecBase::CurrentCpu() {
-  if (mCpus[0]) {
-    TUint64 cpu = GetCPU();
-    if (cpu > mNumCpus) {
-      return mCpus[0];
-    }
-    else {
-      dlog("CurrentCpu = %d\n", cpu);
-      return mCpus[cpu];
-    }
-  }
-  return mCpus[0];
+  CPU *cpu = GetCPU();
+  // dlog("CurrentCPU(%x)]n", cpu);
+  return cpu;
+}
+
+TUint64 ExecBase::GetCurrentCpuNumber() {
+  CPU *cpu = GetCPU();
+  return cpu ? cpu->mProcessorId : 0;
 }
 
 void ExecBase::SetInspirationBase(InspirationBase *aInspirationBase) {
   mInspirationBase = aInspirationBase;
   mInspirationBase->Init();
+}
+
+void ExecBase::InterruptOthers(TUint8 aVector) {
+  CPU *cpu = mCpus[0];
+  if (cpu != ENull) {
+    cpu->mApic->InterruptOthers(aVector);
+  }
 }
 
 void ExecBase::Disable() {
@@ -131,24 +129,11 @@ void ExecBase::Enable() {
   }
 }
 
-//void ExecBase::AddInterruptHandler(TUint8 aIndex, TInterruptHandler *aHandler, TAny *aData, const char *aDescription) {
-//  mIDT->InstallHandler(aIndex, aHandler, aData, aDescription);
-//}
-
 void ExecBase::AddTask(BTask *aTask) {
   DISABLE;
-
   // TODO: this should figure out which CPU to assign task to
   CPU *c = CurrentCpu();
   c->AddTask(aTask);
-#if 0
-  aTask->mRegisters.tss = (TUint64)c->mTss;
-  dlog("    Add Task %016x --- %s --- rip=%016x rsp=%016x\n", aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
-  //  aTask->Dump();
-  mActiveTasks.Add(*aTask);
-  //  mActiveTasks.Dump();
-  //  dlog("x\n");
-#endif
   ENABLE;
 }
 
@@ -156,6 +141,10 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 
   DISABLE;
   CPU *c = CurrentCpu();
+  if (!c) {
+    c = CurrentCpu();
+    bochs;
+  }
   c->RemoveTask(aTask, aExitCode);
   ENABLE;
 
@@ -165,16 +154,6 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 
   return aExitCode;
 }
-
-#if 0
-void ExecBase::DumpTasks() {
-  dlog("\n\nActive Tasks\n");
-  mActiveTasks.Dump();
-  dlog("Waiting Tasks\n");
-  mWaitingTasks.Dump();
-  dlog("\n\n");
-}
-#endif
 
 void ExecBase::WaitSignal(BTask *aTask) {
   DISABLE;
@@ -356,20 +335,24 @@ void ExecBase::AddFileSystem(BFileSystem *aFileSystem) {
 
 void ExecBase::GuruMeditation(const char *aFormat, ...) {
   cli();
-  bochs;
-  char buf[512];
-  dprint("\n\n***********************\n");
-  dprint("GURU MEDITATION at %dms\n", SystemTicks());
-
+  CPU *c = GetCPU();
   va_list args;
   va_start(args, aFormat);
-  vsprintf(buf, aFormat, args);
-  dprint(buf);
-  dprint("\n");
+  c->GuruMeditation(aFormat, args);
+  // bochs;
+  // char buf[512];
+  // dprint("\n\n***********************\n");
+  // dprint("GURU MEDITATION at %dms\n", SystemTicks());
 
-  GetCurrentTask()->Dump();
-  va_end(args);
-  dprint("***********************\n\n\nHalted.\n");
+  // va_list args;
+  // va_start(args, aFormat);
+  // vsprintf(buf, aFormat, args);
+  // dprint(buf);
+  // dprint("\n");
+
+  // GetCurrentTask()->Dump();
+  // va_end(args);
+  // dprint("***********************\n\n\nHalted.\n");
 
   for (;;) {
     halt();
@@ -420,19 +403,22 @@ public:
 };
 
 void ExecBase::SetIntVector(EInterruptNumber aInterruptNumber, BInterrupt *aInterrupt) {
+  dlog("SetIntVector(%d, %x) %s\n", aInterruptNumber, aInterrupt, aInterrupt->mNodeName);
   mInterrupts[aInterruptNumber].Add(*aInterrupt);
 }
 
 void ExecBase::EnableIRQ(TUint16 aIRQ) {
-  mPIC->EnableIRQ(aIRQ);
+  IDT::EnableInterrupt(aIRQ);
+  mACPI->EnableIRQ(aIRQ);
 }
 
 void ExecBase::DisableIRQ(TUint16 aIRQ) {
-  mPIC->DisableIRQ(aIRQ);
+  IDT::DisableInterrupt(aIRQ);
+  mACPI->DisableIRQ(aIRQ);
 }
 
 void ExecBase::AckIRQ(TUint16 aIRQ) {
-  mPIC->AckIRQ(aIRQ);
+  mACPI->AckIRQ(aIRQ);
 }
 
 extern "C" TUint64 GetRFLAGS();
@@ -466,6 +452,7 @@ void ExecBase::SetException(EInterruptNumber aIndex, const char *aName) {
   DISABLE;
   IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
   SetIntVector(aIndex, new DefaultException(aName));
+  IDT::EnableInterrupt(aIndex);
   ENABLE;
 }
 
@@ -481,6 +468,7 @@ void ExecBase::SetTrap(EInterruptNumber aIndex, const char *aName) {
   //  dlog("Add Trap %d %s\n", aIndex, aName);
   IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
   SetIntVector(aIndex, new NextTaskTrap(aName));
+  IDT::EnableInterrupt(aIndex);
   ENABLE;
 }
 

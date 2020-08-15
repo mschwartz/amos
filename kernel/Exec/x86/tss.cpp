@@ -12,7 +12,7 @@ TSS::TSS() {
   mTss.ist5 = (TUint64)&iStack5[KSTACK_SIZE];
   mTss.ist6 = (TUint64)&iStack6[KSTACK_SIZE];
   mTss.ist7 = (TUint64)&iStack7[KSTACK_SIZE];
-  // Dump();
+  Dump();
 }
 
 TSS::~TSS() {

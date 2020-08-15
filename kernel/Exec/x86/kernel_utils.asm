@@ -7,9 +7,40 @@
 %macro bochs 0
 	xchg bx,bx
 %endmacro
-global gdt_flush
 
-	; called as: gdt_flush(&gdt_ptr, cs) in C
+;; execute wrmsr
+global wrmsr
+wrmsr:
+	push rcx
+	push rdx
+
+	mov rcx, rdi
+	mov rax, rsi
+	mov rdx, rsi
+	shr rdx, 32
+	wrmsr
+
+	pop rdx
+	pop rcx
+	ret
+	
+;; extern "C" TUint64 read_msr(TUint64 aRegister);
+global rdmsr
+rdmsr:
+	push rcx
+	push rdx
+
+	mov rcx, rdi
+	rdmsr
+	shl rdx, 32
+	or rax, rdx
+
+	pop rdx
+	pop rcx
+	ret
+
+;; called as: gdt_flush(&gdt_ptr, cs) in C
+global gdt_flush
 gdt_flush:
         mov rax,rdi 
         lgdt [rax]                      ; load the gdt into the CPU
@@ -26,6 +57,7 @@ gdt_flush:
 .flush:
         ret
 
+;; load task register	
 global tss_flush
 tss_flush:
         mov rax, rdi
@@ -33,6 +65,7 @@ tss_flush:
 .flush:
         ret
 
+;; load page directory into cr3
 global load_page_directory
 load_page_directory:
         mov cr3, rdi
@@ -109,6 +142,13 @@ GetFS:
 global GetRSP
 GetRSP:
 	mov rax, rsp
+	ret
+	
+global SetRSP
+SetRSP:
+	pop rax
+	mov rsp, rdi
+	push rax
 	ret
 	
 global GetRFLAGS

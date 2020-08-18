@@ -71,6 +71,7 @@ enum EInterruptNumber {
   EAta2IRQ,
   //
   ETrap0,
+  ETrap1,
   EMaxInterrupts,
 
 };

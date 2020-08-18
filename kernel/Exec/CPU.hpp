@@ -83,6 +83,8 @@ protected:
     mActiveTasks.Add(aTask);
     mMutex.Release();
   }
+
+  void WaitSignal(BTask *aTask);
   void RescheduleIRQ();
 
 protected:

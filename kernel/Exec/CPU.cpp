@@ -227,8 +227,28 @@ void CPU::AddTask(BTask *aTask) {
   ENABLE;
 }
 
+void CPU::WaitSignal(BTask *aTask) {
+  mMutex.Acquire();
+  aTask->Remove();
+  mRunningTaskCount--;
+  // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
+  // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
+  if (aTask->mSigWait & aTask->mSigReceived) {
+    // TODO: assign task to a CPU
+    mActiveTasks.Add(*aTask);
+    aTask->mTaskState = ETaskRunning;
+  }
+  else {
+    aTask->mTaskState = ETaskWaiting;
+    gExecBase.AddWaitingTask(aTask);
+    // mWaitingTasks.Add(*aTask);
+  }
+  mMutex.Release();
+  gExecBase.Schedule();
+}
+
 TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
-  DISABLE;
+  mMutex.Acquire();
   aTask->Remove();
   mRunningTaskCount--;
   TBool isCurrentTask = aTask == mCurrentTask;
@@ -242,9 +262,11 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   if (isCurrentTask) {
     mCurrentTask = mActiveTasks.First();
     SetCurrentTask(&mCurrentTask->mRegisters);
+    mMutex.Release();
     enter_tasking(); // just enter next task
   }
-  ENABLE;
+
+  mMutex.Release();
   return aExitCode;
 }
 

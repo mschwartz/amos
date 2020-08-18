@@ -12,11 +12,11 @@ TInt64 KeyboardTask::Run() {
 
   dprint("\n");
   dlog("KeyboardTask Run\n");
-  Forbid();
+  // Forbid();
   while ((keyboardPort = gExecBase.FindMessagePort("keyboard.device")) == ENull) {
     Sleep(1);
   }
-  Permit();
+  // Permit();
 
   MessagePort *replyPort = CreatePort("replyPort");
   KeyboardMessage *message = new KeyboardMessage(replyPort, EKeyRead);

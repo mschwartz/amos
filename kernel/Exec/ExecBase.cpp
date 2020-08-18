@@ -82,6 +82,7 @@ ExecBase::ExecBase() {
   mPS2 = ENull;
 #endif
 
+  mCpus[0]->mCpuState = ECpuRunning;
   mCpus[0]->EnterAP();
 }
 
@@ -129,24 +130,21 @@ void ExecBase::Enable() {
   }
 }
 
+void ExecBase::AddWaitingTask(BTask *aTask) {
+  mWaitingTasksMutex.Acquire();
+  mWaitingTasks.Add(*aTask);
+  mWaitingTasksMutex.Release();
+}
+
 void ExecBase::AddTask(BTask *aTask) {
-  DISABLE;
-  // TODO: this should figure out which CPU to assign task to
-  CPU *c = CurrentCpu();
+  // TODO: this should choose a CPU to assign task to
+  CPU *c = ChooseCpu();
   c->AddTask(aTask);
-  ENABLE;
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
-
-  DISABLE;
   CPU *c = CurrentCpu();
-  if (!c) {
-    c = CurrentCpu();
-    bochs;
-  }
   c->RemoveTask(aTask, aExitCode);
-  ENABLE;
 
   if (aDelete) {
     delete aTask;
@@ -155,23 +153,36 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
   return aExitCode;
 }
 
+CPU *ExecBase::ChooseCpu() {
+  return mCpus[0];
+  
+  static TInt nextCpu = 0;
+  do {
+    nextCpu++;
+    nextCpu %= 4;
+  } while (mCpus[nextCpu]->mCpuState != ECpuRunning);
+  return mCpus[nextCpu];
+}
+
 void ExecBase::WaitSignal(BTask *aTask) {
-  DISABLE;
-  aTask->Remove();
-  // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
-  // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
-  if (aTask->mSigWait & aTask->mSigReceived) {
-    // TODO: assign task to a CPU
-    CPU *cpu = CurrentCpu();
-    cpu->AddActiveTask(*aTask);
-    aTask->mTaskState = ETaskRunning;
-  }
-  else {
-    mWaitingTasks.Add(*aTask);
-    aTask->mTaskState = ETaskWaiting;
-  }
-  Schedule();
-  ENABLE;
+  CPU *cpu = (CPU *)aTask->mCpu;
+  cpu->WaitSignal(aTask);
+  // DISABLE;
+  // aTask->Remove();
+  // // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
+  // // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
+  // if (aTask->mSigWait & aTask->mSigReceived) {
+  //   // TODO: assign task to a CPU
+  //   CPU *cpu = CurrentCpu();
+  //   cpu->AddActiveTask(*aTask);
+  //   aTask->mTaskState = ETaskRunning;
+  // }
+  // else {
+  //   mWaitingTasks.Add(*aTask);
+  //   aTask->mTaskState = ETaskWaiting;
+  // }
+  // Schedule();
+  // ENABLE;
 }
 
 void ExecBase::WaitSemaphore(BTask *aTask, Semaphore *aSemaphore) {
@@ -195,7 +206,7 @@ void ExecBase::ReleaseSemaphore(Semaphore *aSemaphore) {
     aSemaphore->mNestCount = 1;
     aSemaphore->mSharedCount = 0;
     t->mTaskState = ETaskRunning;
-    CurrentCpu()->AddActiveTask(*t);
+    ChooseCpu()->AddActiveTask(*t);
     // mActiveTasks.Add(*t);
   }
   else {
@@ -219,7 +230,7 @@ void ExecBase::Wake(BTask *aTask) {
     dlog("Wake %s\n", aTask->TaskName());
   }
   aTask->Remove();
-  CurrentCpu()->AddActiveTask(*aTask);
+  ChooseCpu()->AddActiveTask(*aTask);
   aTask->mTaskState = ETaskRunning;
   ENABLE;
   //  DumpTasks();
@@ -335,6 +346,7 @@ void ExecBase::AddFileSystem(BFileSystem *aFileSystem) {
 
 void ExecBase::GuruMeditation(const char *aFormat, ...) {
   cli();
+  gExecBase.InterruptOthers(ETrap1);
   CPU *c = GetCPU();
   va_list args;
   va_start(args, aFormat);
@@ -381,7 +393,7 @@ public:
 class DefaultIRQ : public BInterrupt {
 public:
   DefaultIRQ(const char *aKind) : BInterrupt(aKind, LIST_PRI_MIN) {}
-  ~DefaultIRQ();
+  // ~DefaultIRQ();
 
 public:
   TBool Run(TAny *aData) {
@@ -393,12 +405,24 @@ public:
 class NextTaskTrap : public BInterrupt {
 public:
   NextTaskTrap(const char *aKind) : BInterrupt(aKind, LIST_PRI_MIN) {}
-  ~NextTaskTrap();
+  // ~NextTaskTrap();
 
 public:
   TBool Run(TAny *aData) {
     gExecBase.RescheduleIRQ();
     return ETrue;
+  }
+};
+
+class HaltTrap : public BInterrupt {
+public:
+  HaltTrap(const char *aKind) : BInterrupt(aKind, LIST_PRI_MIN) {}
+
+public:
+  TBool Run(TAny *aData) {
+    while (1) {
+      halt();
+    }
   }
 };
 
@@ -472,6 +496,15 @@ void ExecBase::SetTrap(EInterruptNumber aIndex, const char *aName) {
   ENABLE;
 }
 
+void ExecBase::SetHaltTrap(EInterruptNumber aIndex, const char *aName) {
+  DISABLE;
+  //  dlog("Add Trap %d %s\n", aIndex, aName);
+  IDT::InstallHandler(aIndex, ExecBase::RootHandler, this, aName);
+  SetIntVector(aIndex, new HaltTrap(aName));
+  IDT::EnableInterrupt(aIndex);
+  ENABLE;
+}
+
 void ExecBase::InitInterrupts() {
   DISABLE;
   // install default exception handlers
@@ -515,6 +548,7 @@ void ExecBase::InitInterrupts() {
   SetInterrupt(EAta1IRQ, "Ata 1");
   SetInterrupt(EAta2IRQ, "Ata 2");
   SetTrap(ETrap0, "Trap0");
+  SetHaltTrap(ETrap1, "Trap1");
 
   ENABLE;
 }

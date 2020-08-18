@@ -124,6 +124,7 @@ protected:
   void SetInterrupt(EInterruptNumber aInterruptNumber, const char *aName);
   void SetException(EInterruptNumber aInterruptNumber, const char *aName);
   void SetTrap(EInterruptNumber aInterruptNumber, const char *aName);
+  void SetHaltTrap(EInterruptNumber aInterruptNumber, const char *aName);
   void InitInterrupts();
   //
   BInterruptList mInterrupts[EMaxInterrupts];
@@ -141,12 +142,15 @@ protected:
 public:
   // add task to active task list
   void AddTask(BTask *aTask);
+  void AddWaitingTask(BTask *aTask);
   // suicide/exit/kill task
   TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete = ETrue);
 
   // void DumpTasks();
   // void DumpCurrentTask() { mCurrentTask->Dump(); }
   void AddWaitingList(BTask &aTask);
+
+  CPU *ChooseCpu();
 
   BTask *GetCurrentTask() {
     CPU *cpu = CurrentCpu();

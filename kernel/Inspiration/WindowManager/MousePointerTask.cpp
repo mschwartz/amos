@@ -92,11 +92,12 @@ TInt64 MousePointerTask::Run() {
   dprint("\n");
   dlog("MousePointerTask Run\n");
 
-  Forbid();
+  // Forbid();
   while ((mousePort = gExecBase.FindMessagePort("mouse.device")) == ENull) {
+    dlog("waiting for mouse.device\n");
     Sleep(1);
   }
-  Permit();
+  // Permit();
 
   MessagePort *replyPort = CreatePort("replyPort");
 

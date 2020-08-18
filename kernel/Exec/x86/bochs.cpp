@@ -12,11 +12,13 @@ extern "C" TUint8 bochs_present;
 extern "C" void eputs(const char *s);
 extern "C" void sputc(char c);
 
+static Mutex lock;
+
 void dassert(TBool aValue, const char *aFormat, ...) {
   if (aValue) {
     return;
   }
-  DISABLE;
+  lock.Acquire();
 
   va_list args;
   va_start(args, aFormat);
@@ -28,7 +30,7 @@ void dassert(TBool aValue, const char *aFormat, ...) {
   va_end(args);
 
   bochs;
-  ENABLE;
+  lock.Release();
   
 }
 
@@ -45,16 +47,14 @@ void dputc(char c) {
 }
 
 void dputs(const char *s) {
-  DISABLE;
+  lock.Acquire();
   while (*s) {
     dputc(*s++);
   }
-  ENABLE;
+  lock.Release();
 }
 
 void dlog(const char *fmt, ...) {
-  DISABLE;
-
   va_list args;
   va_start(args, fmt);
 
@@ -63,8 +63,6 @@ void dlog(const char *fmt, ...) {
   vsprintf(buf, fmt, args);
   dputs(buf);
   va_end(args);
-
-  ENABLE;
 }
 
 void dprintf(const char *fmt, ...) {

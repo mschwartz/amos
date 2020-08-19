@@ -148,10 +148,12 @@ void CPU::EnterAP() {
   dprint("\n\n");
   dlog("EnterAP %d gs(%x) mGS(%x) CPU(%x %x)\n", mProcessorId, GetGS(), &mGS, this, GetCPU());
 
+  // each CPU has its own IdleTask
   mIdleTask = new IdleTask();
   mIdleTask->mCpu = this;
   mActiveTasks.Add(*mIdleTask);
-  // Before enabling interrupts, we need to have the idle or init task set up
+
+  // BSP needs to run InitTask to initialize things
   if (mProcessorId == 0) { // no need to start the boot processsor
     InitTask *task = new InitTask();
     task->mCpu = this;
@@ -175,21 +177,25 @@ void CPU::StartAP(BTask *aTask) {
   dlog("CPU %d StartAP\n", mProcessorId);
 
   Apic *apic = mApic;
-  aTask->Sleep(2);
+  // aTask->Sleep(2);
 
+  dlog("SendIPI\n");
   if (!apic->SendIPI(mProcessorId, 0x8000)) {
     dlog("*** COULD NOT IPI (%d)\n", mProcessorId);
     mCpuState = ECpuUnusable;
     return;
   }
-  aTask->MilliSleep(10);
+  dlog("sleep 10ms\n");
+  // aTask->MilliSleep(10);
 
+  dlog("SendSIPI\n");
   if (!apic->SendSIPI(mProcessorId, 0x8000)) {
     dlog("*** COULD NOT SIPI (%d)\n", mProcessorId);
     mCpuState = ECpuUnusable;
     return;
   }
 
+  dlog("Wait for CPU to be running\n");
   TInt timeout = 10;
   while (mCpuState != ECpuRunning && timeout--) {
     aTask->MilliSleep(5);
@@ -197,6 +203,7 @@ void CPU::StartAP(BTask *aTask) {
 
   if (mCpuState != ECpuRunning) {
     // do another SIPI
+    dlog("Not running, SIPI again\n");
     if (!apic->SendSIPI(mProcessorId, 0x8000)) {
       dlog("*** COULD NOT SIPI (%d)\n", mProcessorId);
       mCpuState = ECpuUnusable;
@@ -270,7 +277,22 @@ void CPU::RescheduleIRQ() {
           gExecBase.AddWaitingList(*t);
         }
         else {
-          mActiveTasks.Add(*mCurrentTask);
+          if (mCurrentTask == mIdleTask) {
+            mActiveTasks.Add(*mCurrentTask);
+            BTask *next_task = gExecBase.ActivateTask(ENull);
+            if (next_task) {
+              next_task->mCpu = this;
+              mActiveTasks.Add(*next_task);
+            }
+          }
+          else {
+            BTask *next_task = gExecBase.ActivateTask(mCurrentTask);
+            // dlog("next_task(%x) %s\n", next_task, next_task ? next_task->mNodeName : "NULL");
+            if (next_task) {
+              next_task->mCpu = this;
+              mActiveTasks.Add(*next_task);
+            }
+          }
         }
       }
       else {
@@ -282,6 +304,7 @@ void CPU::RescheduleIRQ() {
   mCurrentTask = mActiveTasks.First();
   SetCurrentTask(&mCurrentTask->mRegisters);
   if (t != mCurrentTask && gExecBase.mDebugSwitch) {
+    // if (t != mCurrentTask) {
     dprint("  CPU %d Reschedule %s\n", mProcessorId, mCurrentTask->TaskName());
     dprint("Previous task\n");
     dprint("  Previous Task %s\n", t->TaskName());

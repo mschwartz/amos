@@ -19,14 +19,21 @@ TInt64 InitTask::Run() {
   dlog("InitTask Run\n");
 
   if (mCpu->mProcessorId != 0) {
+    // NOT THE BSP
     return 0;
   }
 
-  dlog("  initialize timer\n");
-  gExecBase.AddDevice(new TimerDevice());
-
   dlog("  initialize rtc \n");
-  gExecBase.AddDevice(new RtcDevice());
+  RtcDevice *rtc = new RtcDevice();
+  gExecBase.AddDevice(rtc);
+
+  dlog("  initialize timer\n");
+  TimerDevice *td = new TimerDevice();
+  gExecBase.AddDevice(td);
+  // while (rtc->GetTicks() < 10) {
+  //   dlog("ticks(%d)\n", rtc->GetTicks());
+  // }
+  // bochs;
 
   // mCpu->mIdleTask = new IdleTask();
   // gExecBase.AddTask(new IdleTask());

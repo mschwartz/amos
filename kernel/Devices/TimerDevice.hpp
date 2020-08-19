@@ -14,7 +14,7 @@ public:
   ~TimerDevice();
 
 public:
-  TUint64 GetTicks() { return mTicks; }
+  volatile TUint64 GetTicks() { return mTicks; }
   TUint64 IncrementTicks() { return ++mTicks; }
 
 protected:

@@ -39,7 +39,7 @@ cpuid: aes=1, sha=1, xsave=1, xsaveopt=1, avx_f16c=1, avx_fma=1, bmi=1, xop=1, f
 cpuid: tbm=1, x86_64=1, 1g_pages=1, pcid=1, fsgsbase=1, smep=1, smap=1, mwait=1
 print_timestamps: enabled=0
 #debugger_log: debug_log.txt
-debug_symbols: file=kernel.sym
+debug_symbols: file=iso/kernel.sym
 magic_break: enabled=1
 port_e9_hack: enabled=1
 private_colormap: enabled=0

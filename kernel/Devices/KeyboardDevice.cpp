@@ -1,6 +1,6 @@
 #include <Exec/ExecBase.hpp>
 #include <Exec/x86/cpu_utils.hpp>
-#include <Exec/x86/ps2.hpp>
+// #include <Exec/x86/ps2.hpp>
 #include <Devices/KeyboardDevice.hpp>
 #include <Exec/BTask.hpp>
 

@@ -1,6 +1,6 @@
 #include <Exec/ExecBase.hpp>
 #include <Exec/x86/cpu_utils.hpp>
-#include <Exec/x86/ps2.hpp>
+// #include <Exec/x86/ps2.hpp>
 #include <Devices/MouseDevice.hpp>
 
 const TUint32 MOUSE_DR = 0x60;

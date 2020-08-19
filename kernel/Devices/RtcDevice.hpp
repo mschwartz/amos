@@ -18,7 +18,7 @@ public:
 
 public:
   TUint64 Tick();
-  TUint64 GetTicks() { return mMillis; }
+  volatile TUint64 GetTicks() { return mMillis; }
   void IncrementTicks() { mMillis++; }
 
 public:

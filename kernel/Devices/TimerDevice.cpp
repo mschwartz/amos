@@ -71,6 +71,7 @@ TInt64 TimerTask::Run() {
   TUint64 port_mask = 1 << mMessagePort->SignalNumber();
   TUint64 tick_mask = 1 << mSignalBit;
 
+  dlog("TimerTask Wait Loop\n");
   for (;;) {
     TUint64 sigs = Wait(port_mask | tick_mask);
     if (sigs & port_mask) {
@@ -112,6 +113,7 @@ TInt64 TimerTask::Run() {
 }
 
 TBool TimerInterrupt::Run(TAny *g) {
+  // dlog("TIMER\n");
   CPU *cpu = GetCPU();
   if (!cpu) {
     gExecBase.InterruptOthers(IRQ_TIMER);
@@ -125,7 +127,10 @@ TBool TimerInterrupt::Run(TAny *g) {
 
   // dlog("Reschedule cpu(%d)\n", cpu->mProcessorId);
   cpu->RescheduleIRQ(); // maybe wake up new task
-  cpu->AckIRQ(IRQ_TIMER);
+
+  if (cpu->mApicId == 0) {
+    cpu->AckIRQ(IRQ_TIMER);
+  }
   return ETrue;
 }
 

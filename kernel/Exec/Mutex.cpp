@@ -13,11 +13,14 @@ TBool Mutex::Try() {
 }
 
 void Mutex::Acquire() {
+  // dlog("Acquire %s\n", mName);
+  // dlog("ACQUIRE\n");
   while (!__sync_bool_compare_and_swap(&mLock, 0, 1)) {
     asm("pause");
   }
 }
 
 void Mutex::Release() {
+  // dlog("RELEASE\n")
   mLock = 0;
 }

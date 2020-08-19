@@ -163,10 +163,13 @@ void InitAllocMem() {
   }
 }
 
+static Mutex mutex;
+
 TAny *AllocMem(TInt64 aSize, TInt aFlags) {
   Chunk *ret = ENull;
   DLOG("AllocMem aSize(%d) aFlags(%x)\n", aSize, aFlags);
 
+  mutex.Acquire();
   // search for free chunk of desired size
   for (Chunk *c = sFreeChunks->First(); !sFreeChunks->End(c); c = c->mNext) {
     DLOG("Chunk(%x)\n", c);
@@ -202,6 +205,8 @@ TAny *AllocMem(TInt64 aSize, TInt aFlags) {
     }
   }
 
+  mutex.Release();
+
   TUint8 *p = (TUint8 *)ret;
   TUint8 *mem = &p[sizeof(Chunk)];
   if (aFlags & MEMF_CLEAR) {
@@ -216,7 +221,9 @@ void FreeMem(TAny *aPtr) {
   // TODO combine this Chunk with any existing that are contiguous
   TUint8 *p = (TUint8 *)aPtr;
   Chunk *c = (Chunk *)(p - sizeof(Chunk));
+  mutex.Acquire();
   sFreeChunks->AddHead(*c);
+  mutex.Release();
 }
 
 #else

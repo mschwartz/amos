@@ -23,6 +23,6 @@ ls -l iso/*.img
 echo ""
 ls -l c.img
 
-nm iso/kernel.elf | grep " T " | awk '{ print $1" "$3 }' > kernel.sym
+nm iso/kernel.elf | grep " T " | awk '{ print $1" "$3 }' > iso/kernel.sym
 echo ""
-wc -l kernel.sym
+wc -l iso/kernel.sym

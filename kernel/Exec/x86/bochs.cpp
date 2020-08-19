@@ -12,6 +12,8 @@ extern "C" TUint8 bochs_present;
 extern "C" void eputs(const char *s);
 extern "C" void sputc(char c);
 
+static Mutex lock;
+
 void dassert(TBool aValue, const char *aFormat, ...) {
   if (aValue) {
     return;
@@ -45,11 +47,11 @@ void dputc(char c) {
 }
 
 void dputs(const char *s) {
-  DISABLE;
+  lock.Acquire();
   while (*s) {
     dputc(*s++);
   }
-  ENABLE;
+  lock.Release();
 }
 
 void dlog(const char *fmt, ...) {

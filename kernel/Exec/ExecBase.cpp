@@ -9,7 +9,7 @@
 
 #include <Exec/x86/mmu.hpp>
 #include <Exec/x86/pic.hpp>
-#include <Exec/x86/ps2.hpp>
+// #include <Exec/x86/ps2.hpp>
 #include <Exec/x86/pci.hpp>
 #include <Exec/x86/acpi.hpp>
 
@@ -76,12 +76,6 @@ ExecBase::ExecBase() {
   cli();
   dlog("  initialized 8259 PIC\n");
 
-#ifdef ENABLE_PS2
-  mPS2 = new PS2();
-#else
-  mPS2 = ENull;
-#endif
-
   mCpus[0]->EnterAP();
 }
 
@@ -130,23 +124,19 @@ void ExecBase::Enable() {
 }
 
 void ExecBase::AddTask(BTask *aTask) {
-  DISABLE;
-  // TODO: this should figure out which CPU to assign task to
-  CPU *c = CurrentCpu();
-  c->AddTask(aTask);
-  ENABLE;
+  mActiveTasks.Lock();
+  mActiveTasks.Add(*aTask);
+  mActiveTasks.Unlock();
+  // DISABLE;
+  // // TODO: this should figure out which CPU to assign task to
+  // CPU *c = CurrentCpu();
+  // c->AddTask(aTask);
+  // ENABLE;
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
-
-  DISABLE;
   CPU *c = CurrentCpu();
-  if (!c) {
-    c = CurrentCpu();
-    bochs;
-  }
   c->RemoveTask(aTask, aExitCode);
-  ENABLE;
 
   if (aDelete) {
     delete aTask;
@@ -158,17 +148,18 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 void ExecBase::WaitSignal(BTask *aTask) {
   DISABLE;
   aTask->Remove();
+  aTask->mCpu = ENull;
+
   // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
   // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
   if (aTask->mSigWait & aTask->mSigReceived) {
-    // TODO: assign task to a CPU
-    CPU *cpu = CurrentCpu();
-    cpu->AddActiveTask(*aTask);
+    mActiveTasks.Lock();
     aTask->mTaskState = ETaskRunning;
+    mActiveTasks.Add(*aTask);
+    mActiveTasks.Unlock();
   }
   else {
-    mWaitingTasks.Add(*aTask);
-    aTask->mTaskState = ETaskWaiting;
+    AddWaitingList(*aTask);
   }
   Schedule();
   ENABLE;
@@ -195,7 +186,7 @@ void ExecBase::ReleaseSemaphore(Semaphore *aSemaphore) {
     aSemaphore->mNestCount = 1;
     aSemaphore->mSharedCount = 0;
     t->mTaskState = ETaskRunning;
-    CurrentCpu()->AddActiveTask(*t);
+    // CurrentCpu()->AddActiveTask(*t);
     // mActiveTasks.Add(*t);
   }
   else {
@@ -213,15 +204,20 @@ void ExecBase::ReleaseSemaphore(Semaphore *aSemaphore) {
 void ExecBase::Wake(BTask *aTask) {
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
-  DISABLE;
+  mWaitingTasks.Lock();
   if (aTask == ENull) {
     aTask = mWaitingTasks.First();
-    dlog("Wake %s\n", aTask->TaskName());
+    // dlog("Wake %s\n", aTask->TaskName());
   }
   aTask->Remove();
-  CurrentCpu()->AddActiveTask(*aTask);
+  mWaitingTasks.Unlock();
+  // dlog("Wake(%s)\n", aTask->TaskName());
   aTask->mTaskState = ETaskRunning;
-  ENABLE;
+  mActiveTasks.Lock();
+  mActiveTasks.Add(*aTask);
+  mActiveTasks.Unlock();
+
+  // CurrentCpu()->AddActiveTask(*aTask);
   //  DumpTasks();
 }
 
@@ -234,7 +230,29 @@ void ExecBase::Kickstart() {
 }
 
 void ExecBase::AddWaitingList(BTask &aTask) {
+  mWaitingTasks.Lock();
+  aTask.mCpu = ENull;
+  aTask.mTaskState = ETaskWaiting;
   mWaitingTasks.Add(aTask);
+  mWaitingTasks.Unlock();
+}
+
+BTask *ExecBase::ActivateTask(BTask *aOldTask) {
+  mActiveTasks.Lock();
+  if (aOldTask) {
+    aOldTask->mCpu = ENull;
+    mActiveTasks.Add(*aOldTask);
+    if (GetCPU()->mProcessorId == 3) {
+      dlog("added oldTask %s\n", aOldTask->TaskName());
+    }
+  }
+
+  BTask *new_task = mActiveTasks.RemHead();
+  mActiveTasks.Unlock();
+  if (new_task) {
+    new_task->mTaskState = ETaskRunning;
+  }
+  return new_task;
 }
 
 /**

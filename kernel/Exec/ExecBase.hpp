@@ -100,12 +100,6 @@ protected:
   TInt mNumCpus;
   CPU *mCpus[MAX_CPUS];
 
-public:
-  PS2 *GetPS2() { return mPS2; }
-
-protected:
-  PS2 *mPS2;
-
   //
   // INTERRUPTS
   //
@@ -147,6 +141,7 @@ public:
   // void DumpTasks();
   // void DumpCurrentTask() { mCurrentTask->Dump(); }
   void AddWaitingList(BTask &aTask);
+  void AddActiveTask(BTask &aTask);
 
   BTask *GetCurrentTask() {
     CPU *cpu = CurrentCpu();
@@ -178,8 +173,14 @@ public:
   void RescheduleIRQ(); // from IRQ context
   void Schedule();
 
+  /**
+   * Add oldTask to Exec's global Active Task List.
+   * Returns the next task to activate.
+   */
+  BTask *ActivateTask(BTask *aOldTask);
+
 protected:
-  Mutex mWaitingTasksMutex;
+  BTaskList mActiveTasks;
   BTaskList mWaitingTasks;
 
   //

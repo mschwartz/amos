@@ -98,8 +98,9 @@ void BList::AddHead(BNode &aNode) {
  */
 BNode *BList::RemHead() {
   BNode *n = mNext;
-  if (n == (BNode *)this)
+  if (n == (BNode *)this) {
     return ENull;
+  }
   n->Remove();
   return n;
 }

@@ -43,6 +43,7 @@ include mk/kernel.mk
 include mk/boot.mk
 
 clean:
+	@find . -name '*.sym' -delete
 	@find . -name '*.o' -delete
 	@find . -name '*.a' -delete
 	@find . -name '*.raw' -delete

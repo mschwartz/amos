@@ -78,15 +78,9 @@ protected:
   BTask *CurrentTask() { return mCurrentTask; }
   void DumpTasks();
 
-  void AddActiveTask(BTask &aTask) {
-    mMutex.Acquire();
-    mActiveTasks.Add(aTask);
-    mMutex.Release();
-  }
   void RescheduleIRQ();
 
 protected:
-  Mutex mMutex;
   TInt64 mRunningTaskCount;;
   BTaskList mActiveTasks;
   BTask *mCurrentTask;

@@ -2,6 +2,7 @@
 #define EXEC_TASK_H
 
 #include <Types/BList.hpp>
+#include <Exec/Mutex.hpp>
 #include <Exec/x86/tasking.hpp>
 
 const TInt64 TASK_PRI_MIN = LIST_PRI_MIN;
@@ -76,6 +77,7 @@ protected:
     */
   TInt8 AllocSignal(TInt64 aSignalNum);
   TBool FreeSignal(TInt64 aSignalNum);
+
   /**
     * Wait for one or more signals, specified in the signal set (set of signal bits to wait on).
     *
@@ -89,11 +91,12 @@ public:
     */
   void Signal(TInt64 aSignalBit);
 
+public:
   MessagePort *CreatePort(const char *aName = ENull, TInt64 aPri = LIST_PRI_DEFAULT);
 
 protected:
   void FreePort(MessagePort *aMessagePort);
-  
+
   /**
    * Wait for message port to be created.
    */
@@ -153,6 +156,13 @@ public:
 
   static void DumpRegisters(TTaskRegisters *aRegisters);
   void Dump();
+
+public:
+  void Lock() { mMutex.Acquire(); }
+  void Unlock() { mMutex.Release(); }
+
+protected:
+  Mutex mMutex;
 
 public:
   BTask *RemHead() { return (BTask *)BListPri::RemHead(); }

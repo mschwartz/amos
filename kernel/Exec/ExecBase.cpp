@@ -104,7 +104,7 @@ void ExecBase::SetInspirationBase(InspirationBase *aInspirationBase) {
 }
 
 void ExecBase::InterruptOthers(TUint8 aVector) {
-  CPU *cpu = mCpus[0];
+  CPU *cpu = GetCPU();
   if (cpu != ENull) {
     cpu->mApic->InterruptOthers(aVector);
   }
@@ -246,7 +246,9 @@ void ExecBase::Wake(BTask *aTask) {
 }
 
 void ExecBase::Schedule() {
+  DISABLE;
   schedule_trap();
+  ENABLE;
 }
 
 void ExecBase::Kickstart() {

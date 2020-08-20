@@ -1,8 +1,10 @@
 #ifndef BLIST_H
 #define BLIST_H
 
+#include <Types/Mutex.hpp>
 #include <Exec/BBase.hpp>
 #include <Exec/Memory.hpp>
+
 // #include <stdint.h>
 
 const TInt64 LIST_PRI_MIN = 32767;
@@ -96,6 +98,10 @@ public:
   TInt64 mPri;
 };
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 /**
  * Double linked list of elements. Elements are simply added to the head or tail of the list.
  */
@@ -105,6 +111,14 @@ public:
   BList();
   ~BList();
 
+public:
+  void Lock(const char *aMessage = ENull) { mMutex.Acquire(aMessage); }
+  void Unlock(const char *aMessage = ENull) { mMutex.Release(aMessage); }
+
+public:
+  Mutex mMutex;
+
+public:
   /**
    * Remove all of the elements from the list.
    */
@@ -169,6 +183,10 @@ public:
   BNode *Find(BNode &aNode);
 };
 
+/********************************************************************************
+ ********************************************************************************
+ *******************************************************************************/
+
 /**
  * Double linked list of elements, sorted by descending priority.
  *
@@ -181,6 +199,13 @@ public:
     Reset();
   }
   ~BListPri();
+
+public:
+  void Lock(const char *aMessage = ENull) { mMutex.Acquire(aMessage); }
+  void Unlock(const char *aMessage = ENull) { mMutex.Release(aMessage); }
+
+public:
+  Mutex mMutex;
 
 public:
   void Dump(BNodePri *aStop = ENull);

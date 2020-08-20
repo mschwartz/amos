@@ -13,26 +13,26 @@
 #include <Exec/Semaphore.hpp>
 #include <Exec/TSysInfo.hpp>
 
-extern "C" TUint64 GetFlags();
-extern "C" void SetFlags(TUint64 aFlags);
-
-#define DISABLE                  \
-  TUint64 ___flags = GetFlags(); \
-  cli();
-#define ENABLE SetFlags(___flags);
-
 //#include <Devices/Screen.h>
 //#include <Exec/x86/cpu.h>
 
 class ActiveTaskList : public BTaskList {
-public:
-  void Lock() { mMutex.Acquire("Active Task List"); }
-  void Unlock() { mMutex.Release("Active Task List"); }
+  public:
+  ActiveTaskList() : BTaskList("Active Tasks"){
+    mMutex.SetName("ExecBase ActiveTaskList");
+  }
+
+  public:
+    void Lock() { mMutex.Acquire("Active Task List"); }
+    void Unlock() { mMutex.Release("Active Task List"); }
 };
 
 class WaitingTaskList : public BTaskList {
 public:
-  WaitingTaskList() : BTaskList("Waiting Tasks") {}
+  WaitingTaskList() : BTaskList("Waiting Tasks") {
+    mMutex.SetName("ExecBase WaitingTaskList");
+
+  }
   void Lock() { mMutex.Acquire("Waiting Task List"); }
   void Unlock() { mMutex.Release("Waiting Task List"); }
 };
@@ -104,9 +104,9 @@ protected:
 public:
   TInt NumCpus() { return mNumCpus; }
   void AddCpu(CPU *aCPU);
+
   CPU *CurrentCpu();
   CPU *GetCpu(TInt aNum) { return mCpus[aNum]; }
-  void InterruptOthers(TUint8 aVector);
   TUint64 ProcessorId();
 
 protected:

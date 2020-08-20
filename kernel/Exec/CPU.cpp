@@ -24,11 +24,16 @@ void CPU::ColdStart() {
   // swapgs();
 }
 
+void CPU::InterruptOthers(TUint8 aVector) {
+  mApic->InterruptOthers(aVector);
+}
+
 void CPU::AckIRQ(TUint16 aIRQ) {
   mApic->EOI(aIRQ);
 }
 
 CPU::CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi) {
+  mActiveTasks.mMutex.SetName("CPU Active List");
   mBootStack = (TUint8 *)AllocMem(BOOT_STACK_SIZE);
   dlog("CONSTRUCT CPU %d\n", aProcessorId);
   mGS.mCurrentCpu = this;
@@ -151,20 +156,25 @@ void CPU::EnterAP() {
   // each CPU has its own IdleTask
   mIdleTask = new IdleTask();
   mIdleTask->mCpu = this;
+  LockActiveList();
   mActiveTasks.Add(*mIdleTask);
+  UnlockActiveList();
 
   // BSP needs to run InitTask to initialize things
   if (mProcessorId == 0) { // no need to start the boot processsor
     InitTask *task = new InitTask();
     task->mCpu = this;
+    LockActiveList();
     mActiveTasks.Add(*task);
+    UnlockActiveList();
   }
   else {
     mGdt->Install();
     mIdt->Install();
   }
-  mRunningTaskCount = 1;
+  // LockActiveList();
   mCurrentTask = mActiveTasks.First();
+  // UnlockActiveList();
   SetCurrentTask(&mCurrentTask->mRegisters);
 
   // sti();
@@ -226,21 +236,13 @@ void CPU::StartAP(BTask *aTask) {
   }
 }
 
-void CPU::AddTask(BTask *aTask) {
-  mActiveTasks.Lock();
-  aTask->mRegisters.tss = (TUint64)mTss;
-  aTask->mCpu = this;
-  mActiveTasks.Add(*aTask);
-  mRunningTaskCount++;
-  dlog("    CPU(%d) Add Task %016x --- %s --- rip=%016x rsp=%016x\n",
-    mProcessorId, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
-  mActiveTasks.Unlock();
-}
-
 TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
-  mActiveTasks.Lock();
+  DISABLE;
+
+  LockActiveList();
   aTask->Remove();
-  mRunningTaskCount--;
+  UnlockActiveList("remove task");
+
   TBool isCurrentTask = aTask == mCurrentTask;
   if (isCurrentTask) {
     dlog("CPU %d RemoveTask(%s) code(%d) CURRENT TASK\n", mProcessorId, aTask->TaskName(), aExitCode);
@@ -252,21 +254,21 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   if (isCurrentTask) {
     mCurrentTask = mActiveTasks.First();
     SetCurrentTask(&mCurrentTask->mRegisters);
-    mActiveTasks.Unlock();
     enter_tasking(); // just enter next task
   }
-  mActiveTasks.Unlock();
+
+  ENABLE;
   return aExitCode;
 }
 
 void CPU::DumpTasks() {
-  mActiveTasks.Lock();
+  LockActiveList();
   dlog("\n\nActive Tasks\n");
   mActiveTasks.Dump();
   // dlog("Waiting Tasks\n");
   // mWaitingTasks.Dump();
   dlog("\n\n");
-  mActiveTasks.Unlock();
+  UnlockActiveList();
 }
 
 void CPU::WaitSignal(BTask *aTask) {
@@ -277,22 +279,28 @@ void CPU::WaitSignal(BTask *aTask) {
     bochs;
   }
 
-  aTask->Remove();
+  // dlog("WaitSignal(%s) %x\n", aTask->TaskName(), this);
+  // bochs;
+  LockActiveList("CPU add task");
+  // dlog("locked\n");
+  aTask->Remove(); // remove from this CPU's active list
+  // dlog("removed\n");
+  UnlockActiveList("CPU add task");
+  // dlog("unlocked\n");
 
-  BTask *t = mCurrentTask,
-        *rtask = gExecBase.RescheduleTask(aTask == mIdleTask ? ENull : aTask),
-        *next_task = rtask ? rtask : mIdleTask;
+  BTask *next_task = gExecBase.RescheduleTask(aTask);
 
-  // dlog("t(%x) rtask(%x) next_task(%x) mIdleTask(%x)\n", t, rtask, next_task, mIdleTask);
-  if (rtask != ENull) {
-
-    // dlog("RescheduleTask %s => %s\n", t->TaskName(), next_task->TaskName());
-    // SetCurrentTask(&mCurrentTask->mRegisters);
-
+  if (next_task != ENull) {
+    next_task->mCpu = this;
+    // dlog("%d WaitSignal add task(%s) %d\n", mProcessorId, next_task->TaskName(), mProcessorId);
+    LockActiveList();
     mActiveTasks.Add(*next_task);
+    UnlockActiveList();
   }
 
   gExecBase.Schedule();
+  dlog("WaitSignal(%s) returns\n", mCurrentTask->TaskName());
+  // bochs;
   ENABLE;
 }
 
@@ -313,36 +321,25 @@ void CPU::RescheduleIRQ() {
   BTask *t = mCurrentTask,
         *next_task;
 
-  if (t && t != mIdleTask) {
-    mActiveTasks.Lock();
-    t->Remove();
-    mActiveTasks.Unlock();
-
-    next_task = gExecBase.RescheduleTask(t == mIdleTask ? ENull : t);
-  }
-  else {
-    next_task = gExecBase.RescheduleTask(ENull);
-  }
-
-  if (next_task == ENull) {
-    next_task = mIdleTask;
-  }
-  else {
-    mActiveTasks.Lock();
-    next_task->Remove();
-    mActiveTasks.Unlock();
-  }
-
-  TBool test = CompareStrings(next_task->TaskName(), "Init Task") == 0;
-  // if (test) {
-  //   dlog("next_task(%s)\n", next_task->TaskName());
-  // }
-
-  next_task->mCpu = this;
-  if (next_task != mIdleTask) {
-    mActiveTasks.Lock();
-    mActiveTasks.Add(*next_task);
-    mActiveTasks.Unlock();
+  if (t) {
+    if (t == mIdleTask) {
+      next_task = gExecBase.RescheduleTask(ENull);
+    }
+    else {
+      LockActiveList();
+      t->Remove();
+      UnlockActiveList();
+      next_task = gExecBase.RescheduleTask(t);
+    }
+    if (next_task == ENull) {
+      next_task = mIdleTask;
+    }
+    next_task->mCpu = this;
+    if (next_task != mIdleTask) {
+      LockActiveList();
+      mActiveTasks.Add(*next_task);
+      UnlockActiveList();
+    }
   }
 
   mCurrentTask = mActiveTasks.First();

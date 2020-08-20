@@ -110,9 +110,8 @@ public:
         }
       }
 
-      static Mutex mutex;
       if (sigs & tick_mask) {
-	mutex.Acquire();
+	rtcQueue.Lock();
         TUint64 current = mRtcDevice->Tick();
         for (;;) {
           RtcMessage *m = (RtcMessage *)rtcQueue.First();
@@ -127,7 +126,7 @@ public:
 	  // dlog("reply!\n");
           m->Reply();
         }
-	mutex.Release();
+	rtcQueue.Unlock();
       }
     }
   }

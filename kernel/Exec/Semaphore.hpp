@@ -42,13 +42,6 @@ public:
     dlog("Construct SemaphoreList\n");
   }
   ~SemaphoreList() {}
-
-public:
-  void Lock() { mMutex.Acquire(); }
-  void Unlock() { mMutex.Release(); }
-
-protected:
-  Mutex mMutex;
 };
 
 #endif

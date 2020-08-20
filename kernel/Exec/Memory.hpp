@@ -27,6 +27,7 @@ extern void operator delete[](void *aMemory);
 
 TInt StringLength(const char *aString);
 void CopyString(char *aDestination, const char *aSource);
+void ConcatentateString(char *aDestination, const char *aSource);
 char *DuplicateString(const char *aString, EMemoryFlags aMemoryType = MEMF_PUBLIC);
 
 TInt CompareStrings(const char *aString1, const char *aString2);

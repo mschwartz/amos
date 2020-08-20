@@ -61,6 +61,7 @@ TInt64 BTask::ProcessorId() {
   return c->mProcessorId;
 }
 
+
 CPU *BTask::CurrentCPU() {
   return (CPU *)mCpu;
 }
@@ -208,7 +209,6 @@ void BTask::Signal(TInt64 aSignalSet) {
 }
 
 TUint64 BTask::Wait(TUint64 aSignalSet) {
-  DISABLE;
   if (aSignalSet != 0) {
     mSignalMutex.Acquire();
     mSigWait |= aSignalSet;
@@ -219,17 +219,17 @@ TUint64 BTask::Wait(TUint64 aSignalSet) {
     // effectively a YIELD
   }
 
-  CPU *c = (CPU *)mCpu;
-  ENABLE;
+  // CPU *c = (CPU *)mCpu;
+  CPU *c = CurrentCPU();
 
   // dlog("----- %s Wait(%x)\n", TaskName(), aSignalSet);
   c->WaitSignal(this);
   // dlog("<<<<<<<<<<< %s WaitSignal returned(%x)\n", TaskName(), aSignalSet);
 
-  mSignalMutex.Acquire();
+  // mSignalMutex.Acquire();
   TUint64 received = mSigReceived;
   mSigReceived = 0;
-  mSignalMutex.Release();
+  // mSignalMutex.Release();
   return received;
 }
 

@@ -24,11 +24,8 @@
 
 #ifdef KERNEL
 
-static Mutex mutex,
-  chip_mutex,
-  data_mutex;
-
 static TAny *ExtendChipRam(TUint64 aIncrement) {
+  static Mutex chip_mutex;
   extern void *chip_memory;
   extern void *chip_memory_end;
   static TUint8 *sChipBreak = ENull;
@@ -73,6 +70,7 @@ static TAny *ExtendChipRam(TUint64 aIncrement) {
 }
 
 static TAny *ExtendDataSegment(TUint64 aIncrement) {
+  static Mutex data_mutex;
   extern void *kernel_end;
   static TUint8 *sProgramBreak = ENull;
 
@@ -177,6 +175,9 @@ void InitAllocMem() {
   }
 }
 
+// Mutex to lock out other CPUs and tasks while operating on memory structures
+static Mutex mutex;
+
 TAny *AllocMem(TInt64 aSize, TInt aFlags) {
   Chunk *ret = ENull;
   DLOG("AllocMem aSize(%d) aFlags(%x)\n", aSize, aFlags);
@@ -238,6 +239,7 @@ void FreeMem(TAny *aPtr) {
 }
 
 #else
+// not in AMOS/kernel versions
 void *AllocMem(TInt64 aSize, TInt aFlags) {
   TAny *mem = malloc(aSize);
   if (aFlags & MEMF_CLEAR) {
@@ -248,47 +250,6 @@ void *AllocMem(TInt64 aSize, TInt aFlags) {
 
 void FreeMem(TAny *p) {
   free(p);
-}
-#endif
-
-#if 0
-void *AllocMem(TInt64 aSize, TInt aFlags) {
-#ifdef KERNEL
-#ifdef LOCKMEM
-  DISABLE;
-#endif
-#endif
-
-// #ifdef KERNEL
-//   dlog("AllocMem(%d)\n", aSize);
-// #endif
-
-  TUint8 *mem = (TUint8 *)malloc(aSize);
-
-#ifdef KERNEL
-#ifdef LOCKMEM
-  ENABLE;
-#endif
-#endif
-  if (aFlags & MEMF_CLEAR) {
-    SetMemory8(mem, 0, aSize);
-  }
-  return (TAny *)mem;
-}
-
-void FreeMem(TAny *memory) {
-#ifdef KERNEL
-#ifdef LOCKMEM
-  TUint64 flags = GetFlags();
-  cli();
-#endif
-#endif
-  free(memory);
-#ifdef KERNEL
-#ifdef LOCKMEM
-  SetFlags(flags);
-#endif
-#endif
 }
 #endif
 
@@ -339,6 +300,11 @@ char *DuplicateString(const char *aString, EMemoryFlags aMemoryType) {
 void CopyString(char *aDestination, const char *aSource) {
   while ((*aDestination++ = *aSource++))
     ;
+}
+
+void ConcatentateString(char *aDestination, const char *aSource) {
+  while (*aDestination++ != '\0');
+  CopyString(aDestination, aSource);
 }
 
 TInt CompareStrings(const char *aString1, const char *aString2) {

@@ -31,14 +31,13 @@ ExecBase gExecBase;
 
 extern "C" void schedule_trap();
 extern "C" void eputs(const char *s);
-
 extern "C" void enter_tasking();
-
 extern "C" TUint64 rdrand();
 
 // ExecBase constructor
 ExecBase::ExecBase() {
-  CPU::ColdStart();
+  CPU::ColdStart(); // initialize BSP and default Kernel GS
+
   dlog("ExecBase constructor called\n");
   mDebugSwitch = EFalse;
 
@@ -103,13 +102,6 @@ void ExecBase::SetInspirationBase(InspirationBase *aInspirationBase) {
   mInspirationBase->Init();
 }
 
-void ExecBase::InterruptOthers(TUint8 aVector) {
-  CPU *cpu = GetCPU();
-  if (cpu != ENull) {
-    cpu->mApic->InterruptOthers(aVector);
-  }
-}
-
 void ExecBase::Disable() {
   if (mDisableNestCount++ == 0) {
     cli();
@@ -129,8 +121,28 @@ void ExecBase::AddTask(BTask *aTask) {
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
-  CPU *c = CurrentCpu();
-  c->RemoveTask(aTask, aExitCode);
+  if (aTask->mCpu) {
+    ((CPU *)aTask->mCpu)->RemoveTask(aTask);
+  }
+  else {
+    switch (aTask->mTaskState) {
+      case ETaskRunning:
+        mActiveTasks.Lock();
+        aTask->Remove();
+        mActiveTasks.Unlock();
+        break;
+
+      case ETaskWaiting:
+        mWaitingTasks.Lock();
+        aTask->Remove();
+        mWaitingTasks.Unlock();
+        break;
+
+      default:
+        aTask->Remove();
+        break;
+    }
+  }
 
   if (aDelete) {
     delete aTask;
@@ -138,26 +150,6 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 
   return aExitCode;
 }
-
-#if 0
-void ExecBase::WaitSignal(BTask *aTask) {
-  DISABLE;
-  // remove task from whichever CPU's active task list
-  aTask->Remove();
-  // aTask->mCpu = ENull;
-
-  // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
-  // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
-  if (aTask->mSigWait & aTask->mSigReceived) {
-    AddActiveList(aTask);
-  }
-  else {
-    AddWaitingList(aTask);
-  }
-  // Schedule();
-  ENABLE;
-}
-#endif
 
 void ExecBase::WaitSemaphore(BTask *aTask, Semaphore *aSemaphore) {
   DISABLE;
@@ -257,7 +249,7 @@ void ExecBase::Kickstart() {
 
 void ExecBase::AddActiveList(BTask *aTask) {
   mActiveTasks.Lock();
-  // aTask->mCpu = ENull;
+  aTask->mCpu = ENull;
   aTask->mTaskState = ETaskRunning;
   mActiveTasks.Add(*aTask);
   mActiveTasks.Unlock();
@@ -265,7 +257,7 @@ void ExecBase::AddActiveList(BTask *aTask) {
 
 void ExecBase::AddWaitingList(BTask *aTask) {
   mWaitingTasks.Lock();
-  // aTask->mCpu = ENull;
+  aTask->mCpu = ENull;
   aTask->mTaskState = ETaskWaiting;
   mWaitingTasks.Add(*aTask);
   mWaitingTasks.Unlock();
@@ -549,11 +541,14 @@ extern "C" TUint64 GetRFLAGS();
 TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
   cli();
   BInterruptList *list = &gExecBase.mInterrupts[aInterruptNumber];
+  list->Lock();
   for (BInterrupt *i = (BInterrupt *)list->First(); !list->End(i); i = (BInterrupt *)i->mNext) {
     if (i->Run(i->mData)) {
+      list->Unlock();
       return ETrue;
     }
   }
+  list->Unlock();
   // TODO: no handler!
   dlog("No handler!\n");
   return EFalse;

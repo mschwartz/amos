@@ -2,7 +2,6 @@
 #define EXEC_TASK_H
 
 #include <Types/BList.hpp>
-#include <Exec/Mutex.hpp>
 #include <Exec/x86/tasking.hpp>
 
 const TInt64 TASK_PRI_MIN = LIST_PRI_MIN;
@@ -166,13 +165,6 @@ public:
 
   static void DumpRegisters(TTaskRegisters *aRegisters);
   void Dump();
-
-public:
-  void Lock() { mMutex.Acquire(); }
-  void Unlock() { mMutex.Release(); }
-
-protected:
-  Mutex mMutex;
 
 public:
   BTask *RemHead() { return (BTask *)BListPri::RemHead(); }

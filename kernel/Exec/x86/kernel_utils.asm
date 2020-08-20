@@ -21,8 +21,8 @@ spinlock:
 	
 .spin_with_pause:
 	pause                    ; Tell CPU we're spinning
-	test qword [rdi],1      ; Is the lock free?
-	jnz .spin_with_pause     ; no, wait
+	; test qword [rdi],1       ; Is the lock free?
+	; jnz .spin_with_pause     ; no, wait
 	jmp spinlock		 ; retry
 
 ;; spinunlock(TUint64 *lock_variable)

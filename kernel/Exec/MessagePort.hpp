@@ -38,13 +38,6 @@ public:
   ~BMessageList();
 
 public:
-  void Lock() { mMutex.Acquire(); }
-  void Unlock() { mMutex.Release(); }
-
-protected:
-  Mutex mMutex;
-
-public:
   void Dump();
 };
 
@@ -85,13 +78,6 @@ class MessagePortList : public BListPri {
 public:
   MessagePortList(const char *aName);
   ~MessagePortList();
-
-public:
-  void Lock() { mMutex.Acquire(); }
-  void Unlock() { mMutex.Release(); }
-
-protected:
-  Mutex mMutex;
 
 public:
   MessagePort *FindPort(const char *aName) {

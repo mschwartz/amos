@@ -253,11 +253,11 @@ ap_boot:
         mov fs, ax
         mov gs, ax
 
-	mov si, ap_message
-	call puts16
-	mov al, [CPU_NUM]
-	call hexbyte16
-	call newline16
+	; mov si, ap_message
+	; call puts16
+	; mov al, [CPU_NUM]
+	; call hexbyte16
+	; call newline16
 
 	; enable A20
 ap_set_a20:

@@ -29,34 +29,66 @@ void dassert(TBool aValue, const char *aFormat, ...) {
   bochs;
 }
 
+static Mutex dputc_lock;
 void dputc(char c) {
   //  sputc(c);
   //    outb((int)c, 0xe9);
   //  sputc(c);
+  // dputc_lock.Acquire();
   if (bochs_present) {
     outb(0xe9, (int)c);
   }
   else {
     sputc(c);
   }
+  // dputc_lock.Release();
 }
 
-static Mutex lock;
+static Mutex dputs_lock;
+
 void dputs(const char *s) {
-  lock.Acquire();
+  // dputs_lock.Acquire();
   while (*s) {
     dputc(*s++);
   }
-  lock.Release();
+  // dputs_lock.Release();
 }
+
+/*
+Black: \u001b[30m
+Red: \u001b[31m
+Green: \u001b[32m
+Yellow: \u001b[33m
+Blue: \u001b[34m
+Magenta: \u001b[35m
+Cyan: \u001b[36m
+White: \u001b[37m
+ */
+
+// ANSI escape sequences
+static const char *cpu_colors[] = {
+  "\u001b[37m", // white
+  "\u001b[36m", // cyan
+  "\u001b[35m", // magenta
+  "\u001b[33m", // Yellow
+  "\u001b[32m", // green
+  "\u001b[31m", // red
+  "\u001b[34m", // blue
+  "\u001b[30m", // black
+};
+const char *reset = "\u001b[0m"; // reset to normal color
 
 void dlog(const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
 
-  char buf[512];
-  dprint("%2d %020d %-16s ", gExecBase.ProcessorId(), gExecBase.SystemTicks(), gExecBase.CurrentTaskName());
-  vsprintf(buf, fmt, args);
+  TInt64 cpuNum = gExecBase.ProcessorId();
+  char buf[512], buf2[512];
+  vsprintf(buf2, fmt, args);
+  sprintf(buf, "%s%2d %020d %-16s %s%s", cpu_colors[cpuNum],
+    cpuNum, gExecBase.SystemTicks(), gExecBase.CurrentTaskName(),
+    buf2,
+    reset);
   dputs(buf);
   va_end(args);
 }

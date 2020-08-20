@@ -259,12 +259,6 @@ public:
 };
 
 class BFileSystemList : public BList {
-public:
-  void Lock() { mMutex.Acquire(); }
-  void Unlock() { mMutex.Release(); }
-
-protected:
-  Mutex mMutex;
 };
 
 /********************************************************************************

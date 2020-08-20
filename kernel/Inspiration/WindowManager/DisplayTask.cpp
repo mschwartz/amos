@@ -44,6 +44,7 @@ TInt64 DisplayTask::Run() {
   // DSPACE();
   // DLOG("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
   DLOG("DisplayTask Run %x\n", inb(0x3da));
+  bochs;
   Sleep(1);
 
   TUint64 vbl_time = time_vbl();

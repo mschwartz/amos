@@ -3,6 +3,14 @@
 
 #include <Types.hpp>
 
+extern "C" TUint64 GetFlags();
+extern "C" void SetFlags(TUint64 aFlags);
+
+#define DISABLE                  \
+  TUint64 ___flags = GetFlags(); \
+  cli();
+#define ENABLE SetFlags(___flags);
+
 extern "C" void wrmsr(TUint64 aRegister, TAny *aValue);
 extern "C" TUint64 rdmsr(TUint64 aRegister);
 

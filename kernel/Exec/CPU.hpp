@@ -13,7 +13,6 @@
 #include <Exec/x86/gdt.hpp>
 #include <Exec/x86/tss.hpp>
 #include <Exec/BTask.hpp>
-// #include <Exec/Mutex.hpp>
 
 /********************************************************************************
  ********************************************************************************
@@ -61,6 +60,7 @@ public:
   void EnterAP();             // entry point for AP, running in the AP's CORE!
 
 public:
+  void InterruptOthers(TUint8 aVector);
   void AckIRQ(TUint16 aIRQ);
 
 protected:
@@ -74,17 +74,24 @@ public:
   void GuruMeditation(const char *aFormat, ...);
 
 protected:
-  void AddTask(BTask *aTask);
-  TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode);
+  TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode = 0);
   BTask *CurrentTask() { return mCurrentTask; }
   void DumpTasks();
 
-  void  WaitSignal(BTask *aTask);
+  void WaitSignal(BTask *aTask);
   void RescheduleIRQ();
 
 protected:
-  TInt64 mRunningTaskCount;
   BTaskList mActiveTasks;
+  void LockActiveList(const char *aMessage = ENull) {
+    // dprint("LockActiveList this(%x) %x\n", this, &mActiveTasks);
+    mActiveTasks.Lock(aMessage);
+    // dprint("/LockActiveList\n");
+  }
+  void UnlockActiveList(const char *aMessage = ENull) {
+    // dprint("UnlockActiveList\n");
+    mActiveTasks.Unlock(aMessage);
+  }
   BTask *mCurrentTask;
 
 public:

@@ -27,18 +27,13 @@ BProcess::~BProcess() {
 
 TBool BProcess::DoIO(FileDescriptor *aFileDescriptor) {
   // need to forbid/permit to avoid other task modifying message port list while we find()
-  Forbid();
   MessagePort *port = gExecBase.FindMessagePort("simple.filesystem");
-  Permit();
-
   if (!port) {
     dlog("no simple.filesystem port\n");
     bochs;
     return EFalse;
   }
 
-  // dlog("DoIO\n");
-  // aFileDescriptor->Dump();
 
   aFileDescriptor->mMessage.mReplyPort = mFsReplyPort;
   aFileDescriptor->mMessage.Send(port);

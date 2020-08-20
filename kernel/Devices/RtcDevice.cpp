@@ -56,13 +56,10 @@ public:
     mSignalBit = AllocSignal(-1);
     mMessagePort = CreatePort("rtc.device");
     gExecBase.AddMessagePort(*mMessagePort);
-
   }
 
 public:
   TInt64 Run() {
-    DISABLE;
-
     dprint("\n");
     dlog("RTC Task running!\n");
 
@@ -88,8 +85,6 @@ public:
     gExecBase.EnableIRQ(IRQ_RTC);
 
     BMessageList rtcQueue("rtc.device queue");
-    ENABLE;
-
     TUint64 port_mask = 1 << mMessagePort->SignalNumber();
     TUint64 tick_mask = 1 << mSignalBit;
 
@@ -105,6 +100,7 @@ public:
               break;
             case ERtcSleep:
               m->mPri = mRtcDevice->GetTicks() + m->mArg1;
+              // dlog("Queue Sleep(%s) ticks(%d) when(%d)\n", m->mReplyPort->OwnerName(), mRtcDevice->GetTicks(), m->mPri);
               rtcQueue.Add(*m);
               break;
             default:
@@ -114,22 +110,24 @@ public:
         }
       }
 
+      static Mutex mutex;
       if (sigs & tick_mask) {
+	mutex.Acquire();
         TUint64 current = mRtcDevice->Tick();
         for (;;) {
-          TUint64 flags = GetFlags();
           RtcMessage *m = (RtcMessage *)rtcQueue.First();
           if (rtcQueue.End(m)) {
             break;
           }
+	  // dlog("m->pri(%d) current(%d)\n", m->mPri, current);
           if (m->mPri > current) {
-            SetFlags(flags);
             break;
           }
           m->Remove();
-          SetFlags(flags);
+	  // dlog("reply!\n");
           m->Reply();
         }
+	mutex.Release();
       }
     }
   }
@@ -231,7 +229,7 @@ TBool RtcInterrupt::Run(TAny *aData) {
 
   outb(0x70, 0x0c);
   inb(0x71);
-  gExecBase.AckIRQ(IRQ_RTC);
+  GetCPU()->AckIRQ(IRQ_RTC);
   mTask->Signal(1 << mTask->mSignalBit);
   return ETrue;
 }

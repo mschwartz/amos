@@ -116,7 +116,7 @@ CPU::CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi) {
 
 void CPU::GuruMeditation(const char *aFormat, ...) {
   cli();
-  // bochs;
+  bochs;
   char buf[512];
   dprint("\n\n***********************\n");
   dprint("GURU MEDITATION at %dms in CPU %d\n", gExecBase.SystemTicks(), mProcessorId);
@@ -196,10 +196,13 @@ void CPU::StartAP(BTask *aTask) {
   }
 
   dlog("Wait for CPU to be running\n");
-  TInt timeout = 10;
+  TInt64 timeout = 10; // 100000000000;
   while (mCpuState != ECpuRunning && timeout--) {
-    aTask->MilliSleep(5);
+    dlog("Wait %d\n", timeout);
+    aTask->MilliSleep(1);
+    // aTask->MilliSleep(5);
   }
+  dlog("Not running yet\n");
 
   if (mCpuState != ECpuRunning) {
     // do another SIPI
@@ -213,7 +216,7 @@ void CPU::StartAP(BTask *aTask) {
 
   timeout = 100;
   while (mCpuState != ECpuRunning && timeout--) {
-    aTask->MilliSleep(1);
+    aTask->MilliSleep(10);
   }
   if (mCpuState != ECpuRunning) {
     dlog("*** COULD NOT START %d\n", mProcessorId);
@@ -224,18 +227,18 @@ void CPU::StartAP(BTask *aTask) {
 }
 
 void CPU::AddTask(BTask *aTask) {
-  DISABLE;
+  mActiveTasks.Lock();
   aTask->mRegisters.tss = (TUint64)mTss;
   aTask->mCpu = this;
   mActiveTasks.Add(*aTask);
   mRunningTaskCount++;
   dlog("    CPU(%d) Add Task %016x --- %s --- rip=%016x rsp=%016x\n",
     mProcessorId, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
-  ENABLE;
+  mActiveTasks.Unlock();
 }
 
 TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
-  DISABLE;
+  mActiveTasks.Lock();
   aTask->Remove();
   mRunningTaskCount--;
   TBool isCurrentTask = aTask == mCurrentTask;
@@ -249,65 +252,104 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   if (isCurrentTask) {
     mCurrentTask = mActiveTasks.First();
     SetCurrentTask(&mCurrentTask->mRegisters);
+    mActiveTasks.Unlock();
     enter_tasking(); // just enter next task
   }
-  ENABLE;
+  mActiveTasks.Unlock();
   return aExitCode;
 }
 
 void CPU::DumpTasks() {
+  mActiveTasks.Lock();
   dlog("\n\nActive Tasks\n");
   mActiveTasks.Dump();
   // dlog("Waiting Tasks\n");
   // mWaitingTasks.Dump();
   dlog("\n\n");
+  mActiveTasks.Unlock();
 }
 
-void CPU::RescheduleIRQ() {
-  BTask *t = mCurrentTask;
+void CPU::WaitSignal(BTask *aTask) {
+  DISABLE;
 
-  if (mCurrentTask) {
-    // if task is blocked, it is not on the system waiting list
-    // it is potentially on a Sempahore's waiting list or some other waiting list
-    if (mCurrentTask->mTaskState != ETaskBlocked) {
-      // if Task has called Forbid(), we don't want to switch to another task
-      if (mCurrentTask->mForbidNestCount == 0) {
-        mCurrentTask->Remove();
-        if (mCurrentTask->mTaskState == ETaskWaiting) {
-          gExecBase.AddWaitingList(*t);
-        }
-        else {
-          if (mCurrentTask == mIdleTask) {
-            mActiveTasks.Add(*mCurrentTask);
-            BTask *next_task = gExecBase.ActivateTask(ENull);
-            if (next_task) {
-              next_task->mCpu = this;
-              mActiveTasks.Add(*next_task);
-            }
-          }
-          else {
-            BTask *next_task = gExecBase.ActivateTask(mCurrentTask);
-            // dlog("next_task(%x) %s\n", next_task, next_task ? next_task->mNodeName : "NULL");
-            if (next_task) {
-              next_task->mCpu = this;
-              mActiveTasks.Add(*next_task);
-            }
-          }
-        }
-      }
-      else {
-        dlog("FORBID %d\n", mCurrentTask->mForbidNestCount);
-      }
-    }
+  if (aTask == mIdleTask) {
+    dlog("idle task cannot wait()\n");
+    bochs;
+  }
+
+  aTask->Remove();
+
+  BTask *t = mCurrentTask,
+        *rtask = gExecBase.RescheduleTask(aTask == mIdleTask ? ENull : aTask),
+        *next_task = rtask ? rtask : mIdleTask;
+
+  // dlog("t(%x) rtask(%x) next_task(%x) mIdleTask(%x)\n", t, rtask, next_task, mIdleTask);
+  if (rtask != ENull) {
+
+    // dlog("RescheduleTask %s => %s\n", t->TaskName(), next_task->TaskName());
+    // SetCurrentTask(&mCurrentTask->mRegisters);
+
+    mActiveTasks.Add(*next_task);
+  }
+
+  gExecBase.Schedule();
+  ENABLE;
+}
+
+/**
+ * RescheduleIRQ()
+ *
+ * This is to be called from the Timer Interrupt handler to possibly preempt the current running task
+ * and switch to the next task that should run.
+ *
+ * ExecBase has a master running tasks list that is shared among all the CPUs.  Thus when it is time to 
+ * switch to another task, the head of that list is the task that should run.
+ *
+ * The effect of this scheme is that a task can start in CPU0, get switched from, and resume in any of the
+ * CPUs.  This is possibly going to cause CPU cache misses if the task is moved to a different physical CPU 
+ * (like on a motherboard with more than one CPU socket).
+ */
+void CPU::RescheduleIRQ() {
+  BTask *t = mCurrentTask,
+        *next_task;
+
+  if (t && t != mIdleTask) {
+    mActiveTasks.Lock();
+    t->Remove();
+    mActiveTasks.Unlock();
+
+    next_task = gExecBase.RescheduleTask(t == mIdleTask ? ENull : t);
+  }
+  else {
+    next_task = gExecBase.RescheduleTask(ENull);
+  }
+
+  if (next_task == ENull) {
+    next_task = mIdleTask;
+  }
+  else {
+    mActiveTasks.Lock();
+    next_task->Remove();
+    mActiveTasks.Unlock();
+  }
+
+  TBool test = CompareStrings(next_task->TaskName(), "Init Task") == 0;
+  // if (test) {
+  //   dlog("next_task(%s)\n", next_task->TaskName());
+  // }
+
+  next_task->mCpu = this;
+  if (next_task != mIdleTask) {
+    mActiveTasks.Lock();
+    mActiveTasks.Add(*next_task);
+    mActiveTasks.Unlock();
   }
 
   mCurrentTask = mActiveTasks.First();
   SetCurrentTask(&mCurrentTask->mRegisters);
+
   if (t != mCurrentTask && gExecBase.mDebugSwitch) {
     // if (t != mCurrentTask) {
-    dprint("  CPU %d Reschedule %s\n", mProcessorId, mCurrentTask->TaskName());
-    dprint("Previous task\n");
-    dprint("  Previous Task %s\n", t->TaskName());
-    dprint("\n\n\n");
+    dprint("  CPU %d Reschedule %s => %s\n", mProcessorId, mCurrentTask->TaskName(), t->TaskName());
   }
 }

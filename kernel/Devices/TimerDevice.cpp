@@ -63,6 +63,7 @@ protected:
 };
 
 TInt64 TimerTask::Run() {
+  DISABLE;
   dprint("\n");
   dlog("TimerTask Run\n");
 
@@ -70,6 +71,8 @@ TInt64 TimerTask::Run() {
 
   TUint64 port_mask = 1 << mMessagePort->SignalNumber();
   TUint64 tick_mask = 1 << mSignalBit;
+
+  ENABLE;
 
   dlog("TimerTask Wait Loop\n");
   for (;;) {
@@ -95,17 +98,15 @@ TInt64 TimerTask::Run() {
     if (sigs & tick_mask) {
       TUint64 current = mTimerDevice->IncrementTicks();
       for (;;) {
-        TUint64 flags = GetFlags();
         TimerMessage *m = (TimerMessage *)timerQueue.First();
         if (timerQueue.End(m)) {
           break;
         }
         if (m->mPri > current) {
-          SetFlags(flags);
           break;
         }
         m->Remove();
-        SetFlags(flags);
+        // dlog("Timer reply %s\n", m->mReplyPort->OwnerName());
         m->Reply();
       }
     }
@@ -113,13 +114,14 @@ TInt64 TimerTask::Run() {
 }
 
 TBool TimerInterrupt::Run(TAny *g) {
-  // dlog("TIMER\n");
+  // dlog("TIMER IRQ\n");
   CPU *cpu = GetCPU();
   if (!cpu) {
     gExecBase.InterruptOthers(IRQ_TIMER);
     gExecBase.AckIRQ(IRQ_TIMER);
     return ETrue;
   }
+
   if (cpu->mApicId == 0) {
     mTask->Signal(1 << mTask->mSignalBit);
     gExecBase.InterruptOthers(IRQ_TIMER);
@@ -131,6 +133,7 @@ TBool TimerInterrupt::Run(TAny *g) {
   if (cpu->mApicId == 0) {
     cpu->AckIRQ(IRQ_TIMER);
   }
+
   return ETrue;
 }
 

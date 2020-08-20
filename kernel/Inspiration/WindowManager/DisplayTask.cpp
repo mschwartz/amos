@@ -41,8 +41,8 @@ static inline TUint64 time_vbl() {
 }
 
 TInt64 DisplayTask::Run() {
-  DSPACE();
-  DLOG("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+  // DSPACE();
+  // DLOG("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
   DLOG("DisplayTask Run %x\n", inb(0x3da));
   Sleep(1);
 

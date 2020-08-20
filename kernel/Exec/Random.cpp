@@ -54,9 +54,7 @@ TUint32 Random() {
 #else
   static const TUint32 a = 16807,
                        m = 2147483647;
-  DISABLE;
   sRandomSeed = (a * sRandomSeed) % m;
-  ENABLE;
   return sRandomSeed % m;
 #endif
 }

@@ -30,10 +30,10 @@ TInt64 InitTask::Run() {
   dlog("  initialize timer\n");
   TimerDevice *td = new TimerDevice();
   gExecBase.AddDevice(td);
-  // while (rtc->GetTicks() < 10) {
-  //   dlog("ticks(%d)\n", rtc->GetTicks());
-  // }
-  // bochs;
+  while (rtc->GetTicks() < 10) {
+    // dlog("ticks(%d)\n", rtc->GetTicks());
+  }
+  dlog("=== ticks(%d)\n", rtc->GetTicks());
 
   // mCpu->mIdleTask = new IdleTask();
   // gExecBase.AddTask(new IdleTask());
@@ -158,5 +158,8 @@ TInt64 InitTask::Run() {
   dlog("  initialize Inspiration\n");
   gExecBase.SetInspirationBase(new InspirationBase());
 
+  for (;;) {
+    Sleep(1000);
+  }
   return 0;
 }

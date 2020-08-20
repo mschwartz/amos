@@ -12,9 +12,11 @@ extern "C" void init_task_state(TTaskRegisters *t);
 
 BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize)
     : BNodePri(aName, aPri), mInspirationBase(*gExecBase.GetInspirationBase()) {
-  // initialize Forbid/Permit
+// initialize Forbid/Permit
+#if 0
   mForbidNestCount = 0;
   mDisableNestCount = 0;
+#endif
   mTaskState = ETaskRunning;
 
   // initialize task's Signals
@@ -49,6 +51,18 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize)
 
 BTask::~BTask() {
   //
+}
+
+TInt64 BTask::ProcessorId() {
+  CPU *c = (CPU *)mCpu;
+  if (c == ENull) {
+    return -1;
+  }
+  return c->mProcessorId;
+}
+
+CPU *BTask::CurrentCPU() {
+  return (CPU *)mCpu;
 }
 
 void BTask::Suicide(TInt64 aCode) {
@@ -133,7 +147,7 @@ void BTask::Dump() {
 }
 
 TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
-  DISABLE;
+  mSignalMutex.Acquire();
 
   TInt8 sig = -1;
   if (aSignalNum == -1) {
@@ -153,88 +167,93 @@ TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
     }
   }
 
-  ENABLE;
+  mSignalMutex.Release();
   return sig == 64 ? -1 : sig;
 }
 
 TBool BTask::FreeSignal(TInt64 aSignalNum) {
-  DISABLE;
+  mSignalMutex.Acquire();
   TUint64 mask = 1 << aSignalNum;
   if (mSigAlloc & mask) {
     mSigAlloc &= ~mask;
-    ENABLE;
+    mSignalMutex.Release();
     return ETrue;
   }
-  ENABLE;
+  mSignalMutex.Release();
   return EFalse;
 }
 
-extern "C" void push_disable();
-extern "C" void pop_disable();
-
 void BTask::Signal(TInt64 aSignalSet) {
+  TBool test = CompareStrings(this->TaskName(), "Init Task") == 0;
+  // if (test) {
+  //   dlog("Signal(%s)\n", this->TaskName());
+  //   bochs;
+  // }
+  mSignalMutex.Acquire();
   mSigReceived |= aSignalSet;
   // assure this task is in active list and potentially perform a task switch
   if (mSigReceived & mSigWait) {
+    // if (test) {
+    //   bochs;
+    // }
+
     //    if (CompareStrings(this->TaskName(), "Timer Task")) {
-    //    dlog("Wake(%s)\n", this->TaskName());
     //    }
+    mSignalMutex.Release();
     gExecBase.Wake(this);
+  }
+  else {
+    mSignalMutex.Release();
   }
 }
 
 TUint64 BTask::Wait(TUint64 aSignalSet) {
-  if (aSignalSet == 0) {
-    gExecBase.Wake(this);
-    return 0;
-  }
-
-  {
-    DISABLE;
+  DISABLE;
+  if (aSignalSet != 0) {
+    mSignalMutex.Acquire();
     mSigWait |= aSignalSet;
-    ENABLE;
+    mSignalMutex.Release();
+    mTaskState = ETaskWaiting;
+  }
+  else {
+    // effectively a YIELD
   }
 
-  gExecBase.WaitSignal(this);
+  CPU *c = (CPU *)mCpu;
+  ENABLE;
 
-  {
-    DISABLE;
-    volatile TUint64 received = mSigReceived;
-    mSigReceived = 0;
-    ENABLE;
+  // dlog("----- %s Wait(%x)\n", TaskName(), aSignalSet);
+  c->WaitSignal(this);
+  // dlog("<<<<<<<<<<< %s WaitSignal returned(%x)\n", TaskName(), aSignalSet);
 
-    return received;
-  }
+  mSignalMutex.Acquire();
+  TUint64 received = mSigReceived;
+  mSigReceived = 0;
+  mSignalMutex.Release();
+  return received;
 }
 
 MessagePort *BTask::CreatePort(const char *aName, TInt64 aPri) {
-  DISABLE;
   TInt64 sig = AllocSignal(-1);
   MessagePort *p = new MessagePort(aName, this, sig, aPri);
   gExecBase.AddMessagePort(*p);
-  ENABLE;
   return p;
 }
 
 void BTask::FreePort(MessagePort *aMessagePort) {
-  DISABLE;
-
   FreeSignal(aMessagePort->SignalNumber());
   gExecBase.RemoveMessagePort(*aMessagePort);
-
-  ENABLE;
-
   delete aMessagePort;
 }
 
-void BTask::WaitForPort(const char *aName) {
+MessagePort *BTask::WaitForPort(const char *aName) {
   for (;;) {
     MessagePort *p = gExecBase.FindMessagePort(aName);
     if (p) {
-      return;
+      return p;
     }
+    Sleep(1);
   }
-  
 }
 TUint64 BTask::WaitPorts(TUint64 aSigMask, ...) {
   va_list args;
@@ -305,6 +324,7 @@ void BTask::MilliSleep(TUint64 aMilliSeconds) {
   FreePort(replyPort);
 }
 
+#if 0
 void BTask::Disable() {
   gExecBase.Disable();
   if (++mDisableNestCount != 1) {
@@ -337,6 +357,7 @@ void BTask::Permit() {
   }
   ENABLE;
 }
+#endif
 
 void BTaskList::Dump() {
   DISABLE;

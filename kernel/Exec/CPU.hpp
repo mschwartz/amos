@@ -13,7 +13,7 @@
 #include <Exec/x86/gdt.hpp>
 #include <Exec/x86/tss.hpp>
 #include <Exec/BTask.hpp>
-#include <Exec/Mutex.hpp>
+// #include <Exec/Mutex.hpp>
 
 /********************************************************************************
  ********************************************************************************
@@ -44,6 +44,7 @@ class TimerInterrupt;
 
 class CPU : public BBase {
   friend ExecBase;
+  friend BTask;
   friend TimerInterrupt;
 
 public:
@@ -78,16 +79,17 @@ protected:
   BTask *CurrentTask() { return mCurrentTask; }
   void DumpTasks();
 
+  void  WaitSignal(BTask *aTask);
   void RescheduleIRQ();
 
 protected:
-  TInt64 mRunningTaskCount;;
+  TInt64 mRunningTaskCount;
   BTaskList mActiveTasks;
   BTask *mCurrentTask;
 
 public:
   TUint8 *mBootStack;
-  TUint64 mCpuState;
+  volatile TUint64 mCpuState;
 
 public:
   TUint32 mProcessorId;

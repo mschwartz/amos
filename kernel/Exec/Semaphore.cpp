@@ -14,24 +14,19 @@ Semaphore::Semaphore(const char *aName, TInt64 aPriority) : BNodePri(aName, aPri
 }
 
 Semaphore::~Semaphore() {
-  DISABLE;
   if (mSharedCount || (mOwner && mOwner != gExecBase.GetCurrentTask())) {
     // shouldn't happen!
     gExecBase.GuruMeditation("Semaphore (%s) destructor called while in use\n", NodeName());
   }
-  ENABLE;
 }
 
 TBool Semaphore::Attempt(TBool aExclusive) {
-  DISABLE;
-
   BTask *t = gExecBase.GetCurrentTask();
   if (t == mOwner) {
     // nested attempts
     DSPACE();
     DLOG("Semaphore::Attempt nested succeeded\n");
     mNestCount++;
-    ENABLE;
     return ETrue;
   }
 
@@ -39,7 +34,6 @@ TBool Semaphore::Attempt(TBool aExclusive) {
     // someone else has the lock
     DSPACE();
     DLOG("Semaphore::Attempt Semaphore in use mOwner (%s)\n", mOwner->TaskName());
-    ENABLE;
     return EFalse;
   }
   else if (aExclusive) {
@@ -47,7 +41,6 @@ TBool Semaphore::Attempt(TBool aExclusive) {
       // one or more tasks have a shared lock
       DSPACE();
       DLOG("Semaphore::Attempt Shared Semaphore in use\n");
-      ENABLE;
       return EFalse;
     }
     // grab the lock, it's ours!
@@ -56,7 +49,6 @@ TBool Semaphore::Attempt(TBool aExclusive) {
     mOwner = t;
     mNestCount = 1;
     mSharedCount = 0;
-    ENABLE;
     return ETrue;
   }
   else {
@@ -64,17 +56,14 @@ TBool Semaphore::Attempt(TBool aExclusive) {
     DSPACE();
     DLOG("Semaphore::Attempt shared lock success\n");
     mSharedCount++;
-    ENABLE;
     return ETrue;
   }
 }
 
 void Semaphore::Obtain(TBool aExclusive) {
-  DISABLE;
   BTask *t = gExecBase.GetCurrentTask();
 
   if (Attempt(aExclusive)) {
-    ENABLE;
     return;
   }
   DLOG("Semaphore in use (about to block) currentTask(%s) this(%x)\n", t->TaskName(), this);
@@ -88,20 +77,19 @@ void Semaphore::Obtain(TBool aExclusive) {
   // gExecBase.Schedule();
   // // gExecBase.WaitSemaphore(t, this);
   DLOG("%s got semapnore\n", t->TaskName());
-  ENABLE;
 }
 
 TBool Semaphore::Release() {
   DSPACE();
   DLOG("Semaphore::Release()\n");
-  DISABLE;
+
   BTask *t = gExecBase.GetCurrentTask();
   if (mOwner == t) {
     // release the exclusive lock
     DLOG("Release exclusive lock\n");
     gExecBase.ReleaseSemaphore(this);
     DLOG("RELEASED (%s)\n", gExecBase.CurrentTaskName());
-    ENABLE;
+
     return ETrue;
   }
   else if (mSharedCount > 0) {
@@ -112,7 +100,6 @@ TBool Semaphore::Release() {
       gExecBase.ReleaseSemaphore(this);
     }
     DLOG("RELEADED SHARED LOCK\n");
-    ENABLE;
     return ETrue;
   }
   DLOG("*** can't unlock Semaphore not owned by (%s)\n", t->TaskName());

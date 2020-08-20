@@ -113,6 +113,10 @@ public:
     mPrev = (BNode *)this;
   }
 
+  TBool Empty() {
+    return mNext == this;
+  }
+
   void AddHead(BNode &aNode);
   BNode *RemHead();
   void AddTail(BNode &aNode);
@@ -182,6 +186,10 @@ public:
   void Dump(BNodePri *aStop = ENull);
 
 public:
+  TBool Empty() {
+    return mNext == this;
+  }
+
   /**
    * Remove all of the elements from the list.
    */

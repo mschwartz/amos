@@ -24,19 +24,26 @@
 
 #ifdef KERNEL
 
-extern "C" TAny *ExtendChipRam(TUint64 aIncrement) {
+static Mutex mutex,
+  chip_mutex,
+  data_mutex;
+
+static TAny *ExtendChipRam(TUint64 aIncrement) {
   extern void *chip_memory;
   extern void *chip_memory_end;
   static TUint8 *sChipBreak = ENull;
   static void *end = &chip_memory_end;
 
   DLOG("ExtendChipRam(%d)\n", aIncrement);
+  chip_mutex.Acquire();
+
   if (sChipBreak == ENull) {
     sChipBreak = (TUint8 *)&chip_memory;
     DLOG("ExtendChipRam(0x%x)\n", sChipBreak);
   }
 
   if (aIncrement == 0) {
+    chip_mutex.Release();
     if (sChipBreak > end) {
       DLOG("AllocMem(%d) OUT OF CHIP MEMORY\n", aIncrement);
       bochs;
@@ -46,6 +53,7 @@ extern "C" TAny *ExtendChipRam(TUint64 aIncrement) {
   }
 
   if (sChipBreak > end) {
+    chip_mutex.Release();
     DLOG("OUT OF CHIP MEMORY\n", sChipBreak, end);
     bochs;
     return ENull;
@@ -54,28 +62,34 @@ extern "C" TAny *ExtendChipRam(TUint64 aIncrement) {
   void *ret = sChipBreak;
   sChipBreak = &sChipBreak[aIncrement];
   if (sChipBreak > end) {
+    chip_mutex.Release();
     DLOG("OUT OF CHIP MEMORY\n", sChipBreak, end);
     bochs;
     return ENull;
   }
 
+  chip_mutex.Release();
   return ret;
 }
 
-extern "C" TAny *ExtendDataSegment(TUint64 aIncrement) {
+static TAny *ExtendDataSegment(TUint64 aIncrement) {
   extern void *kernel_end;
   static TUint8 *sProgramBreak = ENull;
 
+  data_mutex.Acquire();
   if (sProgramBreak == ENull) {
     sProgramBreak = (TUint8 *)&kernel_end;
   }
 
   if (aIncrement == 0) {
+    data_mutex.Release();
     return sProgramBreak;
   }
 
   void *ret = sProgramBreak;
   sProgramBreak = &sProgramBreak[aIncrement];
+
+  data_mutex.Release();
   return ret;
 }
 
@@ -163,14 +177,12 @@ void InitAllocMem() {
   }
 }
 
-static Mutex mutex;
-
 TAny *AllocMem(TInt64 aSize, TInt aFlags) {
   Chunk *ret = ENull;
   DLOG("AllocMem aSize(%d) aFlags(%x)\n", aSize, aFlags);
 
-  mutex.Acquire();
   // search for free chunk of desired size
+  mutex.Acquire("AllocMem");
   for (Chunk *c = sFreeChunks->First(); !sFreeChunks->End(c); c = c->mNext) {
     DLOG("Chunk(%x)\n", c);
     if (aFlags & MEMF_CHIP) {
@@ -189,6 +201,7 @@ TAny *AllocMem(TInt64 aSize, TInt aFlags) {
       break;
     }
   }
+  mutex.Release("AllocMem");
 
   if (ret == ENull) {
     // no Chunk found
@@ -204,8 +217,6 @@ TAny *AllocMem(TInt64 aSize, TInt aFlags) {
       ret->mSize = aSize;
     }
   }
-
-  mutex.Release();
 
   TUint8 *p = (TUint8 *)ret;
   TUint8 *mem = &p[sizeof(Chunk)];

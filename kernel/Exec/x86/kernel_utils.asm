@@ -8,6 +8,30 @@
 	xchg bx,bx
 %endmacro
 
+;; spinlock(TUint64 *lock_variable)
+;; test and set longword (spinlock)
+global spinlock
+spinlock:
+	; pushf
+	; cli
+	lock bts qword [rdi],0        ;Attempt to acquire the lock (in case lock is uncontended)
+	jc .spin_with_pause
+	; popf
+	ret
+	
+.spin_with_pause:
+	pause                    ; Tell CPU we're spinning
+	test qword [rdi],1      ; Is the lock free?
+	jnz .spin_with_pause     ; no, wait
+	jmp spinlock		 ; retry
+
+;; spinunlock(TUint64 *lock_variable)
+global spinunlock
+spinunlock:
+	xor rax, rax
+	mov [rdi], rax
+	ret
+	
 ;; execute wrmsr
 global wrmsr
 wrmsr:
@@ -287,19 +311,6 @@ push_flags:
 
 global pop_flags
 pop_flags:
-        pop rax
-        popf
-        jmp rax
-
-global push_disable
-push_disable:
-        pop rax
-        pushf
-        cli
-        jmp rax
-
-global pop_disable
-pop_disable:
         pop rax
         popf
         jmp rax

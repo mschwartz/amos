@@ -253,11 +253,18 @@ class BFileSystem : public BNode {
 public:
   BFileSystem(const char *aName);
   ~BFileSystem();
+
 public:
   RootSector *mRootSector;
 };
 
 class BFileSystemList : public BList {
+public:
+  void Lock() { mMutex.Acquire(); }
+  void Unlock() { mMutex.Release(); }
+
+protected:
+  Mutex mMutex;
 };
 
 /********************************************************************************

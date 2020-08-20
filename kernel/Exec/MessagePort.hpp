@@ -36,6 +36,14 @@ class BMessageList : public BListPri {
 public:
   BMessageList(const char *aName);
   ~BMessageList();
+
+public:
+  void Lock() { mMutex.Acquire(); }
+  void Unlock() { mMutex.Release(); }
+
+protected:
+  Mutex mMutex;
+
 public:
   void Dump();
 };
@@ -58,9 +66,11 @@ public:
 
 public:
   void Dump();
+  const char *OwnerName() { return mOwner ? mOwner->TaskName() : "No owner"; }
 
 protected:
   void ReceiveMessage(BMessage *aMessage);
+
 protected:
   BTask *mOwner;
   TInt64 mSignalBit;
@@ -75,6 +85,13 @@ class MessagePortList : public BListPri {
 public:
   MessagePortList(const char *aName);
   ~MessagePortList();
+
+public:
+  void Lock() { mMutex.Acquire(); }
+  void Unlock() { mMutex.Release(); }
+
+protected:
+  Mutex mMutex;
 
 public:
   MessagePort *FindPort(const char *aName) {

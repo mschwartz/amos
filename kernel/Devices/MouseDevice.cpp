@@ -106,9 +106,9 @@ protected:
 };
 
 TBool MouseInterrupt::Run(TAny *aData) {
-  DISABLE;
+  // DISABLE;
   TInt8 in_byte = mouse_read();
-  ENABLE;
+  // ENABLE;
 
   switch (mState) {
     case 0:
@@ -216,7 +216,7 @@ TInt64 MouseTask::Run() {
   dlog("MouseTask Run\n");
   Sleep(3);
 
-  DISABLE;
+  // DISABLE;
   mMessagePort = CreatePort("mouse.device");
   gExecBase.AddMessagePort(*mMessagePort);
 
@@ -283,7 +283,7 @@ TInt64 MouseTask::Run() {
   gExecBase.EnableIRQ(IRQ_MOUSE);
   gExecBase.AckIRQ(IRQ_MOUSE);
 
-  ENABLE;
+  // ENABLE;
 
   BMessageList move_messages("move_mouse_list");
   BMessageList buttons_messages("buttons_mouse_list");

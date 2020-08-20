@@ -8,14 +8,14 @@ extern "C" void StartExamples() {
   dlog("------- Construct TestIdcmp\n");
   gExecBase.AddTask(new TestIdcmpTask());
 
-  dlog("------- Construct ConsoleWindowTest\n");
-  gExecBase.AddTask(new ConsoleWindowTestTask());
+  // dlog("------- Construct ConsoleWindowTest\n");
+  // gExecBase.AddTask(new ConsoleWindowTestTask());
 
-  dlog("------- Construct TestTask\n");
-  gExecBase.AddTask(new TestTask());
+  // dlog("------- Construct TestTask\n");
+  // gExecBase.AddTask(new TestTask());
 
-  dlog("------- Construct CLI\n");
-  gExecBase.AddTask(new CliTask());
+  // dlog("------- Construct CLI\n");
+  // gExecBase.AddTask(new CliTask());
 
   dprint("Construct ExitTests\n");
   // gExecBase.AddTask(new ExitTestTask(EExitTestReturn, "RETURN", 12));

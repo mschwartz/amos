@@ -261,9 +261,7 @@ TInt64 SimpleFileSystemTask::Run() {
   mAtaPort = ENull;
   while (!mAtaPort) {
     dlog("  Finding port(%s)\n", mDiskDevice);
-    Forbid();
     mAtaPort = gExecBase.FindMessagePort(mDiskDevice);
-    Permit();
     if (!mAtaPort) {
       dlog("  Port(%s) not found, sleeping\n", mDiskDevice);
       Sleep(1);

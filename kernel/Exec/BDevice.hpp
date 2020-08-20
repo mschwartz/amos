@@ -15,6 +15,13 @@ public:
   ~BDeviceList();
 
 public:
+  void Lock() { mMutex.Acquire(); }
+  void Unlock() { mMutex.Release(); }
+
+protected:
+  Mutex mMutex;
+
+public:
   void AddDevice(BDevice& aDevice);
   BDevice *FindDevice(const char *aName);
 

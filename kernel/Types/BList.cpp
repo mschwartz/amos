@@ -1,3 +1,6 @@
+#define DEBUGME
+#undef DEBUGME
+
 #include <Types/BList.hpp>
 #include <Exec/Memory.hpp>
 
@@ -25,7 +28,7 @@ BNode::~BNode() {
 }
 
 void BNode::SetName(const char *aName) {
-  delete [] mNodeName;
+  delete[] mNodeName;
   mNodeName = DuplicateString(aName);
 }
 
@@ -50,7 +53,7 @@ BNodePri::~BNodePri() {}
 /**
  * Create an empty list.
  */
-BList::BList(const char *aNodeName) : BNode(aNodeName) { 
+BList::BList(const char *aNodeName) : BNode(aNodeName) {
   Reset();
 }
 
@@ -80,16 +83,16 @@ BList::~BList() {
  * Add an element to the tail of the list.
  * @param node The element to add.
  */
-void BList::AddTail(BNode &aNode) { 
-  aNode.InsertBeforeNode(this); 
+void BList::AddTail(BNode &aNode) {
+  aNode.InsertBeforeNode(this);
 }
 
 /**
  * Add an element to the head of the list.
  * @param node The element to add.
  */
-void BList::AddHead(BNode &aNode) { 
-  aNode.InsertAfterNode(this); 
+void BList::AddHead(BNode &aNode) {
+  aNode.InsertAfterNode(this);
 }
 
 /**
@@ -102,6 +105,7 @@ BNode *BList::RemHead() {
     return ENull;
   }
   n->Remove();
+  n->mNext = n->mPrev = ENull;
   return n;
 }
 
@@ -121,8 +125,8 @@ BNode *BList::RemTail() {
  * Remove the specified element from the list.
  *  * @param node The element to remove.
  */
-void BList::RemoveNode(BNode *aNode) { 
-  aNode->Remove(); 
+void BList::RemoveNode(BNode *aNode) {
+  aNode->Remove();
 }
 
 BNode *BList::Find(const char *aNodeName) {
@@ -134,7 +138,7 @@ BNode *BList::Find(const char *aNodeName) {
   return ENull;
 }
 
-BNode *BList::Find(BNode& aNode) {
+BNode *BList::Find(BNode &aNode) {
   for (BNode *n = First(); !End(n); n = n->mNext) {
     if (n == &aNode) {
       return n;
@@ -184,12 +188,12 @@ void BListPri::Dump(BNodePri *aStop) {
 #endif
 }
 
-void BListPri::AddTail(BNodePri &aNode) { 
-  aNode.InsertBeforeNode(this); 
+void BListPri::AddTail(BNodePri &aNode) {
+  aNode.InsertBeforeNode(this);
 }
 
-void BListPri::AddHead(BNodePri &aNode) { 
-  aNode.InsertAfterNode(this); 
+void BListPri::AddHead(BNodePri &aNode) {
+  aNode.InsertAfterNode(this);
 }
 
 /**
@@ -222,17 +226,29 @@ BNodePri *BListPri::RemTail() {
  * Remove the specified element from the list.
  * @param node The element to remove.
  */
-void BListPri::RemoveNode(BNodePri *aNode) { 
-  aNode->Remove(); 
+void BListPri::RemoveNode(BNodePri *aNode) {
+  aNode->Remove();
 }
 
 void BListPri::Add(BNodePri &aNode) {
+  DPRINT("\n");
+#ifdef DEBUGME
+  TInt count = 0;
+#endif
   for (BNodePri *n = First(); !End(n); n = n->mNext) {
+#ifdef DEBUGME
+    count++;
+    if (count > 10) {
+      dprint("%s %d\n ", n->mNodeName, n->mPri);
+    }
+#endif
     if (aNode.mPri < n->mPri) {
+      DPRINT("insert\n");
       aNode.InsertBeforeNode(n);
       return;
     }
   }
+  DPRINT("tail\n");
   AddTail(aNode);
 }
 
@@ -245,7 +261,7 @@ BNodePri *BListPri::Find(const char *aNodeName) {
   return ENull;
 }
 
-BNodePri *BListPri::Find(BNodePri& aNode) {
+BNodePri *BListPri::Find(BNodePri &aNode) {
   for (BNodePri *n = First(); !End(n); n = n->mNext) {
     if (n == &aNode) {
       return n;
@@ -253,4 +269,3 @@ BNodePri *BListPri::Find(BNodePri& aNode) {
   }
   return ENull;
 }
-

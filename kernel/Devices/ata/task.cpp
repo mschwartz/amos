@@ -39,7 +39,6 @@ TInt64 AtaTask::Run() {
   DSPACE();
   dlog("AtaTask running\n");
 
-  DISABLE;
   TUint8 sigbit = AllocSignal(-1); // this is for signal from IRQ handler(s)
   mSigMask = (1 << sigbit);
   dlog("  AtaTask signal bit %d(%x)\n", sigbit, mSigMask);
@@ -56,8 +55,6 @@ TInt64 AtaTask::Run() {
 
   MessagePort *port = CreatePort("ata.device");
   gExecBase.AddMessagePort(*port);
-
-  ENABLE;
 
   TIdeDevice *drive0 = &mDevices[0];
   for (;;) {

@@ -38,6 +38,10 @@ public:
 public:
   TTaskRegisters mRegisters;
 
+public:
+  TInt64 ProcessorId();
+  CPU *CurrentCPU();
+
 protected:
   volatile ETaskState mTaskState;
   volatile CPU *mCpu;
@@ -64,6 +68,7 @@ protected:
   static void RunWrapper(BTask *aTask);
 
 protected:
+  Mutex mSignalMutex;
   volatile TUint64 mSigAlloc;
   volatile TUint64 mSigWait;
   volatile TUint64 mSigReceived;
@@ -100,7 +105,7 @@ protected:
   /**
    * Wait for message port to be created.
    */
-  void WaitForPort(const char *aName);
+  MessagePort *WaitForPort(const char *aName);
 
   /**
    * Wait for message port signal bit as well as any optional other signal bits.
@@ -134,6 +139,7 @@ public:
   void Sleep(TUint64 aSeconds);
   void MilliSleep(TUint64 aMilliSeconds);
 
+#if 0
 protected:
   void Disable();
   void Enable();
@@ -143,11 +149,15 @@ protected:
 
 protected:
   volatile TInt64 mForbidNestCount, mDisableNestCount;
+#endif
 
 protected:
   InspirationBase &mInspirationBase;
 };
 
+/**
+ *
+ */
 class BTaskList : public BListPri {
 public:
   BTaskList(const char *aName = "Task List") : BListPri(aName) {

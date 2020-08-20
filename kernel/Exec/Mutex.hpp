@@ -14,11 +14,11 @@ public:
 
 public:
   TBool Try();
-  void Acquire();
-  void Release();
+  void Acquire(const char *aMessage = ENull);
+  void Release(const char *amessage = ENull);
 
 protected:
-  volatile int mLock;
+  TUint64 mLock;
 };
 
 #endif

@@ -18,8 +18,10 @@ extern void FreeMem(TAny *aMemory);
 
 extern void *operator new(unsigned long aSize);
 extern void *operator new[](unsigned long aSize);
+
 extern void operator delete(void *aMemory, unsigned long aSize);
 extern void operator delete(void *aMemory);
+
 extern void operator delete[](void *aMemory, unsigned long aSize);
 extern void operator delete[](void *aMemory);
 
@@ -38,7 +40,6 @@ void SetMemory64(TAny *aDestination, TUint64 aValue, TInt64 aCount);
 void CopyMemory(TAny *aDestination, TAny *aSource, TInt64 aCount);
 void CopyMemory32(TAny *aDestination, TAny *aSource, TInt64 aCount);
 void CopyMemory64(TAny *aDestination, TAny *aSource, TInt64 aCount);
-
 
 /** 
  * parse token, separated by aDelim,  from aString into aToken.

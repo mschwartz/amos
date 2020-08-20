@@ -39,19 +39,19 @@ void MousePointerTask::HandleButtons(MouseMessage *aMessage) {
         SendIdcmpMessage(IDCMP_MOUSEBUTTONS, SELECTDOWN, aMessage);
       }
       else {
-	dlog("Activated window\n");
+        dlog("Activated window\n");
       }
       if ((mDraggable.mWindow = mInspirationBase.DragWindow(mMouseX, mMouseY)) != ENull) {
-	mDraggable.mDx = mMouseX - mDraggable.mWindow->WindowLeft();
-	mDraggable.mDy = mMouseY - mDraggable.mWindow->WindowTop();
-	dlog("Start Drag (%s) dx(%d) dy(%d)\n", mDraggable.mWindow->Title(), mDraggable.mDx, mDraggable.mDy);
+        mDraggable.mDx = mMouseX - mDraggable.mWindow->WindowLeft();
+        mDraggable.mDy = mMouseY - mDraggable.mWindow->WindowTop();
+        dlog("Start Drag (%s) dx(%d) dy(%d)\n", mDraggable.mWindow->Title(), mDraggable.mDx, mDraggable.mDy);
       }
     }
     else {
       // button being held down
       if (mDraggable.mWindow) {
-	// dlog("dragging %d,%d\n", mMouseX - mDraggable.mDx, mMouseY - mDraggable.mDy);
-	mDraggable.mWindow->MoveTo(mMouseX - mDraggable.mDx, mMouseY - mDraggable.mDy);
+        // dlog("dragging %d,%d\n", mMouseX - mDraggable.mDx, mMouseY - mDraggable.mDy);
+        mDraggable.mWindow->MoveTo(mMouseX - mDraggable.mDx, mMouseY - mDraggable.mDy);
       }
     }
   }
@@ -87,17 +87,10 @@ void MousePointerTask::HandleButtons(MouseMessage *aMessage) {
 }
 
 TInt64 MousePointerTask::Run() {
-  MessagePort *mousePort;
-
   dprint("\n");
   dlog("MousePointerTask Run\n");
 
-  Forbid();
-  while ((mousePort = gExecBase.FindMessagePort("mouse.device")) == ENull) {
-    Sleep(1);
-  }
-  Permit();
-
+  MessagePort *mousePort = WaitForPort("mouse.device");
   MessagePort *replyPort = CreatePort("replyPort");
 
   MouseMessage *move_message = new MouseMessage(replyPort, EMouseMove);

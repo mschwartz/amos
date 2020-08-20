@@ -33,8 +33,8 @@ void Apic::Initialize() {
 
   TUint64 base = read_msr(0x1b);
   dlog("  base=%x %x %s BSP(%s)\n", base, base & ~0xfff,
-       base & (1 << 11) ? "true" : "false",
-       base & (1 << 8) ? "true" : "false");
+    base & (1 << 11) ? "true" : "false",
+    base & (1 << 8) ? "true" : "false");
   // clear disable bit
   // WriteRegister(APIC_SPURIOUS_REG, LAPIC_ENABLE | 0xff);
 
@@ -61,6 +61,7 @@ void Apic::Initialize() {
 
 TBool Apic::InterruptOthers(TUint8 aVector) {
   DISABLE;
+
   // dlog("InterruptOthers(%d)\n", aVector);
   if (!WaitForIdle()) {
     dlog("NOT IDLE\n");
@@ -74,9 +75,9 @@ TBool Apic::InterruptOthers(TUint8 aVector) {
 
   WriteRegister(APIC_ICR_HIGH, 0);
   WriteRegister(APIC_ICR_LOW, APIC_VECTOR(aVector) |
-		APIC_ICR_DESTINATION_TYPE_ALL_OTHERS |
-		APIC_LEVEL_ASSERT |
-		APIC_DESTINATION_PHYSICAL);
+                                APIC_ICR_DESTINATION_TYPE_ALL_OTHERS |
+                                APIC_LEVEL_ASSERT |
+                                APIC_DESTINATION_PHYSICAL);
 
   TBool status = WaitForIdle();
   ENABLE;

@@ -15,8 +15,10 @@ extern "C" int brk(void *aAddress) {
   return 0;
 }
 
+static Mutex sbrk_mutex;
 // increments the programs data space by increment bytes
 extern "C" void *sbrk(intptr_t aIncrement) {
+  sbrk_mutex.Acquire();
   if (gProgramBreak == nullptr) {
     gProgramBreak = (uint8_t *)&kernel_end;
   }
@@ -26,6 +28,7 @@ extern "C" void *sbrk(intptr_t aIncrement) {
 
   void *ret = gProgramBreak;
   gProgramBreak += aIncrement;
+  sbrk_mutex.Acquire();
   return ret;
 }
 

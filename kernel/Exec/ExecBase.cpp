@@ -93,7 +93,7 @@ CPU *ExecBase::CurrentCpu() {
   return cpu;
 }
 
-TUint64 ExecBase::GetCurrentCpuNumber() {
+TUint64 ExecBase::ProcessorId() {
   CPU *cpu = GetCPU();
   return cpu ? cpu->mProcessorId : 0;
 }
@@ -124,14 +124,8 @@ void ExecBase::Enable() {
 }
 
 void ExecBase::AddTask(BTask *aTask) {
-  mActiveTasks.Lock();
-  mActiveTasks.Add(*aTask);
-  mActiveTasks.Unlock();
-  // DISABLE;
-  // // TODO: this should figure out which CPU to assign task to
-  // CPU *c = CurrentCpu();
-  // c->AddTask(aTask);
-  // ENABLE;
+  dlog(">> AddTask(%s)\n", aTask->TaskName());
+  AddActiveList(aTask);
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
@@ -145,25 +139,25 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
   return aExitCode;
 }
 
+#if 0
 void ExecBase::WaitSignal(BTask *aTask) {
   DISABLE;
+  // remove task from whichever CPU's active task list
   aTask->Remove();
-  aTask->mCpu = ENull;
+  // aTask->mCpu = ENull;
 
   // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
   // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
   if (aTask->mSigWait & aTask->mSigReceived) {
-    mActiveTasks.Lock();
-    aTask->mTaskState = ETaskRunning;
-    mActiveTasks.Add(*aTask);
-    mActiveTasks.Unlock();
+    AddActiveList(aTask);
   }
   else {
-    AddWaitingList(*aTask);
+    AddWaitingList(aTask);
   }
-  Schedule();
+  // Schedule();
   ENABLE;
 }
+#endif
 
 void ExecBase::WaitSemaphore(BTask *aTask, Semaphore *aSemaphore) {
   DISABLE;
@@ -202,23 +196,53 @@ void ExecBase::ReleaseSemaphore(Semaphore *aSemaphore) {
   * Note that Add() will sort the task into the list, effecting round-robin order.
   */
 void ExecBase::Wake(BTask *aTask) {
+  DISABLE;
+  // dlog("-------------- Wake(%s) -------------- \n", aTask->TaskName());
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
-  mWaitingTasks.Lock();
   if (aTask == ENull) {
-    aTask = mWaitingTasks.First();
-    // dlog("Wake %s\n", aTask->TaskName());
+    mWaitingTasks.Lock();
+    if (!mWaitingTasks.Empty()) {
+      aTask->Remove();
+    }
+    mWaitingTasks.Unlock();
   }
-  aTask->Remove();
-  mWaitingTasks.Unlock();
-  // dlog("Wake(%s)\n", aTask->TaskName());
-  aTask->mTaskState = ETaskRunning;
-  mActiveTasks.Lock();
-  mActiveTasks.Add(*aTask);
-  mActiveTasks.Unlock();
 
-  // CurrentCpu()->AddActiveTask(*aTask);
-  //  DumpTasks();
+  if (aTask == ENull) {
+    ENABLE;
+    return;
+  }
+
+  // TBool test = CompareStrings(aTask->TaskName(), "Init Task") == 0;
+  // if (test) {
+  //   dlog("-------------- Wake(%s) -------------- \n", aTask->TaskName());
+  // }
+
+  switch (aTask->mTaskState) {
+    case ETaskRunning:
+      mActiveTasks.Lock();
+      aTask->Remove();
+      mActiveTasks.Unlock();
+      break;
+    case ETaskWaiting:
+      mWaitingTasks.Lock();
+      aTask->Remove();
+      mWaitingTasks.Unlock();
+      break;
+    default:
+      aTask->Remove();
+      break;
+  }
+
+  aTask->mTaskState = ETaskRunning;
+  AddActiveList(aTask);
+  // if (test) {
+  //   dlog("WAKE %s\n", aTask->TaskName());
+  //   mActiveTasks.Dump();
+  //   bochs;
+  // }
+
+  ENABLE;
 }
 
 void ExecBase::Schedule() {
@@ -229,31 +253,61 @@ void ExecBase::Kickstart() {
   enter_tasking(); // just enter next task
 }
 
-void ExecBase::AddWaitingList(BTask &aTask) {
+void ExecBase::AddActiveList(BTask *aTask) {
+  mActiveTasks.Lock();
+  // aTask->mCpu = ENull;
+  aTask->mTaskState = ETaskRunning;
+  mActiveTasks.Add(*aTask);
+  mActiveTasks.Unlock();
+}
+
+void ExecBase::AddWaitingList(BTask *aTask) {
   mWaitingTasks.Lock();
-  aTask.mCpu = ENull;
-  aTask.mTaskState = ETaskWaiting;
-  mWaitingTasks.Add(aTask);
+  // aTask->mCpu = ENull;
+  aTask->mTaskState = ETaskWaiting;
+  mWaitingTasks.Add(*aTask);
   mWaitingTasks.Unlock();
 }
 
+#if 0
 BTask *ExecBase::ActivateTask(BTask *aOldTask) {
-  mActiveTasks.Lock();
+  // DISABLE;
+
   if (aOldTask) {
-    aOldTask->mCpu = ENull;
-    mActiveTasks.Add(*aOldTask);
-    if (GetCPU()->mProcessorId == 3) {
-      dlog("added oldTask %s\n", aOldTask->TaskName());
+    switch (aOldTask->mTaskState) {
+      case ETaskWaiting:
+        AddWaitingList(aOldTask);
+        break;
+      case ETaskRunning:
+        AddActiveList(aOldTask);
+        break;
+      case ETaskBlocked:
+        dprint("*** ActivateTask blocked task %s\n", aOldTask->TaskName());
+        // Task is on some Semaphore's waiting list
+        break;
+      default:
+        dprint("*** ActivateTask invalid task state(%d) task(%x) %s\n", aOldTask->mTaskState, aOldTask, aOldTask->TaskName());
+        bochs
+          // shouldn't get here
+          break;
     }
+    // if (aOldTask->ProcessorId() == 3) {
+    //   dlog("-----> Activate %s\n", aOldTask->TaskName());
+    // }
   }
 
+  mActiveTasks.Lock();
   BTask *new_task = mActiveTasks.RemHead();
   mActiveTasks.Unlock();
+
   if (new_task) {
     new_task->mTaskState = ETaskRunning;
   }
+
+  // ENABLE;
   return new_task;
 }
+#endif
 
 /**
  * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
@@ -261,6 +315,38 @@ BTask *ExecBase::ActivateTask(BTask *aOldTask) {
 void ExecBase::RescheduleIRQ() {
   CPU *c = CurrentCpu();
   c->RescheduleIRQ();
+}
+
+BTask *ExecBase::RescheduleTask(BTask *aTask) {
+  if (aTask) {
+    switch (aTask->mTaskState) {
+      case ETaskWaiting:
+        // dlog("AddWaitingList(%s)  ", aTask->TaskName());
+        AddWaitingList(aTask);
+        break;
+      case ETaskRunning:
+        AddActiveList(aTask);
+        break;
+      default:
+        break;
+    }
+  }
+
+  mActiveTasks.Lock();
+  BTask *new_task = mActiveTasks.RemHead();
+  mActiveTasks.Unlock();
+
+  if (new_task) {
+    new_task->mTaskState = ETaskRunning;
+    // if (aTask != new_task && CompareStrings(new_task->TaskName(), "Init Task") == 0) {
+    //   dprint("%s\n", new_task->TaskName());
+    // }
+  }
+  // else {
+  //   dprint("NULL Task\n");
+  // }
+
+  return new_task;
 }
 
 /********************************************************************************
@@ -273,19 +359,22 @@ TBool ExecBase::AddSemaphore(Semaphore *aSemaphore) {
 }
 
 TBool ExecBase::RemoveSemaphore(Semaphore *aSemaphore) {
+  mSemaphoreList.Lock();
   if (aSemaphore->mNext && aSemaphore->mPrev) {
     aSemaphore->Remove();
+    mSemaphoreList.Unlock();
     return ETrue;
   }
   else {
+    mSemaphoreList.Unlock();
     return EFalse;
   }
 }
 
 Semaphore *ExecBase::FindSemaphore(const char *aName) {
-  DISABLE;
+  mSemaphoreList.Lock();
   Semaphore *s = (Semaphore *)mSemaphoreList.Find(aName);
-  ENABLE;
+  mSemaphoreList.Unlock();
   return s;
 }
 
@@ -294,25 +383,26 @@ Semaphore *ExecBase::FindSemaphore(const char *aName) {
  *******************************************************************************/
 
 void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
-  DISABLE;
+  mMessagePortList->Lock();
   mMessagePortList->Add(aMessagePort);
-  ENABLE;
+  mMessagePortList->Unlock();
 }
 
 TBool ExecBase::RemoveMessagePort(MessagePort &aMessagePort) {
+  mMessagePortList->Lock();
   if (mMessagePortList->Find(aMessagePort)) {
-    DISABLE;
     aMessagePort.Remove();
-    ENABLE;
+    mMessagePortList->Unlock();
     return ETrue;
   }
+  mMessagePortList->Unlock();
   return EFalse;
 }
 
 MessagePort *ExecBase::FindMessagePort(const char *aName) {
-  DISABLE;
+  mMessagePortList->Lock();
   MessagePort *mp = (MessagePort *)mMessagePortList->Find(aName);
-  ENABLE;
+  mMessagePortList->Unlock();
   return mp;
 }
 
@@ -325,15 +415,16 @@ MessagePort *ExecBase::FindMessagePort(const char *aName) {
  *******************************************************************************/
 
 void ExecBase::AddDevice(BDevice *aDevice) {
-  DISABLE;
+  mDeviceList.Lock();
   mDeviceList.Add(*aDevice);
-  ENABLE;
+  mDeviceList.Unlock();
+  ;
 }
 
 BDevice *ExecBase::FindDevice(const char *aName) {
-  DISABLE;
+  mDeviceList.Lock();
   BDevice *d = mDeviceList.FindDevice(aName);
-  ENABLE;
+  mDeviceList.Unlock();
   return d;
 }
 
@@ -342,9 +433,9 @@ BDevice *ExecBase::FindDevice(const char *aName) {
  *******************************************************************************/
 
 void ExecBase::AddFileSystem(BFileSystem *aFileSystem) {
-  DISABLE;
+  mFileSystemList.Lock();
   mFileSystemList.AddHead(*aFileSystem);
-  ENABLE;
+  mFileSystemList.Unlock();
 }
 
 /********************************************************************************
@@ -421,7 +512,7 @@ public:
 };
 
 void ExecBase::SetIntVector(EInterruptNumber aInterruptNumber, BInterrupt *aInterrupt) {
-  dlog("SetIntVector(%d, %x) %s\n", aInterruptNumber, aInterrupt, aInterrupt->mNodeName);
+  // dlog("SetIntVector(%d, %x) %s\n", aInterruptNumber, aInterrupt, aInterrupt->mNodeName);
   mInterrupts[aInterruptNumber].Add(*aInterrupt);
 }
 

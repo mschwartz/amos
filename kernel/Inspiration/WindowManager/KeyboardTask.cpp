@@ -8,16 +8,10 @@ KeyboardTask::KeyboardTask() : BTask("inspiration-keyboard.task", TASK_PRI_DEFAU
 }
 
 TInt64 KeyboardTask::Run() {
-  MessagePort *keyboardPort;
 
   dprint("\n");
   dlog("KeyboardTask Run\n");
-  Forbid();
-  while ((keyboardPort = gExecBase.FindMessagePort("keyboard.device")) == ENull) {
-    Sleep(1);
-  }
-  Permit();
-
+  MessagePort *keyboardPort = WaitForPort("keyboard.device");
   MessagePort *replyPort = CreatePort("replyPort");
   KeyboardMessage *message = new KeyboardMessage(replyPort, EKeyRead);
 

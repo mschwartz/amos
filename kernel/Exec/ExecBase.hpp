@@ -24,6 +24,19 @@ extern "C" void SetFlags(TUint64 aFlags);
 //#include <Devices/Screen.h>
 //#include <Exec/x86/cpu.h>
 
+class ActiveTaskList : public BTaskList {
+public:
+  void Lock() { mMutex.Acquire("Active Task List"); }
+  void Unlock() { mMutex.Release("Active Task List"); }
+};
+
+class WaitingTaskList : public BTaskList {
+public:
+  WaitingTaskList() : BTaskList("Waiting Tasks") {}
+  void Lock() { mMutex.Acquire("Waiting Task List"); }
+  void Unlock() { mMutex.Release("Waiting Task List"); }
+};
+
 class RtcDevice;
 // class TSS;
 // class GDT;
@@ -94,7 +107,7 @@ public:
   CPU *CurrentCpu();
   CPU *GetCpu(TInt aNum) { return mCpus[aNum]; }
   void InterruptOthers(TUint8 aVector);
-  TUint64 GetCurrentCpuNumber();
+  TUint64 ProcessorId();
 
 protected:
   TInt mNumCpus;
@@ -140,8 +153,8 @@ public:
 
   // void DumpTasks();
   // void DumpCurrentTask() { mCurrentTask->Dump(); }
-  void AddWaitingList(BTask &aTask);
-  void AddActiveTask(BTask &aTask);
+  void AddWaitingList(BTask *aTask);
+  void AddActiveList(BTask *aTask);
 
   BTask *GetCurrentTask() {
     CPU *cpu = CurrentCpu();
@@ -164,24 +177,39 @@ public:
   /**
     * Put task to sleep until any of its sigwait signals are set.
     */
-  void WaitSignal(BTask *aTask);
+  // void WaitSignal(BTask *aTask);
   //  void Wait(BTask *aTask);
   void Wake(BTask *aTask = ENull);
 
   void Kickstart();     // kickstart multitasking.  Only call once from main() !!!!
                         //  void Reschedule();
   void RescheduleIRQ(); // from IRQ context
+
+  /**
+   * RescheduleTask()
+   *
+   * CPU is done using this task, return to it the next task to run.
+   */
+  BTask *RescheduleTask(BTask *aTask);
+
+  /**
+   * Schedule()
+   *
+   * Force a reschdule 
+   */
   void Schedule();
 
+#if 0
   /**
    * Add oldTask to Exec's global Active Task List.
    * Returns the next task to activate.
    */
   BTask *ActivateTask(BTask *aOldTask);
+#endif
 
 protected:
-  BTaskList mActiveTasks;
-  BTaskList mWaitingTasks;
+  ActiveTaskList mActiveTasks;
+  WaitingTaskList mWaitingTasks;
 
   //
   // Semaphores

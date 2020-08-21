@@ -223,9 +223,11 @@ static TAny *allocate(TUint64 aSize, TUint64 aFlags) {
 }
 
 TAny *AllocMem(TInt64 aSize, TInt aFlags) {
+  // DISABLE;
   mutex.Acquire();
   TAny *mem = allocate(aSize, aFlags);
   mutex.Release();
+  // ENABLE;
   if (aFlags & MEMF_CLEAR) {
     SetMemory8(mem, 0, aSize);
   }
@@ -237,9 +239,11 @@ void FreeMem(TAny *aPtr) {
   // TODO combine this Chunk with any existing that are contiguous
   TUint8 *p = (TUint8 *)aPtr;
   Chunk *c = (Chunk *)(p - sizeof(Chunk));
+  // DISABLE;
   mutex.Acquire();
   sFreeChunks->AddHead(*c);
   mutex.Release();
+  // ENABLE;
 }
 
 #else

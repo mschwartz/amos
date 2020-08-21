@@ -61,14 +61,13 @@ TInt64 BTask::ProcessorId() {
   return c->mProcessorId;
 }
 
-
 CPU *BTask::CurrentCPU() {
   return (CPU *)mCpu;
 }
 
 void BTask::Suicide(TInt64 aCode) {
   // remove and delete me
-  gExecBase.RemoveTask(this, aCode, ETrue);
+  ((CPU *)mCpu)->RemoveTask(this, aCode);
 }
 
 void BTask::RunWrapper(BTask *aTask) {
@@ -148,7 +147,7 @@ void BTask::Dump() {
 }
 
 TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
-  mSignalMutex.Acquire();
+  // mSignalMutex.Acquire();
 
   TInt8 sig = -1;
   if (aSignalNum == -1) {
@@ -168,43 +167,32 @@ TInt8 BTask::AllocSignal(TInt64 aSignalNum) {
     }
   }
 
-  mSignalMutex.Release();
+  // mSignalMutex.Release();
   return sig == 64 ? -1 : sig;
 }
 
 TBool BTask::FreeSignal(TInt64 aSignalNum) {
-  mSignalMutex.Acquire();
+  // mSignalMutex.Acquire();
   TUint64 mask = 1 << aSignalNum;
   if (mSigAlloc & mask) {
     mSigAlloc &= ~mask;
     mSignalMutex.Release();
     return ETrue;
   }
-  mSignalMutex.Release();
+  // mSignalMutex.Release();
   return EFalse;
 }
 
 void BTask::Signal(TInt64 aSignalSet) {
-  TBool test = CompareStrings(this->TaskName(), "Init Task") == 0;
-  // if (test) {
-  //   dlog("Signal(%s)\n", this->TaskName());
-  //   bochs;
-  // }
-  mSignalMutex.Acquire();
+  // mSignalMutex.Acquire();
   mSigReceived |= aSignalSet;
   // assure this task is in active list and potentially perform a task switch
   if (mSigReceived & mSigWait) {
-    // if (test) {
-    //   bochs;
-    // }
-
-    //    if (CompareStrings(this->TaskName(), "Timer Task")) {
-    //    }
-    mSignalMutex.Release();
+    // mSignalMutex.Release();
     gExecBase.Wake(this);
   }
   else {
-    mSignalMutex.Release();
+    // mSignalMutex.Release();
   }
 }
 
@@ -219,7 +207,6 @@ TUint64 BTask::Wait(TUint64 aSignalSet) {
     // effectively a YIELD
   }
 
-  // CPU *c = (CPU *)mCpu;
   CPU *c = CurrentCPU();
 
   // dlog("----- %s Wait(%x)\n", TaskName(), aSignalSet);
@@ -306,7 +293,7 @@ void BTask::Sleep(TUint64 aSeconds) {
 }
 
 void BTask::MilliSleep(TUint64 aMilliSeconds) {
-  MessagePort *rtc = gExecBase.FindMessagePort("rtc.device");
+  MessagePort *rtc = WaitForPort("rtc.device");
   if (!rtc) {
     dlog("no rtc port\n");
     return;

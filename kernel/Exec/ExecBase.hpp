@@ -150,7 +150,7 @@ public:
   // remove task from whatever list it is on, safely.  From CPU's active list, from waiting list, from active list, etc.
   void SafeRemoveTask(BTask *aTask);
   // suicide/exit/kill task
-  TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete = ETrue);
+  // TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete = ETrue);
 
 // void DumpTasks();
 // void DumpCurrentTask() { mCurrentTask->Dump(); }

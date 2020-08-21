@@ -1,4 +1,4 @@
-#include <stdarg.h>
+#include <cstdarg>
 #include <Exec/x86/bochs.hpp>
 //#include <Exec/x86/kprint.h>
 #include <posix/itoa.h>
@@ -47,11 +47,21 @@ void dputc(char c) {
 static Mutex dputs_lock;
 
 void dputs(const char *s) {
+  DISABLE;
   dputs_lock.Acquire();
   while (*s) {
     dputc(*s++);
   }
   dputs_lock.Release();
+  ENABLE;
+}
+
+void dputs_safe(const char *s) {
+  DISABLE;
+  while (*s) {
+    dputc(*s++);
+  }
+  ENABLE;
 }
 
 /*
@@ -89,7 +99,9 @@ void dlog(const char *fmt, ...) {
     cpuNum, gExecBase.SystemTicks(), gExecBase.CurrentTaskName(),
     reset,
     buf2);
+  // dputs_lock.Acquire();
   dputs(buf);
+  // dputs_lock.Release();
   va_end(args);
 }
 

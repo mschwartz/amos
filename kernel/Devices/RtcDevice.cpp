@@ -91,6 +91,7 @@ public:
     dlog("RTC Wait Signal\n");
     for (;;) {
       TUint64 sigs = Wait(port_mask | tick_mask);
+      DISABLE;
       if (sigs & port_mask) {
         while (RtcMessage *m = (RtcMessage *)mMessagePort->GetMessage()) {
           switch (m->mCommand) {
@@ -99,8 +100,8 @@ public:
               m->Reply();
               break;
             case ERtcSleep:
-              m->mPri = mRtcDevice->GetTicks() + m->mArg1;
-              // dlog("Queue Sleep(%s) ticks(%d) when(%d)\n", m->mReplyPort->OwnerName(), mRtcDevice->GetTicks(), m->mPri);
+              m->mPri = gExecBase.SystemTicks() + m->mArg1;
+              dlog("Queue Sleep(%s) ticks(%d) when(%d)\n", m->mReplyPort->OwnerName(), gExecBase.SystemTicks(), m->mPri);
               rtcQueue.Add(*m);
               break;
             default:
@@ -111,8 +112,9 @@ public:
       }
 
       if (sigs & tick_mask) {
-	rtcQueue.Lock();
-        TUint64 current = mRtcDevice->Tick();
+	// dlog("tick\n");
+	// rtcQueue.Lock();
+        TUint64 current = gExecBase.SystemTicks();
         for (;;) {
           RtcMessage *m = (RtcMessage *)rtcQueue.First();
           if (rtcQueue.End(m)) {
@@ -123,11 +125,12 @@ public:
             break;
           }
           m->Remove();
-	  // dlog("reply!\n");
+	  dlog("reply!\n");
           m->Reply();
         }
-	rtcQueue.Unlock();
+	// rtcQueue.Unlock();
       }
+      ENABLE;
     }
   }
 

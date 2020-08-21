@@ -4,10 +4,12 @@
 #include <Exec/ExecBase.hpp>
 #include <Types/Mutex.hpp>
 
-#include <atomic>
+// #include <atomic>
 
 Mutex::Mutex() : BBase() {
   mName = DuplicateString("");
+  mTask = ENull;
+  mFlags = 0;
   // locked = ATOMIC_FLAG_INIT;
 }
 
@@ -15,17 +17,51 @@ Mutex::~Mutex() {
 }
 
 void Mutex::Acquire(const char *aMessage) {
+  return;
   DISABLE;
+  mFlags = GetFlags();
+  BTask *task = gExecBase.GetCurrentTask();
+  // if (task == mTask && mLock) {
+  //   dlog("Trying to lock again %s\n", task->TaskName());
+  //   bochs;
+  // }
+#ifdef DEBUGME
+  char buf[512];
+  if (task) {
+    sprintf(buf, "Acquire mutex(%s) by task (%s)\n", mName, task->TaskName());
+  }
+  else {
+    sprintf(buf, "Acquire mutex(%s)\n", mName);
+    dputs_safe(buf);
+  }
+#endif
+  // cli();
   while (__sync_lock_test_and_set(&mLock, 1))
     ;
+  mTask = task;
   ENABLE;
 }
 
 void Mutex::Release(const char *aMessage) {
+  return;
   DISABLE;
+#ifdef DEBUGME
+  char buf[512];
+  BTask *task = gExecBase.GetCurrentTask();
+  if (task) {
+    sprintf(buf, "Release mutex(%s) by task (%s)\n", mName, task->TaskName());
+  }
+  else {
+    sprintf(buf, "Release  mutex(%s)\n", mName);
+    dputs_safe(buf);
+  }
+#endif
+  mTask = ENull;
   __sync_lock_release(&mLock);
   ENABLE;
+  // SetFlags(mFlags);
 }
+
 #if 0
 void Mutex::Acquire(const char *aMessage) {
   DISABLE;

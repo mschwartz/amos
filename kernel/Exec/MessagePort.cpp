@@ -43,16 +43,20 @@ MessagePort::~MessagePort() {
 }
 
 BMessage *MessagePort::GetMessage() {
-  mList->Lock();
+  // DISABLE;
+  // mList->Lock();
   BMessage *m = (BMessage *)mList->RemHead();
-  mList->Unlock();
+  // mList->Unlock();
+  // ENABLE;
   return m;
 }
 
 void MessagePort::ReceiveMessage(BMessage *aMessage) {
-  mList->Lock();
+  // DISABLE;
+  // mList->Lock();
   mList->AddTail(*aMessage);
-  mList->Unlock();
+  // mList->Unlock();
+  // ENABLE;
 
   // dlog("recv Signal(%s)\n", mOwner->TaskName());
   mOwner->Signal(1 << mSignalBit);

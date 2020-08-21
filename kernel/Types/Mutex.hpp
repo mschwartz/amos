@@ -10,6 +10,8 @@
 #include <Exec/x86/cpu_utils.hpp>
 // #include <atomic>
 
+class BTask;
+
 class Mutex : public BBase {
 public:
   Mutex();
@@ -23,7 +25,9 @@ public:
 
 protected:
   volatile int mLock ALIGN16;
+  TUint64 mFlags; // saved flags
   char *mName;
+  BTask *mTask;
 
 public:
   void Acquire(const char *aMessage = ENull);

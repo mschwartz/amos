@@ -221,6 +221,7 @@ inline void dbreak() {
 extern void dputc(char c);
 extern void dlog(const char *fmt, ...);
 extern void dputs(const char *s);
+extern void dputs_safe(const char *s);
 extern void dassert(TBool aValue, const char *fmt, ...);
 extern void dprintf(const char *fmt, ...);
 extern void dprint(const char *fmt, ...);

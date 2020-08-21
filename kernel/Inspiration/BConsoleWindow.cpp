@@ -120,7 +120,9 @@ void BConsoleWindow::Resize(TInt32 aW, TInt32 aH) {
 }
 
 BConsoleWindow::~BConsoleWindow() {
-  gExecBase.RemoveTask(mConsoleTask, 0);
+  if (mConsoleTask) {
+    mConsoleTask->Suicide(0);
+  }
   mConsoleTask = ENull;
 }
 

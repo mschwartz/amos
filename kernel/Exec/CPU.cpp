@@ -252,6 +252,8 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
     dlog("CPU %d RemoveTask(%s) code(%d)\n", mProcessorId, aTask->TaskName(), aExitCode);
   }
 
+  delete aTask;
+  
   if (isCurrentTask) {
     mCurrentTask = mActiveTasks.First();
     SetCurrentTask(&mCurrentTask->mRegisters);
@@ -259,6 +261,8 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   }
 
   ENABLE;
+  // dlog("RemoveTaskx!\n");
+  // bochs;
   return aExitCode;
 }
 
@@ -282,11 +286,11 @@ void CPU::WaitSignal(BTask *aTask) {
 
   // dlog("WaitSignal(%s) %x\n", aTask->TaskName(), this);
   // bochs;
-  LockActiveList("CPU add task");
+  // LockActiveList("CPU add task");
   // dlog("locked\n");
   aTask->Remove(); // remove from this CPU's active list
   // dlog("removed\n");
-  UnlockActiveList("CPU add task");
+  // UnlockActiveList("CPU add task");
   // dlog("unlocked\n");
 
   BTask *next_task = gExecBase.RescheduleTask(aTask);
@@ -294,9 +298,9 @@ void CPU::WaitSignal(BTask *aTask) {
   if (next_task != ENull) {
     next_task->mCpu = this;
     // dlog("%d WaitSignal add task(%s) %d\n", mProcessorId, next_task->TaskName(), mProcessorId);
-    LockActiveList();
+    // LockActiveList();
     mActiveTasks.Add(*next_task);
-    UnlockActiveList();
+    // UnlockActiveList();
   }
 
   gExecBase.Schedule();

@@ -76,10 +76,12 @@ extern "C" TUint64 isr60; // unexpected
 extern "C" TUint64 isr128; // syscall (0x80, or 0x60 + 32)
 extern "C" TUint64 isr130; // interrupt scheduler
 
+extern "C" TUint64 isrGP; // interrupt scheduler
+
 static TIsrHandler interrupt_handlers[INTERRUPTS];
 static TBool interrupt_enabled[256];
 
-static Mutex mutex;
+// static Mutex mutex;
 
 /**
  * kernel_isr
@@ -89,10 +91,8 @@ static Mutex mutex;
 extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
   cli();
 
-  // mutex.Acquire();
   if (!interrupt_enabled[aIsrNumber] && aIsrNumber != 48) {
     gExecBase.AckIRQ(aIsrNumber);
-    // mutex.Release();
     return ETrue;
   }
 
@@ -108,11 +108,9 @@ extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
     const char *desc = IDT::InterruptDescription(current_task->isr_num);
     dlog("no handler: %d(%x) %s\n", aIsrNumber, current_task->isr_num, desc);
     gExecBase.AckIRQ(aIsrNumber);
-    // mutex.Release();
     return false;
   }
 
-  // mutex.Release();
   bool ret = info->mHandler(info->mInterruptNumber, info->mData);
   gExecBase.AckIRQ(aIsrNumber);
   return ret;
@@ -120,15 +118,11 @@ extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
 
 void IDT::EnableInterrupt(TUint16 aInterruptNumber) {
   dlog("IDT enable interrupt(%d)\n", aInterruptNumber);
-  // mutex.Acquire();
   interrupt_enabled[aInterruptNumber] = ETrue;
-  // mutex.Release();
 }
 void IDT::DisableInterrupt(TUint16 aInterruptNumber) {
   dlog("IDT disable interrupt(%d)\n", aInterruptNumber);
-  // mutex.Acquire();
   interrupt_enabled[aInterruptNumber] = EFalse;
-  // mutex.Release();
 }
 
 #pragma pack(1)
@@ -175,7 +169,6 @@ static void set_entry(TInt aIndex, TUint64 aVec, TInt aIst = 0) {
 
 IDT::IDT() {
   DISABLE;
-  // mutex.Acquire();
   // initialize C ISRs
   for (TInt i = 0; i < INTERRUPTS; i++) {
     interrupt_handlers[i].Set(i, nullptr, nullptr, "Not installed");
@@ -244,18 +237,16 @@ IDT::IDT() {
   }
   set_entry(128, isr128);
   set_entry(130, isr130);
+  set_entry(13, isrGP);
 
   mAlive = ETrue;
-  // mutex.Release();
   ENABLE;
 }
 
 void IDT::Install() {
-  // mutex.Acquire();
   idt_ptr.limit = sizeof(TIdtEntry) * IDT_SIZE - 1;
   idt_ptr.base = &idt_entries[0];
   load_idtr(&idt_ptr);
-  // mutex.Release();
 }
 
 IDT::~IDT() {
@@ -263,9 +254,7 @@ IDT::~IDT() {
 }
 
 void IDT::InstallHandler(uint8_t index, TInterruptHandler *handler, void *aData, const char *description) {
-  // mutex.Acquire();
   interrupt_handlers[index].Set(index, handler, aData, description);
-  // mutex.Release();
 }
 
 static const char *int_desc[] = {

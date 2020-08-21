@@ -37,11 +37,11 @@ TInt64 InitTask::Run() {
 
   // mCpu->mIdleTask = new IdleTask();
   // gExecBase.AddTask(new IdleTask());
-  dlog("  STARTING APs\n");
-  for (TInt i = 1; i < gExecBase.NumCpus(); i++) {
-    CPU *cpu = gExecBase.GetCpu(i);
-    cpu->StartAP(this); // initialize tasking for AP
-  }
+  // dlog("  STARTING APs\n");
+  // for (TInt i = 1; i < gExecBase.NumCpus(); i++) {
+  //   CPU *cpu = gExecBase.GetCpu(i);
+  //   cpu->StartAP(this); // initialize tasking for AP
+  // }
 
   // Sleep(3);
 

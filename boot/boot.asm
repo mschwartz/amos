@@ -1067,8 +1067,18 @@ call_main:
 	shl rax, 4
 	mov [rdi + SYSINFO.ebda], rax
 
-	; start other CPUs
+	push rax
+	push rdi
 
+	mov rax, 0xffffff
+	mov rcx, 2560 * 1600
+	xor rdi, rdi
+        mov edi, [display_mode + VideoMode.fb]
+	rep stosd
+
+	pop rdi
+	pop rax
+	
 	; call kernel with SYSINFO as argument
 	xor ah, ah
 	mov al, [bochs_present]

@@ -257,34 +257,44 @@ void CPU::DumpTasks() {
 }
 
 void CPU::RescheduleIRQ() {
-  BTask *t = mCurrentTask;
-
-  if (mCurrentTask) {
-    // if task is blocked, it is not on the system waiting list
-    // it is potentially on a Sempahore's waiting list or some other waiting list
-    if (mCurrentTask->mTaskState != ETaskBlocked) {
-      // if Task has called Forbid(), we don't want to switch to another task
-      if (mCurrentTask->mForbidNestCount == 0) {
-        mCurrentTask->Remove();
-        if (mCurrentTask->mTaskState == ETaskWaiting) {
-          gExecBase.AddWaitingList(*t);
-        }
-        else {
-          mActiveTasks.Add(*mCurrentTask);
-        }
-      }
-      else {
-        dlog("FORBID %d\n", mCurrentTask->mForbidNestCount);
-      }
-    }
+  DISABLE;
+  if (mCurrentTask != mIdleTask) {
+    mCurrentTask->Remove();
   }
+
+  BTask *t = gExecBase.NextTask(mCurrentTask == mIdleTask ? ENull : mCurrentTask);
+  if (t) {
+    mActiveTasks.Add(*t);
+  }
+
+  // if (mCurrentTask) {
+  //   // if task is blocked, it is not on the system waiting list
+  //   // it is potentially on a Sempahore's waiting list or some other waiting list
+  //   if (mCurrentTask->mTaskState != ETaskBlocked) {
+  //     // if Task has called Forbid(), we don't want to switch to another task
+  //     if (mCurrentTask->mForbidNestCount == 0) {
+  //       mCurrentTask->Remove();
+  //       if (mCurrentTask->mTaskState == ETaskWaiting) {
+  //         gExecBase.AddWaitingList(*t);
+  //       }
+  //       else {
+  //         mActiveTasks.Add(*mCurrentTask);
+  //       }
+  //     }
+  //     else {
+  //       dlog("FORBID %d\n", mCurrentTask->mForbidNestCount);
+  //     }
+  //   }
+  // }
 
   mCurrentTask = mActiveTasks.First();
   SetCurrentTask(&mCurrentTask->mRegisters);
-  if (t != mCurrentTask && gExecBase.mDebugSwitch) {
-    dprint("  CPU %d Reschedule %s\n", mProcessorId, mCurrentTask->TaskName());
-    dprint("Previous task\n");
-    dprint("  Previous Task %s\n", t->TaskName());
-    dprint("\n\n\n");
-  }
+  ENABLE;
+
+  // if (t != mCurrentTask && gExecBase.mDebugSwitch) {
+  //   dprint("  CPU %d Reschedule %s\n", mProcessorId, mCurrentTask->TaskName());
+  //   dprint("Previous task\n");
+  //   dprint("  Previous Task %s\n", t->TaskName());
+  //   dprint("\n\n\n");
+  // }
 }

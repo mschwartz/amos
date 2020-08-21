@@ -12,7 +12,7 @@ DisplayTask::DisplayTask(Display &aDisplay)
 }
 static inline void start_vbl() {
   // dlog("enter start_vbl\n");
-  while ((inb(0x3da) & (1<<3)) == 0) {
+  while ((inb(0x3da) & (1 << 3)) == 0) {
     // dlog("loop start_vbl\n");
   }
   // dlog("exit start_vbl\n");
@@ -20,7 +20,7 @@ static inline void start_vbl() {
 
 static inline void end_vbl() {
   // dlog("enter end_vbl\n");
-  while ((inb(0x3da) & (1<<3)) != 0) {
+  while ((inb(0x3da) & (1 << 3)) != 0) {
     // dlog("loop end_vbl\n");
   }
   // dlog("exit end_vbl\n");
@@ -58,16 +58,19 @@ TInt64 DisplayTask::Run() {
   TUint64 elapsed = 0, start = 0, end = 0, now = 0;
 
   // Wait for vbl in a loop and update screen via DirtyRects
+  Sleep(1);
   for (;;) {
     // We need to account for elapsed time for the drawing.
     TUint64 wait_time = vbl_time - elapsed;
     // dlog("wait_time(%d) start(%d) end(%d) vbl_time(%d)\n", wait_time, start, end, vbl_time);
     if (wait_time) {
-      MilliSleep(vbl_time - elapsed);
+      // dlog("sleep(%d)\n", wait_time);
+      MilliSleep(wait_time);
     }
     else {
       // dlog("overrun\n");
     }
+    // dlog("start_vbl()\n");
     start_vbl(); // wait for in vblank
 
     // dlog("start vbl (%d,%d)\n", mDisplay.mMouseX, mDisplay.mMouseY);

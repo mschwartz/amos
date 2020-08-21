@@ -129,12 +129,18 @@ void ExecBase::Enable() {
   }
 }
 
+static Mutex tasks_mutex;
+
 void ExecBase::AddTask(BTask *aTask) {
   DISABLE;
-  // TODO: this should figure out which CPU to assign task to
-  CPU *c = CurrentCpu();
-  c->AddTask(aTask);
+  tasks_mutex.Acquire();
+  mRunningTasks.Add(*aTask);
+  tasks_mutex.Release();
   ENABLE;
+  // TODO: this should figure out which CPU to assign task to
+  // CPU *c = CurrentCpu();
+  // c->AddTask(aTask);
+  // ENABLE;
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
@@ -157,19 +163,26 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 
 void ExecBase::WaitSignal(BTask *aTask) {
   DISABLE;
+  //
   aTask->Remove();
   // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
   // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
   if (aTask->mSigWait & aTask->mSigReceived) {
     // TODO: assign task to a CPU
-    CPU *cpu = CurrentCpu();
-    cpu->AddActiveTask(*aTask);
+    // CPU *cpu = CurrentCpu();
+    // cpu->AddActiveTask(*aTask);
     aTask->mTaskState = ETaskRunning;
+    // dlog("Add running\n");
+    tasks_mutex.Acquire();
+    mRunningTasks.Add(*aTask);
   }
   else {
-    mWaitingTasks.Add(*aTask);
     aTask->mTaskState = ETaskWaiting;
+    // dlog("Add waiting\n");
+    tasks_mutex.Acquire();
+    mWaitingTasks.Add(*aTask);
   }
+  tasks_mutex.Release();
   Schedule();
   ENABLE;
 }
@@ -214,13 +227,14 @@ void ExecBase::Wake(BTask *aTask) {
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
   DISABLE;
-  if (aTask == ENull) {
-    aTask = mWaitingTasks.First();
-    dlog("Wake %s\n", aTask->TaskName());
+  tasks_mutex.Acquire();
+  if (aTask) {
+    aTask->Remove();
+    aTask->mTaskState = ETaskRunning;
+    mRunningTasks.Add(*aTask);
   }
-  aTask->Remove();
-  CurrentCpu()->AddActiveTask(*aTask);
-  aTask->mTaskState = ETaskRunning;
+  // CurrentCpu()->AddActiveTask(*aTask);
+  tasks_mutex.Release();
   ENABLE;
   //  DumpTasks();
 }
@@ -233,16 +247,32 @@ void ExecBase::Kickstart() {
   enter_tasking(); // just enter next task
 }
 
-void ExecBase::AddWaitingList(BTask &aTask) {
-  mWaitingTasks.Add(aTask);
-}
-
 /**
  * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
  */
 void ExecBase::RescheduleIRQ() {
   CPU *c = CurrentCpu();
   c->RescheduleIRQ();
+}
+
+BTask *ExecBase::NextTask(BTask *aTask) {
+  DISABLE;
+  tasks_mutex.Acquire();
+  if (aTask != ENull) {
+    switch (aTask->mTaskState) {
+      case ETaskRunning:
+        mRunningTasks.Add(*aTask);
+        break;
+      case ETaskWaiting:
+        mWaitingTasks.Add(*aTask);
+        break;
+    }
+  }
+
+  BTask *ret = mRunningTasks.RemHead();
+  tasks_mutex.Release();
+  ENABLE;
+  return ret;
 }
 
 /********************************************************************************

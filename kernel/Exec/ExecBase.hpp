@@ -17,21 +17,20 @@
 //#include <Exec/x86/cpu.h>
 
 class ActiveTaskList : public BTaskList {
-  public:
-  ActiveTaskList() : BTaskList("Active Tasks"){
+public:
+  ActiveTaskList() : BTaskList("Active Tasks") {
     mMutex.SetName("ExecBase ActiveTaskList");
   }
 
-  public:
-    void Lock() { mMutex.Acquire("Active Task List"); }
-    void Unlock() { mMutex.Release("Active Task List"); }
+public:
+  void Lock() { mMutex.Acquire("Active Task List"); }
+  void Unlock() { mMutex.Release("Active Task List"); }
 };
 
 class WaitingTaskList : public BTaskList {
 public:
   WaitingTaskList() : BTaskList("Waiting Tasks") {
     mMutex.SetName("ExecBase WaitingTaskList");
-
   }
   void Lock() { mMutex.Acquire("Waiting Task List"); }
   void Unlock() { mMutex.Release("Waiting Task List"); }
@@ -148,13 +147,17 @@ protected:
 public:
   // add task to active task list
   void AddTask(BTask *aTask);
+  // remove task from whatever list it is on, safely.  From CPU's active list, from waiting list, from active list, etc.
+  void SafeRemoveTask(BTask *aTask);
   // suicide/exit/kill task
   TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete = ETrue);
 
-  // void DumpTasks();
-  // void DumpCurrentTask() { mCurrentTask->Dump(); }
+// void DumpTasks();
+// void DumpCurrentTask() { mCurrentTask->Dump(); }
+#if 0
   void AddWaitingList(BTask *aTask);
   void AddActiveList(BTask *aTask);
+#endif
 
   BTask *GetCurrentTask() {
     CPU *cpu = CurrentCpu();

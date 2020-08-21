@@ -115,9 +115,13 @@ void ExecBase::Enable() {
   }
 }
 
+static Mutex tasks_mutex;
+
 void ExecBase::AddTask(BTask *aTask) {
   dlog(">> AddTask(%s)\n", aTask->TaskName());
-  AddActiveList(aTask);
+  tasks_mutex.Acquire();
+  mActiveTasks.Add(*aTask);
+  tasks_mutex.Release();
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
@@ -189,26 +193,21 @@ void ExecBase::ReleaseSemaphore(Semaphore *aSemaphore) {
   */
 void ExecBase::Wake(BTask *aTask) {
   DISABLE;
-  // dlog("-------------- Wake(%s) -------------- \n", aTask->TaskName());
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
+
+  tasks_mutex.Acquire();
   if (aTask == ENull) {
-    mWaitingTasks.Lock();
     if (!mWaitingTasks.Empty()) {
       aTask->Remove();
     }
-    mWaitingTasks.Unlock();
   }
 
   if (aTask == ENull) {
+    tasks_mutex.Release();
     ENABLE;
     return;
   }
-
-  // TBool test = CompareStrings(aTask->TaskName(), "Init Task") == 0;
-  // if (test) {
-  //   dlog("-------------- Wake(%s) -------------- \n", aTask->TaskName());
-  // }
 
   switch (aTask->mTaskState) {
     case ETaskRunning:
@@ -227,7 +226,9 @@ void ExecBase::Wake(BTask *aTask) {
   }
 
   aTask->mTaskState = ETaskRunning;
-  AddActiveList(aTask);
+
+  mActiveTasks.Add(*aTask);
+  tasks_mutex.Release();
   // if (test) {
   //   dlog("WAKE %s\n", aTask->TaskName());
   //   mActiveTasks.Dump();
@@ -247,6 +248,7 @@ void ExecBase::Kickstart() {
   enter_tasking(); // just enter next task
 }
 
+#if 0
 void ExecBase::AddActiveList(BTask *aTask) {
   mActiveTasks.Lock();
   aTask->mCpu = ENull;
@@ -262,6 +264,7 @@ void ExecBase::AddWaitingList(BTask *aTask) {
   mWaitingTasks.Add(*aTask);
   mWaitingTasks.Unlock();
 }
+#endif
 
 #if 0
 BTask *ExecBase::ActivateTask(BTask *aOldTask) {
@@ -312,33 +315,29 @@ void ExecBase::RescheduleIRQ() {
 }
 
 BTask *ExecBase::RescheduleTask(BTask *aTask) {
+  tasks_mutex.Acquire();
+
   if (aTask) {
+    aTask->mCpu = ENull;
     switch (aTask->mTaskState) {
       case ETaskWaiting:
-        // dlog("AddWaitingList(%s)  ", aTask->TaskName());
-        AddWaitingList(aTask);
+        mWaitingTasks.Add(*aTask);
         break;
       case ETaskRunning:
-        AddActiveList(aTask);
+        mActiveTasks.Add(*aTask);
         break;
       default:
         break;
     }
   }
 
-  mActiveTasks.Lock();
   BTask *new_task = mActiveTasks.RemHead();
-  mActiveTasks.Unlock();
+
+  tasks_mutex.Release();
 
   if (new_task) {
     new_task->mTaskState = ETaskRunning;
-    // if (aTask != new_task && CompareStrings(new_task->TaskName(), "Init Task") == 0) {
-    //   dprint("%s\n", new_task->TaskName());
-    // }
   }
-  // else {
-  //   dprint("NULL Task\n");
-  // }
 
   return new_task;
 }
@@ -348,7 +347,10 @@ BTask *ExecBase::RescheduleTask(BTask *aTask) {
  *******************************************************************************/
 
 TBool ExecBase::AddSemaphore(Semaphore *aSemaphore) {
+  mSemaphoreList.Lock();
   mSemaphoreList.Add(*aSemaphore);
+  mSemaphoreList.Unlock();
+
   return ETrue;
 }
 

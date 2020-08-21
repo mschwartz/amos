@@ -25,14 +25,14 @@
 #ifdef KERNEL
 
 static TAny *ExtendChipRam(TUint64 aIncrement) {
-  static Mutex chip_mutex;
+  // static Mutex chip_mutex;
   extern void *chip_memory;
   extern void *chip_memory_end;
   static TUint8 *sChipBreak = ENull;
   static void *end = &chip_memory_end;
 
   DLOG("ExtendChipRam(%d)\n", aIncrement);
-  chip_mutex.Acquire();
+  // chip_mutex.Acquire();
 
   if (sChipBreak == ENull) {
     sChipBreak = (TUint8 *)&chip_memory;
@@ -40,7 +40,7 @@ static TAny *ExtendChipRam(TUint64 aIncrement) {
   }
 
   if (aIncrement == 0) {
-    chip_mutex.Release();
+    // chip_mutex.Release();
     if (sChipBreak > end) {
       DLOG("AllocMem(%d) OUT OF CHIP MEMORY\n", aIncrement);
       bochs;
@@ -50,7 +50,7 @@ static TAny *ExtendChipRam(TUint64 aIncrement) {
   }
 
   if (sChipBreak > end) {
-    chip_mutex.Release();
+    // chip_mutex.Release();
     DLOG("OUT OF CHIP MEMORY\n", sChipBreak, end);
     bochs;
     return ENull;
@@ -59,35 +59,35 @@ static TAny *ExtendChipRam(TUint64 aIncrement) {
   void *ret = sChipBreak;
   sChipBreak = &sChipBreak[aIncrement];
   if (sChipBreak > end) {
-    chip_mutex.Release();
+    // chip_mutex.Release();
     DLOG("OUT OF CHIP MEMORY\n", sChipBreak, end);
     bochs;
     return ENull;
   }
 
-  chip_mutex.Release();
+  // chip_mutex.Release();
   return ret;
 }
 
 static TAny *ExtendDataSegment(TUint64 aIncrement) {
-  static Mutex data_mutex;
+  // static Mutex data_mutex;
   extern void *kernel_end;
   static TUint8 *sProgramBreak = ENull;
 
-  data_mutex.Acquire();
+  // data_mutex.Acquire();
   if (sProgramBreak == ENull) {
     sProgramBreak = (TUint8 *)&kernel_end;
   }
 
   if (aIncrement == 0) {
-    data_mutex.Release();
+    // data_mutex.Release();
     return sProgramBreak;
   }
 
   void *ret = sProgramBreak;
   sProgramBreak = &sProgramBreak[aIncrement];
 
-  data_mutex.Release();
+  // data_mutex.Release();
   return ret;
 }
 
@@ -178,12 +178,11 @@ void InitAllocMem() {
 // Mutex to lock out other CPUs and tasks while operating on memory structures
 static Mutex mutex;
 
-TAny *AllocMem(TInt64 aSize, TInt aFlags) {
+static TAny *allocate(TUint64 aSize, TUint64 aFlags) {
   Chunk *ret = ENull;
   DLOG("AllocMem aSize(%d) aFlags(%x)\n", aSize, aFlags);
 
   // search for free chunk of desired size
-  mutex.Acquire("AllocMem");
   for (Chunk *c = sFreeChunks->First(); !sFreeChunks->End(c); c = c->mNext) {
     DLOG("Chunk(%x)\n", c);
     if (aFlags & MEMF_CHIP) {
@@ -202,7 +201,6 @@ TAny *AllocMem(TInt64 aSize, TInt aFlags) {
       break;
     }
   }
-  mutex.Release("AllocMem");
 
   if (ret == ENull) {
     // no Chunk found
@@ -221,10 +219,16 @@ TAny *AllocMem(TInt64 aSize, TInt aFlags) {
 
   TUint8 *p = (TUint8 *)ret;
   TUint8 *mem = &p[sizeof(Chunk)];
+  return mem;
+}
+
+TAny *AllocMem(TInt64 aSize, TInt aFlags) {
+  mutex.Acquire();
+  TAny *mem = allocate(aSize, aFlags);
+  mutex.Release();
   if (aFlags & MEMF_CLEAR) {
     SetMemory8(mem, 0, aSize);
   }
-
   DLOG("AllocMem returns(%x)\n", mem);
   return mem;
 }
@@ -303,7 +307,8 @@ void CopyString(char *aDestination, const char *aSource) {
 }
 
 void ConcatentateString(char *aDestination, const char *aSource) {
-  while (*aDestination++ != '\0');
+  while (*aDestination++ != '\0')
+    ;
   CopyString(aDestination, aSource);
 }
 

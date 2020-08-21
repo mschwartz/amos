@@ -12,9 +12,21 @@ Mutex::Mutex() : BBase() {
 }
 
 Mutex::~Mutex() {
-  //
 }
 
+void Mutex::Acquire(const char *aMessage) {
+  DISABLE;
+  while (__sync_lock_test_and_set(&mLock, 1))
+    ;
+  ENABLE;
+}
+
+void Mutex::Release(const char *aMessage) {
+  DISABLE;
+  __sync_lock_release(&mLock);
+  ENABLE;
+}
+#if 0
 void Mutex::Acquire(const char *aMessage) {
   DISABLE;
 #ifdef DEBUGME
@@ -58,6 +70,7 @@ void Mutex::Release(const char *aMessage) {
   }
 #endif
 }
+#endif
 #if 0
 #define USE_SPINLOCK
 #undef USE_SPINLOCK

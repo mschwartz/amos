@@ -75,7 +75,6 @@ TInt64 TimerTask::Run() {
   ENABLE;
 
   dlog("TimerTask Wait Loop %x\n", mCpu);
-  bochs;
   for (;;) {
     TUint64 sigs = Wait(port_mask | tick_mask);
     if (sigs & port_mask) {

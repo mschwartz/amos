@@ -47,11 +47,11 @@ void dputc(char c) {
 static Mutex dputs_lock;
 
 void dputs(const char *s) {
-  // dputs_lock.Acquire();
+  dputs_lock.Acquire();
   while (*s) {
     dputc(*s++);
   }
-  // dputs_lock.Release();
+  dputs_lock.Release();
 }
 
 /*
@@ -85,10 +85,10 @@ void dlog(const char *fmt, ...) {
   TInt64 cpuNum = gExecBase.ProcessorId();
   char buf[512], buf2[512];
   vsprintf(buf2, fmt, args);
-  sprintf(buf, "%s%2d %020d %-16s %s%s", cpu_colors[cpuNum],
+  sprintf(buf, "%s%2d %020d %-16s %s %s", cpu_colors[cpuNum],
     cpuNum, gExecBase.SystemTicks(), gExecBase.CurrentTaskName(),
-    buf2,
-    reset);
+    reset,
+    buf2);
   dputs(buf);
   va_end(args);
 }

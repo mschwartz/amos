@@ -8,7 +8,7 @@
 // #include <Exec/ExecBase.hpp>
 #include <Exec/BBase.hpp>
 #include <Exec/x86/cpu_utils.hpp>
-#include <atomic>
+// #include <atomic>
 
 class Mutex : public BBase {
 public:
@@ -22,7 +22,7 @@ public:
   }
 
 protected:
-  std::atomic_flag locked = ATOMIC_FLAG_INIT;
+  volatile int mLock ALIGN16;
   char *mName;
 
 public:

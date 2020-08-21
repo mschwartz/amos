@@ -541,14 +541,12 @@ extern "C" TUint64 GetRFLAGS();
 TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
   cli();
   BInterruptList *list = &gExecBase.mInterrupts[aInterruptNumber];
-  list->Lock();
   for (BInterrupt *i = (BInterrupt *)list->First(); !list->End(i); i = (BInterrupt *)i->mNext) {
     if (i->Run(i->mData)) {
       list->Unlock();
       return ETrue;
     }
   }
-  list->Unlock();
   // TODO: no handler!
   dlog("No handler!\n");
   return EFalse;

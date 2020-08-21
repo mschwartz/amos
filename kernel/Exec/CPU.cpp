@@ -2,6 +2,7 @@
 #include <Exec/ExecBase.hpp>
 #include <Exec/IdleTask.hpp>
 #include <Exec/InitTask.hpp>
+#include <cstdarg>
 
 extern "C" TUint64 cpuid(TUint32 *eax, TUint32 *ebx, TUint32 *ecx, TUint32 *edx);
 extern "C" void cpu_brand(char *buf);
@@ -299,7 +300,7 @@ void CPU::WaitSignal(BTask *aTask) {
   }
 
   gExecBase.Schedule();
-  dlog("WaitSignal(%s) returns\n", mCurrentTask->TaskName());
+  // dlog("WaitSignal(%s) returns\n", mCurrentTask->TaskName());
   // bochs;
   ENABLE;
 }
@@ -342,7 +343,9 @@ void CPU::RescheduleIRQ() {
     }
   }
 
+  LockActiveList();
   mCurrentTask = mActiveTasks.First();
+  UnlockActiveList();
   SetCurrentTask(&mCurrentTask->mRegisters);
 
   if (t != mCurrentTask && gExecBase.mDebugSwitch) {

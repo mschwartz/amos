@@ -7,6 +7,8 @@
 
 #include <Exec/BBase.hpp>
 
+class BTask;
+
 class Mutex : public BBase {
 public:
   Mutex();
@@ -19,6 +21,7 @@ public:
 
 protected:
   volatile int mLock;
+  BTask *mTask;
 };
 
 #endif

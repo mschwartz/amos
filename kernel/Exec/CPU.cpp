@@ -161,7 +161,6 @@ void CPU::EnterAP() {
     mGdt->Install();
     mIdt->Install();
   }
-  mRunningTaskCount = 1;
   mCurrentTask = mActiveTasks.First();
   SetCurrentTask(&mCurrentTask->mRegisters);
 
@@ -216,21 +215,22 @@ void CPU::StartAP(BTask *aTask) {
   }
 }
 
+#if 0
 void CPU::AddTask(BTask *aTask) {
   DISABLE;
   aTask->mRegisters.tss = (TUint64)mTss;
   aTask->mCpu = this;
   mActiveTasks.Add(*aTask);
-  mRunningTaskCount++;
   dlog("    CPU(%d) Add Task %016x --- %s --- rip=%016x rsp=%016x\n",
     mProcessorId, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
   ENABLE;
 }
+#endif
 
 TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   DISABLE;
+  Lock();
   aTask->Remove();
-  mRunningTaskCount--;
   TBool isCurrentTask = aTask == mCurrentTask;
   if (isCurrentTask) {
     dlog("CPU %d RemoveTask(%s) code(%d) CURRENT TASK\n", mProcessorId, aTask->TaskName(), aExitCode);
@@ -257,12 +257,16 @@ void CPU::DumpTasks() {
 }
 
 void CPU::RescheduleIRQ() {
-  DISABLE;
+  // DISABLE;
+  BTask *t;
   if (mCurrentTask != mIdleTask) {
     mCurrentTask->Remove();
+    t = gExecBase.NextTask(mCurrentTask);
+  }
+  else {
+    t = gExecBase.NextTask(ENull);
   }
 
-  BTask *t = gExecBase.NextTask(mCurrentTask == mIdleTask ? ENull : mCurrentTask);
   if (t) {
     mActiveTasks.Add(*t);
   }
@@ -289,7 +293,7 @@ void CPU::RescheduleIRQ() {
 
   mCurrentTask = mActiveTasks.First();
   SetCurrentTask(&mCurrentTask->mRegisters);
-  ENABLE;
+  // ENABLE;
 
   // if (t != mCurrentTask && gExecBase.mDebugSwitch) {
   //   dprint("  CPU %d Reschedule %s\n", mProcessorId, mCurrentTask->TaskName());

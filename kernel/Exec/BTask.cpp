@@ -189,22 +189,14 @@ TUint64 BTask::Wait(TUint64 aSignalSet) {
     return 0;
   }
 
-  {
-    DISABLE;
-    mSigWait |= aSignalSet;
-    ENABLE;
-  }
+  mSigWait |= aSignalSet;
 
   gExecBase.WaitSignal(this);
 
-  {
-    DISABLE;
-    volatile TUint64 received = mSigReceived;
-    mSigReceived = 0;
-    ENABLE;
+  TUint64 received = mSigReceived;
+  mSigReceived = 0;
 
-    return received;
-  }
+  return received;
 }
 
 MessagePort *BTask::CreatePort(const char *aName, TInt64 aPri) {
@@ -234,7 +226,6 @@ void BTask::WaitForPort(const char *aName) {
       return;
     }
   }
-  
 }
 TUint64 BTask::WaitPorts(TUint64 aSigMask, ...) {
   va_list args;

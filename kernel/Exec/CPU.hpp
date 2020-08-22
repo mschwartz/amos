@@ -73,7 +73,7 @@ public:
   void GuruMeditation(const char *aFormat, ...);
 
 protected:
-  void AddTask(BTask *aTask);
+  // void AddTask(BTask *aTask);
   TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode);
   BTask *CurrentTask() { return mCurrentTask; }
   void DumpTasks();
@@ -85,9 +85,11 @@ protected:
   }
   void RescheduleIRQ();
 
+  void Lock() { mMutex.Acquire(); }
+  void Unlock() { mMutex.Release(); }
+
 protected:
   Mutex mMutex;
-  TInt64 mRunningTaskCount;;
   BTaskList mActiveTasks;
   BTask *mCurrentTask;
 

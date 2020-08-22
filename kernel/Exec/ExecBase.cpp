@@ -137,10 +137,6 @@ void ExecBase::AddTask(BTask *aTask) {
   mRunningTasks.Add(*aTask);
   tasks_mutex.Release();
   ENABLE;
-  // TODO: this should figure out which CPU to assign task to
-  // CPU *c = CurrentCpu();
-  // c->AddTask(aTask);
-  // ENABLE;
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
@@ -164,25 +160,24 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 void ExecBase::WaitSignal(BTask *aTask) {
   DISABLE;
   //
+  tasks_mutex.Acquire();
   aTask->Remove();
+  tasks_mutex.Release();
+
   // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
   // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
   if (aTask->mSigWait & aTask->mSigReceived) {
-    // TODO: assign task to a CPU
-    // CPU *cpu = CurrentCpu();
-    // cpu->AddActiveTask(*aTask);
     aTask->mTaskState = ETaskRunning;
-    // dlog("Add running\n");
     tasks_mutex.Acquire();
     mRunningTasks.Add(*aTask);
+    tasks_mutex.Release();
   }
   else {
     aTask->mTaskState = ETaskWaiting;
-    // dlog("Add waiting\n");
     tasks_mutex.Acquire();
     mWaitingTasks.Add(*aTask);
+    tasks_mutex.Release();
   }
-  tasks_mutex.Release();
   Schedule();
   ENABLE;
 }
@@ -227,14 +222,16 @@ void ExecBase::Wake(BTask *aTask) {
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
   DISABLE;
-  tasks_mutex.Acquire();
   if (aTask) {
-    aTask->Remove();
+    tasks_mutex.Acquire();
+    if (aTask->mNext) {
+      aTask->Remove();
+    }
     aTask->mTaskState = ETaskRunning;
     mRunningTasks.Add(*aTask);
+    tasks_mutex.Release();
   }
   // CurrentCpu()->AddActiveTask(*aTask);
-  tasks_mutex.Release();
   ENABLE;
   //  DumpTasks();
 }
@@ -258,6 +255,7 @@ void ExecBase::RescheduleIRQ() {
 BTask *ExecBase::NextTask(BTask *aTask) {
   DISABLE;
   tasks_mutex.Acquire();
+
   if (aTask != ENull) {
     switch (aTask->mTaskState) {
       case ETaskRunning:
@@ -270,6 +268,7 @@ BTask *ExecBase::NextTask(BTask *aTask) {
   }
 
   BTask *ret = mRunningTasks.RemHead();
+
   tasks_mutex.Release();
   ENABLE;
   return ret;
@@ -279,24 +278,31 @@ BTask *ExecBase::NextTask(BTask *aTask) {
  ********************************************************************************
  *******************************************************************************/
 
+static Mutex sem_mutex;
+
 TBool ExecBase::AddSemaphore(Semaphore *aSemaphore) {
+  sem_mutex.Acquire();
   mSemaphoreList.Add(*aSemaphore);
+  sem_mutex.Release();
   return ETrue;
 }
 
 TBool ExecBase::RemoveSemaphore(Semaphore *aSemaphore) {
+  sem_mutex.Acquire();
   if (aSemaphore->mNext && aSemaphore->mPrev) {
     aSemaphore->Remove();
+    sem_mutex.Release();
     return ETrue;
   }
-  else {
-    return EFalse;
-  }
+  sem_mutex.Release();
+  return EFalse;
 }
 
 Semaphore *ExecBase::FindSemaphore(const char *aName) {
   DISABLE;
+  sem_mutex.Acquire();
   Semaphore *s = (Semaphore *)mSemaphoreList.Find(aName);
+  sem_mutex.Release();
   ENABLE;
   return s;
 }
@@ -307,14 +313,18 @@ Semaphore *ExecBase::FindSemaphore(const char *aName) {
 
 void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
   DISABLE;
+  mMessagePortList->Lock();
   mMessagePortList->Add(aMessagePort);
+  mMessagePortList->Unlock();
   ENABLE;
 }
 
 TBool ExecBase::RemoveMessagePort(MessagePort &aMessagePort) {
   if (mMessagePortList->Find(aMessagePort)) {
     DISABLE;
+    mMessagePortList->Lock();
     aMessagePort.Remove();
+    mMessagePortList->Unlock();
     ENABLE;
     return ETrue;
   }
@@ -323,7 +333,9 @@ TBool ExecBase::RemoveMessagePort(MessagePort &aMessagePort) {
 
 MessagePort *ExecBase::FindMessagePort(const char *aName) {
   DISABLE;
+  mMessagePortList->Lock();
   MessagePort *mp = (MessagePort *)mMessagePortList->Find(aName);
+  mMessagePortList->Unlock();
   ENABLE;
   return mp;
 }

@@ -2,6 +2,7 @@
 #define BMESSAGEPORT_H
 
 #include <Exec/BTask.hpp>
+#include <Exec/Mutex.hpp>
 
 /********************************************************************************
  ********************************************************************************
@@ -36,6 +37,14 @@ class BMessageList : public BListPri {
 public:
   BMessageList(const char *aName);
   ~BMessageList();
+
+public:
+  void Lock() { mMutex.Acquire(); }
+  void Unlock() { mMutex.Release(); }
+
+protected:
+  Mutex mMutex;
+
 public:
   void Dump();
 };
@@ -61,6 +70,14 @@ public:
 
 protected:
   void ReceiveMessage(BMessage *aMessage);
+
+public:
+  void Lock() { mMutex.Acquire(); }
+  void Unlock() { mMutex.Release(); }
+
+protected:
+  Mutex mMutex;
+
 protected:
   BTask *mOwner;
   TInt64 mSignalBit;
@@ -78,8 +95,19 @@ public:
 
 public:
   MessagePort *FindPort(const char *aName) {
-    return (MessagePort *)Find(aName);
+
+    Lock();
+    MessagePort *p = (MessagePort *)Find(aName);
+    Unlock();
+    return p;
   }
+
+protected:
+  Mutex mMutex;
+
+public:
+  void Lock() { mMutex.Acquire(); }
+  void Unlock() { mMutex.Release(); }
 };
 
 #endif

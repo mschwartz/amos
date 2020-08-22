@@ -71,20 +71,15 @@ protected:
 
 public:
   void GuruMeditation(const char *aFormat, ...);
-
-protected:
-  // void AddTask(BTask *aTask);
-  TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode);
-  BTask *CurrentTask() { return mCurrentTask; }
   void DumpTasks();
 
-  void AddActiveTask(BTask &aTask) {
-    mMutex.Acquire();
-    mActiveTasks.Add(aTask);
-    mMutex.Release();
-  }
+protected:
+  TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode);
+  BTask *CurrentTask() { return mCurrentTask; }
+
   void RescheduleIRQ();
 
+public:
   void Lock() { mMutex.Acquire(); }
   void Unlock() { mMutex.Release(); }
 

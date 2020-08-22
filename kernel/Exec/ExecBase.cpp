@@ -162,22 +162,18 @@ void ExecBase::WaitSignal(BTask *aTask) {
   //
   tasks_mutex.Acquire();
   aTask->Remove();
-  tasks_mutex.Release();
 
   // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
   // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
   if (aTask->mSigWait & aTask->mSigReceived) {
     aTask->mTaskState = ETaskRunning;
-    tasks_mutex.Acquire();
     mRunningTasks.Add(*aTask);
-    tasks_mutex.Release();
   }
   else {
     aTask->mTaskState = ETaskWaiting;
-    tasks_mutex.Acquire();
     mWaitingTasks.Add(*aTask);
-    tasks_mutex.Release();
   }
+  tasks_mutex.Release();
   Schedule();
   ENABLE;
 }
@@ -203,8 +199,9 @@ void ExecBase::ReleaseSemaphore(Semaphore *aSemaphore) {
     aSemaphore->mNestCount = 1;
     aSemaphore->mSharedCount = 0;
     t->mTaskState = ETaskRunning;
-    CurrentCpu()->AddActiveTask(*t);
-    // mActiveTasks.Add(*t);
+    tasks_mutex.Acquire();
+    mRunningTasks.Add(*t);
+    tasks_mutex.Release();
   }
   else {
     aSemaphore->mOwner = ENull;
@@ -257,17 +254,27 @@ BTask *ExecBase::NextTask(BTask *aTask) {
   tasks_mutex.Acquire();
 
   if (aTask != ENull) {
+    if (CompareStrings(aTask->TaskName(), "Idle Task") == 0) {
+      dlog("BAD\n");
+      bochs;
+    }
     switch (aTask->mTaskState) {
       case ETaskRunning:
+        // dprint("Add Running %x(%s) - ", aTask, aTask->TaskName());
         mRunningTasks.Add(*aTask);
         break;
       case ETaskWaiting:
+        // dprint("Add Waiting %x(%s) - ", aTask, aTask->TaskName());
         mWaitingTasks.Add(*aTask);
         break;
+      default:
+        // blocked - already on semaphore's waiting list (DO NOT REMOVE IT!)
+	break;
     }
   }
 
   BTask *ret = mRunningTasks.RemHead();
+  dprint(" ret %x(%s)\n", ret, ret ? ret->TaskName() : "IDLE");
 
   tasks_mutex.Release();
   ENABLE;

@@ -138,16 +138,15 @@ void CPU::GuruMeditation(const char *aFormat, ...) {
 
 // This function must run in the CPU!
 void CPU::EnterAP() {
-  cli();
   mGS.mCurrentCpu = this;
   SetGS(&mGS);
   SetCPU(this);
   mApic->Initialize();
-  cli();
 
   dprint("\n\n");
   dlog("EnterAP %d gs(%x) mGS(%x) CPU(%x %x)\n", mProcessorId, GetGS(), &mGS, this, GetCPU());
 
+  Lock();
   mIdleTask = new IdleTask();
   mIdleTask->mCpu = this;
   mActiveTasks.Add(*mIdleTask);
@@ -163,10 +162,11 @@ void CPU::EnterAP() {
   }
   mCurrentTask = mActiveTasks.First();
   SetCurrentTask(&mCurrentTask->mRegisters);
+  Unlock();
 
   // sti();
   enter_tasking(); // just enter next task
-  dlog("BAD\n");
+  dlog("BAD EnterAP\n");
   bochs;
 }
 
@@ -215,21 +215,10 @@ void CPU::StartAP(BTask *aTask) {
   }
 }
 
-#if 0
-void CPU::AddTask(BTask *aTask) {
-  DISABLE;
-  aTask->mRegisters.tss = (TUint64)mTss;
-  aTask->mCpu = this;
-  mActiveTasks.Add(*aTask);
-  dlog("    CPU(%d) Add Task %016x --- %s --- rip=%016x rsp=%016x\n",
-    mProcessorId, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
-  ENABLE;
-}
-#endif
-
 TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   DISABLE;
   Lock();
+
   aTask->Remove();
   TBool isCurrentTask = aTask == mCurrentTask;
   if (isCurrentTask) {
@@ -251,14 +240,15 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
 void CPU::DumpTasks() {
   dlog("\n\nActive Tasks\n");
   mActiveTasks.Dump();
-  // dlog("Waiting Tasks\n");
-  // mWaitingTasks.Dump();
   dlog("\n\n");
 }
 
 void CPU::RescheduleIRQ() {
-  // DISABLE;
+  DISABLE;
+  Lock();
+
   BTask *t;
+  // we don't want to remove the idle task and add it to Exec's lists!
   if (mCurrentTask != mIdleTask) {
     mCurrentTask->Remove();
     t = gExecBase.NextTask(mCurrentTask);
@@ -267,38 +257,15 @@ void CPU::RescheduleIRQ() {
     t = gExecBase.NextTask(ENull);
   }
 
+  // If NextTask returned a BTask, we want to add it and run it.  Otherwise there are none ready so we want to IdleTask.
   if (t) {
     mActiveTasks.Add(*t);
   }
 
-  // if (mCurrentTask) {
-  //   // if task is blocked, it is not on the system waiting list
-  //   // it is potentially on a Sempahore's waiting list or some other waiting list
-  //   if (mCurrentTask->mTaskState != ETaskBlocked) {
-  //     // if Task has called Forbid(), we don't want to switch to another task
-  //     if (mCurrentTask->mForbidNestCount == 0) {
-  //       mCurrentTask->Remove();
-  //       if (mCurrentTask->mTaskState == ETaskWaiting) {
-  //         gExecBase.AddWaitingList(*t);
-  //       }
-  //       else {
-  //         mActiveTasks.Add(*mCurrentTask);
-  //       }
-  //     }
-  //     else {
-  //       dlog("FORBID %d\n", mCurrentTask->mForbidNestCount);
-  //     }
-  //   }
-  // }
-
   mCurrentTask = mActiveTasks.First();
   SetCurrentTask(&mCurrentTask->mRegisters);
-  // ENABLE;
 
-  // if (t != mCurrentTask && gExecBase.mDebugSwitch) {
-  //   dprint("  CPU %d Reschedule %s\n", mProcessorId, mCurrentTask->TaskName());
-  //   dprint("Previous task\n");
-  //   dprint("  Previous Task %s\n", t->TaskName());
-  //   dprint("\n\n\n");
-  // }
+  Unlock();
+
+  ENABLE;
 }

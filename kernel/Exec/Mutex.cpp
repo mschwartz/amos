@@ -22,7 +22,7 @@ void Mutex::Acquire() {
     // dprint("%s\n", mTask->TaskName());
     bochs;
     ENABLE;
-    return;
+    // return;
   }
   while (!__sync_bool_compare_and_swap(&mLock, 0, 1)) {
     asm("pause");

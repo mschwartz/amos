@@ -157,5 +157,6 @@ TInt64 InitTask::Run() {
   // for (;;) {
   //   Sleep(100);
   // }
+  dlog("Exiting!\n");
   return 0;
 }

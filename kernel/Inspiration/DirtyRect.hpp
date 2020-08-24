@@ -3,12 +3,13 @@
 
 #include <Types/BList.hpp>
 #include <Types/TRect.hpp>
+#include <Exec/SpinLock.hpp>
 
 class DirtyRect : public BNode {
 public:
   DirtyRect(TRect &aRect);
 
- public:
+public:
   TBool Overlaps(TRect &aRect) { return mRect.Overlaps(aRect); }
   TInt32 Area() { return mRect.Area(); }
 
@@ -22,6 +23,14 @@ public:
 
 public:
   void Add(TRect &aRect);
+
+public:
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
+
+protected:
+  SpinLock mSpinLock;
+
 public:
   DirtyRect *First() { return (DirtyRect *)mNext; }
   DirtyRect *Next(DirtyRect *r) { return (DirtyRect *)r->mNext; }

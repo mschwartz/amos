@@ -14,19 +14,19 @@ BDevice::~BDevice() {
 /**
   * BDeviceList
   */
-BDeviceList::BDeviceList() : BListPri("Device List") {
+DeviceList::DeviceList() : BListPri("Device List") {
 //  bochs
 //  dprint("construct device list\n");
 }
 
-BDeviceList::~BDeviceList() {
+DeviceList::~DeviceList() {
 }
 
-BDevice *BDeviceList::FindDevice(const char *aName) {
+BDevice *DeviceList::FindDevice(const char *aName) {
   return (BDevice *)Find(aName);
 }
 
-void BDeviceList::AddDevice(BDevice& aDevice) {
+void DeviceList::AddDevice(BDevice& aDevice) {
   dlog("\nAdd Device %x\n", &aDevice);
 }
 

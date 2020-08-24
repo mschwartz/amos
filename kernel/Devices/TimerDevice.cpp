@@ -119,13 +119,15 @@ TBool TimerInterrupt::Run(TAny *g) {
     gExecBase.InterruptOthers(IRQ_TIMER);
     return ETrue;
   }
+
+  // dlog("Reschedule cpu(%d)\n", cpu->mProcessorId);
+  cpu->RescheduleIRQ(); // maybe wake up new task
+
   if (cpu->mApicId == 0) {
     mTask->Signal(1 << mTask->mSignalBit);
     gExecBase.InterruptOthers(IRQ_TIMER);
   }
 
-  // dlog("Reschedule cpu(%d)\n", cpu->mProcessorId);
-  cpu->RescheduleIRQ(); // maybe wake up new task
   return ETrue;
 }
 

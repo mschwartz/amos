@@ -11,6 +11,7 @@ DirtyRectList::DirtyRectList() : BList("dirty Rect list") {
 void DirtyRectList::Add(TRect &aRect) {
   TInt32 area = aRect.Area();
 
+  Lock();
   for (DirtyRect *d = (DirtyRect *)First(); !End(d); d = (DirtyRect *)Next(d)) {
     if (d->Overlaps(aRect)) {
       TRect newRect(d->mRect);
@@ -18,6 +19,7 @@ void DirtyRectList::Add(TRect &aRect) {
       if (newRect.Area() <= d->Area() + area) {
         // combine
         d->mRect.Set(newRect);
+	Unlock();
         return;
       }
     }
@@ -25,4 +27,5 @@ void DirtyRectList::Add(TRect &aRect) {
   // no overlap, add new DirtyRect
   DirtyRect *d = new DirtyRect(aRect);
   AddTail(*d);
+  Unlock();
 }

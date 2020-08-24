@@ -9,10 +9,10 @@
 
 class BTask;
 
-class Mutex : public BBase {
+class SpinLock : public BBase {
 public:
-  Mutex();
-  ~Mutex();
+  SpinLock();
+  ~SpinLock();
 
 public:
   TBool Try();
@@ -21,6 +21,7 @@ public:
 
 protected:
   volatile int mLock;
+  TUint64 mFlags;
   BTask *mTask;
 };
 

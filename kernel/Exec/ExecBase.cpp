@@ -129,7 +129,7 @@ void ExecBase::Enable() {
   }
 }
 
-static Mutex tasks_mutex;
+static SpinLock tasks_mutex;
 
 void ExecBase::AddTask(BTask *aTask) {
   DISABLE;
@@ -274,7 +274,6 @@ BTask *ExecBase::NextTask(BTask *aTask) {
   }
 
   BTask *ret = mRunningTasks.RemHead();
-  dprint(" ret %x(%s)\n", ret, ret ? ret->TaskName() : "IDLE");
 
   tasks_mutex.Release();
   ENABLE;
@@ -285,7 +284,8 @@ BTask *ExecBase::NextTask(BTask *aTask) {
  ********************************************************************************
  *******************************************************************************/
 
-static Mutex sem_mutex;
+// TODO: add this to Semaphore.hpp (in class)
+static SpinLock sem_mutex;
 
 TBool ExecBase::AddSemaphore(Semaphore *aSemaphore) {
   sem_mutex.Acquire();
@@ -306,11 +306,9 @@ TBool ExecBase::RemoveSemaphore(Semaphore *aSemaphore) {
 }
 
 Semaphore *ExecBase::FindSemaphore(const char *aName) {
-  DISABLE;
   sem_mutex.Acquire();
   Semaphore *s = (Semaphore *)mSemaphoreList.Find(aName);
   sem_mutex.Release();
-  ENABLE;
   return s;
 }
 
@@ -328,22 +326,18 @@ void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
 
 TBool ExecBase::RemoveMessagePort(MessagePort &aMessagePort) {
   if (mMessagePortList->Find(aMessagePort)) {
-    DISABLE;
     mMessagePortList->Lock();
     aMessagePort.Remove();
     mMessagePortList->Unlock();
-    ENABLE;
     return ETrue;
   }
   return EFalse;
 }
 
 MessagePort *ExecBase::FindMessagePort(const char *aName) {
-  DISABLE;
   mMessagePortList->Lock();
   MessagePort *mp = (MessagePort *)mMessagePortList->Find(aName);
   mMessagePortList->Unlock();
-  ENABLE;
   return mp;
 }
 
@@ -356,15 +350,15 @@ MessagePort *ExecBase::FindMessagePort(const char *aName) {
  *******************************************************************************/
 
 void ExecBase::AddDevice(BDevice *aDevice) {
-  DISABLE;
+  mDeviceList.Lock();
   mDeviceList.Add(*aDevice);
-  ENABLE;
+  mDeviceList.Unlock();
 }
 
 BDevice *ExecBase::FindDevice(const char *aName) {
-  DISABLE;
+  mDeviceList.Lock();
   BDevice *d = mDeviceList.FindDevice(aName);
-  ENABLE;
+  mDeviceList.Unlock();
   return d;
 }
 
@@ -453,7 +447,10 @@ public:
 
 void ExecBase::SetIntVector(EInterruptNumber aInterruptNumber, BInterrupt *aInterrupt) {
   dlog("SetIntVector(%d, %x) %s\n", aInterruptNumber, aInterrupt, aInterrupt->mNodeName);
-  mInterrupts[aInterruptNumber].Add(*aInterrupt);
+  BInterruptList *list = &mInterrupts[aInterruptNumber];
+  list->Lock();
+  list->Add(*aInterrupt);
+  list->Unlock();
 }
 
 void ExecBase::EnableIRQ(TUint16 aIRQ) {
@@ -485,15 +482,15 @@ extern "C" TUint64 GetRFLAGS();
  * Note that there may be multiple interrupts that fire a vector.
  */
 TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
-  cli();
   BInterruptList *list = &gExecBase.mInterrupts[aInterruptNumber];
+  list->Lock();
   for (BInterrupt *i = (BInterrupt *)list->First(); !list->End(i); i = (BInterrupt *)i->mNext) {
-    if (i->Run(i->mData)) {
-      return ETrue;
-    }
+    list->Unlock();
+    return i->Run(i->mData);
   }
   // TODO: no handler!
   dlog("No handler!\n");
+  list->Unlock();
   return EFalse;
 }
 

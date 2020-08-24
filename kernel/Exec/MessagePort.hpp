@@ -2,7 +2,7 @@
 #define BMESSAGEPORT_H
 
 #include <Exec/BTask.hpp>
-#include <Exec/Mutex.hpp>
+#include <Exec/SpinLock.hpp>
 
 /********************************************************************************
  ********************************************************************************
@@ -39,11 +39,11 @@ public:
   ~BMessageList();
 
 public:
-  void Lock() { mMutex.Acquire(); }
-  void Unlock() { mMutex.Release(); }
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
 
 protected:
-  Mutex mMutex;
+  SpinLock mSpinLock;
 
 public:
   void Dump();
@@ -72,11 +72,11 @@ protected:
   void ReceiveMessage(BMessage *aMessage);
 
 public:
-  void Lock() { mMutex.Acquire(); }
-  void Unlock() { mMutex.Release(); }
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
 
 protected:
-  Mutex mMutex;
+  SpinLock mSpinLock;
 
 protected:
   BTask *mOwner;
@@ -103,11 +103,11 @@ public:
   }
 
 protected:
-  Mutex mMutex;
+  SpinLock mSpinLock;
 
 public:
-  void Lock() { mMutex.Acquire(); }
-  void Unlock() { mMutex.Release(); }
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
 };
 
 #endif

@@ -63,7 +63,7 @@ protected:
   BBitmap32 *mBitmap; // offscreen bitmap, size of screen
   // the background bitmap is used to erase windows and other things to the background image
   BBitmap32 *mBackground; // offscreen background bitmap
-  BWindowList mWindowList;
+  WindowList mWindowList;
   TCoordinate mTopY;
 
 public:
@@ -87,9 +87,16 @@ protected:
  ********************************************************************************
  *******************************************************************************/
 
-class BScreenList : public BList {
+class ScreenList : public BList {
 public:
-  BScreenList() : BList("Screen List") {}
+  ScreenList() : BList("Screen List") {}
+
+public:
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
+
+protected:
+  SpinLock mSpinLock;
 
 public:
   BScreen *First() { return (BScreen *)BList::First(); }

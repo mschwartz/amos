@@ -43,7 +43,7 @@ void dputc(char c) {
   }
 }
 
-static Mutex mutex;
+static SpinLock mutex;
 
 void dputs(const char *s) {
   DISABLE;

@@ -2,6 +2,7 @@
 #define EXEC_BINTERRUPT_H
 
 #include <Types/BList.hpp>
+#include <Exec/SpinLock.hpp>
 
 /* External interrupts */
 #define IRQ_OFFSET 0x20 /* Interrupt offset for external interrupts */
@@ -104,6 +105,13 @@ public:
   BInterruptList() : BListPri("Interrupt List") {
   }
   ~BInterruptList() {}
+
+public:
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
+
+protected:
+  SpinLock mSpinLock;
 };
 
 #endif

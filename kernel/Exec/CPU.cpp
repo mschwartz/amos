@@ -116,7 +116,9 @@ CPU::CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi) {
 
 void CPU::GuruMeditation(const char *aFormat, ...) {
   cli();
-  // bochs;
+  mCpuState = ECpuGuruMeditation;
+  bochs;
+
   char buf[512];
   dprint("\n\n***********************\n");
   dprint("GURU MEDITATION at %dms in CPU %d\n", gExecBase.SystemTicks(), mProcessorId);
@@ -244,8 +246,7 @@ void CPU::DumpTasks() {
 }
 
 void CPU::RescheduleIRQ() {
-  DISABLE;
-  Lock();
+  Lock(); // in case active tasks list is being manipulated in a Task
 
   BTask *t;
   // we don't want to remove the idle task and add it to Exec's lists!
@@ -257,7 +258,8 @@ void CPU::RescheduleIRQ() {
     t = gExecBase.NextTask(ENull);
   }
 
-  // If NextTask returned a BTask, we want to add it and run it.  Otherwise there are none ready so we want to IdleTask.
+  // If NextTask returned a BTask, we want to add it and run it.
+  // Otherwise there are none ready so we want to IdleTask.
   if (t) {
     mActiveTasks.Add(*t);
   }
@@ -266,6 +268,4 @@ void CPU::RescheduleIRQ() {
   SetCurrentTask(&mCurrentTask->mRegisters);
 
   Unlock();
-
-  ENABLE;
 }

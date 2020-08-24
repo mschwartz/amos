@@ -216,7 +216,7 @@ public:
   BDevice *FindDevice(const char *aName);
 
 protected:
-  BDeviceList mDeviceList;
+  DeviceList mDeviceList;
 
   //
   // FILESYSTEMS

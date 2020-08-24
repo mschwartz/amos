@@ -13,7 +13,7 @@
 #include <Exec/x86/gdt.hpp>
 #include <Exec/x86/tss.hpp>
 #include <Exec/BTask.hpp>
-#include <Exec/Mutex.hpp>
+#include <Exec/SpinLock.hpp>
 
 /********************************************************************************
  ********************************************************************************
@@ -80,11 +80,11 @@ protected:
   void RescheduleIRQ();
 
 public:
-  void Lock() { mMutex.Acquire(); }
-  void Unlock() { mMutex.Release(); }
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
 
 protected:
-  Mutex mMutex;
+  SpinLock mSpinLock;
   BTaskList mActiveTasks;
   BTask *mCurrentTask;
 

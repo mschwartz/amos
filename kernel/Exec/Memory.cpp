@@ -213,7 +213,7 @@ static TAny *allocate(TInt64 aSize, TInt aFlags) {
   // return mem;
 }
 
-static Mutex allocmem_mutex;
+static SpinLock allocmem_mutex;
 
 TAny *AllocMem(TInt64 aSize, TInt aFlags) {
   allocmem_mutex.Acquire();

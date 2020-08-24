@@ -35,7 +35,7 @@ TInt64 InitTask::Run() {
   for (TInt i = 1; i < gExecBase.NumCpus(); i++) {
     CPU *cpu = gExecBase.GetCpu(i);
     cpu->StartAP(this); // initialize tasking for AP
-    // break;
+    break;
   }
 
   // Sleep(3);

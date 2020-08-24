@@ -218,7 +218,6 @@ void CPU::StartAP(BTask *aTask) {
 }
 
 TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
-  DISABLE;
   Lock();
 
   aTask->Remove();
@@ -233,9 +232,10 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   if (isCurrentTask) {
     mCurrentTask = mActiveTasks.First();
     SetCurrentTask(&mCurrentTask->mRegisters);
+    Unlock();
     enter_tasking(); // just enter next task
   }
-  ENABLE;
+  Unlock();
   return aExitCode;
 }
 

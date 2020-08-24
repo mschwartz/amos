@@ -250,7 +250,6 @@ void ExecBase::RescheduleIRQ() {
 }
 
 BTask *ExecBase::NextTask(BTask *aTask) {
-  DISABLE;
   tasks_mutex.Acquire();
 
   if (aTask != ENull) {
@@ -276,7 +275,6 @@ BTask *ExecBase::NextTask(BTask *aTask) {
   BTask *ret = mRunningTasks.RemHead();
 
   tasks_mutex.Release();
-  ENABLE;
   return ret;
 }
 

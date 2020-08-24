@@ -138,12 +138,14 @@ void ExecBase::AddTask(BTask *aTask) {
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
+  DISABLE;
   CPU *c = (CPU *)aTask->mCpu;
   if (!c) {
     c = CurrentCpu();
     bochs;
   }
   c->RemoveTask(aTask, aExitCode);
+  ENABLE;
 
   if (aDelete) {
     delete aTask;

@@ -154,8 +154,8 @@ TInt64 InitTask::Run() {
   gExecBase.SetInspirationBase(new InspirationBase());
 
   // TODO: this should work!
-  for (;;) {
-    Sleep(100);
-  }
+  // for (;;) {
+  //   Sleep(100);
+  // }
   return 0;
 }

@@ -33,9 +33,9 @@ TInt64 InitTask::Run() {
   dlog("  STARTING APs\n");
   // for (TInt i = 1; i < 3; i++) {
   for (TInt i = 1; i < gExecBase.NumCpus(); i++) {
+    break;
     CPU *cpu = gExecBase.GetCpu(i);
     cpu->StartAP(this); // initialize tasking for AP
-    break;
   }
 
   // Sleep(3);
@@ -153,5 +153,9 @@ TInt64 InitTask::Run() {
   dlog("  initialize Inspiration\n");
   gExecBase.SetInspirationBase(new InspirationBase());
 
+  // TODO: this should work!
+  for (;;) {
+    Sleep(100);
+  }
   return 0;
 }

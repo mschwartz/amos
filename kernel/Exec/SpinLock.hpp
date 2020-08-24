@@ -22,7 +22,6 @@ public:
 protected:
   volatile int mLock;
   TUint64 mFlags;
-  BTask *mTask;
 };
 
 #endif

@@ -132,23 +132,18 @@ void ExecBase::Enable() {
 static SpinLock tasks_mutex;
 
 void ExecBase::AddTask(BTask *aTask) {
-  DISABLE;
   tasks_mutex.Acquire();
   mRunningTasks.Add(*aTask);
   tasks_mutex.Release();
-  ENABLE;
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
-
-  DISABLE;
-  CPU *c = CurrentCpu();
+  CPU *c = (CPU *)aTask->mCpu;
   if (!c) {
     c = CurrentCpu();
     bochs;
   }
   c->RemoveTask(aTask, aExitCode);
-  ENABLE;
 
   if (aDelete) {
     delete aTask;
@@ -158,8 +153,6 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 }
 
 void ExecBase::WaitSignal(BTask *aTask) {
-  DISABLE;
-  //
   tasks_mutex.Acquire();
   aTask->Remove();
 
@@ -175,7 +168,6 @@ void ExecBase::WaitSignal(BTask *aTask) {
   }
   tasks_mutex.Release();
   Schedule();
-  ENABLE;
 }
 
 void ExecBase::WaitSemaphore(BTask *aTask, Semaphore *aSemaphore) {

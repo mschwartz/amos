@@ -333,6 +333,7 @@ isr_common:
 
 global restore_task_state
 restore_task_state:
+	cli
         ; restore task state
 	swapgs
         mov rdi, [gs:CURRENT_TASK]

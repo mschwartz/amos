@@ -20,6 +20,7 @@ void SpinLock::Acquire() {
   while (!__sync_bool_compare_and_swap(&mLock, 0, 1)) {
     asm("pause");
   }
+  __sync_synchronize();
   mFlags = flags;
 }
 
@@ -30,6 +31,7 @@ void SpinLock::Release() {
   //   dprint("release %s != %s\n", mTask->TaskName(), t->TaskName());
   //   bochs;
   // }
+  __sync_synchronize();
   mLock = 0;
   SetFlags(mFlags);
 }

@@ -234,8 +234,10 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
     mCurrentTask = mActiveTasks.First();
     SetCurrentTask(&mCurrentTask->mRegisters);
     Unlock();
+    dprint("CPU::RemoveTask - enter-tasking\n");
     enter_tasking(); // just enter next task
   }
+  bochs
   Unlock();
   ENABLE;
   return aExitCode;
@@ -248,6 +250,7 @@ void CPU::DumpTasks() {
 }
 
 void CPU::RescheduleIRQ() {
+  DISABLE;
   Lock(); // in case active tasks list is being manipulated in a Task
 
   BTask *t;
@@ -263,6 +266,7 @@ void CPU::RescheduleIRQ() {
   // If NextTask returned a BTask, we want to add it and run it.
   // Otherwise there are none ready so we want to IdleTask.
   if (t) {
+    t->mCpu = this;
     mActiveTasks.Add(*t);
   }
 
@@ -270,4 +274,5 @@ void CPU::RescheduleIRQ() {
   SetCurrentTask(&mCurrentTask->mRegisters);
 
   Unlock();
+  ENABLE;
 }

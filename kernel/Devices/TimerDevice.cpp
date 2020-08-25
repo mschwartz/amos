@@ -115,7 +115,7 @@ TBool TimerInterrupt::Run(TAny *g) {
   // dlog("TIMER\n");
   CPU *cpu = GetCPU();
   if (!cpu) {
-    gExecBase.InterruptOthers(IRQ_TIMER);
+    // gExecBase.InterruptOthers(IRQ_TIMER);
     gExecBase.AckIRQ(IRQ_TIMER);
     return ETrue;
   }
@@ -126,9 +126,9 @@ TBool TimerInterrupt::Run(TAny *g) {
   if (cpu->mApicId == 0) {
     mTask->Signal(1 << mTask->mSignalBit);
     gExecBase.InterruptOthers(IRQ_TIMER);
-    gExecBase.AckIRQ(IRQ_TIMER);
   }
 
+  gExecBase.AckIRQ(IRQ_TIMER);
   return ETrue;
 }
 

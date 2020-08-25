@@ -7,6 +7,8 @@
 
 #include <Exec/BBase.hpp>
 
+typedef TUint32 TSpinLock;
+
 class BTask;
 
 class SpinLock : public BBase {
@@ -20,7 +22,7 @@ public:
   void Release();
 
 protected:
-  volatile int mLock;
+  volatile TSpinLock mLock;
   TUint64 mFlags;
 };
 

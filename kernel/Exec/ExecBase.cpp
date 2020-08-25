@@ -406,6 +406,7 @@ public:
 public:
   TBool Run(TAny *aData) {
     cli();
+    bochs;
     gExecBase.GuruMeditation("%s Exception", mNodeName);
     // TODO: kill/remove current task
     halt();

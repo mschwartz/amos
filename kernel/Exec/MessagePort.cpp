@@ -33,12 +33,11 @@ void BMessage::Dump() {
 
 MessagePort::MessagePort(const char *aName, BTask *aOwner, TInt64 aSignalBit, TInt64 aPri)
     : BNodePri(aName, aPri) {
-  DISABLE;
+
   mOwner = aOwner;
   mSignalBit = aSignalBit;
 
   mList = new BMessageList(aName);
-  ENABLE;
 }
 
 MessagePort::~MessagePort() {
@@ -46,20 +45,20 @@ MessagePort::~MessagePort() {
 }
 
 BMessage *MessagePort::GetMessage() {
-  DISABLE;
+  Lock();
   BMessage *m = (BMessage *)mList->RemHead();
+  Unlock();
   if (m) {
     m->mNext = m->mPrev = ENull;
   }
 
-  ENABLE;
   return m;
 }
 
 void MessagePort::ReceiveMessage(BMessage *aMessage) {
-  DISABLE;
+  Lock();
   mList->AddTail(*aMessage);
-  ENABLE;
+  Unlock();
 
   mOwner->Signal(1 << mSignalBit);
 }
@@ -82,14 +81,13 @@ BMessageList::~BMessageList() {
 }
 
 void BMessageList::Dump() {
-  TUint64 flags = GetFlags();
-  cli();
+  Lock();
 
   for (BMessage *m = (BMessage *)First(); !End(m); m = (BMessage *)m->mNext) {
     m->Dump();
   }
 
-  SetFlags(flags);
+  Unlock();
 }
 
 /********************************************************************************

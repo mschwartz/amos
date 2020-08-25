@@ -6,7 +6,7 @@
 #include <Graphics/bitmap/BBitmap32.hpp>
 
 class BScreen;
-class BScreenList;
+class ScreenList;
 class BWindow;
 class DisplayTask;
 class Cursor;
@@ -74,7 +74,7 @@ public:
   BScreen *FindScreen(const char *aTitle);
 
 protected:
-  BScreenList *mScreenList;
+  ScreenList *mScreenList;
   BBitmap32 *mBitmap;
 
   Cursor *mCursor;

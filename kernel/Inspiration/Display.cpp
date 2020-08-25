@@ -12,12 +12,17 @@ void Display::Init() {
 }
 
 void Display::AddScreen(BScreen *aScreen) {
+  mScreenList->Lock();
   mScreenList->AddHead(*aScreen);
+  mScreenList->Unlock();
   aScreen->Clear(0x4f4fff);
 }
 
 BScreen *Display::FindScreen(const char *aTitle) {
-  return mScreenList->Find(aTitle);
+  mScreenList->Lock();
+  BScreen *s = mScreenList->Find(aTitle);
+  mScreenList->Unlock();
+  return s;
 }
 
 BScreen *Display::TopScreen() {
@@ -81,7 +86,7 @@ void Display::Clear(TUint32 aColor) {
 BWindow *Display::ActiveWindow() { return TopScreen()->ActiveWindow(); }
 Display::Display() : BNode("Display") {
   dlog("Construct Display\n");
-  mScreenList = new BScreenList;
+  mScreenList = new ScreenList;
 
   TSystemInfo info;
   gExecBase.GetSystemInfo(&info);

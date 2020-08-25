@@ -8,6 +8,7 @@
 #define AMOS_INSPIRATION_BTHEME_H
 
 #include <Types/BList.hpp>
+#include <Exec/SpinLock.hpp>
 
 class BConsoleFont32;
 
@@ -70,11 +71,20 @@ public:
   TBool End(BTheme *aTheme) { return BList::End(aTheme); };
 
 public:
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
+
+protected:
+  SpinLock mSpinLock;
+
+public:
   void Dump() {
+    Lock();
     dprint("\n\n");
     for (BTheme *t = First(); !End(t); t = Next(t)) {
       t->Dump();
     }
+    Unlock();
   }
 };
 

@@ -29,7 +29,6 @@ void dassert(TBool aValue, const char *aFormat, ...) {
 
   bochs;
   ENABLE;
-  
 }
 
 void dputc(char c) {
@@ -44,26 +43,32 @@ void dputc(char c) {
   }
 }
 
+static SpinLock mutex;
+
 void dputs(const char *s) {
   DISABLE;
+  mutex.Acquire();
   while (*s) {
     dputc(*s++);
   }
+  mutex.Release();
   ENABLE;
 }
 
 void dlog(const char *fmt, ...) {
   DISABLE;
+  // mutex.Acquire();
 
   va_list args;
   va_start(args, fmt);
 
   char buf[512];
-  dprint("%2d %020d %-16s ", gExecBase.GetCurrentCpuNumber(), gExecBase.SystemTicks(), gExecBase.CurrentTaskName());
-  vsprintf(buf, fmt, args);
+  sprintf(buf, "%2d %020d %-16s ", gExecBase.GetCurrentCpuNumber(), gExecBase.SystemTicks(), gExecBase.CurrentTaskName());
+  vsprintf(&buf[StringLength(buf)], fmt, args);
   dputs(buf);
   va_end(args);
 
+  // mutex.Release();
   ENABLE;
 }
 

@@ -24,8 +24,10 @@ BScreen::~BScreen() {
 }
 
 void BScreen::AddWindow(BWindow *aWindow) {
+  mWindowList.Lock();
   aWindow->mScreen = this;
   aWindow->mNext = aWindow->mPrev = ENull;
+  mWindowList.Unlock();
   ActivateWindow(aWindow);
 }
 
@@ -53,6 +55,7 @@ void BScreen::EraseWindow(BWindow *aWindow) {
   AddDirtyRect(aWindow->mWindowRect);
 }
 
+// copy entire window rectangle to screen's bitmap
 void BScreen::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
   TRect &rect = aWindow->mWindowRect;
   mBitmap->BltCopy(aWindow->mBitmap, rect.x1, rect.y1);
@@ -60,11 +63,13 @@ void BScreen::UpdateWindow(BWindow *aWindow, TBool aDecorations) {
 }
 
 void BScreen::ActivateWindow(BWindow *aWindow) {
+  mWindowList.Lock();
   if (aWindow->mNext != ENull) {
     aWindow->Remove();
   }
   BWindow *w = ActiveWindow();
   mWindowList.AddHead(*aWindow);
+  mWindowList.Unlock();
   if (!mWindowList.End(w)) {
     w->PaintDecorations(); // inactivate window
   }
@@ -74,14 +79,14 @@ void BScreen::ActivateWindow(BWindow *aWindow) {
 BWindow *BScreen::DragWindow(TCoordinate aX, TCoordinate aY) {
   BWindow *selected = ENull;
 
-  DISABLE;
+  mWindowList.Lock();
   for (BWindow *w = mWindowList.Last(); !mWindowList.End(w); w = (BWindow *)mWindowList.Prev(w)) {
     // dlog("DragWindow, trying %x(%s) %d,%d %d\n", w, w->Title(), aX, aY, w->mTitlebarRect.PointInRect(aX, aY));
     if (w->OverDragBar(aX, aY)) {
       selected = w;
     }
   }
-  ENABLE;
+  mWindowList.Unlock();
 
   return selected;
 }
@@ -89,7 +94,7 @@ BWindow *BScreen::DragWindow(TCoordinate aX, TCoordinate aY) {
 TBool BScreen::ActivateWindow(TCoordinate aX, TCoordinate aY) {
   BWindow *selected = ENull;
 
-  DISABLE;
+  mWindowList.Lock();
   for (BWindow *w = mWindowList.Last(); !mWindowList.End(w); w = (BWindow *)mWindowList.Prev(w)) {
     // dlog("ActivateWindow, trying %x(%s) %d,%d %d\n", w, w->Title(), aX, aY, w->mWindowRect.PointInRect(aX, aY));
 
@@ -97,7 +102,7 @@ TBool BScreen::ActivateWindow(TCoordinate aX, TCoordinate aY) {
       selected = w;
     }
   }
-  ENABLE;
+  mWindowList.Unlock();
 
   if (selected) {
     if (selected != ActiveWindow()) {
@@ -115,6 +120,7 @@ TBool BScreen::ActivateWindow(TCoordinate aX, TCoordinate aY) {
 // This is called from the DisplayTask to render the dirty rects from offscreen to
 // physical screen.  Called during vblank to try to avoid tearing.
 void BScreen::UpdateDirtyRects() {
+  mDirtyRects.Lock();
   for (DirtyRect *r = mDirtyRects.First(); !mDirtyRects.End(r); r = mDirtyRects.Next(r)) {
     r->Remove();
     TRect &rect = r->mRect;
@@ -128,10 +134,12 @@ void BScreen::UpdateDirtyRects() {
     }
     delete r;
   }
+  mDirtyRects.Unlock();
 }
 
 void BScreen::UpdateWindows() {
   // render windows back to front
+  mWindowList.Lock();
   for (BWindow *win = mWindowList.Last(); !mWindowList.End((BNode *)win); win = (BWindow *)mWindowList.Prev(win)) {
     TBool hidden = EFalse;
     for (BWindow *other = (BWindow *)mWindowList.First(); other != win; other = (BWindow *)mWindowList.Next(other)) {
@@ -145,4 +153,5 @@ void BScreen::UpdateWindows() {
       UpdateWindow(win);
     }
   }
+  mWindowList.Unlock();
 }

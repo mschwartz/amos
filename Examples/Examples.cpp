@@ -18,7 +18,7 @@ extern "C" void StartExamples() {
   gExecBase.AddTask(new CliTask());
 
   dprint("Construct ExitTests\n");
-  gExecBase.AddTask(new ExitTestTask(EExitTestReturn, "RETURN", 12));
-  gExecBase.AddTask(new ExitTestTask(EExitTestSuicide, "SUICIDE", 8));
-  gExecBase.AddTask(new ExitTestTask(EExitTestExit, "EXIT", 12));
+  // gExecBase.AddTask(new ExitTestTask(EExitTestReturn, "RETURN", 12));
+  // gExecBase.AddTask(new ExitTestTask(EExitTestSuicide, "SUICIDE", 8));
+  // gExecBase.AddTask(new ExitTestTask(EExitTestExit, "EXIT", 12));
 }

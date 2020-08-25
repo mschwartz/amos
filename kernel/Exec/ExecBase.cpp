@@ -129,18 +129,17 @@ void ExecBase::Enable() {
   }
 }
 
+static SpinLock tasks_mutex;
+
 void ExecBase::AddTask(BTask *aTask) {
-  DISABLE;
-  // TODO: this should figure out which CPU to assign task to
-  CPU *c = CurrentCpu();
-  c->AddTask(aTask);
-  ENABLE;
+  tasks_mutex.Acquire();
+  mRunningTasks.Add(*aTask);
+  tasks_mutex.Release();
 }
 
 TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
-
   DISABLE;
-  CPU *c = CurrentCpu();
+  CPU *c = (CPU *)aTask->mCpu;
   if (!c) {
     c = CurrentCpu();
     bochs;
@@ -156,22 +155,21 @@ TInt64 ExecBase::RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete) {
 }
 
 void ExecBase::WaitSignal(BTask *aTask) {
-  DISABLE;
+  tasks_mutex.Acquire();
   aTask->Remove();
+
   // If task has received a signal it's waiting for, we don't want to move it to the WAIT list,
   // but it may be lower priority than another task so we need to sort it in to ACTIVE list.
   if (aTask->mSigWait & aTask->mSigReceived) {
-    // TODO: assign task to a CPU
-    CPU *cpu = CurrentCpu();
-    cpu->AddActiveTask(*aTask);
     aTask->mTaskState = ETaskRunning;
+    mRunningTasks.Add(*aTask);
   }
   else {
-    mWaitingTasks.Add(*aTask);
     aTask->mTaskState = ETaskWaiting;
+    mWaitingTasks.Add(*aTask);
   }
+  tasks_mutex.Release();
   Schedule();
-  ENABLE;
 }
 
 void ExecBase::WaitSemaphore(BTask *aTask, Semaphore *aSemaphore) {
@@ -195,8 +193,9 @@ void ExecBase::ReleaseSemaphore(Semaphore *aSemaphore) {
     aSemaphore->mNestCount = 1;
     aSemaphore->mSharedCount = 0;
     t->mTaskState = ETaskRunning;
-    CurrentCpu()->AddActiveTask(*t);
-    // mActiveTasks.Add(*t);
+    tasks_mutex.Acquire();
+    mRunningTasks.Add(*t);
+    tasks_mutex.Release();
   }
   else {
     aSemaphore->mOwner = ENull;
@@ -214,13 +213,16 @@ void ExecBase::Wake(BTask *aTask) {
   // note that removing and adding the task will sort the task at the end of all tasks with the same priority.
   // this effects round-robin.
   DISABLE;
-  if (aTask == ENull) {
-    aTask = mWaitingTasks.First();
-    dlog("Wake %s\n", aTask->TaskName());
+  if (aTask) {
+    tasks_mutex.Acquire();
+    if (aTask->mNext) {
+      aTask->Remove();
+    }
+    aTask->mTaskState = ETaskRunning;
+    mRunningTasks.Add(*aTask);
+    tasks_mutex.Release();
   }
-  aTask->Remove();
-  CurrentCpu()->AddActiveTask(*aTask);
-  aTask->mTaskState = ETaskRunning;
+  // CurrentCpu()->AddActiveTask(*aTask);
   ENABLE;
   //  DumpTasks();
 }
@@ -233,10 +235,6 @@ void ExecBase::Kickstart() {
   enter_tasking(); // just enter next task
 }
 
-void ExecBase::AddWaitingList(BTask &aTask) {
-  mWaitingTasks.Add(aTask);
-}
-
 /**
  * Determine next task to run.  This should only be called from IRQ/Interrupt context with interrupts disabled.
  */
@@ -245,29 +243,64 @@ void ExecBase::RescheduleIRQ() {
   c->RescheduleIRQ();
 }
 
+BTask *ExecBase::NextTask(BTask *aTask) {
+  tasks_mutex.Acquire();
+
+  if (aTask != ENull) {
+    if (CompareStrings(aTask->TaskName(), "Idle Task") == 0) {
+      dlog("BAD\n");
+      bochs;
+    }
+    switch (aTask->mTaskState) {
+      case ETaskRunning:
+        // dprint("Add Running %x(%s) - ", aTask, aTask->TaskName());
+        mRunningTasks.Add(*aTask);
+        break;
+      case ETaskWaiting:
+        // dprint("Add Waiting %x(%s) - ", aTask, aTask->TaskName());
+        mWaitingTasks.Add(*aTask);
+        break;
+      default:
+        // blocked - already on semaphore's waiting list (DO NOT REMOVE IT!)
+	break;
+    }
+  }
+
+  BTask *ret = mRunningTasks.RemHead();
+
+  tasks_mutex.Release();
+  return ret;
+}
+
 /********************************************************************************
  ********************************************************************************
  *******************************************************************************/
 
+// TODO: add this to Semaphore.hpp (in class)
+static SpinLock sem_mutex;
+
 TBool ExecBase::AddSemaphore(Semaphore *aSemaphore) {
+  sem_mutex.Acquire();
   mSemaphoreList.Add(*aSemaphore);
+  sem_mutex.Release();
   return ETrue;
 }
 
 TBool ExecBase::RemoveSemaphore(Semaphore *aSemaphore) {
+  sem_mutex.Acquire();
   if (aSemaphore->mNext && aSemaphore->mPrev) {
     aSemaphore->Remove();
+    sem_mutex.Release();
     return ETrue;
   }
-  else {
-    return EFalse;
-  }
+  sem_mutex.Release();
+  return EFalse;
 }
 
 Semaphore *ExecBase::FindSemaphore(const char *aName) {
-  DISABLE;
+  sem_mutex.Acquire();
   Semaphore *s = (Semaphore *)mSemaphoreList.Find(aName);
-  ENABLE;
+  sem_mutex.Release();
   return s;
 }
 
@@ -277,24 +310,26 @@ Semaphore *ExecBase::FindSemaphore(const char *aName) {
 
 void ExecBase::AddMessagePort(MessagePort &aMessagePort) {
   DISABLE;
+  mMessagePortList->Lock();
   mMessagePortList->Add(aMessagePort);
+  mMessagePortList->Unlock();
   ENABLE;
 }
 
 TBool ExecBase::RemoveMessagePort(MessagePort &aMessagePort) {
   if (mMessagePortList->Find(aMessagePort)) {
-    DISABLE;
+    mMessagePortList->Lock();
     aMessagePort.Remove();
-    ENABLE;
+    mMessagePortList->Unlock();
     return ETrue;
   }
   return EFalse;
 }
 
 MessagePort *ExecBase::FindMessagePort(const char *aName) {
-  DISABLE;
+  mMessagePortList->Lock();
   MessagePort *mp = (MessagePort *)mMessagePortList->Find(aName);
-  ENABLE;
+  mMessagePortList->Unlock();
   return mp;
 }
 
@@ -307,15 +342,15 @@ MessagePort *ExecBase::FindMessagePort(const char *aName) {
  *******************************************************************************/
 
 void ExecBase::AddDevice(BDevice *aDevice) {
-  DISABLE;
+  mDeviceList.Lock();
   mDeviceList.Add(*aDevice);
-  ENABLE;
+  mDeviceList.Unlock();
 }
 
 BDevice *ExecBase::FindDevice(const char *aName) {
-  DISABLE;
+  mDeviceList.Lock();
   BDevice *d = mDeviceList.FindDevice(aName);
-  ENABLE;
+  mDeviceList.Unlock();
   return d;
 }
 
@@ -371,6 +406,7 @@ public:
 public:
   TBool Run(TAny *aData) {
     cli();
+    bochs;
     gExecBase.GuruMeditation("%s Exception", mNodeName);
     // TODO: kill/remove current task
     halt();
@@ -404,7 +440,10 @@ public:
 
 void ExecBase::SetIntVector(EInterruptNumber aInterruptNumber, BInterrupt *aInterrupt) {
   dlog("SetIntVector(%d, %x) %s\n", aInterruptNumber, aInterrupt, aInterrupt->mNodeName);
-  mInterrupts[aInterruptNumber].Add(*aInterrupt);
+  BInterruptList *list = &mInterrupts[aInterruptNumber];
+  list->Lock();
+  list->Add(*aInterrupt);
+  list->Unlock();
 }
 
 void ExecBase::EnableIRQ(TUint16 aIRQ) {
@@ -436,15 +475,15 @@ extern "C" TUint64 GetRFLAGS();
  * Note that there may be multiple interrupts that fire a vector.
  */
 TBool ExecBase::RootHandler(TInt64 aInterruptNumber, TAny *aData) {
-  cli();
   BInterruptList *list = &gExecBase.mInterrupts[aInterruptNumber];
+  list->Lock();
   for (BInterrupt *i = (BInterrupt *)list->First(); !list->End(i); i = (BInterrupt *)i->mNext) {
-    if (i->Run(i->mData)) {
-      return ETrue;
-    }
+    list->Unlock();
+    return i->Run(i->mData);
   }
   // TODO: no handler!
   dlog("No handler!\n");
+  list->Unlock();
   return EFalse;
 }
 

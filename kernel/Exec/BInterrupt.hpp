@@ -2,6 +2,7 @@
 #define EXEC_BINTERRUPT_H
 
 #include <Types/BList.hpp>
+#include <Exec/SpinLock.hpp>
 
 /* External interrupts */
 #define IRQ_OFFSET 0x20 /* Interrupt offset for external interrupts */
@@ -52,10 +53,10 @@ enum EInterruptNumber {
   EVirtualization,
   ESecurity,
   // IRQ
-  EApicTimerIRQ = 0x20,
-  EKeyboardIRQ = 0x21,
-  ETimerIRQ = 0x22,
-  ESlavePicIRQ = 0x22,
+  EApicTimerIRQ = IRQ_OFFSET,
+  EKeyboardIRQ = IRQ_OFFSET+1,
+  ETimerIRQ = IRQ_OFFSET+2,
+  ESlavePicIRQ = IRQ_OFFSET+2,
   ECom2IRQ,
   ECom1IRQ,
   ELpt2IRQ,
@@ -104,6 +105,13 @@ public:
   BInterruptList() : BListPri("Interrupt List") {
   }
   ~BInterruptList() {}
+
+public:
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
+
+protected:
+  SpinLock mSpinLock;
 };
 
 #endif

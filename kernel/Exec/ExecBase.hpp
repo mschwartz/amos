@@ -143,10 +143,11 @@ public:
   void AddTask(BTask *aTask);
   // suicide/exit/kill task
   TInt64 RemoveTask(BTask *aTask, TInt64 aExitCode, TBool aDelete = ETrue);
+  // next task from running list
+  BTask *NextTask(BTask *aTask);
 
   // void DumpTasks();
   // void DumpCurrentTask() { mCurrentTask->Dump(); }
-  void AddWaitingList(BTask &aTask);
 
   BTask *GetCurrentTask() {
     CPU *cpu = CurrentCpu();
@@ -179,7 +180,7 @@ public:
   void Schedule();
 
 protected:
-  Mutex mWaitingTasksMutex;
+  BTaskList mRunningTasks;
   BTaskList mWaitingTasks;
 
   //
@@ -215,7 +216,7 @@ public:
   BDevice *FindDevice(const char *aName);
 
 protected:
-  BDeviceList mDeviceList;
+  DeviceList mDeviceList;
 
   //
   // FILESYSTEMS

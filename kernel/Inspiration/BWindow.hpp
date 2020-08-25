@@ -118,13 +118,20 @@ protected:
  ********************************************************************************
  *******************************************************************************/
 
-class BWindowList : public BList {
+class WindowList : public BList {
 public:
-  BWindowList() : BList("Window List") {}
+  WindowList() : BList("Window List") {}
 
 public:
   BWindow *First() { return (BWindow *)mNext; }
   BWindow *Last() { return (BWindow *)mPrev; }
+
+public:
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
+
+protected:
+  SpinLock mSpinLock;
 };
 
 /********************************************************************************

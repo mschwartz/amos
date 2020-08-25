@@ -28,13 +28,16 @@ TInt64 InitTask::Run() {
   dlog("  initialize rtc \n");
   gExecBase.AddDevice(new RtcDevice());
 
-  // mCpu->mIdleTask = new IdleTask();
-  // gExecBase.AddTask(new IdleTask());
   dlog("  STARTING APs\n");
+  // for (TInt i = 1; i < 3; i++) {
   for (TInt i = 1; i < gExecBase.NumCpus(); i++) {
+    break;
     CPU *cpu = gExecBase.GetCpu(i);
     cpu->StartAP(this); // initialize tasking for AP
   }
+
+  // mCpu->mIdleTask = new IdleTask();
+  // gExecBase.AddTask(new IdleTask());
 
   // Sleep(3);
 
@@ -151,5 +154,10 @@ TInt64 InitTask::Run() {
   dlog("  initialize Inspiration\n");
   gExecBase.SetInspirationBase(new InspirationBase());
 
+  // TODO: this should work!
+  for (;;) {
+    Sleep(100);
+  }
+  dlog("Exiting!\n");
   return 0;
 }

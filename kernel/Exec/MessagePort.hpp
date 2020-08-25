@@ -2,6 +2,7 @@
 #define BMESSAGEPORT_H
 
 #include <Exec/BTask.hpp>
+#include <Exec/SpinLock.hpp>
 
 /********************************************************************************
  ********************************************************************************
@@ -36,6 +37,14 @@ class BMessageList : public BListPri {
 public:
   BMessageList(const char *aName);
   ~BMessageList();
+
+public:
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
+
+protected:
+  SpinLock mSpinLock;
+
 public:
   void Dump();
 };
@@ -61,6 +70,14 @@ public:
 
 protected:
   void ReceiveMessage(BMessage *aMessage);
+
+public:
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
+
+protected:
+  SpinLock mSpinLock;
+
 protected:
   BTask *mOwner;
   TInt64 mSignalBit;
@@ -78,8 +95,19 @@ public:
 
 public:
   MessagePort *FindPort(const char *aName) {
-    return (MessagePort *)Find(aName);
+
+    Lock();
+    MessagePort *p = (MessagePort *)Find(aName);
+    Unlock();
+    return p;
   }
+
+protected:
+  SpinLock mSpinLock;
+
+public:
+  void Lock() { mSpinLock.Acquire(); }
+  void Unlock() { mSpinLock.Release(); }
 };
 
 #endif

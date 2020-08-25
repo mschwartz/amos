@@ -7,10 +7,14 @@
 
 #include <Exec/BBase.hpp>
 
-class Mutex : public BBase {
+typedef TUint32 TSpinLock;
+
+class BTask;
+
+class SpinLock : public BBase {
 public:
-  Mutex();
-  ~Mutex();
+  SpinLock();
+  ~SpinLock();
 
 public:
   TBool Try();
@@ -18,7 +22,8 @@ public:
   void Release();
 
 protected:
-  volatile int mLock;
+  volatile TSpinLock mLock;
+  TUint64 mFlags;
 };
 
 #endif

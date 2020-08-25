@@ -116,7 +116,9 @@ CPU::CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi) {
 
 void CPU::GuruMeditation(const char *aFormat, ...) {
   cli();
-  // bochs;
+  mCpuState = ECpuGuruMeditation;
+  bochs;
+
   char buf[512];
   dprint("\n\n***********************\n");
   dprint("GURU MEDITATION at %dms in CPU %d\n", gExecBase.SystemTicks(), mProcessorId);
@@ -138,16 +140,15 @@ void CPU::GuruMeditation(const char *aFormat, ...) {
 
 // This function must run in the CPU!
 void CPU::EnterAP() {
-  cli();
   mGS.mCurrentCpu = this;
   SetGS(&mGS);
   SetCPU(this);
   mApic->Initialize();
-  cli();
 
   dprint("\n\n");
   dlog("EnterAP %d gs(%x) mGS(%x) CPU(%x %x)\n", mProcessorId, GetGS(), &mGS, this, GetCPU());
 
+  Lock();
   mIdleTask = new IdleTask();
   mIdleTask->mCpu = this;
   mActiveTasks.Add(*mIdleTask);
@@ -161,13 +162,13 @@ void CPU::EnterAP() {
     mGdt->Install();
     mIdt->Install();
   }
-  mRunningTaskCount = 1;
   mCurrentTask = mActiveTasks.First();
   SetCurrentTask(&mCurrentTask->mRegisters);
+  Unlock();
 
   // sti();
   enter_tasking(); // just enter next task
-  dlog("BAD\n");
+  dlog("BAD EnterAP\n");
   bochs;
 }
 
@@ -216,21 +217,11 @@ void CPU::StartAP(BTask *aTask) {
   }
 }
 
-void CPU::AddTask(BTask *aTask) {
-  DISABLE;
-  aTask->mRegisters.tss = (TUint64)mTss;
-  aTask->mCpu = this;
-  mActiveTasks.Add(*aTask);
-  mRunningTaskCount++;
-  dlog("    CPU(%d) Add Task %016x --- %s --- rip=%016x rsp=%016x\n",
-    mProcessorId, aTask, aTask->mNodeName, aTask->mRegisters.rip, aTask->mRegisters.rsp);
-  ENABLE;
-}
-
 TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   DISABLE;
+  Lock();
+
   aTask->Remove();
-  mRunningTaskCount--;
   TBool isCurrentTask = aTask == mCurrentTask;
   if (isCurrentTask) {
     dlog("CPU %d RemoveTask(%s) code(%d) CURRENT TASK\n", mProcessorId, aTask->TaskName(), aExitCode);
@@ -242,8 +233,12 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
   if (isCurrentTask) {
     mCurrentTask = mActiveTasks.First();
     SetCurrentTask(&mCurrentTask->mRegisters);
+    Unlock();
+    dprint("CPU::RemoveTask - enter-tasking\n");
     enter_tasking(); // just enter next task
   }
+  bochs
+  Unlock();
   ENABLE;
   return aExitCode;
 }
@@ -251,40 +246,33 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
 void CPU::DumpTasks() {
   dlog("\n\nActive Tasks\n");
   mActiveTasks.Dump();
-  // dlog("Waiting Tasks\n");
-  // mWaitingTasks.Dump();
   dlog("\n\n");
 }
 
 void CPU::RescheduleIRQ() {
-  BTask *t = mCurrentTask;
+  DISABLE;
+  Lock(); // in case active tasks list is being manipulated in a Task
 
-  if (mCurrentTask) {
-    // if task is blocked, it is not on the system waiting list
-    // it is potentially on a Sempahore's waiting list or some other waiting list
-    if (mCurrentTask->mTaskState != ETaskBlocked) {
-      // if Task has called Forbid(), we don't want to switch to another task
-      if (mCurrentTask->mForbidNestCount == 0) {
-        mCurrentTask->Remove();
-        if (mCurrentTask->mTaskState == ETaskWaiting) {
-          gExecBase.AddWaitingList(*t);
-        }
-        else {
-          mActiveTasks.Add(*mCurrentTask);
-        }
-      }
-      else {
-        dlog("FORBID %d\n", mCurrentTask->mForbidNestCount);
-      }
-    }
+  BTask *t;
+  // we don't want to remove the idle task and add it to Exec's lists!
+  if (mCurrentTask != mIdleTask) {
+    mCurrentTask->Remove();
+    t = gExecBase.NextTask(mCurrentTask);
+  }
+  else {
+    t = gExecBase.NextTask(ENull);
+  }
+
+  // If NextTask returned a BTask, we want to add it and run it.
+  // Otherwise there are none ready so we want to IdleTask.
+  if (t) {
+    t->mCpu = this;
+    mActiveTasks.Add(*t);
   }
 
   mCurrentTask = mActiveTasks.First();
   SetCurrentTask(&mCurrentTask->mRegisters);
-  if (t != mCurrentTask && gExecBase.mDebugSwitch) {
-    dprint("  CPU %d Reschedule %s\n", mProcessorId, mCurrentTask->TaskName());
-    dprint("Previous task\n");
-    dprint("  Previous Task %s\n", t->TaskName());
-    dprint("\n\n\n");
-  }
+
+  Unlock();
+  ENABLE;
 }

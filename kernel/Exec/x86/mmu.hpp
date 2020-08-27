@@ -2,8 +2,9 @@
 #define KERNEL_MMU_H
 
 #include <Types.hpp>
+#include "PageTable.hpp"
 
-const TUint64 PAGE_SIZE = 4096;
+// const TUint64 PAGE_SIZE = 4096;
 
 typedef struct {
   TUint16 mOffset : 12;

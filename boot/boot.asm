@@ -308,7 +308,7 @@ ap_start32:
 	mov cr4, eax
 
 	; use PML4 for paging
-	mov eax, 0x2008
+	mov eax, 0x2000
 	mov cr3, eax
 	
         ; Enable long mode and SYSCALL/SYSRET
@@ -936,7 +936,7 @@ pd_low:					; Create a 2 MiB page
 	cmp ecx, 2048
 	jne pd_low			; Create 2048 2 MiB page maps.
 
-	mov eax, 0x00002008		; Write-thru enabled (Bit 3)
+	mov eax, 0x00002000		; Write-thru enabled (Bit 3)
         ret
 
 enter_long_mode:

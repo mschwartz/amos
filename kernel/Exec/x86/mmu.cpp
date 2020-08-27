@@ -16,36 +16,49 @@ static const char *types[] = {
   "Reserved ",
 };
 
+extern "C" void *kernel_end;
+
 TUint64 MMU::link_memory_pages(TUint64 address, TUint64 size) {
+  const TUint64 start = ((TUint64)&kernel_end) + 200 * MEGABYTE;
+  ;
+  dlog("link_memory_pages(%x, %d/%x) start(%x)\n", address, size, size, start);
   if (address == 0) {
     return 0;
   }
+  dlog("  link_memory_pages(%x, %d/%x)\n", address, size, size);
   TUint8 *src = (TUint8 *)address;
   TInt pages = size / PAGE_SIZE - 1;
   for (TInt count = 0; count < pages; count++) {
-    if ((TUint64)src >= 4 * GIGABYTE) {
-//      kprint("DONE\n");
-      break;
-    }
-//      dlog("%d link %x %d size:%d pages:%d\r", count, src, src, size, pages);
+    // if ((TUint64)src >= 4 * GIGABYTE) {
+    //   //      kprint("DONE\n");
+    //   break;
+    // }
     TUint64 *ptr = (TUint64 *)&src[0];
-//    bzero(src, PAGE_SIZE);
-//        memset(src, 0, PAGE_SIZE);
 
-    *ptr = (TUint64)mFreePages;
-    mFreePages = src;
+    if (address >= start) {
+      // dlog("   address(%x) start(%x) src(%x)\n", address, start, src);
+      // dlog("    %d link %x %d size:%d pages:%d\n", count, src, src, size, pages);
+      //    bzero(src, PAGE_SIZE);
+      //        memset(src, 0, PAGE_SIZE);
+      *ptr = (TUint64)mFreePages;
+      mFreePages = src;
+    }
+    address += PAGE_SIZE;
+    system_memory += PAGE_SIZE;
     src += PAGE_SIZE;
     //    size -= PAGE_SIZE;
   }
-//      dputc('\n');
+  // dputc('\n');
   return pages;
 }
 
 // unlink a 4K page from free list and return it
 TAny *MMU::AllocPage() {
+  // dprint("-------------------- MMU AllocPage %x ", mFreePages);
   TUint8 *ptr = (TUint8 *)mFreePages;
   TUint64 *ptr64 = (TUint64 *)&ptr[0];
   mFreePages = (TAny *)ptr64[0];
+  // dprint("ptr(%x) mFreePages(%x)\n", ptr, mFreePages);
   return (TAny *)ptr;
 }
 
@@ -70,12 +83,11 @@ typedef struct {
   TUint32 mCount;
   TMemoryInfo mInfo[];
   void Dump() {
-//    dhexdump((TUint8 *)BIOS_MEMORY, 16);
+    //    dhexdump((TUint8 *)BIOS_MEMORY, 16);
     dlog("TBiosMemory: %x, %d entries\n", this, mCount);
-    for (TInt32 i=0; i<mCount; i++) {
+    for (TInt32 i = 0; i < mCount; i++) {
       mInfo[i].Dump();
     }
-
   }
 } PACKED TBiosMemory;
 
@@ -86,30 +98,34 @@ MMU::MMU() {
   mFreePages = nullptr;
   system_memory = 0;
   TBiosMemory *m = (TBiosMemory *)BIOS_MEMORY;
-//  m->Dump();
+  m->Dump();
+  dprint("\n\n");
 
   TInt32 count = m->mCount;
-#ifdef DEBUGME
-  dlog("init_memory %d chunks\n", count);
-#endif
-  for (TInt32 i=0; i<count; i++) {
+  for (TInt32 i = 0; i < count; i++) {
     TMemoryInfo *b = &m->mInfo[i]; // defined in memory.inc
     TInt type = b->type;
-//    dlog("base: $%x size: %d pages: %d type: %d (%d)\n", b->address, b->size, b->size / PAGE_SIZE, type, MEMORYTYPE_RANGE);
     if (type != 1) {
       continue;
     }
-#ifdef DEBUGME
-    dlog("->> base: $%x size: $%x(%d) pages: %d type: %d (%d)\n", b->address, b->size, b->size, b->size / PAGE_SIZE, type, MEMORYTYPE_RANGE);
-#endif
-    system_memory += b->size;
-    //            link_memory_pages(b->address, b->size);
-    link_memory_pages(b->address, GIGABYTE);
+    // b->Dump();
+    link_memory_pages(b->address, b->size);
   }
   system_pages = (system_memory + PAGE_SIZE - 1) / PAGE_SIZE;
 
+  dprint("system_memory(%d) system_pages(%d)\n", system_memory, system_pages);
+  bochs;
+  PageTable *pt = new PageTable(this);
+  for (TUint64 address = 0; address < 8 * GIGABYTE; address++) {
+    pt->MapPage(address, address);
+  }
+  bochs;
+  pt->Dump();
+  return;
+
   // TODO: 64G+ address space mapping
   //  return;
+
   // blank page directory:
 #ifdef DEBUGME
   dlog("blanking page directory\n");
@@ -132,9 +148,9 @@ MMU::MMU() {
 #ifdef DEBUGME
   dlog("page_directory: %x\n", page_directory);
 #endif
-//  bochs
-//  load_page_directory(page_directory);
-//  enable_paging();
+  //  bochs
+  //  load_page_directory(page_directory);
+  //  enable_paging();
 }
 
 MMU::~MMU() {

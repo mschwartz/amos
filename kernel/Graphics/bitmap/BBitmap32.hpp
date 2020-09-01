@@ -84,6 +84,11 @@ public:
     mForegroundColor.Set(aForegroundColor);
     mBackgroundColor.Set(aBackgroundColor);
   }
+  void SetColors(TUint32 aForegroundColor, TUint32 aBackgroundColor) {
+    TRGB fg(aForegroundColor),
+      bg(aBackgroundColor);
+    SetColors(fg, bg);
+  }
   void GetColors(TRGB &aForegroundColor, TRGB &aBackgroundColor) {
     aForegroundColor.Set(mForegroundColor);
     aBackgroundColor.Set(mBackgroundColor);

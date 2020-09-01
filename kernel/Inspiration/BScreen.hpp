@@ -36,6 +36,11 @@ public:
   ~BScreen();
 
 public:
+  const char *Title() { return mNodeName; }
+  void Title(const char *aNewTitle) {
+    SetName(aNewTitle);
+    RenderTitlebar();
+  }
   void RenderTitlebar();
   void Clear(TUint32 aColor);
 

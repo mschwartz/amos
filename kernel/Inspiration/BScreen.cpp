@@ -31,22 +31,31 @@ void BScreen::AddWindow(BWindow *aWindow) {
   ActivateWindow(aWindow);
 }
 
-extern "C" TUint64 GetRSP();
-
 void BScreen::AddDirtyRect(TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TCoordinate aY2) {
   TRect rect(aX1, aY1, aX2, aY2);
   mDirtyRects.Add(rect);
 }
 
+void BScreen::RenderTitlebar() {
+  mBitmap->FillRect(mTheme->mScreenTitleBackgroundColor, 0, 0, Width() - 1, 26);
+  mBitmap->SetFont(mTheme->mScreenFont);
+  mBitmap->SetColors(
+		     mTheme->mScreenTitleColor,
+		     mTheme->mScreenTitleBackgroundColor
+		     );
+  mBitmap->DrawText(4,4, Title());
+  CopyMemory32(mBackground->GetPixels(), mBitmap->GetPixels(), Width() * 28);
+
+  // AddDirtyRect(0, 0, Width() - 1, 26);
+}
+
 void BScreen::Clear(const TUint32 aColor) {
   // copy mBackground to mBitmap
   CopyMemory32(mBitmap->GetPixels(), mBackground->GetPixels(), Width() * Height());
-  // TInt count = Width() * Height();
-
-  // mBitmap->Clear(aColor);
+  RenderTitlebar();
   AddDirtyRect(0, 0, Width() - 1, Height() - 1);
 }
-
+              
 void BScreen::EraseWindow(BWindow *aWindow) {
   TCoordinate x = aWindow->WindowLeft(),
     y = aWindow->WindowTop();
@@ -81,7 +90,6 @@ BWindow *BScreen::DragWindow(TCoordinate aX, TCoordinate aY) {
 
   mWindowList.Lock();
   for (BWindow *w = mWindowList.Last(); !mWindowList.End(w); w = (BWindow *)mWindowList.Prev(w)) {
-    // dlog("DragWindow, trying %x(%s) %d,%d %d\n", w, w->Title(), aX, aY, w->mTitlebarRect.PointInRect(aX, aY));
     if (w->OverDragBar(aX, aY)) {
       selected = w;
     }

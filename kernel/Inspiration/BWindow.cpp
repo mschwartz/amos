@@ -94,7 +94,6 @@ void BWindow::MoveTo(TCoordinate aX, TCoordinate aY) {
   mWindowRect.Offset(aX - WindowLeft(), aY - WindowTop());
   mScreen->UpdateWindow(this);
   ENABLE;
-  //
 }
 
 void BWindow::SetIdcmpPort(BTask *aTask) {

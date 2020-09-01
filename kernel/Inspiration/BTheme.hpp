@@ -34,8 +34,8 @@ public:
   BConsoleFont32 *mTitleFont;                     // window title font
   // screen themes
   TUint32 mScreenBackgroundColor = 0x4f4fff;      // screen/desktop background color
-  TUint32 mScreenTitleBackgroundColor = 0x000000, // screen titlebar background color
-    mScreenTitleColor = 0xffffff;                 // screen titlebar font color
+  TUint32 mScreenTitleBackgroundColor = 0xffffff, // screen titlebar background color
+    mScreenTitleColor = 0x000000;                 // screen titlebar font color
   BConsoleFont32 *mScreenFont;                    // screen title font
 
 public:

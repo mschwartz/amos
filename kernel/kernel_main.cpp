@@ -81,6 +81,7 @@ extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
 
   gSystemInfo.mDiskSize = gSystemInfo.mNumHeads * gSystemInfo.mNumSectors * gSystemInfo.mNumCylinders * 512;
 
+  gSystemInfo.Dump();
   call_global_constructors();
 
   // it should NEVER get here!

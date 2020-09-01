@@ -24,7 +24,7 @@
 
 #ifdef KERNEL
 
-extern "C" TAny *ExtendChipRam(TUint64 aIncrement) {
+static TAny *ExtendChipRam(TUint64 aIncrement) {
   extern void *chip_memory;
   extern void *chip_memory_end;
   static TUint8 *sChipBreak = ENull;
@@ -62,7 +62,7 @@ extern "C" TAny *ExtendChipRam(TUint64 aIncrement) {
   return ret;
 }
 
-extern "C" TAny *ExtendDataSegment(TUint64 aIncrement) {
+static TAny *ExtendDataSegment(TUint64 aIncrement) {
   extern void *kernel_end;
   static TUint8 *sProgramBreak = ENull;
 
@@ -203,14 +203,6 @@ static TAny *allocate(TInt64 aSize, TInt aFlags) {
   }
 
   return ret;
-  // TUint8 *p = (TUint8 *)ret;
-  // TUint8 *mem = &p[sizeof(Chunk)];
-  // if (aFlags & MEMF_CLEAR) {
-  //   SetMemory8(mem, 0, aSize);
-  // }
-
-  // DLOG("AllocMem returns(%x)\n", mem);
-  // return mem;
 }
 
 static SpinLock allocmem_mutex;

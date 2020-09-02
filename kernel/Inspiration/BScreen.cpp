@@ -37,22 +37,25 @@ void BScreen::AddDirtyRect(TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TC
 }
 
 void BScreen::RenderTitlebar() {
-  mBitmap->FillRect(mTheme->mScreenTitleBackgroundColor, 0, 0, Width() - 1, 26);
-  mBitmap->SetFont(mTheme->mScreenFont);
-  mBitmap->SetColors(
+  BBitmap32 *b = mBackground;
+  b->FillRect(mTheme->mScreenTitleBackgroundColor, 0, 0, Width() - 1, 26);
+  b->SetFont(mTheme->mScreenFont);
+  b->SetColors(
 		     mTheme->mScreenTitleColor,
 		     mTheme->mScreenTitleBackgroundColor
 		     );
-  mBitmap->DrawText(4,4, Title());
-  CopyMemory32(mBackground->GetPixels(), mBitmap->GetPixels(), Width() * 28);
+  char buf[512];
+  sprintf(buf, "%s - %d total / %d used / %d available", Title(), TotalMem(), UsedMem(), AvailMem());
+  b->DrawText(4,4, buf);
+  // CopyMemory32(mBackground->GetPixels(), mBitmap->GetPixels(), Width() * 28);
 
-  // AddDirtyRect(0, 0, Width() - 1, 26);
+  AddDirtyRect(0, 0, Width() - 1, 26);
 }
 
 void BScreen::Clear(const TUint32 aColor) {
   // copy mBackground to mBitmap
-  CopyMemory32(mBitmap->GetPixels(), mBackground->GetPixels(), Width() * Height());
   RenderTitlebar();
+  CopyMemory32(mBitmap->GetPixels(), mBackground->GetPixels(), Width() * Height());
   AddDirtyRect(0, 0, Width() - 1, Height() - 1);
 }
               
@@ -148,6 +151,7 @@ void BScreen::UpdateDirtyRects() {
 void BScreen::UpdateWindows() {
   // render windows back to front
   mWindowList.Lock();
+  RenderTitlebar();
   for (BWindow *win = mWindowList.Last(); !mWindowList.End((BNode *)win); win = (BWindow *)mWindowList.Prev(win)) {
     TBool hidden = EFalse;
     for (BWindow *other = (BWindow *)mWindowList.First(); other != win; other = (BWindow *)mWindowList.Next(other)) {

@@ -56,6 +56,8 @@ ExecBase::ExecBase() {
   mMMU = new MMU;
   dlog("  initialized MMU\n");
 
+  InitAllocMem();
+
   cli();
   mACPI = new ACPI();
   dlog("  initialized ACPI\n");

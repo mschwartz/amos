@@ -9,6 +9,7 @@
 
 #ifdef KERNEL
 #include <Exec/x86/bochs.hpp>
+#include <Exec/x86/kernel_memory.hpp>
 #else
 #include <stdlib.h>
 #endif
@@ -23,6 +24,9 @@
 #endif
 
 #ifdef KERNEL
+
+static TUint64 sUsedMem = 0,
+               sTotalMem = 0;
 
 static TAny *ExtendChipRam(TUint64 aIncrement) {
   extern void *chip_memory;
@@ -157,10 +161,29 @@ static TUint8 sChunkListMem[sizeof(ChunkList)];
 static ChunkList *sFreeChunks = ENull;
 
 void InitAllocMem() {
+  gSystemInfo.mRam = 0;
+  TBiosMemory *m = (TBiosMemory *)BIOS_MEMORY;
+  TInt32 count = m->mCount;
+  for (TInt32 i = 0; i < count; i++) {
+    TMemoryInfo *b = &m->mInfo[i]; // defined in memory.inc
+    TInt type = b->type;
+    if (type != 1) {
+      continue;
+    }
+    // b->Dump();
+    if (b->address + b->size > gSystemInfo.mRam) {
+      gSystemInfo.mRam = b->address + b->size;
+    }
+  }
+
+  extern void *kernel_end;
   if (!sFreeChunks) {
     sFreeChunks = (ChunkList *)&sChunkListMem;
     sFreeChunks->Init();
   }
+  sUsedMem = 0;
+  sTotalMem = gSystemInfo.mRam - (TUint64)&kernel_end;
+  dlog("InitAllocMem total(%d)\n", gSystemInfo.mRam);
 }
 
 static TAny *allocate(TInt64 aSize, TInt aFlags) {
@@ -183,6 +206,7 @@ static TAny *allocate(TInt64 aSize, TInt aFlags) {
       c->Remove();
       DLOG("AllocMem freeList HIT\n");
       ret = c;
+      sUsedMem += aSize;
       break;
     }
   }
@@ -197,6 +221,7 @@ static TAny *allocate(TInt64 aSize, TInt aFlags) {
       ret->Dump();
     }
     else {
+      sUsedMem += aSize;
       ret = (Chunk *)ExtendDataSegment(sizeof(Chunk) + aSize);
       ret->mSize = aSize;
     }
@@ -226,8 +251,23 @@ void FreeMem(TAny *aPtr) {
   allocmem_mutex.Acquire();
   TUint8 *p = (TUint8 *)aPtr;
   Chunk *c = (Chunk *)(p - sizeof(Chunk));
+  if ((c->mSize & CHUNK_CHIP) == 0) {
+    sUsedMem -= c->mSize;
+  }
   sFreeChunks->AddHead(*c);
   allocmem_mutex.Release();
+}
+
+TUint64 AvailMem() {
+  return sTotalMem - sUsedMem;
+}
+
+TUint64 TotalMem() {
+  return sTotalMem;
+}
+
+TUint64 UsedMem() {
+  return sUsedMem;
 }
 
 #else

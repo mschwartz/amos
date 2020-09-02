@@ -44,7 +44,7 @@ typedef struct {
     // dlog("TSystemInfo(%x)\n", this);
     dlog("%s %s\n", mVersion, mBochs ? "BOCHS ENABLED" : "NO BOCHS");
     dlog("     CPU Speed: %0d Mhz\n", mCpuMhz);
-    dlog("           RAM: %016x\n", mRam);
+    dlog("           RAM: %016x (%d)\n", mRam, mRam);
     dlog("          init: %016x - %016x\n", mInitStart, mInitEnd);
     dlog("          text: %016x - %016x\n", mTextStart, mTextEnd);
     dlog("        rodata: %016x - %016x\n", mRoDataStart, mRoDataEnd);

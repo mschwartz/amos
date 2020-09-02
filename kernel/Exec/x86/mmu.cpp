@@ -20,7 +20,7 @@ extern "C" void *kernel_end;
 
 TUint64 MMU::link_memory_pages(TUint64 address, TUint64 size) {
   const TUint64 start = ((TUint64)&kernel_end) + 200 * MEGABYTE;
-  ;
+
   dlog("link_memory_pages(%x, %d/%x) start(%x)\n", address, size, size, start);
   if (address == 0) {
     return 0;
@@ -46,6 +46,9 @@ TUint64 MMU::link_memory_pages(TUint64 address, TUint64 size) {
     address += PAGE_SIZE;
     system_memory += PAGE_SIZE;
     src += PAGE_SIZE;
+    if (src > mHighAddress) {
+      mHighAddress = src;
+    }
     //    size -= PAGE_SIZE;
   }
   // dputc('\n');
@@ -68,34 +71,9 @@ void MMU::FreePage(TAny *aPage) {
   mFreePages = ptr;
 }
 
-// the boot code creates an array of these at a known location, so we can find all the memory.
-typedef struct {
-  TUint64 address;
-  TUint64 size;
-  TUint32 type;
-  TUint32 acpi;
-  void Dump() {
-    dlog("  TMemoryInfo: %x address: %x size: $%x(%d) type: %x acpi: %x\n", this, address, size, size, type, acpi);
-  }
-} PACKED TMemoryInfo;
-
-typedef struct {
-  TUint32 mCount;
-  TMemoryInfo mInfo[];
-  void Dump() {
-    //    dhexdump((TUint8 *)BIOS_MEMORY, 16);
-    dlog("TBiosMemory: %x, %d entries\n", this, mCount);
-    for (TInt32 i = 0; i < mCount; i++) {
-      mInfo[i].Dump();
-    }
-  }
-} PACKED TBiosMemory;
-
-const TUint64 MEMORYTYPE_RANGE = 1;
-const TUint64 MEMORYTYPE_RESERVED = 2;
-
 MMU::MMU() {
   mFreePages = nullptr;
+  mHighAddress = nullptr;
   system_memory = 0;
   TBiosMemory *m = (TBiosMemory *)BIOS_MEMORY;
   m->Dump();
@@ -113,7 +91,13 @@ MMU::MMU() {
   }
   system_pages = (system_memory + PAGE_SIZE - 1) / PAGE_SIZE;
 
+  // gSystemInfo.mRam = HighAddress();
+
+  gSystemInfo.Dump();
+  
   dprint("system_memory(%d) system_pages(%d)\n", system_memory, system_pages);
+  return;
+  
   bochs;
   PageTable *pt = new PageTable(this);
   for (TUint64 address = 0; address < 8 * GIGABYTE; address++) {

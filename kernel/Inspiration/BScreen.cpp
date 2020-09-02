@@ -6,6 +6,8 @@
 
 #include <Graphics/bitmap/BBitmap32.hpp>
 
+const TInt TITLEBAR_HEIGHT = 26;
+
 BScreen::BScreen(const char *aTitle) : BNode(aTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
   mDisplay = mInspirationBase.GetDisplay();
   mDisplay->Dump();
@@ -38,18 +40,22 @@ void BScreen::AddDirtyRect(TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TC
 
 void BScreen::RenderTitlebar() {
   BBitmap32 *b = mBackground;
-  b->FillRect(mTheme->mScreenTitleBackgroundColor, 0, 0, Width() - 1, 26);
+  b->FillRect(mTheme->mScreenTitleBackgroundColor, 0, 0, Width() - 1, TITLEBAR_HEIGHT);
   b->SetFont(mTheme->mScreenFont);
   b->SetColors(
-		     mTheme->mScreenTitleColor,
-		     mTheme->mScreenTitleBackgroundColor
-		     );
-  char buf[512];
-  sprintf(buf, "%s - %d total / %d used / %d available", Title(), TotalMem(), UsedMem(), AvailMem());
-  b->DrawText(4,4, buf);
-  // CopyMemory32(mBackground->GetPixels(), mBitmap->GetPixels(), Width() * 28);
+    mTheme->mScreenTitleColor,
+    mTheme->mScreenTitleBackgroundColor);
 
-  AddDirtyRect(0, 0, Width() - 1, 26);
+#if 0
+  b->DrawText(4,4, Title());
+#else
+  char buf[512];
+  sprintf(buf, "%s - %x total / %x used / %x available", Title(), TotalMem(), UsedMem(), AvailMem());
+  b->DrawText(4, 4, buf);
+#endif
+  // CopyMemory32(mBackground->GetPixels(), mBitmap->GetPixels(), Width() * TITLEBAR_HEIGHT);
+
+  AddDirtyRect(0, 0, Width() - 1, TITLEBAR_HEIGHT);
 }
 
 void BScreen::Clear(const TUint32 aColor) {
@@ -58,10 +64,10 @@ void BScreen::Clear(const TUint32 aColor) {
   CopyMemory32(mBitmap->GetPixels(), mBackground->GetPixels(), Width() * Height());
   AddDirtyRect(0, 0, Width() - 1, Height() - 1);
 }
-              
+
 void BScreen::EraseWindow(BWindow *aWindow) {
   TCoordinate x = aWindow->WindowLeft(),
-    y = aWindow->WindowTop();
+              y = aWindow->WindowTop();
 
   mBitmap->BltRect(mBackground, x, y, x, y, aWindow->WindowWidth(), aWindow->WindowHeight());
   AddDirtyRect(aWindow->mWindowRect);

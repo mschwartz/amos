@@ -9,6 +9,10 @@ public:
 
 public:
   void RenderTitlebar();
+
+protected:
+  TInt64 mTime;
+  char mTitleBuffer[512];
 };
 
 #endif

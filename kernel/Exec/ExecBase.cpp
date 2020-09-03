@@ -38,7 +38,6 @@ extern "C" TUint64 rdrand();
 
 // ExecBase constructor
 ExecBase::ExecBase() {
-  CPU::ColdStart();
   dlog("ExecBase constructor called\n");
   mDebugSwitch = EFalse;
 

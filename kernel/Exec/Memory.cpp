@@ -183,7 +183,7 @@ void InitAllocMem() {
   }
   sUsedMem = 0;
   sTotalMem = gSystemInfo.mRam - (TUint64)&kernel_end;
-  dlog("InitAllocMem total(%d)\n", gSystemInfo.mRam);
+  // dlog("InitAllocMem total(%d)\n", gSystemInfo.mRam);
 }
 
 static TAny *allocate(TInt64 aSize, TInt aFlags) {

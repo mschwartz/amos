@@ -6,6 +6,8 @@
 
 #include <Graphics/bitmap/BBitmap32.hpp>
 
+const TInt TITLEBAR_HEIGHT = 26;
+
 BScreen::BScreen(const char *aTitle) : BNode(aTitle), mInspirationBase(*gExecBase.GetInspirationBase()) {
   mDisplay = mInspirationBase.GetDisplay();
   mDisplay->Dump();
@@ -37,28 +39,35 @@ void BScreen::AddDirtyRect(TCoordinate aX1, TCoordinate aY1, TCoordinate aX2, TC
 }
 
 void BScreen::RenderTitlebar() {
-  mBitmap->FillRect(mTheme->mScreenTitleBackgroundColor, 0, 0, Width() - 1, 26);
-  mBitmap->SetFont(mTheme->mScreenFont);
-  mBitmap->SetColors(
-		     mTheme->mScreenTitleColor,
-		     mTheme->mScreenTitleBackgroundColor
-		     );
-  mBitmap->DrawText(4,4, Title());
-  CopyMemory32(mBackground->GetPixels(), mBitmap->GetPixels(), Width() * 28);
+  BBitmap32 *b = mBackground;
+  b->FillRect(mTheme->mScreenTitleBackgroundColor, 0, 0, Width() - 1, TITLEBAR_HEIGHT);
+  b->SetFont(mTheme->mScreenFont);
+  b->SetColors(
+    mTheme->mScreenTitleColor,
+    mTheme->mScreenTitleBackgroundColor);
 
-  // AddDirtyRect(0, 0, Width() - 1, 26);
+#if 0
+  b->DrawText(4,4, Title());
+#else
+  char buf[512];
+  sprintf(buf, "%s - %x total / %x used / %x available", Title(), TotalMem(), UsedMem(), AvailMem());
+  b->DrawText(4, 4, buf);
+#endif
+  // CopyMemory32(mBackground->GetPixels(), mBitmap->GetPixels(), Width() * TITLEBAR_HEIGHT);
+
+  AddDirtyRect(0, 0, Width() - 1, TITLEBAR_HEIGHT);
 }
 
 void BScreen::Clear(const TUint32 aColor) {
   // copy mBackground to mBitmap
-  CopyMemory32(mBitmap->GetPixels(), mBackground->GetPixels(), Width() * Height());
   RenderTitlebar();
+  CopyMemory32(mBitmap->GetPixels(), mBackground->GetPixels(), Width() * Height());
   AddDirtyRect(0, 0, Width() - 1, Height() - 1);
 }
-              
+
 void BScreen::EraseWindow(BWindow *aWindow) {
   TCoordinate x = aWindow->WindowLeft(),
-    y = aWindow->WindowTop();
+              y = aWindow->WindowTop();
 
   mBitmap->BltRect(mBackground, x, y, x, y, aWindow->WindowWidth(), aWindow->WindowHeight());
   AddDirtyRect(aWindow->mWindowRect);
@@ -148,6 +157,7 @@ void BScreen::UpdateDirtyRects() {
 void BScreen::UpdateWindows() {
   // render windows back to front
   mWindowList.Lock();
+  RenderTitlebar();
   for (BWindow *win = mWindowList.Last(); !mWindowList.End((BNode *)win); win = (BWindow *)mWindowList.Prev(win)) {
     TBool hidden = EFalse;
     for (BWindow *other = (BWindow *)mWindowList.First(); other != win; other = (BWindow *)mWindowList.Next(other)) {

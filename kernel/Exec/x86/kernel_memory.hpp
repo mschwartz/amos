@@ -48,8 +48,34 @@ const TUint64 HIGH_RAM2_END    = 0xbfffffff;
 const TUint64 HIGH_RAM         = 0x0000000100000000; // unlimited
 
 
-const TUint64 BIOS_MEMORY = 0x9000;
+const TUint64 BIOS_MEMORY = 0xb000;
 
 extern "C" void bzero(TAny *dst, TUint64 size);
+
+// the boot code creates an array of these at a known location, so we can find all the memory.
+typedef struct {
+  TUint64 address;
+  TUint64 size;
+  TUint32 type;
+  TUint32 acpi;
+  void Dump() {
+    dlog("  TMemoryInfo: %x address: %x size: $%x(%d) type: %x acpi: %x\n", this, address, size, size, type, acpi);
+  }
+} PACKED TMemoryInfo;
+
+typedef struct {
+  TUint32 mCount;
+  TMemoryInfo mInfo[];
+  void Dump() {
+    //    dhexdump((TUint8 *)BIOS_MEMORY, 16);
+    dlog("TBiosMemory: %x, %d entries\n", this, mCount);
+    for (TInt32 i = 0; i < mCount; i++) {
+      mInfo[i].Dump();
+    }
+  }
+} PACKED TBiosMemory;
+
+const TUint64 MEMORYTYPE_RANGE = 1;
+const TUint64 MEMORYTYPE_RESERVED = 2;
 
 #endif

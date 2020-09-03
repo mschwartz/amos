@@ -41,7 +41,7 @@ public:
     SetName(aNewTitle);
     RenderTitlebar();
   }
-  void RenderTitlebar();
+  virtual void RenderTitlebar();
   void Clear(TUint32 aColor);
 
 public:

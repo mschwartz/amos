@@ -15,6 +15,9 @@ enum EMemoryFlags {
 extern void InitAllocMem();
 extern TAny *AllocMem(TInt64 aSize, int aFlags = MEMF_ANY);
 extern void FreeMem(TAny *aMemory);
+extern TUint64 AvailMem();
+extern TUint64 TotalMem();
+extern TUint64 UsedMem();
 
 extern void *operator new(unsigned long aSize);
 extern void *operator new[](unsigned long aSize);

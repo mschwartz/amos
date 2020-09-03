@@ -43,9 +43,6 @@ extern "C" void SetRSP(TUint8 *sp);
  */
 extern "C" int ap_main(TInt64 aCpuNumber) {
   cli();
-  // static TInt64 a;
-  // CPU *cpu;
-  // a = aCpuNumber;
   CPU *cpu = gExecBase.GetCpu(aCpuNumber);
   cpu->EnterAP();
   while (1) {
@@ -58,11 +55,10 @@ extern "C" TUint64 rdtsc();
 
 extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   cli();
-  // dhexdump((TAny *)0x8000, 10);
-
   InitAllocMem();
+  CPU::ColdStart();
+  
   CopyString(&gSystemInfo.mVersion[0], "AMOS v1.0");
-  // in_bochs = *((TUint8 *)0x7c10);
 
   // compute CPU speed
   outb(0x43, 0x34);
@@ -80,8 +76,8 @@ extern "C" int kernel_main(TSystemInfo *aSystemInfo) {
   gSystemInfo.mCpuMhz = hz / 1000000;
 
   gSystemInfo.mDiskSize = gSystemInfo.mNumHeads * gSystemInfo.mNumSectors * gSystemInfo.mNumCylinders * 512;
-
   gSystemInfo.Dump();
+
   call_global_constructors();
 
   // it should NEVER get here!

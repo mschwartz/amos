@@ -40,7 +40,7 @@ cpuid: aes=0, sha=0, xsave=0, xsaveopt=0, avx_f16c=0, avx_fma=0, bmi=0, xop=0, f
 cpuid: tbm=0, x86_64=1, 1g_pages=0, pcid=0, fsgsbase=0, smep=0, smap=0, mwait=1
 print_timestamps: enabled=0
 debugger_log: debug_log.txt
-debug_symbols: file=kernel.sym
+debug_symbols: file=amos.sym
 magic_break: enabled=1
 port_e9_hack: enabled=1
 private_colormap: enabled=0

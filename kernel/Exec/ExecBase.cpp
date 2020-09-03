@@ -38,7 +38,6 @@ extern "C" TUint64 rdrand();
 
 // ExecBase constructor
 ExecBase::ExecBase() {
-  CPU::ColdStart();
   dlog("ExecBase constructor called\n");
   mDebugSwitch = EFalse;
 
@@ -55,6 +54,8 @@ ExecBase::ExecBase() {
   // set up paging
   mMMU = new MMU;
   dlog("  initialized MMU\n");
+
+  InitAllocMem();
 
   cli();
   mACPI = new ACPI();

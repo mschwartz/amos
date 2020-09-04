@@ -39,6 +39,47 @@ rdmsr:
 	pop rcx
 	ret
 
+global SetCR0
+SetCR0:
+	mov cr0, rdi
+	ret
+
+global GetCR0
+GetCR0:
+	mov rax, cr0
+	ret
+
+global SetCR1
+SetCR1:
+	mov cr1, rdi
+	ret
+
+global GetCR1
+GetCR1:
+	mov rax, cr1
+	ret
+
+global SetCR3
+SetCR3:
+	mov cr3, rdi
+	ret
+
+global GetCR3
+GetCR3:
+	mov rax, cr3
+	ret
+
+global SetCR4
+SetCR4:
+	mov cr4, rdi
+	ret
+
+global GetCR4
+GetCR4:
+	mov rax, cr4
+	ret
+
+	
 ;; called as: gdt_flush(&gdt_ptr, cs) in C
 global gdt_flush
 gdt_flush:

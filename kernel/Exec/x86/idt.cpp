@@ -98,7 +98,7 @@ extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
   //   // bochs;
   // }
 
-  TTaskRegisters *current_task = GetCurrentTask();
+  TTaskContext *current_task = GetCurrentTask();
   TIsrHandler *info = &interrupt_handlers[current_task->isr_num];
   if (!info->mHandler) {
     const char *desc = IDT::InterruptDescription(current_task->isr_num);

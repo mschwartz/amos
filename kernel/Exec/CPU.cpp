@@ -163,10 +163,11 @@ void CPU::EnterAP() {
     mIdt->Install();
   }
   mCurrentTask = mActiveTasks.First();
-  SetCurrentTask(&mCurrentTask->mRegisters);
+  SetCurrentTask(&mCurrentTask->mContext);
   Unlock();
 
   // sti();
+  bochs
   enter_tasking(); // just enter next task
   dlog("BAD EnterAP\n");
   bochs;
@@ -232,7 +233,7 @@ TInt64 CPU::RemoveTask(BTask *aTask, TInt64 aExitCode) {
 
   if (isCurrentTask) {
     mCurrentTask = mActiveTasks.First();
-    SetCurrentTask(&mCurrentTask->mRegisters);
+    SetCurrentTask(&mCurrentTask->mContext);
     Unlock();
     dprint("CPU::RemoveTask - enter-tasking\n");
     enter_tasking(); // just enter next task
@@ -271,7 +272,7 @@ void CPU::RescheduleIRQ() {
   }
 
   mCurrentTask = mActiveTasks.First();
-  SetCurrentTask(&mCurrentTask->mRegisters);
+  SetCurrentTask(&mCurrentTask->mContext);
 
   Unlock();
   ENABLE;

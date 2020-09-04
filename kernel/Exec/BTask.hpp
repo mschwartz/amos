@@ -1,6 +1,7 @@
 #ifndef EXEC_TASK_H
 #define EXEC_TASK_H
 
+#include <Types.hpp>
 #include <Types/BList.hpp>
 #include <Exec/x86/tasking.hpp>
 
@@ -35,11 +36,17 @@ public:
   virtual ~BTask();
 
 public:
-  TTaskRegisters mRegisters;
+  TTaskContext mContext;
 
 protected:
+  TUint8 *mTaskStack,
+    *mTaskStackTop;
+  TUint8 *mKernelStack,
+    *mKernelStackTop;
+  
+protected:
   volatile ETaskState mTaskState;
-  volatile CPU *mCpu;
+  volatile CPU *mCpu; // which cpu running in
 
 public:
   /**
@@ -56,7 +63,7 @@ public:
 
 public:
   const char *TaskName() { return mNodeName; }
-  void DumpRegisters(TTaskRegisters *regs);
+  void DumpContext(TTaskContext *regs);
   void Dump();
 
 protected:
@@ -93,7 +100,7 @@ public:
 
 protected:
   void FreePort(MessagePort *aMessagePort);
-  
+
   /**
    * Wait for message port to be created.
    */
@@ -151,7 +158,7 @@ public:
     //    dlog("Construct BTaskList %s\n", aName);
   }
 
-  static void DumpRegisters(TTaskRegisters *aRegisters);
+  static void DumpContext(TTaskContext *aContext);
   void Dump();
 
 public:

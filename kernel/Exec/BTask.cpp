@@ -7,8 +7,12 @@
 #define DEBUGME
 #undef DEBUGME
 
-extern "C" TUint32 GetCS(), GetDS(), GetES(), GetSS(), GetRFLAGS();
-extern "C" void init_task_state(TTaskRegisters *t);
+extern "C" TUint32 GetCS(), GetDS(), GetES(), GetSS();
+extern "C" TUint64 GetRFLAGS(),
+  GetCR0(), GetCR1(), GetCR3(), GetCR4();
+extern "C" void SetRFLAGS(TUint64 value),
+  SetCR0(TUint64 value), SetCR1(TUint64 value), SetCR3(TUint64 value), SetCR4(TUint64 value);
+extern "C" void init_task_state(TTaskContext *t);
 
 BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize)
     : BNodePri(aName, aPri), mInspirationBase(*gExecBase.GetInspirationBase()) {
@@ -23,27 +27,42 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize)
   mSigReceived = 0;
 
   // initialize task's registers
-  TTaskRegisters *regs = &mRegisters;
+  TTaskContext *regs = &mContext;
   // zero out registers
-  SetMemory8(regs, 0, sizeof(TTaskRegisters));
+  SetMemory8(regs, 0, sizeof(TTaskContext));
 
-  // initialize stack
+  // initialize stacks
   TUint8 *stack = (TUint8 *)AllocMem(aStackSize, MEMF_PUBLIC);
-  regs->upper_sp = (TUint64)&stack[aStackSize];
-  regs->lower_sp = (TUint64)&stack[0];
+  mTaskStack = stack;
+  mTaskStackTop = &stack[aStackSize];
 
-  regs->rsp = (TUint64)regs->upper_sp;
-  regs->rbp = regs->rsp;
-  regs->ss = GetSS();
-  regs->rdi = (TUint64)this;
-  regs->rip = (TUint64)this->RunWrapper;
-  regs->rax = (TUint64)this;
-  regs->cs = 0x8;
-  regs->ds = 0x10;
-  regs->es = 0x10;
-  // regs->fs = GetFS();
-  // regs->gs = GetGS();
-  regs->rflags = 0x202;
+  TUint8 *kstack = (TUint8 *)AllocMem(aStackSize, MEMF_PUBLIC);
+  mKernelStack = kstack;
+  mKernelStackTop = &kstack[aStackSize];
+
+  mContext.task = (TUint64)this;
+  mContext.rip = (TUint64)this->RunWrapper;
+  mContext.rflags = 0x202;
+  mContext.ksp = (TUint64)mKernelStackTop;
+  mContext.rsp = (TUint64)mTaskStackTop;
+  mContext.cr3 = (TUint64)GetCR3();
+
+  // regs->upper_sp = (TUint64)&stack[aStackSize];
+  // regs->lower_sp = (TUint64)&stack[0];
+
+  // regs->rsp = (TUint64)regs->upper_sp;
+  // regs->rbp = regs->rsp;
+  // regs->ss = GetSS();
+  // regs->rdi = (TUint64)this;
+  // regs->rip = (TUint64)this->RunWrapper;
+  // regs->rax = (TUint64)this;
+  // regs->cs = 0x8;
+  // regs->ds = 0x10;
+  // regs->es = 0x10;
+  // // regs->fs = GetFS();
+  // // regs->gs = GetGS();
+  // regs->rflags = 0x202;
+  DumpContext(&this->mContext);
   init_task_state(regs);
 }
 
@@ -73,11 +92,11 @@ static void print_flag(TUint64 flags, TInt bit, const char *m) {
   }
 }
 
-void BTask::DumpRegisters(TTaskRegisters *regs) {
+void BTask::DumpContext(TTaskContext *regs) {
   DISABLE;
 
   dlog("   ===  isr_num %d err_code %d\n", regs->isr_num, regs->err_code);
-  dlog("   rip: %016x cs: %08x\n", regs->rip, regs->cs);
+  // dlog("   rip: %016x cs: %08x\n", regs->rip, regs->cs);
 
   // print flags
   TUint64 f = regs->rflags;
@@ -102,33 +121,34 @@ void BTask::DumpRegisters(TTaskRegisters *regs) {
   dprint("\n");
 
   // general purpose registeers
-  dlog("   rax: %016x\n", regs->rax);
-  dlog("   rbx: %016x\n", regs->rbx);
-  dlog("   rcx: %016x\n", regs->rcx);
-  dlog("   rdx: %016x\n", regs->rdx);
-  dlog("   rsi: %016x\n", regs->rsi);
-  dlog("   rdi: %016x\n", regs->rdi);
-  dlog("    ds: %08x es: %08x \n", regs->ds, regs->es);
-  dlog("    ss %08x rsp %016x rbp %016x\n", regs->ss, regs->rsp, regs->rbp);
+  // dlog("   rax: %016x\n", regs->rax);
+  // dlog("   rbx: %016x\n", regs->rbx);
+  // dlog("   rcx: %016x\n", regs->rcx);
+  // dlog("   rdx: %016x\n", regs->rdx);
+  // dlog("   rsi: %016x\n", regs->rsi);
+  // dlog("   rdi: %016x\n", regs->rdi);
+  // dlog("    ds: %08x es: %08x \n", regs->ds, regs->es);
+  // dlog("    ss %08x rsp %016x rbp %016x\n", regs->ss, regs->rsp, regs->rbp);
 
   ENABLE;
 }
 
 void BTask::Dump() {
   DISABLE;
-  TTaskRegisters *regs = &mRegisters;
-  dlog("\nTask Dump %016x regs(%x)--- %s ---\n", this, &this->mRegisters, mNodeName);
-  DumpRegisters(regs);
+  TTaskContext *regs = &mContext;
+  dlog("\nTask Dump %016x regs(%x)--- %s ---\n", this, &this->mContext, mNodeName);
+  DumpContext(regs);
+
   dlog("  STACK:\n");
-  TUint64 *addr = (TUint64 *)regs->rsp;
+  TUint64 address = regs->rsp;
   for (TInt i = 0; i < 8; i++) {
-    if ((TUint64)addr > mRegisters.upper_sp) {
-      break;
-    }
-    dlog("  %016x: %016x\n", addr, *addr);
-    addr++;
+      if (address > mContext.ksp) {
+        break;
+      }
+      dlog("  %016x: %016x\n", address, *(TUint64 *)address);
+      address+= sizeof(TUint64);
   }
-  dprint("\n\n");
+  // dprint("\n\n");
   ENABLE;
 }
 

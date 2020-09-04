@@ -47,23 +47,8 @@ BTask::BTask(const char *aName, TInt64 aPri, TUint64 aStackSize)
   mContext.rsp = (TUint64)mTaskStackTop;
   mContext.cr3 = (TUint64)GetCR3();
 
-  // regs->upper_sp = (TUint64)&stack[aStackSize];
-  // regs->lower_sp = (TUint64)&stack[0];
-
-  // regs->rsp = (TUint64)regs->upper_sp;
-  // regs->rbp = regs->rsp;
-  // regs->ss = GetSS();
-  // regs->rdi = (TUint64)this;
-  // regs->rip = (TUint64)this->RunWrapper;
-  // regs->rax = (TUint64)this;
-  // regs->cs = 0x8;
-  // regs->ds = 0x10;
-  // regs->es = 0x10;
-  // // regs->fs = GetFS();
-  // // regs->gs = GetGS();
-  // regs->rflags = 0x202;
-  DumpContext(&this->mContext);
   init_task_state(regs);
+  DumpContext(&this->mContext);
 }
 
 BTask::~BTask() {
@@ -79,6 +64,8 @@ void BTask::RunWrapper(BTask *aTask) {
   // CPU *c = (CPU *)aTask->mCpu;
   // BTask *t = ((CPU *)c)->CurrentTask();
 
+  // aTask->Dump();
+  
   TInt64 code = aTask->Run();
 
   // if task returns it is removed from the active list and deleted.
@@ -119,6 +106,12 @@ void BTask::DumpContext(TTaskContext *regs) {
   print_flag(f, 2, "PF ");
   print_flag(f, 0, "CF ");
   dprint("\n");
+
+  dlog("  task: %x\n", mContext.task);
+  dlog("   rip: %x\n", mContext.rip);
+  dlog("   ksp: %x\n", mContext.ksp);
+  dlog("   rsp: %x\n", mContext.rsp);
+  dlog("   cr3: %x\n", mContext.cr3);
 
   // general purpose registeers
   // dlog("   rax: %016x\n", regs->rax);

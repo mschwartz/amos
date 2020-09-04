@@ -3,6 +3,7 @@
 
 #include <Types.hpp>
 #include <Exec/x86/bochs.hpp>
+class TSS;
 
 typedef struct {
   TUint64 task;
@@ -38,6 +39,7 @@ typedef struct {
   TUint64 mCurrentGs;
   BTask *mCurrentTask;
   CPU *mCurrentCpu;
+  TSS *mCurrentTss;
 } PACKED TGS;
 
 

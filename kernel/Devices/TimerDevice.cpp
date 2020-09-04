@@ -112,7 +112,7 @@ TInt64 TimerTask::Run() {
 }
 
 TBool TimerInterrupt::Run(TAny *g) {
-  // dlog("TIMER\n");
+  // dprint("TIMER\n");
   CPU *cpu = GetCPU();
   if (!cpu) {
     // gExecBase.InterruptOthers(IRQ_TIMER);

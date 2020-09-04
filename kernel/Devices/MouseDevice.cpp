@@ -214,6 +214,7 @@ TBool MouseInterrupt::Run(TAny *aData) {
 TInt64 MouseTask::Run() {
   dprint("\n");
   dlog("MouseTask Run\n");
+  bochs;
   Sleep(3);
 
   DISABLE;

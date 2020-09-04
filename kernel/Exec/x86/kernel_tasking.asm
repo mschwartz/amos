@@ -1,5 +1,13 @@
 ;; kernel_tasking.asm %macro bochs 0 xchg bx, bx %endm %macro BOCHS 0 xchg bx, bx %endm ;; kernel_isr is the "C/C++" function to be called extern kernel_isr
 
+%macro BOCHS 0
+	xchg bx,bx
+%endmacro
+	
+%macro bochs 0
+	xchg bx,bx
+%endmacro
+
 struc TSS
 .reserved1 resd 1
 .rsp0      resq 1
@@ -20,7 +28,7 @@ endstruc
 
 ;; TASK structure MUST match the one in idt.h
 struc TASK
-.task               resq 1 
+.task               resq 1
 .rip                resq 1 	; RIP of first instruction to execute for task
 .rflags             resq 1	; initial rflags
 .ksp                resq 1
@@ -159,15 +167,18 @@ restore_task_state:
         ; restore task state
 	swapgs
         mov rdi, [gs:CURRENT_TASK]
+	mov rdx, [gs:CURRENT_TSS]
 	swapgs
+	mov rax, [rdi + TASK.ksp]
+	mov [rdx + TSS.ist1], rax
 
-	mov rsp, [rdi + TASK.rsp]
+	mov rsp, [rdi + TASK.rsp] ; task's kernel stack pointer
 
 	; set cr3 to page tables for the (new) current task, if the page table is not the current one
 	mov rax, [rdi + TASK.cr3]
 	mov rbx, cr3
 	cmp rax, rbx
-	jne .same
+	je .same
 	mov cr3, rax
 .same:
 
@@ -200,7 +211,7 @@ restore_task_state:
 	pop rax
 	mov es, ax
 	pop rax
-	mov fs, ax
+	mov ds, ax
 
 	pop rdx
 	pop rcx
@@ -226,7 +237,7 @@ init_task_state:
 
 	mov rcx, rsp 		; save caller rsp
 
-	mov rsp, [rdi + TASK.ksp]
+	mov rsp, [rdi + TASK.ksp] ; task's top of kernel stack
 
 	; create stack for iretq:
 	; +0x0000 RIP
@@ -253,28 +264,36 @@ init_task_state:
 	push rax		; RIP
 
 	; push initial register values on the kernel stack
-	xor rax, rax
-	push rax 		; r15
-	push rax 		; r14
-	push rax 		; r13
-	push rax 		; r12
-	push rax 		; r11
-	push rax 		; r10
-	push rax 		; r9
-	push rax 		; r8
 
-	mov ax, fs
-	push rax		; fs
-	mov ax, es
-	push rax		; es
-	mov ax, ds
-	push rax		; ds
-
+	mov rax, [rdi + TASK.task]
+	push rax		; rdi
 	xor rax, rax
 	push rax		; rsi
 	push rax		; rbp
-	push rax		; rdi
 
+	push rax		; rax
+	push rbx		; rbx
+	push rcx		; rcx
+	push rdx		; rdx
+	
+	mov ax, ds
+	push rax		; ds
+	mov ax, es
+	push rax		; es
+	mov ax, fs
+	push rax		; fs
+
+	push rax 		; r8
+	push rax 		; r9
+	push rax 		; r10
+	push rax 		; r11
+	push rax 		; r12
+	push rax 		; r13
+	push rax 		; r14
+	push rax 		; r15
+
+	mov [rdi+TASK.rsp], rsp
+	
 	; save coprocessor registers, if CPU has them
         mov rax, cr4
         bts rax, 9
@@ -287,6 +306,7 @@ init_task_state:
         add rax, 15
         and rax, ~0x0f
         fxsave [rax]
+
 .continue:
 
 	mov rsp, rcx 		; restore caller's stack
@@ -296,56 +316,6 @@ init_task_state:
 
 	ret
 	
-%if 0
-        ; push registers we use/modify onto caller's stack
-        push rcx
-
-        mov rcx, rsp                            ; save caller rsp
-
-        ; set up task's stack
-        mov rsp, [rdi + TASK.upper_sp]
-
-        ; set up stack for iretq
-        mov rax, 10h                             ; ss
-        push rax
-
-        mov rax, [rdi + TASK.upper_sp]          ; rsp
-        push rax
-
-        mov rax, [rdi + TASK.rflags]            ; rflags
-        push rax
-
-        mov rax, 8                              ; cs
-        push rax
-
-        mov rax, [rdi + TASK.rip]
-        push rax
-
-        ; push registers as if an IRQ/exception
-
-        xor rax, rax
-        push rax            ; rdi
-        push rax            ; rax
-        push rax            ; rbx
-        push rax            ; rcx
-        push rax            ; rdx
-        push rax            ; rsi
-        push rax            ; r8
-        push rax            ; r9
-        push rax            ; r10
-        push rax            ; r11
-        push rax            ; r12
-        push rax            ; r13
-        push rax            ; r14
-        push rax            ; r15
-        push rax            ; rbp
-
-        mov [rdi + TASK.rsp], rsp
-        ; restore caller rsp
-        mov rsp, rcx
-
-        pop rcx
-%endif
         popf
         ret
 
@@ -421,6 +391,7 @@ save_rsp:
 CURRENT_GS: equ 0
 CURRENT_TASK: equ 8
 CURRENT_CPU: equ 16
+CURRENT_TSS: equ 24
 	
 
 ;; extern "C" void write_msr(TUint64 aRegister, TUint64 aValue);

@@ -86,6 +86,7 @@ static TBool interrupt_enabled[256];
  */
 extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
   cli();
+    dlog("kernel_isr %d\n", aIsrNumber);
 
   if (!interrupt_enabled[aIsrNumber] && aIsrNumber != 48) {
     gExecBase.AckIRQ(aIsrNumber);
@@ -148,7 +149,7 @@ const TInt IDT_SIZE = 256;
 static TIdtEntry idt_entries[IDT_SIZE] ALIGN16;
 static TIdtPtr idt_ptr ALIGN16;
 
-static void set_entry(TInt aIndex, TUint64 aVec, TInt aIst = 0) {
+static void set_entry(TInt aIndex, TUint64 aVec, TInt aIst = 2) {
   TIdtEntry &e = idt_entries[aIndex];
   e.mAddressLow = (TUint16)aVec;
   e.mAddressMiddle = (TUint16)(aVec >> 16);
@@ -209,7 +210,7 @@ IDT::IDT() {
   set_entry(31, isr31);
 
   // IRQs
-  set_entry(32, isr32, 2); // 00 timer
+  set_entry(32, isr32, 0); // 00 timer
   set_entry(33, isr33, 1); // 01 keyboard
   set_entry(34, isr34, 1); // 02 slave
   set_entry(35, isr35, 1); // 03 com2

@@ -407,6 +407,7 @@ public:
 public:
   TBool Run(TAny *aData) {
     cli();
+    dlog("about to guru %s\n", mNodeName);
     bochs;
     gExecBase.GuruMeditation("%s Exception", mNodeName);
     // TODO: kill/remove current task
@@ -434,6 +435,7 @@ public:
 
 public:
   TBool Run(TAny *aData) {
+    dlog("NextTaskTrap\n");
     gExecBase.RescheduleIRQ();
     return ETrue;
   }

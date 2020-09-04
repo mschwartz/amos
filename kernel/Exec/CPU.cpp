@@ -18,6 +18,7 @@ void CPU::ColdStart() {
   sGS.mCurrentGs = (TUint64)&sGS;
   sGS.mCurrentTask = ENull;
   sGS.mCurrentCpu = ENull;
+  sGS.mCurrentTss = ENull;
   SetGS(&sGS);
   // write_msr(USER_GS_BASE, (TUint64)(&sGS));
   // write_msr(KERNEL_GS_BASE, (TUint64)(&sGS));
@@ -40,6 +41,7 @@ CPU::CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi) {
 
   mTss = new TSS();
   dlog("CPU %d initialized TSS\n", mProcessorId);
+  mGS.mCurrentTss = mTss;
   mGdt = new GDT(mTss);
   dlog("CPU %d initialized GDT\n", mProcessorId);
   mIdt = new IDT();
@@ -47,18 +49,10 @@ CPU::CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi) {
 
   if (mProcessorId == 0) {
     TUint64 v = (TUint64)&mGS;
-    // SetMSR(0xc0000101, v>>32, v&0xffffffff);
     mGdt->Install();
     mIdt->Install();
     mGS.mCurrentCpu = this;
-    // write_msr(KERNEL_GS_BASE, (TUint64)(&this->mGS));
-    // swapgs();
-    // write_msr(KERNEL_GS_BASE, (TUint64)(&this->mGS));
-    // swapgs();
     write_msr(USER_GS_BASE, (TUint64)(&this->mGS));
-    // swapgs();
-    // write_msr(USER_GS_BASE, (TUint64)(&this->mGS));
-    // swapgs();
     SetCPU(this);
     dlog("SetGS(%x)\n", &this->mGS);
   }
@@ -117,7 +111,6 @@ CPU::CPU(TUint32 aProcessorId, TUint32 aApicId, ACPI *aAcpi) {
 void CPU::GuruMeditation(const char *aFormat, ...) {
   cli();
   mCpuState = ECpuGuruMeditation;
-  bochs;
 
   char buf[512];
   dprint("\n\n***********************\n");
@@ -167,7 +160,6 @@ void CPU::EnterAP() {
   Unlock();
 
   // sti();
-  bochs
   enter_tasking(); // just enter next task
   dlog("BAD EnterAP\n");
   bochs;

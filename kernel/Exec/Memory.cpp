@@ -34,6 +34,7 @@ static TAny *ExtendChipRam(TUint64 aIncrement) {
   static TUint8 *sChipBreak = ENull;
   static void *end = &chip_memory_end;
 
+  aIncrement = (aIncrement + 15) & ~0x0f;
   DLOG("ExtendChipRam(%d)\n", aIncrement);
   if (sChipBreak == ENull) {
     sChipBreak = (TUint8 *)&chip_memory;
@@ -78,6 +79,7 @@ static TAny *ExtendDataSegment(TUint64 aIncrement) {
     return sProgramBreak;
   }
 
+  aIncrement = (aIncrement + 15) & ~0x0f;
   void *ret = sProgramBreak;
   sProgramBreak = &sProgramBreak[aIncrement];
   return ret;

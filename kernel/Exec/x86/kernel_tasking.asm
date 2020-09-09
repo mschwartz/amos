@@ -1,11 +1,11 @@
 ;; kernel_tasking.asm %macro bochs 0 xchg bx, bx %endm %macro BOCHS 0 xchg bx, bx %endm ;; kernel_isr is the "C/C++" function to be called extern kernel_isr
 
 %macro BOCHS 0
-	xchg bx,bx
+        xchg bx,bx
 %endmacro
-	
+        
 %macro bochs 0
-	xchg bx,bx
+        xchg bx,bx
 %endmacro
 
 struc TSS
@@ -40,24 +40,25 @@ struc TASK
 endstruc
 
 
-	
+        
 ;; each of the isr handlers pushes a word of it's IRQ number and jumps here
 ;; this code puashes all the registers on the stack, and calls our single C IRQ handler
 ;; the C IRQ handler expects this specific order of items on the stack!  See the ISR_REGISTERS struct.
 global isr_common
 isr_common:
-	; stack at this point:
-	; +0x0000 RIP
-	; +0x0008 CS
-	; +0x0010 RFLAGS
-	; +0x0018 RSP
-	; +0x0020 SS
-	; NOTE: rax pushed by ISR is at the very top, we must pop it
-	push rdi            ; save rdi so we don't clobber it
+        ; bochs
+        ; stack at this point:
+        ; +0x0000 RIP
+        ; +0x0008 CS
+        ; +0x0010 RFLAGS
+        ; +0x0018 RSP
+        ; +0x0020 SS
+        ; NOTE: rax pushed by ISR is at the very top, we must pop it
+        push rdi            ; save rdi so we don't clobber it
 
-	swapgs
+        swapgs
         mov rdi, [gs:CURRENT_TASK]
-	
+        
         mov [rdi + TASK.isrnum], rax            ; isrnum was pushed on stack by xisr
 
         ; set default value for task_error_code
@@ -65,58 +66,58 @@ isr_common:
         mov [rdi + TASK.error_code], rax
 
 
-	; we want to store the entire register set in the current task struct
+        ; we want to store the entire register set in the current task struct
         ; stack is rdi, rax, then interrupt stack frame, per above
-	pop rdi
-	pop rax
+        pop rdi
+        pop rax
 
-	; stack at this point:
-	; +0x0000 RIP
-	; +0x0008 CS
-	; +0x0010 RFLAGS
-	; +0x0018 RSP
-	; +0x0020 SS
-	; NOTE: rax is now the value pushed by the isr
+        ; stack at this point:
+        ; +0x0000 RIP
+        ; +0x0008 CS
+        ; +0x0010 RFLAGS
+        ; +0x0018 RSP
+        ; +0x0020 SS
+        ; NOTE: rax is now the value pushed by the isr
 
-	push rsi
-	push rdi
-	push rbp
+        push rsi
+        push rdi
+        push rbp
 
 
         mov rdi, [gs:CURRENT_TASK]
-	swapgs
+        swapgs
 
 
-	; push general purpose registers
-	push rax
-	push rbx
-	push rcx
-	push rdx
-	push r8
-	push r9
-	push r10
-	push r11
-	push r12
-	push r13
-	push r14
-	push r15
+        ; push general purpose registers
+        push rax
+        push rbx
+        push rcx
+        push rdx
+        push r8
+        push r9
+        push r10
+        push r11
+        push r12
+        push r13
+        push r14
+        push r15
 
-	; all general purpose registers are saved at this point
-	xor rax, rax
-	mov ax, ds
-	push rax 		; ds
-	mov ax, es
-	push rax 		; es
-	mov ax, fs
-	push rax 		; fs
+        ; all general purpose registers are saved at this point
+        xor rax, rax
+        mov ax, ds
+        push rax 		; ds
+        mov ax, es
+        push rax 		; es
+        mov ax, fs
+        push rax 		; fs
 
-	; save coprocessor registers, if CPU has them
+        ; save coprocessor registers, if CPU has them
         mov rax, cr4
         bts rax, 9
         je .continue
 
         ; fxsave and fxrstor need to store/restore to/from
-	; 16 byte aligned addresses
+        ; 16 byte aligned addresses
         mov rax, rdi
         add rax, TASK.fxsave
         add rax, 15
@@ -145,17 +146,24 @@ isr_common:
         mov [rdi + TASK.error_code], rax
 
 .frame:
-	mov [rdi + TASK.rsp], rsp
+        mov [rdi + TASK.rsp], rsp
+        swapgs
+        mov rdx, [gs:CURRENT_TSS]
+        swapgs
+        mov rax, rsp
+        add rax, 1024
+        mov [rdx + TSS.ist1], rax
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 extern kernel_isr
-	
+        
         ; pass isrnum to C method as argument
         mov rdi, [rdi + TASK.isrnum]
         call kernel_isr
+        bochs
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -163,26 +171,26 @@ extern kernel_isr
 
 global restore_task_state
 restore_task_state:
-	cli
+        cli
         ; restore task state
-	swapgs
+        swapgs
         mov rdi, [gs:CURRENT_TASK]
-	mov rdx, [gs:CURRENT_TSS]
-	swapgs
-	mov rax, [rdi + TASK.ksp]
-	mov [rdx + TSS.ist1], rax
+        ; mov rdx, [gs:CURRENT_TSS]
+        swapgs
+        ; mov rax, [rdi + TASK.ksp]
+        ; mov [rdx + TSS.ist1], rax
 
-	mov rsp, [rdi + TASK.rsp] ; task's kernel stack pointer
+        mov rsp, [rdi + TASK.rsp] ; task's kernel stack pointer
 
-	; set cr3 to page tables for the (new) current task, if the page table is not the current one
-	mov rax, [rdi + TASK.cr3]
-	mov rbx, cr3
-	cmp rax, rbx
-	je .same
-	mov cr3, rax
+        ; set cr3 to page tables for the (new) current task, if the page table is not the current one
+        mov rax, [rdi + TASK.cr3]
+        mov rbx, cr3
+        cmp rax, rbx
+        je .same
+        mov cr3, rax
 .same:
 
-	; restore fpu and xmm (etc) state
+        ; restore fpu and xmm (etc) state
         mov rax, cr4
         bts rax, 9
         je .continue
@@ -196,31 +204,42 @@ restore_task_state:
         fxrstor [rax]
 
 .continue:
-	; kernel stack is prepared for iretq and has registers pushed on it
-	pop r15
-	pop r14
-	pop r13
-	pop r12
-	pop r11
-	pop r10
-	pop r9
-	pop r8
+        ; kernel stack is prepared for iretq and has registers pushed on it
+        pop r15
+        pop r14
+        pop r13
+        pop r12
+        pop r11
+        pop r10
+        pop r9
+        pop r8
 
-	pop rax
-	mov fs, ax
-	pop rax
-	mov es, ax
-	pop rax
-	mov ds, ax
+        pop rax
+        mov fs, ax
+        pop rax
+        mov es, ax
+        pop rax
+        mov ds, ax
 
-	pop rdx
-	pop rcx
-	pop rbx
-	pop rax
-	
-	pop rbp
-	pop rsi
-	pop rdi
+        pop rdx
+        pop rcx
+        pop rbx
+        pop rax
+        
+        pop rbp
+        pop rsi
+        pop rdi
+
+        push rax
+        push rdx
+        swapgs
+        mov rdx, [gs:CURRENT_TSS]
+        swapgs
+        mov rax, rsp
+        sub rax, 8
+        mov [rdx + TSS.ist1], rax
+        pop rdx
+        pop rax
 
         iretq
 
@@ -232,75 +251,75 @@ init_task_state:
         pushf
         cli
 
-	push rax
-	push rcx
+        push rax
+        push rcx
 
-	mov rcx, rsp 		; save caller rsp
+        mov rcx, rsp 		; save caller rsp
 
-	mov rsp, [rdi + TASK.ksp] ; task's top of kernel stack
+        mov rsp, [rdi + TASK.ksp] ; task's top of kernel stack
 
-	; create stack for iretq:
-	; +0x0000 RIP
-	; +0x0008 CS
-	; +0x0010 RFLAGS
-	; +0x0018 RSP
-	; +0x0020 SS
+        ; create stack for iretq:
+        ; +0x0000 RIP
+        ; +0x0008 CS
+        ; +0x0010 RFLAGS
+        ; +0x0018 RSP
+        ; +0x0020 SS
 
-	xor rax, rax
-	mov ax, ss
-	push rax		; SS
+        xor rax, rax
+        mov ax, ss
+        push rax		; SS
 
-	mov rax, [rdi + TASK.rsp]
-	push rax		; RSP
+        mov rax, [rdi + TASK.rsp]
+        push rax		; RSP
 
-	mov rax, [rdi + TASK.rflags]
-	push rax		; RFLAGS
-	
-	xor rax, rax
-	mov ax, cs
-	push rax		; CS
-	
-	mov rax, [rdi + TASK.rip]
-	push rax		; RIP
+        mov rax, [rdi + TASK.rflags]
+        push rax		; RFLAGS
+        
+        xor rax, rax
+        mov ax, cs
+        push rax		; CS
+        
+        mov rax, [rdi + TASK.rip]
+        push rax		; RIP
 
-	; push initial register values on the kernel stack
+        ; push initial register values on the kernel stack
 
-	mov rax, [rdi + TASK.task]
-	push rax		; rdi
-	xor rax, rax
-	push rax		; rsi
-	push rax		; rbp
+        mov rax, [rdi + TASK.task]
+        push rax		; rdi
+        xor rax, rax
+        push rax		; rsi
+        push rax		; rbp
 
-	push rax		; rax
-	push rbx		; rbx
-	push rcx		; rcx
-	push rdx		; rdx
-	
-	mov ax, ds
-	push rax		; ds
-	mov ax, es
-	push rax		; es
-	mov ax, fs
-	push rax		; fs
+        push rax		; rax
+        push rbx		; rbx
+        push rcx		; rcx
+        push rdx		; rdx
+        
+        mov ax, ds
+        push rax		; ds
+        mov ax, es
+        push rax		; es
+        mov ax, fs
+        push rax		; fs
 
-	push rax 		; r8
-	push rax 		; r9
-	push rax 		; r10
-	push rax 		; r11
-	push rax 		; r12
-	push rax 		; r13
-	push rax 		; r14
-	push rax 		; r15
+        push rax 		; r8
+        push rax 		; r9
+        push rax 		; r10
+        push rax 		; r11
+        push rax 		; r12
+        push rax 		; r13
+        push rax 		; r14
+        push rax 		; r15
 
-	mov [rdi+TASK.rsp], rsp
-	
-	; save coprocessor registers, if CPU has them
+        mov [rdi+TASK.rsp], rsp
+        
+        ; save coprocessor registers, if CPU has them
         mov rax, cr4
         bts rax, 9
         je .continue
 
         ; fxsave and fxrstor need to store/restore to/from
-	; 16 byte aligned addresses
+        ; 16 byte aligned addresses
         mov rax, rdi
         add rax, TASK.fxsave
         add rax, 15
@@ -309,29 +328,29 @@ init_task_state:
 
 .continue:
 
-	mov rsp, rcx 		; restore caller's stack
-	pop rcx
-	pop rax
-	popf
+        mov rsp, rcx 		; restore caller's stack
+        pop rcx
+        pop rax
+        popf
 
-	ret
-	
+        ret
+        
         popf
         ret
 
 global enter_tasking
 enter_tasking:
         ; jmp $
-	jmp restore_task_state
+        jmp restore_task_state
 %if 0
         cli
         ; restore task state
-	swapgs
+        swapgs
         mov rdi, [gs:CURRENT_TASK]
-	swapgs
+        swapgs
 
         ; set up the return stack using the task's stack memory
-	;                    mov ss, [rdi + TASK.ss]
+        ;                    mov ss, [rdi + TASK.ss]
         mov rsp, [rdi + TASK.rsp]
 
         pop rbp
@@ -352,16 +371,16 @@ enter_tasking:
         pop rdi
         iretq
 %endif
-	
+        
 global save_rsp
 save_rsp:
         pushf
         cli
         push rdi
 
-	swapgs
+        swapgs
         mov rdi, [gs:CURRENT_TASK]
-	swapgs
+        swapgs
         test rdi, rdi
         jne .save
         pop rdi
@@ -392,140 +411,140 @@ CURRENT_GS: equ 0
 CURRENT_TASK: equ 8
 CURRENT_CPU: equ 16
 CURRENT_TSS: equ 24
-	
+        
 
 ;; extern "C" void write_msr(TUint64 aRegister, TUint64 aValue);
 global write_msr
 write_msr:
-	push rcx
-	push rdx
-	
-	mov rcx, rdi
-	mov rax, rsi
-	mov rdx, rsi
-	shr rdx, 32
-	wrmsr
+        push rcx
+        push rdx
+        
+        mov rcx, rdi
+        mov rax, rsi
+        mov rdx, rsi
+        shr rdx, 32
+        wrmsr
 
-	pop rdx
-	pop rcx
-	ret
+        pop rdx
+        pop rcx
+        ret
 
 ;; extern "C" TUint64 read_msr(TUint64 aRegister);
 global read_msr
 read_msr:
-	push rcx
-	push rdx
+        push rcx
+        push rdx
 
-	mov rcx, rdi
-	rdmsr
-	shl rdx, 32
-	or rax, rdx
+        mov rcx, rdi
+        rdmsr
+        shl rdx, 32
+        or rax, rdx
 
-	pop rdx
-	pop rcx
-	ret
-	
+        pop rdx
+        pop rcx
+        ret
+        
 global swapgs
 swapgs:
-	swapgs
-	ret
-	
+        swapgs
+        ret
+        
 ;; this is callable from C/C++ to set the GS register value
 global SetGS
 SetGS:
-	pushf
-	cli
-	
-	push rax
-	push rcx
-	push rdx
+        pushf
+        cli
+        
+        push rax
+        push rcx
+        push rdx
 
-	mov rax, rdi
-	mov rdx, rdi
-	shr rdx, 32
-	mov rcx, 0xc0000101
-	wrmsr
+        mov rax, rdi
+        mov rdx, rdi
+        shr rdx, 32
+        mov rcx, 0xc0000101
+        wrmsr
 
-	mov [gs:CURRENT_GS], rdi
-	swapgs
+        mov [gs:CURRENT_GS], rdi
+        swapgs
 
-	; mov rcx, 0xc0000102
-	; wrmsr
-	
-	; swapgs
+        ; mov rcx, 0xc0000102
+        ; wrmsr
+        
+        ; swapgs
 
-	mov rax, [gs:CURRENT_GS]
+        mov rax, [gs:CURRENT_GS]
 
-	; mov rcx, 0xc0000101
-	; rdmsr
+        ; mov rcx, 0xc0000101
+        ; rdmsr
 
-	pop rdx
-	pop rcx
-	pop rax
-	popf
-	
-	ret
+        pop rdx
+        pop rcx
+        pop rax
+        popf
+        
+        ret
 
 gs_flag:
-	db 0
+        db 0
 align 16
-	
+        
 global GetGS
 GetGS:
-	pushf
-	cli
+        pushf
+        cli
 
-	swapgs
-	mov rax, [gs:CURRENT_GS]
-	swapgs
+        swapgs
+        mov rax, [gs:CURRENT_GS]
+        swapgs
 
-	popf
-	ret
+        popf
+        ret
 
 global SetCPU
 SetCPU:
-	pushf
-	cli
+        pushf
+        cli
 
-	swapgs
-	mov [gs:CURRENT_CPU], rdi
-	swapgs
+        swapgs
+        mov [gs:CURRENT_CPU], rdi
+        swapgs
 
-	popf
-	
-	ret
-	
+        popf
+        
+        ret
+        
 global GetCPU
 GetCPU:
-	pushf
-	cli
+        pushf
+        cli
 
-	swapgs
-	mov rax, [gs:CURRENT_CPU]
-	swapgs
+        swapgs
+        mov rax, [gs:CURRENT_CPU]
+        swapgs
 
-	popf
-	ret
-	
+        popf
+        ret
+        
 global SetCurrentTask
 SetCurrentTask:
-	pushf
-	cli
+        pushf
+        cli
 
-	swapgs
-	mov [gs:CURRENT_TASK], rdi
-	swapgs
-	
-	popf
-	ret
+        swapgs
+        mov [gs:CURRENT_TASK], rdi
+        swapgs
+        
+        popf
+        ret
 
 global GetCurrentTask
 GetCurrentTask:
-	pushf
-	cli
-	swapgs
-	mov rax, [gs:CURRENT_TASK]
-	swapgs
-	popf
-	ret
+        pushf
+        cli
+        swapgs
+        mov rax, [gs:CURRENT_TASK]
+        swapgs
+        popf
+        ret
 

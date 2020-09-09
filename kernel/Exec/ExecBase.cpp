@@ -435,8 +435,8 @@ public:
 
 public:
   TBool Run(TAny *aData) {
-    dlog("NextTaskTrap\n");
     gExecBase.RescheduleIRQ();
+    dlog("NextTaskTrap (%s)\n", gExecBase.CurrentTaskName());
     return ETrue;
   }
 };

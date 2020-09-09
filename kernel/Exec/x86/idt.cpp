@@ -227,7 +227,7 @@ IDT::IDT() {
   set_entry(46, isr46, 1); // 14 HARD DISK
   set_entry(47, isr47, 1); // 15 RESERVED
 
-  set_entry(48, isr48, 0); // Schedule TRAP
+  set_entry(48, isr48, 3); // Schedule TRAP
 
   for (int i = 49; i < IDT_SIZE; i++) {
     set_entry(i, isr49, 2);

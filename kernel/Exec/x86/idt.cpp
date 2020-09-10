@@ -6,6 +6,7 @@
 
 extern "C" void set_vector(void *idt_vector, void (*offset)(), TUint16 selector, uint8_t flags);
 extern "C" void load_idtr(void *ptr);
+extern "C" TUint64 GetRSP();
 
 // exceptions
 extern "C" TUint64 isr0;
@@ -86,7 +87,7 @@ static TBool interrupt_enabled[256];
  */
 extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
   cli();
-  dprint("\n\nkernel_isr %d(%s)\n\n", aIsrNumber, IDT::InterruptDescription(aIsrNumber));
+  dprint("\n\n................ kernel_isr %d(%s) sp(%x)\n\n", aIsrNumber, IDT::InterruptDescription(aIsrNumber), GetRSP());
 
   if (!interrupt_enabled[aIsrNumber] && aIsrNumber != 48) {
     gExecBase.AckIRQ(aIsrNumber);

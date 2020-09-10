@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 platform_type=`uname -m`
 unamestr=`uname`

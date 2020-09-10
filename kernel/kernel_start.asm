@@ -2,7 +2,7 @@
 [bits 64]
 
 	;%define SERIAL
-	COM1                equ 0x3f8
+COM1:   equ 0x3f8
 
 %macro BOCHS 0
         xchg bx,bx

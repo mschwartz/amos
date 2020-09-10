@@ -86,7 +86,7 @@ static TBool interrupt_enabled[256];
  */
 extern "C" TBool kernel_isr(TInt64 aIsrNumber) {
   cli();
-    dlog("kernel_isr %d\n", aIsrNumber);
+  dprint("\n\nkernel_isr %d(%s)\n\n", aIsrNumber, IDT::InterruptDescription(aIsrNumber));
 
   if (!interrupt_enabled[aIsrNumber] && aIsrNumber != 48) {
     gExecBase.AckIRQ(aIsrNumber);
